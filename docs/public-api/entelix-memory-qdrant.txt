@@ -1,0 +1,92 @@
+pub mod entelix_memory_qdrant
+#[non_exhaustive] pub enum entelix_memory_qdrant::DistanceMetric
+pub entelix_memory_qdrant::DistanceMetric::Cosine
+pub entelix_memory_qdrant::DistanceMetric::Dot
+pub entelix_memory_qdrant::DistanceMetric::Euclidean
+impl core::clone::Clone for entelix_memory_qdrant::DistanceMetric
+pub fn entelix_memory_qdrant::DistanceMetric::clone(&self) -> entelix_memory_qdrant::DistanceMetric
+impl core::cmp::Eq for entelix_memory_qdrant::DistanceMetric
+impl core::cmp::PartialEq for entelix_memory_qdrant::DistanceMetric
+pub fn entelix_memory_qdrant::DistanceMetric::eq(&self, other: &entelix_memory_qdrant::DistanceMetric) -> bool
+impl core::convert::From<entelix_memory_qdrant::DistanceMetric> for qdrant_client::qdrant::Distance
+pub fn qdrant_client::qdrant::Distance::from(m: entelix_memory_qdrant::DistanceMetric) -> Self
+impl core::default::Default for entelix_memory_qdrant::DistanceMetric
+pub fn entelix_memory_qdrant::DistanceMetric::default() -> entelix_memory_qdrant::DistanceMetric
+impl core::fmt::Debug for entelix_memory_qdrant::DistanceMetric
+pub fn entelix_memory_qdrant::DistanceMetric::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_memory_qdrant::DistanceMetric
+impl core::marker::StructuralPartialEq for entelix_memory_qdrant::DistanceMetric
+impl core::marker::Freeze for entelix_memory_qdrant::DistanceMetric
+impl core::marker::Send for entelix_memory_qdrant::DistanceMetric
+impl core::marker::Sync for entelix_memory_qdrant::DistanceMetric
+impl core::marker::Unpin for entelix_memory_qdrant::DistanceMetric
+impl core::marker::UnsafeUnpin for entelix_memory_qdrant::DistanceMetric
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory_qdrant::DistanceMetric
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory_qdrant::DistanceMetric
+#[non_exhaustive] pub enum entelix_memory_qdrant::QdrantStoreError
+pub entelix_memory_qdrant::QdrantStoreError::Config(alloc::string::String)
+pub entelix_memory_qdrant::QdrantStoreError::FilterProjection(alloc::string::String)
+pub entelix_memory_qdrant::QdrantStoreError::Malformed(alloc::string::String)
+pub entelix_memory_qdrant::QdrantStoreError::Transport(qdrant_client::qdrant_client::error::QdrantError)
+impl core::convert::From<entelix_memory_qdrant::QdrantStoreError> for entelix_core::error::Error
+pub fn entelix_core::error::Error::from(err: entelix_memory_qdrant::QdrantStoreError) -> Self
+impl core::convert::From<qdrant_client::qdrant_client::error::QdrantError> for entelix_memory_qdrant::QdrantStoreError
+pub fn entelix_memory_qdrant::QdrantStoreError::from(source: qdrant_client::qdrant_client::error::QdrantError) -> Self
+impl core::error::Error for entelix_memory_qdrant::QdrantStoreError
+pub fn entelix_memory_qdrant::QdrantStoreError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for entelix_memory_qdrant::QdrantStoreError
+pub fn entelix_memory_qdrant::QdrantStoreError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_memory_qdrant::QdrantStoreError
+pub fn entelix_memory_qdrant::QdrantStoreError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl !core::marker::Freeze for entelix_memory_qdrant::QdrantStoreError
+impl core::marker::Send for entelix_memory_qdrant::QdrantStoreError
+impl core::marker::Sync for entelix_memory_qdrant::QdrantStoreError
+impl core::marker::Unpin for entelix_memory_qdrant::QdrantStoreError
+impl core::marker::UnsafeUnpin for entelix_memory_qdrant::QdrantStoreError
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_memory_qdrant::QdrantStoreError
+impl !core::panic::unwind_safe::UnwindSafe for entelix_memory_qdrant::QdrantStoreError
+pub struct entelix_memory_qdrant::QdrantVectorStore
+impl entelix_memory_qdrant::QdrantVectorStore
+pub fn entelix_memory_qdrant::QdrantVectorStore::builder(collection: impl core::convert::Into<alloc::string::String>, dimension: usize) -> entelix_memory_qdrant::QdrantVectorStoreBuilder
+impl core::clone::Clone for entelix_memory_qdrant::QdrantVectorStore
+pub fn entelix_memory_qdrant::QdrantVectorStore::clone(&self) -> entelix_memory_qdrant::QdrantVectorStore
+impl core::fmt::Debug for entelix_memory_qdrant::QdrantVectorStore
+pub fn entelix_memory_qdrant::QdrantVectorStore::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_memory::traits::VectorStore for entelix_memory_qdrant::QdrantVectorStore
+pub fn entelix_memory_qdrant::QdrantVectorStore::add<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, document: entelix_memory::traits::Document, vector: alloc::vec::Vec<f32>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory_qdrant::QdrantVectorStore::batch_add<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, items: alloc::vec::Vec<(entelix_memory::traits::Document, alloc::vec::Vec<f32>)>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory_qdrant::QdrantVectorStore::count<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, filter: core::option::Option<&'life3 entelix_memory::traits::VectorFilter>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory_qdrant::QdrantVectorStore::delete<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, doc_id: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory_qdrant::QdrantVectorStore::dimension(&self) -> usize
+pub fn entelix_memory_qdrant::QdrantVectorStore::list<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, filter: core::option::Option<&'life3 entelix_memory::traits::VectorFilter>, limit: usize, offset: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::traits::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory_qdrant::QdrantVectorStore::search<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, query_vector: &'life3 [f32], top_k: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::traits::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory_qdrant::QdrantVectorStore::search_filtered<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, query_vector: &'life3 [f32], top_k: usize, filter: &'life4 entelix_memory::traits::VectorFilter) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::traits::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_memory_qdrant::QdrantVectorStore::update<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, doc_id: &'life3 str, document: entelix_memory::traits::Document, vector: alloc::vec::Vec<f32>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl core::marker::Freeze for entelix_memory_qdrant::QdrantVectorStore
+impl core::marker::Send for entelix_memory_qdrant::QdrantVectorStore
+impl core::marker::Sync for entelix_memory_qdrant::QdrantVectorStore
+impl core::marker::Unpin for entelix_memory_qdrant::QdrantVectorStore
+impl core::marker::UnsafeUnpin for entelix_memory_qdrant::QdrantVectorStore
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_memory_qdrant::QdrantVectorStore
+impl !core::panic::unwind_safe::UnwindSafe for entelix_memory_qdrant::QdrantVectorStore
+pub struct entelix_memory_qdrant::QdrantVectorStoreBuilder
+impl entelix_memory_qdrant::QdrantVectorStoreBuilder
+pub async fn entelix_memory_qdrant::QdrantVectorStoreBuilder::build(self) -> entelix_memory_qdrant::QdrantStoreResult<entelix_memory_qdrant::QdrantVectorStore>
+pub fn entelix_memory_qdrant::QdrantVectorStoreBuilder::with_api_key(self, api_key: impl core::convert::Into<alloc::string::String>) -> Self
+pub const fn entelix_memory_qdrant::QdrantVectorStoreBuilder::with_distance(self, distance: entelix_memory_qdrant::DistanceMetric) -> Self
+pub const fn entelix_memory_qdrant::QdrantVectorStoreBuilder::with_existing_collection(self) -> Self
+pub const fn entelix_memory_qdrant::QdrantVectorStoreBuilder::with_on_disk(self, on_disk: bool) -> Self
+pub const fn entelix_memory_qdrant::QdrantVectorStoreBuilder::with_timeout(self, timeout: core::time::Duration) -> Self
+pub fn entelix_memory_qdrant::QdrantVectorStoreBuilder::with_url(self, url: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::marker::Freeze for entelix_memory_qdrant::QdrantVectorStoreBuilder
+impl core::marker::Send for entelix_memory_qdrant::QdrantVectorStoreBuilder
+impl core::marker::Sync for entelix_memory_qdrant::QdrantVectorStoreBuilder
+impl core::marker::Unpin for entelix_memory_qdrant::QdrantVectorStoreBuilder
+impl core::marker::UnsafeUnpin for entelix_memory_qdrant::QdrantVectorStoreBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory_qdrant::QdrantVectorStoreBuilder
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory_qdrant::QdrantVectorStoreBuilder
+pub const entelix_memory_qdrant::CONTENT_KEY: &str
+pub const entelix_memory_qdrant::DOC_ID_KEY: &str
+pub const entelix_memory_qdrant::METADATA_KEY: &str
+pub const entelix_memory_qdrant::NAMESPACE_KEY: &str
+pub type entelix_memory_qdrant::QdrantStoreResult<T> = core::result::Result<T, entelix_memory_qdrant::QdrantStoreError>

@@ -1,0 +1,108 @@
+pub mod entelix_memory_pgvector
+#[non_exhaustive] pub enum entelix_memory_pgvector::DistanceMetric
+pub entelix_memory_pgvector::DistanceMetric::Cosine
+pub entelix_memory_pgvector::DistanceMetric::InnerProduct
+pub entelix_memory_pgvector::DistanceMetric::L2
+impl core::clone::Clone for entelix_memory_pgvector::DistanceMetric
+pub fn entelix_memory_pgvector::DistanceMetric::clone(&self) -> entelix_memory_pgvector::DistanceMetric
+impl core::cmp::Eq for entelix_memory_pgvector::DistanceMetric
+impl core::cmp::PartialEq for entelix_memory_pgvector::DistanceMetric
+pub fn entelix_memory_pgvector::DistanceMetric::eq(&self, other: &entelix_memory_pgvector::DistanceMetric) -> bool
+impl core::default::Default for entelix_memory_pgvector::DistanceMetric
+pub fn entelix_memory_pgvector::DistanceMetric::default() -> entelix_memory_pgvector::DistanceMetric
+impl core::fmt::Debug for entelix_memory_pgvector::DistanceMetric
+pub fn entelix_memory_pgvector::DistanceMetric::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_memory_pgvector::DistanceMetric
+impl core::marker::StructuralPartialEq for entelix_memory_pgvector::DistanceMetric
+impl core::marker::Freeze for entelix_memory_pgvector::DistanceMetric
+impl core::marker::Send for entelix_memory_pgvector::DistanceMetric
+impl core::marker::Sync for entelix_memory_pgvector::DistanceMetric
+impl core::marker::Unpin for entelix_memory_pgvector::DistanceMetric
+impl core::marker::UnsafeUnpin for entelix_memory_pgvector::DistanceMetric
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory_pgvector::DistanceMetric
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory_pgvector::DistanceMetric
+#[non_exhaustive] pub enum entelix_memory_pgvector::IndexKind
+pub entelix_memory_pgvector::IndexKind::Hnsw
+pub entelix_memory_pgvector::IndexKind::IvfFlat
+impl core::clone::Clone for entelix_memory_pgvector::IndexKind
+pub fn entelix_memory_pgvector::IndexKind::clone(&self) -> entelix_memory_pgvector::IndexKind
+impl core::cmp::Eq for entelix_memory_pgvector::IndexKind
+impl core::cmp::PartialEq for entelix_memory_pgvector::IndexKind
+pub fn entelix_memory_pgvector::IndexKind::eq(&self, other: &entelix_memory_pgvector::IndexKind) -> bool
+impl core::default::Default for entelix_memory_pgvector::IndexKind
+pub fn entelix_memory_pgvector::IndexKind::default() -> entelix_memory_pgvector::IndexKind
+impl core::fmt::Debug for entelix_memory_pgvector::IndexKind
+pub fn entelix_memory_pgvector::IndexKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_memory_pgvector::IndexKind
+impl core::marker::StructuralPartialEq for entelix_memory_pgvector::IndexKind
+impl core::marker::Freeze for entelix_memory_pgvector::IndexKind
+impl core::marker::Send for entelix_memory_pgvector::IndexKind
+impl core::marker::Sync for entelix_memory_pgvector::IndexKind
+impl core::marker::Unpin for entelix_memory_pgvector::IndexKind
+impl core::marker::UnsafeUnpin for entelix_memory_pgvector::IndexKind
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory_pgvector::IndexKind
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory_pgvector::IndexKind
+#[non_exhaustive] pub enum entelix_memory_pgvector::PgVectorStoreError
+pub entelix_memory_pgvector::PgVectorStoreError::Config(alloc::string::String)
+pub entelix_memory_pgvector::PgVectorStoreError::FilterProjection(alloc::string::String)
+pub entelix_memory_pgvector::PgVectorStoreError::Malformed(alloc::string::String)
+pub entelix_memory_pgvector::PgVectorStoreError::Sqlx(sqlx_core::error::Error)
+impl core::convert::From<entelix_memory_pgvector::PgVectorStoreError> for entelix_core::error::Error
+pub fn entelix_core::error::Error::from(err: entelix_memory_pgvector::PgVectorStoreError) -> Self
+impl core::convert::From<sqlx_core::error::Error> for entelix_memory_pgvector::PgVectorStoreError
+pub fn entelix_memory_pgvector::PgVectorStoreError::from(source: sqlx_core::error::Error) -> Self
+impl core::error::Error for entelix_memory_pgvector::PgVectorStoreError
+pub fn entelix_memory_pgvector::PgVectorStoreError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for entelix_memory_pgvector::PgVectorStoreError
+pub fn entelix_memory_pgvector::PgVectorStoreError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_memory_pgvector::PgVectorStoreError
+pub fn entelix_memory_pgvector::PgVectorStoreError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_memory_pgvector::PgVectorStoreError
+impl core::marker::Send for entelix_memory_pgvector::PgVectorStoreError
+impl core::marker::Sync for entelix_memory_pgvector::PgVectorStoreError
+impl core::marker::Unpin for entelix_memory_pgvector::PgVectorStoreError
+impl core::marker::UnsafeUnpin for entelix_memory_pgvector::PgVectorStoreError
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_memory_pgvector::PgVectorStoreError
+impl !core::panic::unwind_safe::UnwindSafe for entelix_memory_pgvector::PgVectorStoreError
+pub struct entelix_memory_pgvector::PgVectorStore
+impl entelix_memory_pgvector::PgVectorStore
+pub fn entelix_memory_pgvector::PgVectorStore::builder(dimension: usize) -> entelix_memory_pgvector::PgVectorStoreBuilder
+impl core::clone::Clone for entelix_memory_pgvector::PgVectorStore
+pub fn entelix_memory_pgvector::PgVectorStore::clone(&self) -> entelix_memory_pgvector::PgVectorStore
+impl core::fmt::Debug for entelix_memory_pgvector::PgVectorStore
+pub fn entelix_memory_pgvector::PgVectorStore::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_memory::traits::VectorStore for entelix_memory_pgvector::PgVectorStore
+pub fn entelix_memory_pgvector::PgVectorStore::add<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, document: entelix_memory::traits::Document, vector: alloc::vec::Vec<f32>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory_pgvector::PgVectorStore::batch_add<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, items: alloc::vec::Vec<(entelix_memory::traits::Document, alloc::vec::Vec<f32>)>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory_pgvector::PgVectorStore::count<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, filter: core::option::Option<&'life3 entelix_memory::traits::VectorFilter>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory_pgvector::PgVectorStore::delete<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, doc_id: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory_pgvector::PgVectorStore::dimension(&self) -> usize
+pub fn entelix_memory_pgvector::PgVectorStore::list<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, filter: core::option::Option<&'life3 entelix_memory::traits::VectorFilter>, limit: usize, offset: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::traits::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory_pgvector::PgVectorStore::search<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, query_vector: &'life3 [f32], top_k: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::traits::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory_pgvector::PgVectorStore::search_filtered<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, query_vector: &'life3 [f32], top_k: usize, filter: &'life4 entelix_memory::traits::VectorFilter) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::traits::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_memory_pgvector::PgVectorStore::update<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, doc_id: &'life3 str, document: entelix_memory::traits::Document, vector: alloc::vec::Vec<f32>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl core::marker::Freeze for entelix_memory_pgvector::PgVectorStore
+impl core::marker::Send for entelix_memory_pgvector::PgVectorStore
+impl core::marker::Sync for entelix_memory_pgvector::PgVectorStore
+impl core::marker::Unpin for entelix_memory_pgvector::PgVectorStore
+impl core::marker::UnsafeUnpin for entelix_memory_pgvector::PgVectorStore
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_memory_pgvector::PgVectorStore
+impl !core::panic::unwind_safe::UnwindSafe for entelix_memory_pgvector::PgVectorStore
+pub struct entelix_memory_pgvector::PgVectorStoreBuilder
+impl entelix_memory_pgvector::PgVectorStoreBuilder
+pub async fn entelix_memory_pgvector::PgVectorStoreBuilder::build(self) -> entelix_memory_pgvector::PgVectorStoreResult<entelix_memory_pgvector::PgVectorStore>
+pub const fn entelix_memory_pgvector::PgVectorStoreBuilder::with_auto_migrate(self, auto: bool) -> Self
+pub fn entelix_memory_pgvector::PgVectorStoreBuilder::with_connection_string(self, url: impl core::convert::Into<alloc::string::String>) -> Self
+pub const fn entelix_memory_pgvector::PgVectorStoreBuilder::with_distance(self, distance: entelix_memory_pgvector::DistanceMetric) -> Self
+pub const fn entelix_memory_pgvector::PgVectorStoreBuilder::with_index_kind(self, kind: entelix_memory_pgvector::IndexKind) -> Self
+pub const fn entelix_memory_pgvector::PgVectorStoreBuilder::with_max_connections(self, max: u32) -> Self
+pub fn entelix_memory_pgvector::PgVectorStoreBuilder::with_pool(self, pool: sqlx_postgres::PgPool) -> Self
+pub fn entelix_memory_pgvector::PgVectorStoreBuilder::with_table(self, table: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::marker::Freeze for entelix_memory_pgvector::PgVectorStoreBuilder
+impl core::marker::Send for entelix_memory_pgvector::PgVectorStoreBuilder
+impl core::marker::Sync for entelix_memory_pgvector::PgVectorStoreBuilder
+impl core::marker::Unpin for entelix_memory_pgvector::PgVectorStoreBuilder
+impl core::marker::UnsafeUnpin for entelix_memory_pgvector::PgVectorStoreBuilder
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_memory_pgvector::PgVectorStoreBuilder
+impl !core::panic::unwind_safe::UnwindSafe for entelix_memory_pgvector::PgVectorStoreBuilder
+pub type entelix_memory_pgvector::PgVectorStoreResult<T> = core::result::Result<T, entelix_memory_pgvector::PgVectorStoreError>

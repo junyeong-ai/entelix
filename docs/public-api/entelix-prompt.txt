@@ -1,0 +1,180 @@
+pub mod entelix_prompt
+#[non_exhaustive] pub enum entelix_prompt::ChatPromptPart
+pub entelix_prompt::ChatPromptPart::Placeholder(entelix_prompt::MessagesPlaceholder)
+pub entelix_prompt::ChatPromptPart::Templated
+pub entelix_prompt::ChatPromptPart::Templated::role: entelix_core::ir::message::Role
+pub entelix_prompt::ChatPromptPart::Templated::template: entelix_prompt::PromptTemplate
+impl entelix_prompt::ChatPromptPart
+pub fn entelix_prompt::ChatPromptPart::assistant(template: impl core::convert::AsRef<str>) -> entelix_core::error::Result<Self>
+pub fn entelix_prompt::ChatPromptPart::placeholder(name: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_prompt::ChatPromptPart::system(template: impl core::convert::AsRef<str>) -> entelix_core::error::Result<Self>
+pub fn entelix_prompt::ChatPromptPart::user(template: impl core::convert::AsRef<str>) -> entelix_core::error::Result<Self>
+impl core::clone::Clone for entelix_prompt::ChatPromptPart
+pub fn entelix_prompt::ChatPromptPart::clone(&self) -> entelix_prompt::ChatPromptPart
+impl core::fmt::Debug for entelix_prompt::ChatPromptPart
+pub fn entelix_prompt::ChatPromptPart::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_prompt::ChatPromptPart
+impl core::marker::Send for entelix_prompt::ChatPromptPart
+impl core::marker::Sync for entelix_prompt::ChatPromptPart
+impl core::marker::Unpin for entelix_prompt::ChatPromptPart
+impl core::marker::UnsafeUnpin for entelix_prompt::ChatPromptPart
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_prompt::ChatPromptPart
+impl !core::panic::unwind_safe::UnwindSafe for entelix_prompt::ChatPromptPart
+#[non_exhaustive] pub enum entelix_prompt::PromptValue
+pub entelix_prompt::PromptValue::Messages(alloc::vec::Vec<entelix_core::ir::message::Message>)
+pub entelix_prompt::PromptValue::Text(alloc::string::String)
+impl core::clone::Clone for entelix_prompt::PromptValue
+pub fn entelix_prompt::PromptValue::clone(&self) -> entelix_prompt::PromptValue
+impl core::convert::From<&str> for entelix_prompt::PromptValue
+pub fn entelix_prompt::PromptValue::from(s: &str) -> Self
+impl core::convert::From<alloc::string::String> for entelix_prompt::PromptValue
+pub fn entelix_prompt::PromptValue::from(s: alloc::string::String) -> Self
+impl core::convert::From<alloc::vec::Vec<entelix_core::ir::message::Message>> for entelix_prompt::PromptValue
+pub fn entelix_prompt::PromptValue::from(v: alloc::vec::Vec<entelix_core::ir::message::Message>) -> Self
+impl core::fmt::Debug for entelix_prompt::PromptValue
+pub fn entelix_prompt::PromptValue::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_prompt::PromptValue
+impl core::marker::Send for entelix_prompt::PromptValue
+impl core::marker::Sync for entelix_prompt::PromptValue
+impl core::marker::Unpin for entelix_prompt::PromptValue
+impl core::marker::UnsafeUnpin for entelix_prompt::PromptValue
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_prompt::PromptValue
+impl core::panic::unwind_safe::UnwindSafe for entelix_prompt::PromptValue
+pub struct entelix_prompt::ChatFewShotPromptTemplate
+impl entelix_prompt::ChatFewShotPromptTemplate
+pub fn entelix_prompt::ChatFewShotPromptTemplate::render(&self, input_vars: &entelix_prompt::PromptVars) -> entelix_core::error::Result<alloc::vec::Vec<entelix_core::ir::message::Message>>
+pub fn entelix_prompt::ChatFewShotPromptTemplate::with_examples(examples: alloc::vec::Vec<entelix_prompt::Example>, example_chat: entelix_prompt::ChatPromptTemplate, suffix_chat: entelix_prompt::ChatPromptTemplate) -> Self
+pub fn entelix_prompt::ChatFewShotPromptTemplate::with_selector(selector: entelix_prompt::SharedExampleSelector, example_chat: entelix_prompt::ChatPromptTemplate, suffix_chat: entelix_prompt::ChatPromptTemplate) -> Self
+impl core::clone::Clone for entelix_prompt::ChatFewShotPromptTemplate
+pub fn entelix_prompt::ChatFewShotPromptTemplate::clone(&self) -> entelix_prompt::ChatFewShotPromptTemplate
+impl entelix_runnable::runnable::Runnable<std::collections::hash::map::HashMap<alloc::string::String, entelix_prompt::PromptValue>, alloc::vec::Vec<entelix_core::ir::message::Message>> for entelix_prompt::ChatFewShotPromptTemplate
+pub fn entelix_prompt::ChatFewShotPromptTemplate::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: entelix_prompt::PromptVars, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_core::ir::message::Message>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for entelix_prompt::ChatFewShotPromptTemplate
+impl core::marker::Send for entelix_prompt::ChatFewShotPromptTemplate
+impl core::marker::Sync for entelix_prompt::ChatFewShotPromptTemplate
+impl core::marker::Unpin for entelix_prompt::ChatFewShotPromptTemplate
+impl core::marker::UnsafeUnpin for entelix_prompt::ChatFewShotPromptTemplate
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_prompt::ChatFewShotPromptTemplate
+impl !core::panic::unwind_safe::UnwindSafe for entelix_prompt::ChatFewShotPromptTemplate
+pub struct entelix_prompt::ChatPromptTemplate
+impl entelix_prompt::ChatPromptTemplate
+pub fn entelix_prompt::ChatPromptTemplate::from_messages<I>(parts: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = entelix_prompt::ChatPromptPart>
+pub fn entelix_prompt::ChatPromptTemplate::parts(&self) -> &[entelix_prompt::ChatPromptPart]
+pub fn entelix_prompt::ChatPromptTemplate::render(&self, vars: &entelix_prompt::PromptVars) -> entelix_core::error::Result<alloc::vec::Vec<entelix_core::ir::message::Message>>
+impl core::clone::Clone for entelix_prompt::ChatPromptTemplate
+pub fn entelix_prompt::ChatPromptTemplate::clone(&self) -> entelix_prompt::ChatPromptTemplate
+impl core::fmt::Debug for entelix_prompt::ChatPromptTemplate
+pub fn entelix_prompt::ChatPromptTemplate::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_runnable::runnable::Runnable<std::collections::hash::map::HashMap<alloc::string::String, entelix_prompt::PromptValue>, alloc::vec::Vec<entelix_core::ir::message::Message>> for entelix_prompt::ChatPromptTemplate
+pub fn entelix_prompt::ChatPromptTemplate::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: entelix_prompt::PromptVars, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_core::ir::message::Message>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for entelix_prompt::ChatPromptTemplate
+impl core::marker::Send for entelix_prompt::ChatPromptTemplate
+impl core::marker::Sync for entelix_prompt::ChatPromptTemplate
+impl core::marker::Unpin for entelix_prompt::ChatPromptTemplate
+impl core::marker::UnsafeUnpin for entelix_prompt::ChatPromptTemplate
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_prompt::ChatPromptTemplate
+impl !core::panic::unwind_safe::UnwindSafe for entelix_prompt::ChatPromptTemplate
+pub struct entelix_prompt::FewShotPromptTemplate
+impl entelix_prompt::FewShotPromptTemplate
+pub fn entelix_prompt::FewShotPromptTemplate::render(&self, input_vars: &std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>) -> entelix_core::error::Result<alloc::string::String>
+pub fn entelix_prompt::FewShotPromptTemplate::with_example_separator(self, sep: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_prompt::FewShotPromptTemplate::with_examples(examples: alloc::vec::Vec<entelix_prompt::Example>, example_prompt: entelix_prompt::PromptTemplate, suffix_prompt: entelix_prompt::PromptTemplate) -> Self
+pub fn entelix_prompt::FewShotPromptTemplate::with_prefix(self, prefix: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_prompt::FewShotPromptTemplate::with_selector(selector: entelix_prompt::SharedExampleSelector, example_prompt: entelix_prompt::PromptTemplate, suffix_prompt: entelix_prompt::PromptTemplate) -> Self
+impl core::clone::Clone for entelix_prompt::FewShotPromptTemplate
+pub fn entelix_prompt::FewShotPromptTemplate::clone(&self) -> entelix_prompt::FewShotPromptTemplate
+impl entelix_runnable::runnable::Runnable<std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>, alloc::string::String> for entelix_prompt::FewShotPromptTemplate
+pub fn entelix_prompt::FewShotPromptTemplate::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::string::String>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for entelix_prompt::FewShotPromptTemplate
+impl core::marker::Send for entelix_prompt::FewShotPromptTemplate
+impl core::marker::Sync for entelix_prompt::FewShotPromptTemplate
+impl core::marker::Unpin for entelix_prompt::FewShotPromptTemplate
+impl core::marker::UnsafeUnpin for entelix_prompt::FewShotPromptTemplate
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_prompt::FewShotPromptTemplate
+impl !core::panic::unwind_safe::UnwindSafe for entelix_prompt::FewShotPromptTemplate
+pub struct entelix_prompt::FixedExampleSelector
+impl entelix_prompt::FixedExampleSelector
+pub fn entelix_prompt::FixedExampleSelector::examples(&self) -> &[entelix_prompt::Example]
+pub const fn entelix_prompt::FixedExampleSelector::new(examples: alloc::vec::Vec<entelix_prompt::Example>) -> Self
+impl core::clone::Clone for entelix_prompt::FixedExampleSelector
+pub fn entelix_prompt::FixedExampleSelector::clone(&self) -> entelix_prompt::FixedExampleSelector
+impl core::fmt::Debug for entelix_prompt::FixedExampleSelector
+pub fn entelix_prompt::FixedExampleSelector::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_prompt::ExampleSelector for entelix_prompt::FixedExampleSelector
+pub fn entelix_prompt::FixedExampleSelector::select(&self, _input_vars: &std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>) -> entelix_core::error::Result<alloc::vec::Vec<entelix_prompt::Example>>
+impl core::marker::Freeze for entelix_prompt::FixedExampleSelector
+impl core::marker::Send for entelix_prompt::FixedExampleSelector
+impl core::marker::Sync for entelix_prompt::FixedExampleSelector
+impl core::marker::Unpin for entelix_prompt::FixedExampleSelector
+impl core::marker::UnsafeUnpin for entelix_prompt::FixedExampleSelector
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_prompt::FixedExampleSelector
+impl core::panic::unwind_safe::UnwindSafe for entelix_prompt::FixedExampleSelector
+pub struct entelix_prompt::LengthBasedExampleSelector
+impl entelix_prompt::LengthBasedExampleSelector
+pub fn entelix_prompt::LengthBasedExampleSelector::examples(&self) -> &[entelix_prompt::Example]
+pub const fn entelix_prompt::LengthBasedExampleSelector::new(examples: alloc::vec::Vec<entelix_prompt::Example>, example_prompt: entelix_prompt::PromptTemplate, max_chars: usize) -> Self
+impl core::clone::Clone for entelix_prompt::LengthBasedExampleSelector
+pub fn entelix_prompt::LengthBasedExampleSelector::clone(&self) -> entelix_prompt::LengthBasedExampleSelector
+impl core::fmt::Debug for entelix_prompt::LengthBasedExampleSelector
+pub fn entelix_prompt::LengthBasedExampleSelector::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_prompt::ExampleSelector for entelix_prompt::LengthBasedExampleSelector
+pub fn entelix_prompt::LengthBasedExampleSelector::select(&self, _input_vars: &std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>) -> entelix_core::error::Result<alloc::vec::Vec<entelix_prompt::Example>>
+impl core::marker::Freeze for entelix_prompt::LengthBasedExampleSelector
+impl core::marker::Send for entelix_prompt::LengthBasedExampleSelector
+impl core::marker::Sync for entelix_prompt::LengthBasedExampleSelector
+impl core::marker::Unpin for entelix_prompt::LengthBasedExampleSelector
+impl core::marker::UnsafeUnpin for entelix_prompt::LengthBasedExampleSelector
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_prompt::LengthBasedExampleSelector
+impl !core::panic::unwind_safe::UnwindSafe for entelix_prompt::LengthBasedExampleSelector
+pub struct entelix_prompt::MessagesPlaceholder
+impl entelix_prompt::MessagesPlaceholder
+pub fn entelix_prompt::MessagesPlaceholder::name(&self) -> &str
+pub fn entelix_prompt::MessagesPlaceholder::new(name: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for entelix_prompt::MessagesPlaceholder
+pub fn entelix_prompt::MessagesPlaceholder::clone(&self) -> entelix_prompt::MessagesPlaceholder
+impl core::cmp::Eq for entelix_prompt::MessagesPlaceholder
+impl core::cmp::PartialEq for entelix_prompt::MessagesPlaceholder
+pub fn entelix_prompt::MessagesPlaceholder::eq(&self, other: &entelix_prompt::MessagesPlaceholder) -> bool
+impl core::fmt::Debug for entelix_prompt::MessagesPlaceholder
+pub fn entelix_prompt::MessagesPlaceholder::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_prompt::MessagesPlaceholder
+impl core::marker::Freeze for entelix_prompt::MessagesPlaceholder
+impl core::marker::Send for entelix_prompt::MessagesPlaceholder
+impl core::marker::Sync for entelix_prompt::MessagesPlaceholder
+impl core::marker::Unpin for entelix_prompt::MessagesPlaceholder
+impl core::marker::UnsafeUnpin for entelix_prompt::MessagesPlaceholder
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_prompt::MessagesPlaceholder
+impl core::panic::unwind_safe::UnwindSafe for entelix_prompt::MessagesPlaceholder
+pub struct entelix_prompt::PromptTemplate
+impl entelix_prompt::PromptTemplate
+pub fn entelix_prompt::PromptTemplate::new(template: impl core::convert::AsRef<str>) -> entelix_core::error::Result<Self>
+pub fn entelix_prompt::PromptTemplate::render<S: serde_core::ser::Serialize>(&self, vars: S) -> entelix_core::error::Result<alloc::string::String>
+pub fn entelix_prompt::PromptTemplate::source(&self) -> &str
+pub fn entelix_prompt::PromptTemplate::variables(&self) -> &[alloc::string::String]
+impl core::clone::Clone for entelix_prompt::PromptTemplate
+pub fn entelix_prompt::PromptTemplate::clone(&self) -> entelix_prompt::PromptTemplate
+impl core::cmp::Eq for entelix_prompt::PromptTemplate
+impl core::cmp::PartialEq for entelix_prompt::PromptTemplate
+pub fn entelix_prompt::PromptTemplate::eq(&self, other: &Self) -> bool
+impl core::fmt::Debug for entelix_prompt::PromptTemplate
+pub fn entelix_prompt::PromptTemplate::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_runnable::runnable::Runnable<serde_json::value::Value, alloc::string::String> for entelix_prompt::PromptTemplate
+pub fn entelix_prompt::PromptTemplate::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::string::String>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl entelix_runnable::runnable::Runnable<std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>, alloc::string::String> for entelix_prompt::PromptTemplate
+pub fn entelix_prompt::PromptTemplate::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::string::String>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for entelix_prompt::PromptTemplate
+impl core::marker::Send for entelix_prompt::PromptTemplate
+impl core::marker::Sync for entelix_prompt::PromptTemplate
+impl core::marker::Unpin for entelix_prompt::PromptTemplate
+impl core::marker::UnsafeUnpin for entelix_prompt::PromptTemplate
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_prompt::PromptTemplate
+impl !core::panic::unwind_safe::UnwindSafe for entelix_prompt::PromptTemplate
+pub trait entelix_prompt::ExampleSelector: core::marker::Send + core::marker::Sync
+pub fn entelix_prompt::ExampleSelector::select(&self, input_vars: &std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>) -> entelix_core::error::Result<alloc::vec::Vec<entelix_prompt::Example>>
+impl entelix_prompt::ExampleSelector for entelix_prompt::FixedExampleSelector
+pub fn entelix_prompt::FixedExampleSelector::select(&self, _input_vars: &std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>) -> entelix_core::error::Result<alloc::vec::Vec<entelix_prompt::Example>>
+impl entelix_prompt::ExampleSelector for entelix_prompt::LengthBasedExampleSelector
+pub fn entelix_prompt::LengthBasedExampleSelector::select(&self, _input_vars: &std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>) -> entelix_core::error::Result<alloc::vec::Vec<entelix_prompt::Example>>
+pub type entelix_prompt::Example = std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>
+pub type entelix_prompt::PromptVars = std::collections::hash::map::HashMap<alloc::string::String, entelix_prompt::PromptValue>
+pub type entelix_prompt::SharedExampleSelector = alloc::sync::Arc<dyn entelix_prompt::ExampleSelector>

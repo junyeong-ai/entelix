@@ -1,0 +1,884 @@
+pub mod entelix_tools
+pub mod entelix_tools::memory
+pub struct entelix_tools::memory::MemoryToolConfig
+pub entelix_tools::memory::MemoryToolConfig::entity: core::option::Option<alloc::sync::Arc<entelix_memory::entity::EntityMemory>>
+pub entelix_tools::memory::MemoryToolConfig::semantic: core::option::Option<alloc::sync::Arc<dyn entelix_memory::semantic::SemanticMemoryBackend>>
+impl entelix_tools::memory::MemoryToolConfig
+pub fn entelix_tools::memory::MemoryToolConfig::expose_metadata_fields<I, S>(self, fields: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::Into<alloc::string::String>
+pub fn entelix_tools::memory::MemoryToolConfig::new() -> Self
+pub fn entelix_tools::memory::MemoryToolConfig::with_entity(self, entity: alloc::sync::Arc<entelix_memory::entity::EntityMemory>) -> Self
+pub const fn entelix_tools::memory::MemoryToolConfig::with_entity_temporal_signals(self, expose: bool) -> Self
+pub fn entelix_tools::memory::MemoryToolConfig::with_semantic(self, handle: alloc::sync::Arc<dyn entelix_memory::semantic::SemanticMemoryBackend>) -> Self
+impl core::default::Default for entelix_tools::memory::MemoryToolConfig
+pub fn entelix_tools::memory::MemoryToolConfig::default() -> Self
+impl core::marker::Freeze for entelix_tools::memory::MemoryToolConfig
+impl core::marker::Send for entelix_tools::memory::MemoryToolConfig
+impl core::marker::Sync for entelix_tools::memory::MemoryToolConfig
+impl core::marker::Unpin for entelix_tools::memory::MemoryToolConfig
+impl core::marker::UnsafeUnpin for entelix_tools::memory::MemoryToolConfig
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::memory::MemoryToolConfig
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::memory::MemoryToolConfig
+pub fn entelix_tools::memory::install(registry: entelix_core::tools::registry::ToolRegistry, config: entelix_tools::memory::MemoryToolConfig) -> entelix_core::error::Result<entelix_core::tools::registry::ToolRegistry>
+pub mod entelix_tools::sandboxed
+pub mod entelix_tools::sandboxed::mock
+pub struct entelix_tools::sandboxed::mock::MockSandbox
+impl entelix_tools::sandboxed::mock::MockSandbox
+pub fn entelix_tools::sandboxed::mock::MockSandbox::add_command_response(self, argv0: &str, output: entelix_core::sandbox::CommandOutput) -> Self
+pub fn entelix_tools::sandboxed::mock::MockSandbox::code_calls(&self) -> u32
+pub fn entelix_tools::sandboxed::mock::MockSandbox::command_calls(&self) -> u32
+pub fn entelix_tools::sandboxed::mock::MockSandbox::new() -> Self
+pub fn entelix_tools::sandboxed::mock::MockSandbox::seed_file(&self, path: impl core::convert::Into<alloc::string::String>, bytes: impl core::convert::Into<alloc::vec::Vec<u8>>)
+impl core::default::Default for entelix_tools::sandboxed::mock::MockSandbox
+pub fn entelix_tools::sandboxed::mock::MockSandbox::default() -> Self
+impl entelix_core::sandbox::Sandbox for entelix_tools::sandboxed::mock::MockSandbox
+pub fn entelix_tools::sandboxed::mock::MockSandbox::backend(&self) -> &str
+pub fn entelix_tools::sandboxed::mock::MockSandbox::list_dir<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, path: &'life1 str, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_core::sandbox::DirEntry>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_tools::sandboxed::mock::MockSandbox::read_file<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, path: &'life1 str, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<u8>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_tools::sandboxed::mock::MockSandbox::run_code<'life0, 'life1, 'async_trait>(&'life0 self, _spec: entelix_core::sandbox::CodeSpec, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::sandbox::CommandOutput>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::sandboxed::mock::MockSandbox::run_command<'life0, 'life1, 'async_trait>(&'life0 self, spec: entelix_core::sandbox::CommandSpec, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::sandbox::CommandOutput>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::sandboxed::mock::MockSandbox::write_file<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, path: &'life1 str, bytes: &'life2 [u8], _ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl core::marker::Freeze for entelix_tools::sandboxed::mock::MockSandbox
+impl core::marker::Send for entelix_tools::sandboxed::mock::MockSandbox
+impl core::marker::Sync for entelix_tools::sandboxed::mock::MockSandbox
+impl core::marker::Unpin for entelix_tools::sandboxed::mock::MockSandbox
+impl core::marker::UnsafeUnpin for entelix_tools::sandboxed::mock::MockSandbox
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::sandboxed::mock::MockSandbox
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::sandboxed::mock::MockSandbox
+#[non_exhaustive] pub enum entelix_tools::sandboxed::ShellPolicyError
+pub entelix_tools::sandboxed::ShellPolicyError::CommandNotAllowed
+pub entelix_tools::sandboxed::ShellPolicyError::CommandNotAllowed::command: alloc::string::String
+pub entelix_tools::sandboxed::ShellPolicyError::EmptyArgv
+impl core::cmp::Eq for entelix_tools::ShellPolicyError
+impl core::cmp::PartialEq for entelix_tools::ShellPolicyError
+pub fn entelix_tools::ShellPolicyError::eq(&self, other: &entelix_tools::ShellPolicyError) -> bool
+impl core::error::Error for entelix_tools::ShellPolicyError
+impl core::fmt::Debug for entelix_tools::ShellPolicyError
+pub fn entelix_tools::ShellPolicyError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_tools::ShellPolicyError
+pub fn entelix_tools::ShellPolicyError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_tools::ShellPolicyError
+impl core::marker::Freeze for entelix_tools::ShellPolicyError
+impl core::marker::Send for entelix_tools::ShellPolicyError
+impl core::marker::Sync for entelix_tools::ShellPolicyError
+impl core::marker::Unpin for entelix_tools::ShellPolicyError
+impl core::marker::UnsafeUnpin for entelix_tools::ShellPolicyError
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::ShellPolicyError
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::ShellPolicyError
+pub struct entelix_tools::sandboxed::CodePolicy
+impl entelix_tools::CodePolicy
+pub fn entelix_tools::CodePolicy::admits(&self, language: entelix_core::sandbox::SandboxLanguage) -> bool
+pub const fn entelix_tools::CodePolicy::max_duration(&self) -> core::time::Duration
+pub fn entelix_tools::CodePolicy::new<I>(allowed: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = entelix_core::sandbox::SandboxLanguage>
+pub const fn entelix_tools::CodePolicy::with_max_duration(self, duration: core::time::Duration) -> Self
+impl core::clone::Clone for entelix_tools::CodePolicy
+pub fn entelix_tools::CodePolicy::clone(&self) -> entelix_tools::CodePolicy
+impl core::default::Default for entelix_tools::CodePolicy
+pub fn entelix_tools::CodePolicy::default() -> Self
+impl core::fmt::Debug for entelix_tools::CodePolicy
+pub fn entelix_tools::CodePolicy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tools::CodePolicy
+impl core::marker::Send for entelix_tools::CodePolicy
+impl core::marker::Sync for entelix_tools::CodePolicy
+impl core::marker::Unpin for entelix_tools::CodePolicy
+impl core::marker::UnsafeUnpin for entelix_tools::CodePolicy
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::CodePolicy
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::CodePolicy
+pub struct entelix_tools::sandboxed::MockSandbox
+impl entelix_tools::sandboxed::mock::MockSandbox
+pub fn entelix_tools::sandboxed::mock::MockSandbox::add_command_response(self, argv0: &str, output: entelix_core::sandbox::CommandOutput) -> Self
+pub fn entelix_tools::sandboxed::mock::MockSandbox::code_calls(&self) -> u32
+pub fn entelix_tools::sandboxed::mock::MockSandbox::command_calls(&self) -> u32
+pub fn entelix_tools::sandboxed::mock::MockSandbox::new() -> Self
+pub fn entelix_tools::sandboxed::mock::MockSandbox::seed_file(&self, path: impl core::convert::Into<alloc::string::String>, bytes: impl core::convert::Into<alloc::vec::Vec<u8>>)
+impl core::default::Default for entelix_tools::sandboxed::mock::MockSandbox
+pub fn entelix_tools::sandboxed::mock::MockSandbox::default() -> Self
+impl entelix_core::sandbox::Sandbox for entelix_tools::sandboxed::mock::MockSandbox
+pub fn entelix_tools::sandboxed::mock::MockSandbox::backend(&self) -> &str
+pub fn entelix_tools::sandboxed::mock::MockSandbox::list_dir<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, path: &'life1 str, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_core::sandbox::DirEntry>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_tools::sandboxed::mock::MockSandbox::read_file<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, path: &'life1 str, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<u8>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_tools::sandboxed::mock::MockSandbox::run_code<'life0, 'life1, 'async_trait>(&'life0 self, _spec: entelix_core::sandbox::CodeSpec, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::sandbox::CommandOutput>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::sandboxed::mock::MockSandbox::run_command<'life0, 'life1, 'async_trait>(&'life0 self, spec: entelix_core::sandbox::CommandSpec, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::sandbox::CommandOutput>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::sandboxed::mock::MockSandbox::write_file<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, path: &'life1 str, bytes: &'life2 [u8], _ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl core::marker::Freeze for entelix_tools::sandboxed::mock::MockSandbox
+impl core::marker::Send for entelix_tools::sandboxed::mock::MockSandbox
+impl core::marker::Sync for entelix_tools::sandboxed::mock::MockSandbox
+impl core::marker::Unpin for entelix_tools::sandboxed::mock::MockSandbox
+impl core::marker::UnsafeUnpin for entelix_tools::sandboxed::mock::MockSandbox
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::sandboxed::mock::MockSandbox
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::sandboxed::mock::MockSandbox
+pub struct entelix_tools::sandboxed::SandboxedCodeTool
+impl entelix_tools::SandboxedCodeTool
+pub fn entelix_tools::SandboxedCodeTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>, policy: entelix_tools::CodePolicy) -> Self
+impl core::fmt::Debug for entelix_tools::SandboxedCodeTool
+pub fn entelix_tools::SandboxedCodeTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::SandboxedCodeTool
+pub fn entelix_tools::SandboxedCodeTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SandboxedCodeTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::SandboxedCodeTool
+impl core::marker::Send for entelix_tools::SandboxedCodeTool
+impl core::marker::Sync for entelix_tools::SandboxedCodeTool
+impl core::marker::Unpin for entelix_tools::SandboxedCodeTool
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxedCodeTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxedCodeTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxedCodeTool
+pub struct entelix_tools::sandboxed::SandboxedListDirTool
+impl entelix_tools::SandboxedListDirTool
+pub fn entelix_tools::SandboxedListDirTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>) -> Self
+impl core::fmt::Debug for entelix_tools::SandboxedListDirTool
+pub fn entelix_tools::SandboxedListDirTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::SandboxedListDirTool
+pub fn entelix_tools::SandboxedListDirTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SandboxedListDirTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::SandboxedListDirTool
+impl core::marker::Send for entelix_tools::SandboxedListDirTool
+impl core::marker::Sync for entelix_tools::SandboxedListDirTool
+impl core::marker::Unpin for entelix_tools::SandboxedListDirTool
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxedListDirTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxedListDirTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxedListDirTool
+pub struct entelix_tools::sandboxed::SandboxedReadFileTool
+impl entelix_tools::SandboxedReadFileTool
+pub fn entelix_tools::SandboxedReadFileTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>) -> Self
+impl core::fmt::Debug for entelix_tools::SandboxedReadFileTool
+pub fn entelix_tools::SandboxedReadFileTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::SandboxedReadFileTool
+pub fn entelix_tools::SandboxedReadFileTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SandboxedReadFileTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::SandboxedReadFileTool
+impl core::marker::Send for entelix_tools::SandboxedReadFileTool
+impl core::marker::Sync for entelix_tools::SandboxedReadFileTool
+impl core::marker::Unpin for entelix_tools::SandboxedReadFileTool
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxedReadFileTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxedReadFileTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxedReadFileTool
+pub struct entelix_tools::sandboxed::SandboxedShellTool
+impl entelix_tools::SandboxedShellTool
+pub fn entelix_tools::SandboxedShellTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>, policy: entelix_tools::ShellPolicy) -> Self
+pub fn entelix_tools::SandboxedShellTool::read_only(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>) -> Self
+impl core::fmt::Debug for entelix_tools::SandboxedShellTool
+pub fn entelix_tools::SandboxedShellTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::SandboxedShellTool
+pub fn entelix_tools::SandboxedShellTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SandboxedShellTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::SandboxedShellTool
+impl core::marker::Send for entelix_tools::SandboxedShellTool
+impl core::marker::Sync for entelix_tools::SandboxedShellTool
+impl core::marker::Unpin for entelix_tools::SandboxedShellTool
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxedShellTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxedShellTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxedShellTool
+pub struct entelix_tools::sandboxed::SandboxedWriteFileTool
+impl entelix_tools::SandboxedWriteFileTool
+pub fn entelix_tools::SandboxedWriteFileTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>) -> Self
+impl core::fmt::Debug for entelix_tools::SandboxedWriteFileTool
+pub fn entelix_tools::SandboxedWriteFileTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::SandboxedWriteFileTool
+pub fn entelix_tools::SandboxedWriteFileTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SandboxedWriteFileTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::SandboxedWriteFileTool
+impl core::marker::Send for entelix_tools::SandboxedWriteFileTool
+impl core::marker::Sync for entelix_tools::SandboxedWriteFileTool
+impl core::marker::Unpin for entelix_tools::SandboxedWriteFileTool
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxedWriteFileTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxedWriteFileTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxedWriteFileTool
+pub struct entelix_tools::sandboxed::ShellPolicy
+impl entelix_tools::ShellPolicy
+pub fn entelix_tools::ShellPolicy::add_allowed_command(self, command: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_tools::ShellPolicy::allowed(&self) -> &std::collections::hash::set::HashSet<alloc::string::String>
+pub fn entelix_tools::ShellPolicy::check(&self, argv: &[alloc::string::String]) -> core::result::Result<(), entelix_tools::ShellPolicyError>
+pub fn entelix_tools::ShellPolicy::development_baseline() -> Self
+pub const fn entelix_tools::ShellPolicy::max_duration(&self) -> core::time::Duration
+pub fn entelix_tools::ShellPolicy::new<I, S>(allowed: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::Into<alloc::string::String>
+pub fn entelix_tools::ShellPolicy::read_only_baseline() -> Self
+pub const fn entelix_tools::ShellPolicy::with_max_duration(self, duration: core::time::Duration) -> Self
+impl core::clone::Clone for entelix_tools::ShellPolicy
+pub fn entelix_tools::ShellPolicy::clone(&self) -> entelix_tools::ShellPolicy
+impl core::default::Default for entelix_tools::ShellPolicy
+pub fn entelix_tools::ShellPolicy::default() -> Self
+impl core::fmt::Debug for entelix_tools::ShellPolicy
+pub fn entelix_tools::ShellPolicy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tools::ShellPolicy
+impl core::marker::Send for entelix_tools::ShellPolicy
+impl core::marker::Sync for entelix_tools::ShellPolicy
+impl core::marker::Unpin for entelix_tools::ShellPolicy
+impl core::marker::UnsafeUnpin for entelix_tools::ShellPolicy
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::ShellPolicy
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::ShellPolicy
+pub mod entelix_tools::skills
+#[non_exhaustive] pub enum entelix_tools::skills::ManifestError
+pub entelix_tools::skills::ManifestError::EmptyField(&'static str)
+pub entelix_tools::skills::ManifestError::MissingClosingFence
+pub entelix_tools::skills::ManifestError::MissingField(&'static str)
+pub entelix_tools::skills::ManifestError::MissingOpeningFence
+impl core::error::Error for entelix_tools::skills::ManifestError
+impl core::fmt::Debug for entelix_tools::skills::ManifestError
+pub fn entelix_tools::skills::ManifestError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_tools::skills::ManifestError
+pub fn entelix_tools::skills::ManifestError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tools::skills::ManifestError
+impl core::marker::Send for entelix_tools::skills::ManifestError
+impl core::marker::Sync for entelix_tools::skills::ManifestError
+impl core::marker::Unpin for entelix_tools::skills::ManifestError
+impl core::marker::UnsafeUnpin for entelix_tools::skills::ManifestError
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::skills::ManifestError
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::skills::ManifestError
+pub struct entelix_tools::skills::ActivateSkillTool
+impl entelix_tools::ActivateSkillTool
+pub fn entelix_tools::ActivateSkillTool::new(registry: entelix_core::skills::registry::SkillRegistry) -> Self
+impl core::clone::Clone for entelix_tools::ActivateSkillTool
+pub fn entelix_tools::ActivateSkillTool::clone(&self) -> entelix_tools::ActivateSkillTool
+impl core::fmt::Debug for entelix_tools::ActivateSkillTool
+pub fn entelix_tools::ActivateSkillTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::ActivateSkillTool
+pub fn entelix_tools::ActivateSkillTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::ActivateSkillTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::ActivateSkillTool
+impl core::marker::Send for entelix_tools::ActivateSkillTool
+impl core::marker::Sync for entelix_tools::ActivateSkillTool
+impl core::marker::Unpin for entelix_tools::ActivateSkillTool
+impl core::marker::UnsafeUnpin for entelix_tools::ActivateSkillTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::ActivateSkillTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::ActivateSkillTool
+pub struct entelix_tools::skills::InMemorySkill
+impl entelix_tools::InMemorySkill
+pub fn entelix_tools::InMemorySkill::builder(name: impl core::convert::Into<alloc::string::String>) -> entelix_tools::InMemorySkillBuilder
+impl core::clone::Clone for entelix_tools::InMemorySkill
+pub fn entelix_tools::InMemorySkill::clone(&self) -> entelix_tools::InMemorySkill
+impl core::fmt::Debug for entelix_tools::InMemorySkill
+pub fn entelix_tools::InMemorySkill::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::skills::skill::Skill for entelix_tools::InMemorySkill
+pub fn entelix_tools::InMemorySkill::description(&self) -> &str
+pub fn entelix_tools::InMemorySkill::load<'life0, 'life1, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::skills::skill::LoadedSkill>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::InMemorySkill::name(&self) -> &str
+pub fn entelix_tools::InMemorySkill::version(&self) -> core::option::Option<&str>
+impl core::marker::Freeze for entelix_tools::InMemorySkill
+impl core::marker::Send for entelix_tools::InMemorySkill
+impl core::marker::Sync for entelix_tools::InMemorySkill
+impl core::marker::Unpin for entelix_tools::InMemorySkill
+impl core::marker::UnsafeUnpin for entelix_tools::InMemorySkill
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::InMemorySkill
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::InMemorySkill
+pub struct entelix_tools::skills::InMemorySkillBuilder
+impl entelix_tools::InMemorySkillBuilder
+pub fn entelix_tools::InMemorySkillBuilder::build(self) -> entelix_core::error::Result<entelix_tools::InMemorySkill>
+pub fn entelix_tools::InMemorySkillBuilder::with_description(self, description: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_tools::InMemorySkillBuilder::with_instructions(self, instructions: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_tools::InMemorySkillBuilder::with_resource(self, key: impl core::convert::Into<alloc::string::String>, resource: alloc::sync::Arc<dyn entelix_core::skills::resource::SkillResource>) -> Self
+pub fn entelix_tools::InMemorySkillBuilder::with_text_resource(self, key: impl core::convert::Into<alloc::string::String>, text: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_tools::InMemorySkillBuilder::with_version(self, version: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::fmt::Debug for entelix_tools::InMemorySkillBuilder
+pub fn entelix_tools::InMemorySkillBuilder::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tools::InMemorySkillBuilder
+impl core::marker::Send for entelix_tools::InMemorySkillBuilder
+impl core::marker::Sync for entelix_tools::InMemorySkillBuilder
+impl core::marker::Unpin for entelix_tools::InMemorySkillBuilder
+impl core::marker::UnsafeUnpin for entelix_tools::InMemorySkillBuilder
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::InMemorySkillBuilder
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::InMemorySkillBuilder
+pub struct entelix_tools::skills::ListSkillsTool
+impl entelix_tools::ListSkillsTool
+pub fn entelix_tools::ListSkillsTool::new(registry: entelix_core::skills::registry::SkillRegistry) -> Self
+impl core::clone::Clone for entelix_tools::ListSkillsTool
+pub fn entelix_tools::ListSkillsTool::clone(&self) -> entelix_tools::ListSkillsTool
+impl core::fmt::Debug for entelix_tools::ListSkillsTool
+pub fn entelix_tools::ListSkillsTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::ListSkillsTool
+pub fn entelix_tools::ListSkillsTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, _input: serde_json::value::Value, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::ListSkillsTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::ListSkillsTool
+impl core::marker::Send for entelix_tools::ListSkillsTool
+impl core::marker::Sync for entelix_tools::ListSkillsTool
+impl core::marker::Unpin for entelix_tools::ListSkillsTool
+impl core::marker::UnsafeUnpin for entelix_tools::ListSkillsTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::ListSkillsTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::ListSkillsTool
+pub struct entelix_tools::skills::ReadSkillResourceTool
+impl entelix_tools::ReadSkillResourceTool
+pub fn entelix_tools::ReadSkillResourceTool::new(registry: entelix_core::skills::registry::SkillRegistry) -> Self
+impl core::clone::Clone for entelix_tools::ReadSkillResourceTool
+pub fn entelix_tools::ReadSkillResourceTool::clone(&self) -> entelix_tools::ReadSkillResourceTool
+impl core::fmt::Debug for entelix_tools::ReadSkillResourceTool
+pub fn entelix_tools::ReadSkillResourceTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::ReadSkillResourceTool
+pub fn entelix_tools::ReadSkillResourceTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::ReadSkillResourceTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::ReadSkillResourceTool
+impl core::marker::Send for entelix_tools::ReadSkillResourceTool
+impl core::marker::Sync for entelix_tools::ReadSkillResourceTool
+impl core::marker::Unpin for entelix_tools::ReadSkillResourceTool
+impl core::marker::UnsafeUnpin for entelix_tools::ReadSkillResourceTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::ReadSkillResourceTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::ReadSkillResourceTool
+pub struct entelix_tools::skills::SandboxResource
+impl core::clone::Clone for entelix_tools::SandboxResource
+pub fn entelix_tools::SandboxResource::clone(&self) -> entelix_tools::SandboxResource
+impl core::fmt::Debug for entelix_tools::SandboxResource
+pub fn entelix_tools::SandboxResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::skills::resource::SkillResource for entelix_tools::SandboxResource
+pub fn entelix_tools::SandboxResource::read<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::skills::resource::SkillResourceContent>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for entelix_tools::SandboxResource
+impl core::marker::Send for entelix_tools::SandboxResource
+impl core::marker::Sync for entelix_tools::SandboxResource
+impl core::marker::Unpin for entelix_tools::SandboxResource
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxResource
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxResource
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxResource
+pub struct entelix_tools::skills::SandboxSkill
+impl entelix_tools::SandboxSkill
+pub async fn entelix_tools::SandboxSkill::from_sandbox(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>, root: impl core::convert::Into<alloc::string::String>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<Self>
+impl core::clone::Clone for entelix_tools::SandboxSkill
+pub fn entelix_tools::SandboxSkill::clone(&self) -> entelix_tools::SandboxSkill
+impl core::fmt::Debug for entelix_tools::SandboxSkill
+pub fn entelix_tools::SandboxSkill::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::skills::skill::Skill for entelix_tools::SandboxSkill
+pub fn entelix_tools::SandboxSkill::description(&self) -> &str
+pub fn entelix_tools::SandboxSkill::load<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::skills::skill::LoadedSkill>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SandboxSkill::name(&self) -> &str
+pub fn entelix_tools::SandboxSkill::version(&self) -> core::option::Option<&str>
+impl core::marker::Freeze for entelix_tools::SandboxSkill
+impl core::marker::Send for entelix_tools::SandboxSkill
+impl core::marker::Sync for entelix_tools::SandboxSkill
+impl core::marker::Unpin for entelix_tools::SandboxSkill
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxSkill
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxSkill
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxSkill
+pub struct entelix_tools::skills::SkillManifest
+pub entelix_tools::skills::SkillManifest::body: alloc::string::String
+pub entelix_tools::skills::SkillManifest::description: alloc::string::String
+pub entelix_tools::skills::SkillManifest::name: alloc::string::String
+pub entelix_tools::skills::SkillManifest::version: core::option::Option<alloc::string::String>
+impl core::clone::Clone for entelix_tools::skills::SkillManifest
+pub fn entelix_tools::skills::SkillManifest::clone(&self) -> entelix_tools::skills::SkillManifest
+impl core::cmp::Eq for entelix_tools::skills::SkillManifest
+impl core::cmp::PartialEq for entelix_tools::skills::SkillManifest
+pub fn entelix_tools::skills::SkillManifest::eq(&self, other: &entelix_tools::skills::SkillManifest) -> bool
+impl core::fmt::Debug for entelix_tools::skills::SkillManifest
+pub fn entelix_tools::skills::SkillManifest::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_tools::skills::SkillManifest
+impl core::marker::Freeze for entelix_tools::skills::SkillManifest
+impl core::marker::Send for entelix_tools::skills::SkillManifest
+impl core::marker::Sync for entelix_tools::skills::SkillManifest
+impl core::marker::Unpin for entelix_tools::skills::SkillManifest
+impl core::marker::UnsafeUnpin for entelix_tools::skills::SkillManifest
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::skills::SkillManifest
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::skills::SkillManifest
+pub struct entelix_tools::skills::StaticResource
+impl entelix_tools::StaticResource
+pub fn entelix_tools::StaticResource::binary(mime_type: impl core::convert::Into<alloc::string::String>, bytes: alloc::vec::Vec<u8>) -> Self
+pub fn entelix_tools::StaticResource::text(text: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for entelix_tools::StaticResource
+pub fn entelix_tools::StaticResource::clone(&self) -> entelix_tools::StaticResource
+impl core::fmt::Debug for entelix_tools::StaticResource
+pub fn entelix_tools::StaticResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::skills::resource::SkillResource for entelix_tools::StaticResource
+pub fn entelix_tools::StaticResource::read<'life0, 'life1, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::skills::resource::SkillResourceContent>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for entelix_tools::StaticResource
+impl core::marker::Send for entelix_tools::StaticResource
+impl core::marker::Sync for entelix_tools::StaticResource
+impl core::marker::Unpin for entelix_tools::StaticResource
+impl core::marker::UnsafeUnpin for entelix_tools::StaticResource
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::StaticResource
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::StaticResource
+pub fn entelix_tools::skills::install(tool_registry: entelix_core::tools::registry::ToolRegistry, skill_registry: entelix_core::skills::registry::SkillRegistry) -> entelix_core::error::Result<entelix_core::tools::registry::ToolRegistry>
+pub fn entelix_tools::skills::parse_skill_md(input: &str) -> core::result::Result<entelix_tools::skills::SkillManifest, entelix_tools::skills::ManifestError>
+#[non_exhaustive] pub enum entelix_tools::HostRule
+pub entelix_tools::HostRule::Exact(alloc::string::String)
+pub entelix_tools::HostRule::IpExact(core::net::ip_addr::IpAddr)
+pub entelix_tools::HostRule::Wildcard(alloc::string::String)
+impl core::clone::Clone for entelix_tools::HostRule
+pub fn entelix_tools::HostRule::clone(&self) -> entelix_tools::HostRule
+impl core::cmp::Eq for entelix_tools::HostRule
+impl core::cmp::PartialEq for entelix_tools::HostRule
+pub fn entelix_tools::HostRule::eq(&self, other: &entelix_tools::HostRule) -> bool
+impl core::fmt::Debug for entelix_tools::HostRule
+pub fn entelix_tools::HostRule::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_tools::HostRule
+impl core::marker::Freeze for entelix_tools::HostRule
+impl core::marker::Send for entelix_tools::HostRule
+impl core::marker::Sync for entelix_tools::HostRule
+impl core::marker::Unpin for entelix_tools::HostRule
+impl core::marker::UnsafeUnpin for entelix_tools::HostRule
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::HostRule
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::HostRule
+#[non_exhaustive] pub enum entelix_tools::ShellPolicyError
+pub entelix_tools::ShellPolicyError::CommandNotAllowed
+pub entelix_tools::ShellPolicyError::CommandNotAllowed::command: alloc::string::String
+pub entelix_tools::ShellPolicyError::EmptyArgv
+impl core::cmp::Eq for entelix_tools::ShellPolicyError
+impl core::cmp::PartialEq for entelix_tools::ShellPolicyError
+pub fn entelix_tools::ShellPolicyError::eq(&self, other: &entelix_tools::ShellPolicyError) -> bool
+impl core::error::Error for entelix_tools::ShellPolicyError
+impl core::fmt::Debug for entelix_tools::ShellPolicyError
+pub fn entelix_tools::ShellPolicyError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_tools::ShellPolicyError
+pub fn entelix_tools::ShellPolicyError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_tools::ShellPolicyError
+impl core::marker::Freeze for entelix_tools::ShellPolicyError
+impl core::marker::Send for entelix_tools::ShellPolicyError
+impl core::marker::Sync for entelix_tools::ShellPolicyError
+impl core::marker::Unpin for entelix_tools::ShellPolicyError
+impl core::marker::UnsafeUnpin for entelix_tools::ShellPolicyError
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::ShellPolicyError
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::ShellPolicyError
+#[non_exhaustive] pub enum entelix_tools::ToolError
+pub entelix_tools::ToolError::BodyTooLarge
+pub entelix_tools::ToolError::BodyTooLarge::limit_bytes: usize
+pub entelix_tools::ToolError::Calculator(alloc::string::String)
+pub entelix_tools::ToolError::Config
+pub entelix_tools::ToolError::Config::message: alloc::string::String
+pub entelix_tools::ToolError::Config::source: core::option::Option<alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>>
+pub entelix_tools::ToolError::HostBlocked
+pub entelix_tools::ToolError::HostBlocked::host: alloc::string::String
+pub entelix_tools::ToolError::InvalidInput(alloc::string::String)
+pub entelix_tools::ToolError::MethodBlocked
+pub entelix_tools::ToolError::MethodBlocked::method: alloc::string::String
+pub entelix_tools::ToolError::Network
+pub entelix_tools::ToolError::Network::message: alloc::string::String
+pub entelix_tools::ToolError::Network::source: core::option::Option<alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>>
+pub entelix_tools::ToolError::Serde(serde_json::error::Error)
+pub entelix_tools::ToolError::UnsupportedScheme
+pub entelix_tools::ToolError::UnsupportedScheme::scheme: alloc::string::String
+impl entelix_tools::ToolError
+pub fn entelix_tools::ToolError::config<E>(source: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_tools::ToolError::config_msg(message: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_tools::ToolError::network<E>(source: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_tools::ToolError::network_msg(message: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::convert::From<entelix_tools::ToolError> for entelix_core::error::Error
+pub fn entelix_core::error::Error::from(err: entelix_tools::ToolError) -> Self
+impl core::convert::From<serde_json::error::Error> for entelix_tools::ToolError
+pub fn entelix_tools::ToolError::from(source: serde_json::error::Error) -> Self
+impl core::error::Error for entelix_tools::ToolError
+pub fn entelix_tools::ToolError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for entelix_tools::ToolError
+pub fn entelix_tools::ToolError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_tools::ToolError
+pub fn entelix_tools::ToolError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tools::ToolError
+impl core::marker::Send for entelix_tools::ToolError
+impl core::marker::Sync for entelix_tools::ToolError
+impl core::marker::Unpin for entelix_tools::ToolError
+impl core::marker::UnsafeUnpin for entelix_tools::ToolError
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::ToolError
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::ToolError
+pub struct entelix_tools::ActivateSkillTool
+impl entelix_tools::ActivateSkillTool
+pub fn entelix_tools::ActivateSkillTool::new(registry: entelix_core::skills::registry::SkillRegistry) -> Self
+impl core::clone::Clone for entelix_tools::ActivateSkillTool
+pub fn entelix_tools::ActivateSkillTool::clone(&self) -> entelix_tools::ActivateSkillTool
+impl core::fmt::Debug for entelix_tools::ActivateSkillTool
+pub fn entelix_tools::ActivateSkillTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::ActivateSkillTool
+pub fn entelix_tools::ActivateSkillTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::ActivateSkillTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::ActivateSkillTool
+impl core::marker::Send for entelix_tools::ActivateSkillTool
+impl core::marker::Sync for entelix_tools::ActivateSkillTool
+impl core::marker::Unpin for entelix_tools::ActivateSkillTool
+impl core::marker::UnsafeUnpin for entelix_tools::ActivateSkillTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::ActivateSkillTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::ActivateSkillTool
+pub struct entelix_tools::CalculatorTool
+impl entelix_tools::CalculatorTool
+pub fn entelix_tools::CalculatorTool::new() -> Self
+impl core::default::Default for entelix_tools::CalculatorTool
+pub fn entelix_tools::CalculatorTool::default() -> Self
+impl entelix_core::tools::tool::Tool for entelix_tools::CalculatorTool
+pub fn entelix_tools::CalculatorTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::CalculatorTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::CalculatorTool
+impl core::marker::Send for entelix_tools::CalculatorTool
+impl core::marker::Sync for entelix_tools::CalculatorTool
+impl core::marker::Unpin for entelix_tools::CalculatorTool
+impl core::marker::UnsafeUnpin for entelix_tools::CalculatorTool
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::CalculatorTool
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::CalculatorTool
+pub struct entelix_tools::CodePolicy
+impl entelix_tools::CodePolicy
+pub fn entelix_tools::CodePolicy::admits(&self, language: entelix_core::sandbox::SandboxLanguage) -> bool
+pub const fn entelix_tools::CodePolicy::max_duration(&self) -> core::time::Duration
+pub fn entelix_tools::CodePolicy::new<I>(allowed: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = entelix_core::sandbox::SandboxLanguage>
+pub const fn entelix_tools::CodePolicy::with_max_duration(self, duration: core::time::Duration) -> Self
+impl core::clone::Clone for entelix_tools::CodePolicy
+pub fn entelix_tools::CodePolicy::clone(&self) -> entelix_tools::CodePolicy
+impl core::default::Default for entelix_tools::CodePolicy
+pub fn entelix_tools::CodePolicy::default() -> Self
+impl core::fmt::Debug for entelix_tools::CodePolicy
+pub fn entelix_tools::CodePolicy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tools::CodePolicy
+impl core::marker::Send for entelix_tools::CodePolicy
+impl core::marker::Sync for entelix_tools::CodePolicy
+impl core::marker::Unpin for entelix_tools::CodePolicy
+impl core::marker::UnsafeUnpin for entelix_tools::CodePolicy
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::CodePolicy
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::CodePolicy
+pub struct entelix_tools::HostAllowlist
+impl entelix_tools::HostAllowlist
+pub fn entelix_tools::HostAllowlist::add_exact_host(self, host: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_tools::HostAllowlist::add_exact_ip(self, ip: core::net::ip_addr::IpAddr) -> Self
+pub fn entelix_tools::HostAllowlist::add_subdomain_root(self, host: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_tools::HostAllowlist::explicit_ips(&self) -> std::collections::hash::set::HashSet<core::net::ip_addr::IpAddr>
+pub fn entelix_tools::HostAllowlist::is_empty(&self) -> bool
+pub fn entelix_tools::HostAllowlist::len(&self) -> usize
+pub fn entelix_tools::HostAllowlist::new() -> Self
+impl core::clone::Clone for entelix_tools::HostAllowlist
+pub fn entelix_tools::HostAllowlist::clone(&self) -> entelix_tools::HostAllowlist
+impl core::default::Default for entelix_tools::HostAllowlist
+pub fn entelix_tools::HostAllowlist::default() -> entelix_tools::HostAllowlist
+impl core::fmt::Debug for entelix_tools::HostAllowlist
+pub fn entelix_tools::HostAllowlist::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tools::HostAllowlist
+impl core::marker::Send for entelix_tools::HostAllowlist
+impl core::marker::Sync for entelix_tools::HostAllowlist
+impl core::marker::Unpin for entelix_tools::HostAllowlist
+impl core::marker::UnsafeUnpin for entelix_tools::HostAllowlist
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::HostAllowlist
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::HostAllowlist
+pub struct entelix_tools::HttpFetchTool
+impl entelix_tools::HttpFetchTool
+pub fn entelix_tools::HttpFetchTool::builder() -> entelix_tools::HttpFetchToolBuilder
+impl core::clone::Clone for entelix_tools::HttpFetchTool
+pub fn entelix_tools::HttpFetchTool::clone(&self) -> entelix_tools::HttpFetchTool
+impl core::fmt::Debug for entelix_tools::HttpFetchTool
+pub fn entelix_tools::HttpFetchTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::HttpFetchTool
+pub fn entelix_tools::HttpFetchTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::HttpFetchTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::HttpFetchTool
+impl core::marker::Send for entelix_tools::HttpFetchTool
+impl core::marker::Sync for entelix_tools::HttpFetchTool
+impl core::marker::Unpin for entelix_tools::HttpFetchTool
+impl core::marker::UnsafeUnpin for entelix_tools::HttpFetchTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::HttpFetchTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::HttpFetchTool
+pub struct entelix_tools::HttpFetchToolBuilder
+impl entelix_tools::HttpFetchToolBuilder
+pub fn entelix_tools::HttpFetchToolBuilder::allowed_methods<I: core::iter::traits::collect::IntoIterator<Item = http::method::Method>>(self, methods: I) -> Self
+pub fn entelix_tools::HttpFetchToolBuilder::build(self) -> entelix_tools::ToolResult<entelix_tools::HttpFetchTool>
+pub fn entelix_tools::HttpFetchToolBuilder::expose_response_headers<I, S>(self, headers: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::AsRef<str>
+pub const fn entelix_tools::HttpFetchToolBuilder::max_redirects(self, n: usize) -> Self
+pub const fn entelix_tools::HttpFetchToolBuilder::max_response_bytes(self, n: usize) -> Self
+pub fn entelix_tools::HttpFetchToolBuilder::new() -> Self
+pub const fn entelix_tools::HttpFetchToolBuilder::timeout(self, t: core::time::Duration) -> Self
+pub fn entelix_tools::HttpFetchToolBuilder::with_allowlist(self, allowlist: entelix_tools::HostAllowlist) -> Self
+pub fn entelix_tools::HttpFetchToolBuilder::with_user_agent(self, ua: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::default::Default for entelix_tools::HttpFetchToolBuilder
+pub fn entelix_tools::HttpFetchToolBuilder::default() -> Self
+impl core::marker::Freeze for entelix_tools::HttpFetchToolBuilder
+impl core::marker::Send for entelix_tools::HttpFetchToolBuilder
+impl core::marker::Sync for entelix_tools::HttpFetchToolBuilder
+impl core::marker::Unpin for entelix_tools::HttpFetchToolBuilder
+impl core::marker::UnsafeUnpin for entelix_tools::HttpFetchToolBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::HttpFetchToolBuilder
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::HttpFetchToolBuilder
+pub struct entelix_tools::InMemorySkill
+impl entelix_tools::InMemorySkill
+pub fn entelix_tools::InMemorySkill::builder(name: impl core::convert::Into<alloc::string::String>) -> entelix_tools::InMemorySkillBuilder
+impl core::clone::Clone for entelix_tools::InMemorySkill
+pub fn entelix_tools::InMemorySkill::clone(&self) -> entelix_tools::InMemorySkill
+impl core::fmt::Debug for entelix_tools::InMemorySkill
+pub fn entelix_tools::InMemorySkill::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::skills::skill::Skill for entelix_tools::InMemorySkill
+pub fn entelix_tools::InMemorySkill::description(&self) -> &str
+pub fn entelix_tools::InMemorySkill::load<'life0, 'life1, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::skills::skill::LoadedSkill>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::InMemorySkill::name(&self) -> &str
+pub fn entelix_tools::InMemorySkill::version(&self) -> core::option::Option<&str>
+impl core::marker::Freeze for entelix_tools::InMemorySkill
+impl core::marker::Send for entelix_tools::InMemorySkill
+impl core::marker::Sync for entelix_tools::InMemorySkill
+impl core::marker::Unpin for entelix_tools::InMemorySkill
+impl core::marker::UnsafeUnpin for entelix_tools::InMemorySkill
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::InMemorySkill
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::InMemorySkill
+pub struct entelix_tools::InMemorySkillBuilder
+impl entelix_tools::InMemorySkillBuilder
+pub fn entelix_tools::InMemorySkillBuilder::build(self) -> entelix_core::error::Result<entelix_tools::InMemorySkill>
+pub fn entelix_tools::InMemorySkillBuilder::with_description(self, description: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_tools::InMemorySkillBuilder::with_instructions(self, instructions: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_tools::InMemorySkillBuilder::with_resource(self, key: impl core::convert::Into<alloc::string::String>, resource: alloc::sync::Arc<dyn entelix_core::skills::resource::SkillResource>) -> Self
+pub fn entelix_tools::InMemorySkillBuilder::with_text_resource(self, key: impl core::convert::Into<alloc::string::String>, text: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_tools::InMemorySkillBuilder::with_version(self, version: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::fmt::Debug for entelix_tools::InMemorySkillBuilder
+pub fn entelix_tools::InMemorySkillBuilder::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tools::InMemorySkillBuilder
+impl core::marker::Send for entelix_tools::InMemorySkillBuilder
+impl core::marker::Sync for entelix_tools::InMemorySkillBuilder
+impl core::marker::Unpin for entelix_tools::InMemorySkillBuilder
+impl core::marker::UnsafeUnpin for entelix_tools::InMemorySkillBuilder
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::InMemorySkillBuilder
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::InMemorySkillBuilder
+pub struct entelix_tools::ListSkillsTool
+impl entelix_tools::ListSkillsTool
+pub fn entelix_tools::ListSkillsTool::new(registry: entelix_core::skills::registry::SkillRegistry) -> Self
+impl core::clone::Clone for entelix_tools::ListSkillsTool
+pub fn entelix_tools::ListSkillsTool::clone(&self) -> entelix_tools::ListSkillsTool
+impl core::fmt::Debug for entelix_tools::ListSkillsTool
+pub fn entelix_tools::ListSkillsTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::ListSkillsTool
+pub fn entelix_tools::ListSkillsTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, _input: serde_json::value::Value, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::ListSkillsTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::ListSkillsTool
+impl core::marker::Send for entelix_tools::ListSkillsTool
+impl core::marker::Sync for entelix_tools::ListSkillsTool
+impl core::marker::Unpin for entelix_tools::ListSkillsTool
+impl core::marker::UnsafeUnpin for entelix_tools::ListSkillsTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::ListSkillsTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::ListSkillsTool
+pub struct entelix_tools::ReadSkillResourceTool
+impl entelix_tools::ReadSkillResourceTool
+pub fn entelix_tools::ReadSkillResourceTool::new(registry: entelix_core::skills::registry::SkillRegistry) -> Self
+impl core::clone::Clone for entelix_tools::ReadSkillResourceTool
+pub fn entelix_tools::ReadSkillResourceTool::clone(&self) -> entelix_tools::ReadSkillResourceTool
+impl core::fmt::Debug for entelix_tools::ReadSkillResourceTool
+pub fn entelix_tools::ReadSkillResourceTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::ReadSkillResourceTool
+pub fn entelix_tools::ReadSkillResourceTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::ReadSkillResourceTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::ReadSkillResourceTool
+impl core::marker::Send for entelix_tools::ReadSkillResourceTool
+impl core::marker::Sync for entelix_tools::ReadSkillResourceTool
+impl core::marker::Unpin for entelix_tools::ReadSkillResourceTool
+impl core::marker::UnsafeUnpin for entelix_tools::ReadSkillResourceTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::ReadSkillResourceTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::ReadSkillResourceTool
+pub struct entelix_tools::SandboxResource
+impl core::clone::Clone for entelix_tools::SandboxResource
+pub fn entelix_tools::SandboxResource::clone(&self) -> entelix_tools::SandboxResource
+impl core::fmt::Debug for entelix_tools::SandboxResource
+pub fn entelix_tools::SandboxResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::skills::resource::SkillResource for entelix_tools::SandboxResource
+pub fn entelix_tools::SandboxResource::read<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::skills::resource::SkillResourceContent>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for entelix_tools::SandboxResource
+impl core::marker::Send for entelix_tools::SandboxResource
+impl core::marker::Sync for entelix_tools::SandboxResource
+impl core::marker::Unpin for entelix_tools::SandboxResource
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxResource
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxResource
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxResource
+pub struct entelix_tools::SandboxSkill
+impl entelix_tools::SandboxSkill
+pub async fn entelix_tools::SandboxSkill::from_sandbox(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>, root: impl core::convert::Into<alloc::string::String>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<Self>
+impl core::clone::Clone for entelix_tools::SandboxSkill
+pub fn entelix_tools::SandboxSkill::clone(&self) -> entelix_tools::SandboxSkill
+impl core::fmt::Debug for entelix_tools::SandboxSkill
+pub fn entelix_tools::SandboxSkill::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::skills::skill::Skill for entelix_tools::SandboxSkill
+pub fn entelix_tools::SandboxSkill::description(&self) -> &str
+pub fn entelix_tools::SandboxSkill::load<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::skills::skill::LoadedSkill>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SandboxSkill::name(&self) -> &str
+pub fn entelix_tools::SandboxSkill::version(&self) -> core::option::Option<&str>
+impl core::marker::Freeze for entelix_tools::SandboxSkill
+impl core::marker::Send for entelix_tools::SandboxSkill
+impl core::marker::Sync for entelix_tools::SandboxSkill
+impl core::marker::Unpin for entelix_tools::SandboxSkill
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxSkill
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxSkill
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxSkill
+pub struct entelix_tools::SandboxedCodeTool
+impl entelix_tools::SandboxedCodeTool
+pub fn entelix_tools::SandboxedCodeTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>, policy: entelix_tools::CodePolicy) -> Self
+impl core::fmt::Debug for entelix_tools::SandboxedCodeTool
+pub fn entelix_tools::SandboxedCodeTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::SandboxedCodeTool
+pub fn entelix_tools::SandboxedCodeTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SandboxedCodeTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::SandboxedCodeTool
+impl core::marker::Send for entelix_tools::SandboxedCodeTool
+impl core::marker::Sync for entelix_tools::SandboxedCodeTool
+impl core::marker::Unpin for entelix_tools::SandboxedCodeTool
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxedCodeTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxedCodeTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxedCodeTool
+pub struct entelix_tools::SandboxedListDirTool
+impl entelix_tools::SandboxedListDirTool
+pub fn entelix_tools::SandboxedListDirTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>) -> Self
+impl core::fmt::Debug for entelix_tools::SandboxedListDirTool
+pub fn entelix_tools::SandboxedListDirTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::SandboxedListDirTool
+pub fn entelix_tools::SandboxedListDirTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SandboxedListDirTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::SandboxedListDirTool
+impl core::marker::Send for entelix_tools::SandboxedListDirTool
+impl core::marker::Sync for entelix_tools::SandboxedListDirTool
+impl core::marker::Unpin for entelix_tools::SandboxedListDirTool
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxedListDirTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxedListDirTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxedListDirTool
+pub struct entelix_tools::SandboxedReadFileTool
+impl entelix_tools::SandboxedReadFileTool
+pub fn entelix_tools::SandboxedReadFileTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>) -> Self
+impl core::fmt::Debug for entelix_tools::SandboxedReadFileTool
+pub fn entelix_tools::SandboxedReadFileTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::SandboxedReadFileTool
+pub fn entelix_tools::SandboxedReadFileTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SandboxedReadFileTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::SandboxedReadFileTool
+impl core::marker::Send for entelix_tools::SandboxedReadFileTool
+impl core::marker::Sync for entelix_tools::SandboxedReadFileTool
+impl core::marker::Unpin for entelix_tools::SandboxedReadFileTool
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxedReadFileTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxedReadFileTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxedReadFileTool
+pub struct entelix_tools::SandboxedShellTool
+impl entelix_tools::SandboxedShellTool
+pub fn entelix_tools::SandboxedShellTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>, policy: entelix_tools::ShellPolicy) -> Self
+pub fn entelix_tools::SandboxedShellTool::read_only(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>) -> Self
+impl core::fmt::Debug for entelix_tools::SandboxedShellTool
+pub fn entelix_tools::SandboxedShellTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::SandboxedShellTool
+pub fn entelix_tools::SandboxedShellTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SandboxedShellTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::SandboxedShellTool
+impl core::marker::Send for entelix_tools::SandboxedShellTool
+impl core::marker::Sync for entelix_tools::SandboxedShellTool
+impl core::marker::Unpin for entelix_tools::SandboxedShellTool
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxedShellTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxedShellTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxedShellTool
+pub struct entelix_tools::SandboxedWriteFileTool
+impl entelix_tools::SandboxedWriteFileTool
+pub fn entelix_tools::SandboxedWriteFileTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>) -> Self
+impl core::fmt::Debug for entelix_tools::SandboxedWriteFileTool
+pub fn entelix_tools::SandboxedWriteFileTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::SandboxedWriteFileTool
+pub fn entelix_tools::SandboxedWriteFileTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SandboxedWriteFileTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::SandboxedWriteFileTool
+impl core::marker::Send for entelix_tools::SandboxedWriteFileTool
+impl core::marker::Sync for entelix_tools::SandboxedWriteFileTool
+impl core::marker::Unpin for entelix_tools::SandboxedWriteFileTool
+impl core::marker::UnsafeUnpin for entelix_tools::SandboxedWriteFileTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SandboxedWriteFileTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SandboxedWriteFileTool
+pub struct entelix_tools::SchemaToolAdapter<T: entelix_tools::SchemaTool>
+impl<T: entelix_tools::SchemaTool> entelix_tools::SchemaToolAdapter<T>
+pub const fn entelix_tools::SchemaToolAdapter<T>::inner(&self) -> &T
+impl<T: entelix_tools::SchemaTool> core::fmt::Debug for entelix_tools::SchemaToolAdapter<T>
+pub fn entelix_tools::SchemaToolAdapter<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T: entelix_tools::SchemaTool> entelix_core::tools::tool::Tool for entelix_tools::SchemaToolAdapter<T>
+pub fn entelix_tools::SchemaToolAdapter<T>::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SchemaToolAdapter<T>::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl<T> core::marker::Freeze for entelix_tools::SchemaToolAdapter<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for entelix_tools::SchemaToolAdapter<T>
+impl<T> core::marker::Sync for entelix_tools::SchemaToolAdapter<T>
+impl<T> core::marker::Unpin for entelix_tools::SchemaToolAdapter<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for entelix_tools::SchemaToolAdapter<T> where T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SchemaToolAdapter<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for entelix_tools::SchemaToolAdapter<T> where T: core::panic::unwind_safe::UnwindSafe
+pub struct entelix_tools::SearchResult
+pub entelix_tools::SearchResult::score: core::option::Option<f32>
+pub entelix_tools::SearchResult::snippet: alloc::string::String
+pub entelix_tools::SearchResult::title: alloc::string::String
+pub entelix_tools::SearchResult::url: alloc::string::String
+impl core::clone::Clone for entelix_tools::SearchResult
+pub fn entelix_tools::SearchResult::clone(&self) -> entelix_tools::SearchResult
+impl core::cmp::PartialEq for entelix_tools::SearchResult
+pub fn entelix_tools::SearchResult::eq(&self, other: &entelix_tools::SearchResult) -> bool
+impl core::fmt::Debug for entelix_tools::SearchResult
+pub fn entelix_tools::SearchResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_tools::SearchResult
+impl serde_core::ser::Serialize for entelix_tools::SearchResult
+pub fn entelix_tools::SearchResult::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_tools::SearchResult
+pub fn entelix_tools::SearchResult::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_tools::SearchResult
+impl core::marker::Send for entelix_tools::SearchResult
+impl core::marker::Sync for entelix_tools::SearchResult
+impl core::marker::Unpin for entelix_tools::SearchResult
+impl core::marker::UnsafeUnpin for entelix_tools::SearchResult
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SearchResult
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::SearchResult
+pub struct entelix_tools::SearchTool
+impl entelix_tools::SearchTool
+pub fn entelix_tools::SearchTool::new(provider: alloc::sync::Arc<dyn entelix_tools::SearchProvider>) -> Self
+pub fn entelix_tools::SearchTool::with_default_max_results(self, n: usize) -> Self
+impl core::fmt::Debug for entelix_tools::SearchTool
+pub fn entelix_tools::SearchTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools::SearchTool
+pub fn entelix_tools::SearchTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SearchTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools::SearchTool
+impl core::marker::Send for entelix_tools::SearchTool
+impl core::marker::Sync for entelix_tools::SearchTool
+impl core::marker::Unpin for entelix_tools::SearchTool
+impl core::marker::UnsafeUnpin for entelix_tools::SearchTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SearchTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SearchTool
+pub struct entelix_tools::ShellPolicy
+impl entelix_tools::ShellPolicy
+pub fn entelix_tools::ShellPolicy::add_allowed_command(self, command: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_tools::ShellPolicy::allowed(&self) -> &std::collections::hash::set::HashSet<alloc::string::String>
+pub fn entelix_tools::ShellPolicy::check(&self, argv: &[alloc::string::String]) -> core::result::Result<(), entelix_tools::ShellPolicyError>
+pub fn entelix_tools::ShellPolicy::development_baseline() -> Self
+pub const fn entelix_tools::ShellPolicy::max_duration(&self) -> core::time::Duration
+pub fn entelix_tools::ShellPolicy::new<I, S>(allowed: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::Into<alloc::string::String>
+pub fn entelix_tools::ShellPolicy::read_only_baseline() -> Self
+pub const fn entelix_tools::ShellPolicy::with_max_duration(self, duration: core::time::Duration) -> Self
+impl core::clone::Clone for entelix_tools::ShellPolicy
+pub fn entelix_tools::ShellPolicy::clone(&self) -> entelix_tools::ShellPolicy
+impl core::default::Default for entelix_tools::ShellPolicy
+pub fn entelix_tools::ShellPolicy::default() -> Self
+impl core::fmt::Debug for entelix_tools::ShellPolicy
+pub fn entelix_tools::ShellPolicy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tools::ShellPolicy
+impl core::marker::Send for entelix_tools::ShellPolicy
+impl core::marker::Sync for entelix_tools::ShellPolicy
+impl core::marker::Unpin for entelix_tools::ShellPolicy
+impl core::marker::UnsafeUnpin for entelix_tools::ShellPolicy
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::ShellPolicy
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::ShellPolicy
+pub struct entelix_tools::SsrfSafeDnsResolver
+impl entelix_tools::SsrfSafeDnsResolver
+pub fn entelix_tools::SsrfSafeDnsResolver::from_config(config: hickory_resolver::config::ResolverConfig, opts: hickory_resolver::config::ResolverOpts) -> core::result::Result<Self, entelix_tools::ToolError>
+pub fn entelix_tools::SsrfSafeDnsResolver::from_system() -> core::result::Result<Self, entelix_tools::ToolError>
+pub fn entelix_tools::SsrfSafeDnsResolver::with_explicit_allow(self, ips: std::collections::hash::set::HashSet<core::net::ip_addr::IpAddr>) -> Self
+impl core::fmt::Debug for entelix_tools::SsrfSafeDnsResolver
+pub fn entelix_tools::SsrfSafeDnsResolver::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl reqwest::dns::resolve::Resolve for entelix_tools::SsrfSafeDnsResolver
+pub fn entelix_tools::SsrfSafeDnsResolver::resolve(&self, name: reqwest::dns::resolve::Name) -> reqwest::dns::resolve::Resolving
+impl core::marker::Freeze for entelix_tools::SsrfSafeDnsResolver
+impl core::marker::Send for entelix_tools::SsrfSafeDnsResolver
+impl core::marker::Sync for entelix_tools::SsrfSafeDnsResolver
+impl core::marker::Unpin for entelix_tools::SsrfSafeDnsResolver
+impl core::marker::UnsafeUnpin for entelix_tools::SsrfSafeDnsResolver
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::SsrfSafeDnsResolver
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::SsrfSafeDnsResolver
+pub struct entelix_tools::StaticResource
+impl entelix_tools::StaticResource
+pub fn entelix_tools::StaticResource::binary(mime_type: impl core::convert::Into<alloc::string::String>, bytes: alloc::vec::Vec<u8>) -> Self
+pub fn entelix_tools::StaticResource::text(text: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for entelix_tools::StaticResource
+pub fn entelix_tools::StaticResource::clone(&self) -> entelix_tools::StaticResource
+impl core::fmt::Debug for entelix_tools::StaticResource
+pub fn entelix_tools::StaticResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::skills::resource::SkillResource for entelix_tools::StaticResource
+pub fn entelix_tools::StaticResource::read<'life0, 'life1, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::skills::resource::SkillResourceContent>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for entelix_tools::StaticResource
+impl core::marker::Send for entelix_tools::StaticResource
+impl core::marker::Sync for entelix_tools::StaticResource
+impl core::marker::Unpin for entelix_tools::StaticResource
+impl core::marker::UnsafeUnpin for entelix_tools::StaticResource
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools::StaticResource
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools::StaticResource
+pub const entelix_tools::DEFAULT_FETCH_TIMEOUT: core::time::Duration
+pub const entelix_tools::DEFAULT_MAX_REDIRECTS: usize
+pub const entelix_tools::DEFAULT_MAX_RESPONSE_BYTES: usize
+pub const entelix_tools::DEFAULT_MAX_RESULTS: usize
+pub trait entelix_tools::SchemaTool: core::marker::Send + core::marker::Sync + 'static
+pub type entelix_tools::SchemaTool::Input: serde_core::de::DeserializeOwned + schemars::JsonSchema + core::marker::Send + 'static
+pub type entelix_tools::SchemaTool::Output: serde_core::ser::Serialize + core::marker::Send + 'static
+pub const entelix_tools::SchemaTool::NAME: &'static str
+pub fn entelix_tools::SchemaTool::description(&self) -> &str
+pub fn entelix_tools::SchemaTool::effect(&self) -> entelix_core::tools::effect::ToolEffect
+pub fn entelix_tools::SchemaTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: Self::Input, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<Self::Output>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::SchemaTool::output_schema(&self) -> core::option::Option<serde_json::value::Value>
+pub fn entelix_tools::SchemaTool::retry_hint(&self) -> core::option::Option<entelix_core::tools::effect::RetryHint>
+pub fn entelix_tools::SchemaTool::version(&self) -> core::option::Option<&str>
+pub trait entelix_tools::SchemaToolExt: entelix_tools::SchemaTool + core::marker::Sized
+pub fn entelix_tools::SchemaToolExt::into_adapter(self) -> entelix_tools::SchemaToolAdapter<Self>
+impl<T: entelix_tools::SchemaTool> entelix_tools::SchemaToolExt for T
+pub fn T::into_adapter(self) -> entelix_tools::SchemaToolAdapter<Self>
+pub trait entelix_tools::SearchProvider: core::marker::Send + core::marker::Sync
+pub fn entelix_tools::SearchProvider::search<'life0, 'life1, 'async_trait>(&'life0 self, query: &'life1 str, max_results: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_tools::ToolResult<alloc::vec::Vec<entelix_tools::SearchResult>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools::is_ssrf_blocked(ip: &core::net::ip_addr::IpAddr) -> bool
+pub type entelix_tools::ToolResult<T> = core::result::Result<T, entelix_tools::ToolError>

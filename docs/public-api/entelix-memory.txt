@@ -1,0 +1,913 @@
+pub mod entelix_memory
+#[non_exhaustive] pub enum entelix_memory::Direction
+pub entelix_memory::Direction::Both
+pub entelix_memory::Direction::Incoming
+pub entelix_memory::Direction::Outgoing
+impl core::clone::Clone for entelix_memory::Direction
+pub fn entelix_memory::Direction::clone(&self) -> entelix_memory::Direction
+impl core::cmp::Eq for entelix_memory::Direction
+impl core::cmp::PartialEq for entelix_memory::Direction
+pub fn entelix_memory::Direction::eq(&self, other: &entelix_memory::Direction) -> bool
+impl core::fmt::Debug for entelix_memory::Direction
+pub fn entelix_memory::Direction::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_memory::Direction
+pub fn entelix_memory::Direction::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_memory::Direction
+impl core::marker::StructuralPartialEq for entelix_memory::Direction
+impl core::marker::Freeze for entelix_memory::Direction
+impl core::marker::Send for entelix_memory::Direction
+impl core::marker::Sync for entelix_memory::Direction
+impl core::marker::Unpin for entelix_memory::Direction
+impl core::marker::UnsafeUnpin for entelix_memory::Direction
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::Direction
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::Direction
+#[non_exhaustive] pub enum entelix_memory::VectorFilter
+pub entelix_memory::VectorFilter::All
+pub entelix_memory::VectorFilter::And(alloc::vec::Vec<Self>)
+pub entelix_memory::VectorFilter::Eq
+pub entelix_memory::VectorFilter::Eq::key: alloc::string::String
+pub entelix_memory::VectorFilter::Eq::value: serde_json::value::Value
+pub entelix_memory::VectorFilter::Exists
+pub entelix_memory::VectorFilter::Exists::key: alloc::string::String
+pub entelix_memory::VectorFilter::Gt
+pub entelix_memory::VectorFilter::Gt::key: alloc::string::String
+pub entelix_memory::VectorFilter::Gt::value: serde_json::value::Value
+pub entelix_memory::VectorFilter::Gte
+pub entelix_memory::VectorFilter::Gte::key: alloc::string::String
+pub entelix_memory::VectorFilter::Gte::value: serde_json::value::Value
+pub entelix_memory::VectorFilter::In
+pub entelix_memory::VectorFilter::In::key: alloc::string::String
+pub entelix_memory::VectorFilter::In::values: alloc::vec::Vec<serde_json::value::Value>
+pub entelix_memory::VectorFilter::Lt
+pub entelix_memory::VectorFilter::Lt::key: alloc::string::String
+pub entelix_memory::VectorFilter::Lt::value: serde_json::value::Value
+pub entelix_memory::VectorFilter::Lte
+pub entelix_memory::VectorFilter::Lte::key: alloc::string::String
+pub entelix_memory::VectorFilter::Lte::value: serde_json::value::Value
+pub entelix_memory::VectorFilter::Not(alloc::boxed::Box<Self>)
+pub entelix_memory::VectorFilter::Or(alloc::vec::Vec<Self>)
+pub entelix_memory::VectorFilter::Range
+pub entelix_memory::VectorFilter::Range::key: alloc::string::String
+pub entelix_memory::VectorFilter::Range::max: serde_json::value::Value
+pub entelix_memory::VectorFilter::Range::min: serde_json::value::Value
+impl core::clone::Clone for entelix_memory::VectorFilter
+pub fn entelix_memory::VectorFilter::clone(&self) -> entelix_memory::VectorFilter
+impl core::cmp::PartialEq for entelix_memory::VectorFilter
+pub fn entelix_memory::VectorFilter::eq(&self, other: &entelix_memory::VectorFilter) -> bool
+impl core::fmt::Debug for entelix_memory::VectorFilter
+pub fn entelix_memory::VectorFilter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_memory::VectorFilter
+impl core::marker::Freeze for entelix_memory::VectorFilter
+impl core::marker::Send for entelix_memory::VectorFilter
+impl core::marker::Sync for entelix_memory::VectorFilter
+impl core::marker::Unpin for entelix_memory::VectorFilter
+impl core::marker::UnsafeUnpin for entelix_memory::VectorFilter
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::VectorFilter
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::VectorFilter
+pub struct entelix_memory::BufferMemory
+impl entelix_memory::BufferMemory
+pub async fn entelix_memory::BufferMemory::append(&self, ctx: &entelix_core::context::ExecutionContext, message: entelix_core::ir::message::Message) -> entelix_core::error::Result<()>
+pub async fn entelix_memory::BufferMemory::clear(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<()>
+pub fn entelix_memory::BufferMemory::last_consolidated_at(&self) -> core::option::Option<chrono::datetime::DateTime<chrono::offset::utc::Utc>>
+pub fn entelix_memory::BufferMemory::mark_consolidated(&self, at: chrono::datetime::DateTime<chrono::offset::utc::Utc>)
+pub fn entelix_memory::BufferMemory::mark_consolidated_now(&self)
+pub const fn entelix_memory::BufferMemory::max_turns(&self) -> usize
+pub async fn entelix_memory::BufferMemory::messages(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<alloc::vec::Vec<entelix_core::ir::message::Message>>
+pub const fn entelix_memory::BufferMemory::namespace(&self) -> &entelix_memory::Namespace
+pub fn entelix_memory::BufferMemory::new(store: alloc::sync::Arc<dyn entelix_memory::Store<alloc::vec::Vec<entelix_core::ir::message::Message>>>, namespace: entelix_memory::Namespace, max_turns: usize) -> Self
+pub async fn entelix_memory::BufferMemory::should_consolidate(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<bool>
+pub async fn entelix_memory::BufferMemory::should_consolidate_with(&self, ctx: &entelix_core::context::ExecutionContext, extras: entelix_memory::PolicyExtras) -> entelix_core::error::Result<bool>
+pub fn entelix_memory::BufferMemory::with_consolidation_policy(self, policy: alloc::sync::Arc<dyn entelix_memory::ConsolidationPolicy>) -> Self
+impl !core::marker::Freeze for entelix_memory::BufferMemory
+impl core::marker::Send for entelix_memory::BufferMemory
+impl core::marker::Sync for entelix_memory::BufferMemory
+impl core::marker::Unpin for entelix_memory::BufferMemory
+impl core::marker::UnsafeUnpin for entelix_memory::BufferMemory
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_memory::BufferMemory
+impl !core::panic::unwind_safe::UnwindSafe for entelix_memory::BufferMemory
+pub struct entelix_memory::ConsolidatingBufferMemory
+impl entelix_memory::ConsolidatingBufferMemory
+pub async fn entelix_memory::ConsolidatingBufferMemory::append(&self, ctx: &entelix_core::context::ExecutionContext, message: entelix_core::ir::message::Message) -> entelix_core::error::Result<()>
+pub const fn entelix_memory::ConsolidatingBufferMemory::buffer(&self) -> &alloc::sync::Arc<entelix_memory::BufferMemory>
+pub async fn entelix_memory::ConsolidatingBufferMemory::clear(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<()>
+pub async fn entelix_memory::ConsolidatingBufferMemory::current_summary(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<core::option::Option<alloc::string::String>>
+pub async fn entelix_memory::ConsolidatingBufferMemory::messages(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<alloc::vec::Vec<entelix_core::ir::message::Message>>
+pub fn entelix_memory::ConsolidatingBufferMemory::new(buffer: alloc::sync::Arc<entelix_memory::BufferMemory>, summary: alloc::sync::Arc<entelix_memory::SummaryMemory>, summarizer: alloc::sync::Arc<dyn entelix_memory::Summarizer>) -> Self
+pub const fn entelix_memory::ConsolidatingBufferMemory::summary(&self) -> &alloc::sync::Arc<entelix_memory::SummaryMemory>
+impl core::marker::Freeze for entelix_memory::ConsolidatingBufferMemory
+impl core::marker::Send for entelix_memory::ConsolidatingBufferMemory
+impl core::marker::Sync for entelix_memory::ConsolidatingBufferMemory
+impl core::marker::Unpin for entelix_memory::ConsolidatingBufferMemory
+impl core::marker::UnsafeUnpin for entelix_memory::ConsolidatingBufferMemory
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_memory::ConsolidatingBufferMemory
+impl !core::panic::unwind_safe::UnwindSafe for entelix_memory::ConsolidatingBufferMemory
+#[non_exhaustive] pub struct entelix_memory::ConsolidationContext<'a>
+pub entelix_memory::ConsolidationContext::buffer: &'a [entelix_core::ir::message::Message]
+pub entelix_memory::ConsolidationContext::context_tokens_available: core::option::Option<usize>
+pub entelix_memory::ConsolidationContext::context_tokens_used: core::option::Option<usize>
+pub entelix_memory::ConsolidationContext::last_consolidated_at: core::option::Option<chrono::datetime::DateTime<chrono::offset::utc::Utc>>
+impl<'a> entelix_memory::ConsolidationContext<'a>
+pub const fn entelix_memory::ConsolidationContext<'a>::new(buffer: &'a [entelix_core::ir::message::Message]) -> Self
+pub const fn entelix_memory::ConsolidationContext<'a>::with_context_tokens(self, used: usize, available: usize) -> Self
+pub const fn entelix_memory::ConsolidationContext<'a>::with_last_consolidated_at(self, at: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> Self
+impl<'a> core::clone::Clone for entelix_memory::ConsolidationContext<'a>
+pub fn entelix_memory::ConsolidationContext<'a>::clone(&self) -> entelix_memory::ConsolidationContext<'a>
+impl<'a> core::fmt::Debug for entelix_memory::ConsolidationContext<'a>
+pub fn entelix_memory::ConsolidationContext<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Freeze for entelix_memory::ConsolidationContext<'a>
+impl<'a> core::marker::Send for entelix_memory::ConsolidationContext<'a>
+impl<'a> core::marker::Sync for entelix_memory::ConsolidationContext<'a>
+impl<'a> core::marker::Unpin for entelix_memory::ConsolidationContext<'a>
+impl<'a> core::marker::UnsafeUnpin for entelix_memory::ConsolidationContext<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for entelix_memory::ConsolidationContext<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for entelix_memory::ConsolidationContext<'a>
+pub struct entelix_memory::CostCalculatorAdapter
+impl entelix_memory::CostCalculatorAdapter
+pub const fn entelix_memory::CostCalculatorAdapter::new(inner: alloc::sync::Arc<dyn entelix_core::cost::CostCalculator>) -> Self
+impl entelix_memory::EmbeddingCostCalculator for entelix_memory::CostCalculatorAdapter
+pub fn entelix_memory::CostCalculatorAdapter::compute_cost<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, model: &'life1 str, usage: &'life2 entelix_memory::EmbeddingUsage, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<f64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl core::marker::Freeze for entelix_memory::CostCalculatorAdapter
+impl core::marker::Send for entelix_memory::CostCalculatorAdapter
+impl core::marker::Sync for entelix_memory::CostCalculatorAdapter
+impl core::marker::Unpin for entelix_memory::CostCalculatorAdapter
+impl core::marker::UnsafeUnpin for entelix_memory::CostCalculatorAdapter
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_memory::CostCalculatorAdapter
+impl !core::panic::unwind_safe::UnwindSafe for entelix_memory::CostCalculatorAdapter
+pub struct entelix_memory::Document
+pub entelix_memory::Document::content: alloc::string::String
+pub entelix_memory::Document::doc_id: core::option::Option<entelix_memory::DocumentId>
+pub entelix_memory::Document::metadata: serde_json::value::Value
+pub entelix_memory::Document::score: core::option::Option<f32>
+impl entelix_memory::Document
+pub fn entelix_memory::Document::new(content: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_memory::Document::with_doc_id(self, id: impl core::convert::Into<entelix_memory::DocumentId>) -> Self
+pub fn entelix_memory::Document::with_metadata(self, metadata: serde_json::value::Value) -> Self
+impl core::clone::Clone for entelix_memory::Document
+pub fn entelix_memory::Document::clone(&self) -> entelix_memory::Document
+impl core::cmp::PartialEq for entelix_memory::Document
+pub fn entelix_memory::Document::eq(&self, other: &entelix_memory::Document) -> bool
+impl core::fmt::Debug for entelix_memory::Document
+pub fn entelix_memory::Document::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_memory::Document
+impl serde_core::ser::Serialize for entelix_memory::Document
+pub fn entelix_memory::Document::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_memory::Document
+pub fn entelix_memory::Document::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_memory::Document
+impl core::marker::Send for entelix_memory::Document
+impl core::marker::Sync for entelix_memory::Document
+impl core::marker::Unpin for entelix_memory::Document
+impl core::marker::UnsafeUnpin for entelix_memory::Document
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::Document
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::Document
+pub struct entelix_memory::EdgeId(_)
+impl entelix_memory::EdgeId
+pub fn entelix_memory::EdgeId::as_str(&self) -> &str
+pub fn entelix_memory::EdgeId::from_string(s: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_memory::EdgeId::new() -> Self
+impl core::clone::Clone for entelix_memory::EdgeId
+pub fn entelix_memory::EdgeId::clone(&self) -> entelix_memory::EdgeId
+impl core::cmp::Eq for entelix_memory::EdgeId
+impl core::cmp::Ord for entelix_memory::EdgeId
+pub fn entelix_memory::EdgeId::cmp(&self, other: &entelix_memory::EdgeId) -> core::cmp::Ordering
+impl core::cmp::PartialEq for entelix_memory::EdgeId
+pub fn entelix_memory::EdgeId::eq(&self, other: &entelix_memory::EdgeId) -> bool
+impl core::cmp::PartialOrd for entelix_memory::EdgeId
+pub fn entelix_memory::EdgeId::partial_cmp(&self, other: &entelix_memory::EdgeId) -> core::option::Option<core::cmp::Ordering>
+impl core::default::Default for entelix_memory::EdgeId
+pub fn entelix_memory::EdgeId::default() -> Self
+impl core::fmt::Debug for entelix_memory::EdgeId
+pub fn entelix_memory::EdgeId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_memory::EdgeId
+pub fn entelix_memory::EdgeId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_memory::EdgeId
+pub fn entelix_memory::EdgeId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for entelix_memory::EdgeId
+impl serde_core::ser::Serialize for entelix_memory::EdgeId
+pub fn entelix_memory::EdgeId::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_memory::EdgeId
+pub fn entelix_memory::EdgeId::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_memory::EdgeId
+impl core::marker::Send for entelix_memory::EdgeId
+impl core::marker::Sync for entelix_memory::EdgeId
+impl core::marker::Unpin for entelix_memory::EdgeId
+impl core::marker::UnsafeUnpin for entelix_memory::EdgeId
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::EdgeId
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::EdgeId
+pub struct entelix_memory::Embedding
+pub entelix_memory::Embedding::usage: core::option::Option<entelix_memory::EmbeddingUsage>
+pub entelix_memory::Embedding::vector: alloc::vec::Vec<f32>
+impl entelix_memory::Embedding
+pub const fn entelix_memory::Embedding::new(vector: alloc::vec::Vec<f32>) -> Self
+pub const fn entelix_memory::Embedding::with_usage(self, usage: entelix_memory::EmbeddingUsage) -> Self
+impl core::clone::Clone for entelix_memory::Embedding
+pub fn entelix_memory::Embedding::clone(&self) -> entelix_memory::Embedding
+impl core::cmp::PartialEq for entelix_memory::Embedding
+pub fn entelix_memory::Embedding::eq(&self, other: &entelix_memory::Embedding) -> bool
+impl core::fmt::Debug for entelix_memory::Embedding
+pub fn entelix_memory::Embedding::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_memory::Embedding
+impl serde_core::ser::Serialize for entelix_memory::Embedding
+pub fn entelix_memory::Embedding::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_memory::Embedding
+pub fn entelix_memory::Embedding::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_memory::Embedding
+impl core::marker::Send for entelix_memory::Embedding
+impl core::marker::Sync for entelix_memory::Embedding
+impl core::marker::Unpin for entelix_memory::Embedding
+impl core::marker::UnsafeUnpin for entelix_memory::Embedding
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::Embedding
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::Embedding
+#[non_exhaustive] pub struct entelix_memory::EmbeddingUsage
+pub entelix_memory::EmbeddingUsage::input_tokens: u32
+impl entelix_memory::EmbeddingUsage
+pub const fn entelix_memory::EmbeddingUsage::new(input_tokens: u32) -> Self
+impl core::clone::Clone for entelix_memory::EmbeddingUsage
+pub fn entelix_memory::EmbeddingUsage::clone(&self) -> entelix_memory::EmbeddingUsage
+impl core::cmp::Eq for entelix_memory::EmbeddingUsage
+impl core::cmp::PartialEq for entelix_memory::EmbeddingUsage
+pub fn entelix_memory::EmbeddingUsage::eq(&self, other: &entelix_memory::EmbeddingUsage) -> bool
+impl core::default::Default for entelix_memory::EmbeddingUsage
+pub fn entelix_memory::EmbeddingUsage::default() -> entelix_memory::EmbeddingUsage
+impl core::fmt::Debug for entelix_memory::EmbeddingUsage
+pub fn entelix_memory::EmbeddingUsage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_memory::EmbeddingUsage
+impl core::marker::StructuralPartialEq for entelix_memory::EmbeddingUsage
+impl serde_core::ser::Serialize for entelix_memory::EmbeddingUsage
+pub fn entelix_memory::EmbeddingUsage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_memory::EmbeddingUsage
+pub fn entelix_memory::EmbeddingUsage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_memory::EmbeddingUsage
+impl core::marker::Send for entelix_memory::EmbeddingUsage
+impl core::marker::Sync for entelix_memory::EmbeddingUsage
+impl core::marker::Unpin for entelix_memory::EmbeddingUsage
+impl core::marker::UnsafeUnpin for entelix_memory::EmbeddingUsage
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::EmbeddingUsage
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::EmbeddingUsage
+pub struct entelix_memory::EntityMemory
+impl entelix_memory::EntityMemory
+pub async fn entelix_memory::EntityMemory::all(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>>
+pub async fn entelix_memory::EntityMemory::all_records(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<std::collections::hash::map::HashMap<alloc::string::String, entelix_memory::EntityRecord>>
+pub async fn entelix_memory::EntityMemory::clear(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<()>
+pub async fn entelix_memory::EntityMemory::entity(&self, ctx: &entelix_core::context::ExecutionContext, entity: &str) -> entelix_core::error::Result<core::option::Option<alloc::string::String>>
+pub async fn entelix_memory::EntityMemory::entity_record(&self, ctx: &entelix_core::context::ExecutionContext, entity: &str) -> entelix_core::error::Result<core::option::Option<entelix_memory::EntityRecord>>
+pub const fn entelix_memory::EntityMemory::namespace(&self) -> &entelix_memory::Namespace
+pub fn entelix_memory::EntityMemory::new(store: alloc::sync::Arc<dyn entelix_memory::Store<std::collections::hash::map::HashMap<alloc::string::String, entelix_memory::EntityRecord>>>, namespace: entelix_memory::Namespace) -> Self
+pub async fn entelix_memory::EntityMemory::prune_older_than(&self, ctx: &entelix_core::context::ExecutionContext, ttl: core::time::Duration) -> entelix_core::error::Result<usize>
+pub async fn entelix_memory::EntityMemory::remove(&self, ctx: &entelix_core::context::ExecutionContext, entity: &str) -> entelix_core::error::Result<()>
+pub async fn entelix_memory::EntityMemory::set_entity(&self, ctx: &entelix_core::context::ExecutionContext, entity: &str, fact: impl core::convert::Into<alloc::string::String>) -> entelix_core::error::Result<()>
+pub async fn entelix_memory::EntityMemory::touch(&self, ctx: &entelix_core::context::ExecutionContext, entity: &str) -> entelix_core::error::Result<bool>
+impl core::marker::Freeze for entelix_memory::EntityMemory
+impl core::marker::Send for entelix_memory::EntityMemory
+impl core::marker::Sync for entelix_memory::EntityMemory
+impl core::marker::Unpin for entelix_memory::EntityMemory
+impl core::marker::UnsafeUnpin for entelix_memory::EntityMemory
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_memory::EntityMemory
+impl !core::panic::unwind_safe::UnwindSafe for entelix_memory::EntityMemory
+pub struct entelix_memory::EntityRecord
+pub entelix_memory::EntityRecord::created_at: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_memory::EntityRecord::fact: alloc::string::String
+pub entelix_memory::EntityRecord::last_seen: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+impl core::clone::Clone for entelix_memory::EntityRecord
+pub fn entelix_memory::EntityRecord::clone(&self) -> entelix_memory::EntityRecord
+impl core::cmp::Eq for entelix_memory::EntityRecord
+impl core::cmp::PartialEq for entelix_memory::EntityRecord
+pub fn entelix_memory::EntityRecord::eq(&self, other: &entelix_memory::EntityRecord) -> bool
+impl core::fmt::Debug for entelix_memory::EntityRecord
+pub fn entelix_memory::EntityRecord::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_memory::EntityRecord
+impl serde_core::ser::Serialize for entelix_memory::EntityRecord
+pub fn entelix_memory::EntityRecord::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_memory::EntityRecord
+pub fn entelix_memory::EntityRecord::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_memory::EntityRecord
+impl core::marker::Send for entelix_memory::EntityRecord
+impl core::marker::Sync for entelix_memory::EntityRecord
+impl core::marker::Unpin for entelix_memory::EntityRecord
+impl core::marker::UnsafeUnpin for entelix_memory::EntityRecord
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::EntityRecord
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::EntityRecord
+pub struct entelix_memory::Episode<V>
+pub entelix_memory::Episode::id: entelix_memory::EpisodeId
+pub entelix_memory::Episode::payload: V
+pub entelix_memory::Episode::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+impl<'de, V> serde_core::de::Deserialize<'de> for entelix_memory::Episode<V> where V: serde_core::de::Deserialize<'de>
+pub fn entelix_memory::Episode<V>::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl<V: core::clone::Clone> core::clone::Clone for entelix_memory::Episode<V>
+pub fn entelix_memory::Episode<V>::clone(&self) -> entelix_memory::Episode<V>
+impl<V: core::fmt::Debug> core::fmt::Debug for entelix_memory::Episode<V>
+pub fn entelix_memory::Episode<V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<V> serde_core::ser::Serialize for entelix_memory::Episode<V> where V: serde_core::ser::Serialize
+pub fn entelix_memory::Episode<V>::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<V> core::marker::Freeze for entelix_memory::Episode<V> where V: core::marker::Freeze
+impl<V> core::marker::Send for entelix_memory::Episode<V> where V: core::marker::Send
+impl<V> core::marker::Sync for entelix_memory::Episode<V> where V: core::marker::Sync
+impl<V> core::marker::Unpin for entelix_memory::Episode<V> where V: core::marker::Unpin
+impl<V> core::marker::UnsafeUnpin for entelix_memory::Episode<V> where V: core::marker::UnsafeUnpin
+impl<V> core::panic::unwind_safe::RefUnwindSafe for entelix_memory::Episode<V> where V: core::panic::unwind_safe::RefUnwindSafe
+impl<V> core::panic::unwind_safe::UnwindSafe for entelix_memory::Episode<V> where V: core::panic::unwind_safe::UnwindSafe
+pub struct entelix_memory::EpisodeId(_)
+impl entelix_memory::EpisodeId
+pub const fn entelix_memory::EpisodeId::as_uuid(&self) -> &uuid::Uuid
+pub const fn entelix_memory::EpisodeId::from_uuid(uuid: uuid::Uuid) -> Self
+pub fn entelix_memory::EpisodeId::new() -> Self
+pub fn entelix_memory::EpisodeId::to_hyphenated_string(&self) -> alloc::string::String
+impl core::clone::Clone for entelix_memory::EpisodeId
+pub fn entelix_memory::EpisodeId::clone(&self) -> entelix_memory::EpisodeId
+impl core::cmp::Eq for entelix_memory::EpisodeId
+impl core::cmp::PartialEq for entelix_memory::EpisodeId
+pub fn entelix_memory::EpisodeId::eq(&self, other: &entelix_memory::EpisodeId) -> bool
+impl core::default::Default for entelix_memory::EpisodeId
+pub fn entelix_memory::EpisodeId::default() -> Self
+impl core::fmt::Debug for entelix_memory::EpisodeId
+pub fn entelix_memory::EpisodeId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_memory::EpisodeId
+pub fn entelix_memory::EpisodeId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for entelix_memory::EpisodeId
+impl serde_core::ser::Serialize for entelix_memory::EpisodeId
+pub fn entelix_memory::EpisodeId::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_memory::EpisodeId
+pub fn entelix_memory::EpisodeId::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_memory::EpisodeId
+impl core::marker::Send for entelix_memory::EpisodeId
+impl core::marker::Sync for entelix_memory::EpisodeId
+impl core::marker::Unpin for entelix_memory::EpisodeId
+impl core::marker::UnsafeUnpin for entelix_memory::EpisodeId
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::EpisodeId
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::EpisodeId
+pub struct entelix_memory::EpisodicMemory<V> where V: core::clone::Clone + serde_core::ser::Serialize + serde_core::de::DeserializeOwned + core::marker::Send + core::marker::Sync + 'static
+impl<V> entelix_memory::EpisodicMemory<V> where V: core::clone::Clone + serde_core::ser::Serialize + serde_core::de::DeserializeOwned + core::marker::Send + core::marker::Sync + 'static
+pub async fn entelix_memory::EpisodicMemory<V>::all(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Episode<V>>>
+pub async fn entelix_memory::EpisodicMemory<V>::append(&self, ctx: &entelix_core::context::ExecutionContext, payload: V) -> entelix_core::error::Result<entelix_memory::EpisodeId>
+pub async fn entelix_memory::EpisodicMemory<V>::append_at(&self, ctx: &entelix_core::context::ExecutionContext, payload: V, timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> entelix_core::error::Result<entelix_memory::EpisodeId>
+pub async fn entelix_memory::EpisodicMemory<V>::append_record(&self, ctx: &entelix_core::context::ExecutionContext, episode: entelix_memory::Episode<V>) -> entelix_core::error::Result<()>
+pub async fn entelix_memory::EpisodicMemory<V>::clear(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<()>
+pub async fn entelix_memory::EpisodicMemory<V>::count(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<usize>
+pub const fn entelix_memory::EpisodicMemory<V>::namespace(&self) -> &entelix_memory::Namespace
+pub fn entelix_memory::EpisodicMemory<V>::new(store: alloc::sync::Arc<dyn entelix_memory::Store<alloc::vec::Vec<entelix_memory::Episode<V>>>>, namespace: entelix_memory::Namespace) -> Self
+pub async fn entelix_memory::EpisodicMemory<V>::prune_older_than(&self, ctx: &entelix_core::context::ExecutionContext, ttl: core::time::Duration) -> entelix_core::error::Result<usize>
+pub async fn entelix_memory::EpisodicMemory<V>::range(&self, ctx: &entelix_core::context::ExecutionContext, start: chrono::datetime::DateTime<chrono::offset::utc::Utc>, end: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Episode<V>>>
+pub async fn entelix_memory::EpisodicMemory<V>::recent(&self, ctx: &entelix_core::context::ExecutionContext, n: usize) -> entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Episode<V>>>
+pub async fn entelix_memory::EpisodicMemory<V>::since(&self, ctx: &entelix_core::context::ExecutionContext, start: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Episode<V>>>
+impl<V> core::marker::Freeze for entelix_memory::EpisodicMemory<V>
+impl<V> core::marker::Send for entelix_memory::EpisodicMemory<V>
+impl<V> core::marker::Sync for entelix_memory::EpisodicMemory<V>
+impl<V> core::marker::Unpin for entelix_memory::EpisodicMemory<V>
+impl<V> core::marker::UnsafeUnpin for entelix_memory::EpisodicMemory<V>
+impl<V> !core::panic::unwind_safe::RefUnwindSafe for entelix_memory::EpisodicMemory<V>
+impl<V> !core::panic::unwind_safe::UnwindSafe for entelix_memory::EpisodicMemory<V>
+#[non_exhaustive] pub struct entelix_memory::GraphHop<E>
+pub entelix_memory::GraphHop::edge: E
+pub entelix_memory::GraphHop::edge_id: entelix_memory::EdgeId
+pub entelix_memory::GraphHop::from: entelix_memory::NodeId
+pub entelix_memory::GraphHop::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_memory::GraphHop::to: entelix_memory::NodeId
+impl<E> entelix_memory::GraphHop<E>
+pub const fn entelix_memory::GraphHop<E>::new(edge_id: entelix_memory::EdgeId, from: entelix_memory::NodeId, to: entelix_memory::NodeId, edge: E, timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> Self
+impl<E: core::clone::Clone> core::clone::Clone for entelix_memory::GraphHop<E>
+pub fn entelix_memory::GraphHop<E>::clone(&self) -> entelix_memory::GraphHop<E>
+impl<E: core::fmt::Debug> core::fmt::Debug for entelix_memory::GraphHop<E>
+pub fn entelix_memory::GraphHop<E>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<E> core::marker::Freeze for entelix_memory::GraphHop<E> where E: core::marker::Freeze
+impl<E> core::marker::Send for entelix_memory::GraphHop<E> where E: core::marker::Send
+impl<E> core::marker::Sync for entelix_memory::GraphHop<E> where E: core::marker::Sync
+impl<E> core::marker::Unpin for entelix_memory::GraphHop<E> where E: core::marker::Unpin
+impl<E> core::marker::UnsafeUnpin for entelix_memory::GraphHop<E> where E: core::marker::UnsafeUnpin
+impl<E> core::panic::unwind_safe::RefUnwindSafe for entelix_memory::GraphHop<E> where E: core::panic::unwind_safe::RefUnwindSafe
+impl<E> core::panic::unwind_safe::UnwindSafe for entelix_memory::GraphHop<E> where E: core::panic::unwind_safe::UnwindSafe
+pub struct entelix_memory::IdentityReranker
+impl core::clone::Clone for entelix_memory::IdentityReranker
+pub fn entelix_memory::IdentityReranker::clone(&self) -> entelix_memory::IdentityReranker
+impl core::default::Default for entelix_memory::IdentityReranker
+pub fn entelix_memory::IdentityReranker::default() -> entelix_memory::IdentityReranker
+impl core::fmt::Debug for entelix_memory::IdentityReranker
+pub fn entelix_memory::IdentityReranker::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_memory::IdentityReranker
+impl entelix_memory::Reranker for entelix_memory::IdentityReranker
+pub fn entelix_memory::IdentityReranker::rerank<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _query: &'life1 str, candidates: alloc::vec::Vec<entelix_memory::Document>, top_k: usize, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::RerankedDocument>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl core::marker::Freeze for entelix_memory::IdentityReranker
+impl core::marker::Send for entelix_memory::IdentityReranker
+impl core::marker::Sync for entelix_memory::IdentityReranker
+impl core::marker::Unpin for entelix_memory::IdentityReranker
+impl core::marker::UnsafeUnpin for entelix_memory::IdentityReranker
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::IdentityReranker
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::IdentityReranker
+pub struct entelix_memory::InMemoryGraphMemory<N, E> where N: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, E: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+impl<N, E> entelix_memory::InMemoryGraphMemory<N, E> where N: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, E: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::new() -> Self
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::total_edges(&self) -> usize
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::total_nodes(&self) -> usize
+impl<N, E> core::clone::Clone for entelix_memory::InMemoryGraphMemory<N, E> where N: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, E: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::clone(&self) -> Self
+impl<N, E> core::default::Default for entelix_memory::InMemoryGraphMemory<N, E> where N: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, E: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::default() -> Self
+impl<N, E> entelix_memory::GraphMemory<N, E> for entelix_memory::InMemoryGraphMemory<N, E> where N: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, E: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::add_edge<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, from: &'life3 entelix_memory::NodeId, to: &'life4 entelix_memory::NodeId, edge: E, timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_memory::EdgeId>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::add_edges_batch<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, edges: alloc::vec::Vec<(entelix_memory::NodeId, entelix_memory::NodeId, E, chrono::datetime::DateTime<chrono::offset::utc::Utc>)>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::EdgeId>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::add_node<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, node: N) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_memory::NodeId>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::delete_edge<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, edge_id: &'life3 entelix_memory::EdgeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::delete_node<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, node_id: &'life3 entelix_memory::NodeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::edge<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, edge_id: &'life3 entelix_memory::EdgeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<entelix_memory::GraphHop<E>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::edge_count<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::find_path<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, from: &'life3 entelix_memory::NodeId, to: &'life4 entelix_memory::NodeId, direction: entelix_memory::Direction, max_depth: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<alloc::vec::Vec<entelix_memory::GraphHop<E>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::neighbors<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, node: &'life3 entelix_memory::NodeId, direction: entelix_memory::Direction) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<(entelix_memory::EdgeId, entelix_memory::NodeId, E)>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::node<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, id: &'life3 entelix_memory::NodeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<N>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::node_count<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::prune_older_than<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, ttl: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::temporal_filter<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, from: chrono::datetime::DateTime<chrono::offset::utc::Utc>, to: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::GraphHop<E>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::traverse<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, start: &'life3 entelix_memory::NodeId, direction: entelix_memory::Direction, max_depth: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::GraphHop<E>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl<N, E> core::marker::Freeze for entelix_memory::InMemoryGraphMemory<N, E>
+impl<N, E> core::marker::Send for entelix_memory::InMemoryGraphMemory<N, E>
+impl<N, E> core::marker::Sync for entelix_memory::InMemoryGraphMemory<N, E>
+impl<N, E> core::marker::Unpin for entelix_memory::InMemoryGraphMemory<N, E>
+impl<N, E> core::marker::UnsafeUnpin for entelix_memory::InMemoryGraphMemory<N, E>
+impl<N, E> !core::panic::unwind_safe::RefUnwindSafe for entelix_memory::InMemoryGraphMemory<N, E>
+impl<N, E> !core::panic::unwind_safe::UnwindSafe for entelix_memory::InMemoryGraphMemory<N, E>
+pub struct entelix_memory::InMemoryStore<V> where V: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+impl<V> entelix_memory::InMemoryStore<V> where V: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::InMemoryStore<V>::new() -> Self
+pub fn entelix_memory::InMemoryStore<V>::total_entries(&self) -> usize
+impl<V> core::clone::Clone for entelix_memory::InMemoryStore<V> where V: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::InMemoryStore<V>::clone(&self) -> Self
+impl<V> core::default::Default for entelix_memory::InMemoryStore<V> where V: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::InMemoryStore<V>::default() -> Self
+impl<V> entelix_memory::Store<V> for entelix_memory::InMemoryStore<V> where V: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::InMemoryStore<V>::delete<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, key: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryStore<V>::evict_expired<'life0, 'life1, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_memory::InMemoryStore<V>::get<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, key: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<V>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryStore<V>::list<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, prefix: core::option::Option<&'life3 str>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<alloc::string::String>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryStore<V>::list_namespaces<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, prefix: &'life2 entelix_memory::NamespacePrefix) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Namespace>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryStore<V>::put<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, key: &'life3 str, value: V) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryStore<V>::put_with_options<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, key: &'life3 str, value: V, options: entelix_memory::PutOptions) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl<V> core::marker::Freeze for entelix_memory::InMemoryStore<V>
+impl<V> core::marker::Send for entelix_memory::InMemoryStore<V>
+impl<V> core::marker::Sync for entelix_memory::InMemoryStore<V>
+impl<V> core::marker::Unpin for entelix_memory::InMemoryStore<V>
+impl<V> core::marker::UnsafeUnpin for entelix_memory::InMemoryStore<V>
+impl<V> !core::panic::unwind_safe::RefUnwindSafe for entelix_memory::InMemoryStore<V>
+impl<V> !core::panic::unwind_safe::UnwindSafe for entelix_memory::InMemoryStore<V>
+pub struct entelix_memory::InMemoryVectorStore
+impl entelix_memory::InMemoryVectorStore
+pub fn entelix_memory::InMemoryVectorStore::new(dimension: usize) -> Self
+pub fn entelix_memory::InMemoryVectorStore::total_slots(&self) -> usize
+impl core::clone::Clone for entelix_memory::InMemoryVectorStore
+pub fn entelix_memory::InMemoryVectorStore::clone(&self) -> Self
+impl core::fmt::Debug for entelix_memory::InMemoryVectorStore
+pub fn entelix_memory::InMemoryVectorStore::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_memory::VectorStore for entelix_memory::InMemoryVectorStore
+pub fn entelix_memory::InMemoryVectorStore::add<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, document: entelix_memory::Document, vector: alloc::vec::Vec<f32>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::batch_add<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, items: alloc::vec::Vec<(entelix_memory::Document, alloc::vec::Vec<f32>)>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::count<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, filter: core::option::Option<&'life3 entelix_memory::VectorFilter>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::delete<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, doc_id: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::dimension(&self) -> usize
+pub fn entelix_memory::InMemoryVectorStore::list<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, filter: core::option::Option<&'life3 entelix_memory::VectorFilter>, limit: usize, offset: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::search<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, query_vector: &'life3 [f32], top_k: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::search_filtered<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, query_vector: &'life3 [f32], top_k: usize, filter: &'life4 entelix_memory::VectorFilter) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::update<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, doc_id: &'life3 str, document: entelix_memory::Document, vector: alloc::vec::Vec<f32>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl core::marker::Freeze for entelix_memory::InMemoryVectorStore
+impl core::marker::Send for entelix_memory::InMemoryVectorStore
+impl core::marker::Sync for entelix_memory::InMemoryVectorStore
+impl core::marker::Unpin for entelix_memory::InMemoryVectorStore
+impl core::marker::UnsafeUnpin for entelix_memory::InMemoryVectorStore
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_memory::InMemoryVectorStore
+impl !core::panic::unwind_safe::UnwindSafe for entelix_memory::InMemoryVectorStore
+pub struct entelix_memory::MeteredEmbedder<E> where E: entelix_memory::Embedder
+impl<E> entelix_memory::MeteredEmbedder<E> where E: entelix_memory::Embedder
+pub fn entelix_memory::MeteredEmbedder<E>::from_arc(inner: alloc::sync::Arc<E>, model: impl core::convert::Into<alloc::sync::Arc<str>>) -> Self
+pub fn entelix_memory::MeteredEmbedder<E>::model(&self) -> &str
+pub fn entelix_memory::MeteredEmbedder<E>::new(inner: E, model: impl core::convert::Into<alloc::sync::Arc<str>>) -> Self
+pub fn entelix_memory::MeteredEmbedder<E>::with_cost_calculator(self, calculator: alloc::sync::Arc<dyn entelix_memory::EmbeddingCostCalculator>) -> Self
+impl<E> entelix_memory::Embedder for entelix_memory::MeteredEmbedder<E> where E: entelix_memory::Embedder
+pub fn entelix_memory::MeteredEmbedder<E>::dimension(&self) -> usize
+pub fn entelix_memory::MeteredEmbedder<E>::embed<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, text: &'life1 str, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_memory::Embedding>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::MeteredEmbedder<E>::embed_batch<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, texts: &'life1 [alloc::string::String], ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Embedding>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl<E> core::marker::Freeze for entelix_memory::MeteredEmbedder<E>
+impl<E> core::marker::Send for entelix_memory::MeteredEmbedder<E>
+impl<E> core::marker::Sync for entelix_memory::MeteredEmbedder<E>
+impl<E> core::marker::Unpin for entelix_memory::MeteredEmbedder<E>
+impl<E> core::marker::UnsafeUnpin for entelix_memory::MeteredEmbedder<E>
+impl<E> !core::panic::unwind_safe::RefUnwindSafe for entelix_memory::MeteredEmbedder<E>
+impl<E> !core::panic::unwind_safe::UnwindSafe for entelix_memory::MeteredEmbedder<E>
+pub struct entelix_memory::MmrReranker
+impl entelix_memory::MmrReranker
+pub const entelix_memory::MmrReranker::DEFAULT_LAMBDA: f32
+pub const fn entelix_memory::MmrReranker::lambda(&self) -> f32
+pub fn entelix_memory::MmrReranker::new(embedder: alloc::sync::Arc<dyn entelix_memory::Embedder>) -> Self
+pub const fn entelix_memory::MmrReranker::with_lambda(self, lambda: f32) -> Self
+impl entelix_memory::Reranker for entelix_memory::MmrReranker
+pub fn entelix_memory::MmrReranker::rerank<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, query: &'life1 str, candidates: alloc::vec::Vec<entelix_memory::Document>, top_k: usize, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::RerankedDocument>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl core::marker::Freeze for entelix_memory::MmrReranker
+impl core::marker::Send for entelix_memory::MmrReranker
+impl core::marker::Sync for entelix_memory::MmrReranker
+impl core::marker::Unpin for entelix_memory::MmrReranker
+impl core::marker::UnsafeUnpin for entelix_memory::MmrReranker
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_memory::MmrReranker
+impl !core::panic::unwind_safe::UnwindSafe for entelix_memory::MmrReranker
+pub struct entelix_memory::Namespace
+impl entelix_memory::Namespace
+pub fn entelix_memory::Namespace::new(tenant_id: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_memory::Namespace::parse(rendered: &str) -> entelix_core::error::Result<Self>
+pub fn entelix_memory::Namespace::render(&self) -> alloc::string::String
+pub fn entelix_memory::Namespace::scope(&self) -> &[alloc::string::String]
+pub fn entelix_memory::Namespace::tenant_id(&self) -> &str
+pub fn entelix_memory::Namespace::with_scope(self, segment: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for entelix_memory::Namespace
+pub fn entelix_memory::Namespace::clone(&self) -> entelix_memory::Namespace
+impl core::cmp::Eq for entelix_memory::Namespace
+impl core::cmp::PartialEq for entelix_memory::Namespace
+pub fn entelix_memory::Namespace::eq(&self, other: &entelix_memory::Namespace) -> bool
+impl core::convert::From<&entelix_memory::Namespace> for entelix_memory::NamespacePrefix
+pub fn entelix_memory::NamespacePrefix::from(ns: &entelix_memory::Namespace) -> Self
+impl core::fmt::Debug for entelix_memory::Namespace
+pub fn entelix_memory::Namespace::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_memory::Namespace
+pub fn entelix_memory::Namespace::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for entelix_memory::Namespace
+impl serde_core::ser::Serialize for entelix_memory::Namespace
+pub fn entelix_memory::Namespace::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_memory::Namespace
+pub fn entelix_memory::Namespace::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_memory::Namespace
+impl core::marker::Send for entelix_memory::Namespace
+impl core::marker::Sync for entelix_memory::Namespace
+impl core::marker::Unpin for entelix_memory::Namespace
+impl core::marker::UnsafeUnpin for entelix_memory::Namespace
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::Namespace
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::Namespace
+pub struct entelix_memory::NamespacePrefix
+impl entelix_memory::NamespacePrefix
+pub fn entelix_memory::NamespacePrefix::matches(&self, ns: &entelix_memory::Namespace) -> bool
+pub fn entelix_memory::NamespacePrefix::new(tenant_id: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_memory::NamespacePrefix::scope(&self) -> &[alloc::string::String]
+pub fn entelix_memory::NamespacePrefix::tenant_id(&self) -> &str
+pub fn entelix_memory::NamespacePrefix::with_scope(self, segment: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for entelix_memory::NamespacePrefix
+pub fn entelix_memory::NamespacePrefix::clone(&self) -> entelix_memory::NamespacePrefix
+impl core::cmp::Eq for entelix_memory::NamespacePrefix
+impl core::cmp::PartialEq for entelix_memory::NamespacePrefix
+pub fn entelix_memory::NamespacePrefix::eq(&self, other: &entelix_memory::NamespacePrefix) -> bool
+impl core::convert::From<&entelix_memory::Namespace> for entelix_memory::NamespacePrefix
+pub fn entelix_memory::NamespacePrefix::from(ns: &entelix_memory::Namespace) -> Self
+impl core::fmt::Debug for entelix_memory::NamespacePrefix
+pub fn entelix_memory::NamespacePrefix::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_memory::NamespacePrefix
+pub fn entelix_memory::NamespacePrefix::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for entelix_memory::NamespacePrefix
+impl core::marker::Freeze for entelix_memory::NamespacePrefix
+impl core::marker::Send for entelix_memory::NamespacePrefix
+impl core::marker::Sync for entelix_memory::NamespacePrefix
+impl core::marker::Unpin for entelix_memory::NamespacePrefix
+impl core::marker::UnsafeUnpin for entelix_memory::NamespacePrefix
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::NamespacePrefix
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::NamespacePrefix
+pub struct entelix_memory::NeverConsolidate
+impl core::clone::Clone for entelix_memory::NeverConsolidate
+pub fn entelix_memory::NeverConsolidate::clone(&self) -> entelix_memory::NeverConsolidate
+impl core::cmp::Eq for entelix_memory::NeverConsolidate
+impl core::cmp::PartialEq for entelix_memory::NeverConsolidate
+pub fn entelix_memory::NeverConsolidate::eq(&self, other: &entelix_memory::NeverConsolidate) -> bool
+impl core::default::Default for entelix_memory::NeverConsolidate
+pub fn entelix_memory::NeverConsolidate::default() -> entelix_memory::NeverConsolidate
+impl core::fmt::Debug for entelix_memory::NeverConsolidate
+pub fn entelix_memory::NeverConsolidate::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_memory::NeverConsolidate
+pub fn entelix_memory::NeverConsolidate::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_memory::NeverConsolidate
+impl core::marker::StructuralPartialEq for entelix_memory::NeverConsolidate
+impl entelix_memory::ConsolidationPolicy for entelix_memory::NeverConsolidate
+pub fn entelix_memory::NeverConsolidate::should_consolidate(&self, _ctx: &entelix_memory::ConsolidationContext<'_>) -> bool
+impl core::marker::Freeze for entelix_memory::NeverConsolidate
+impl core::marker::Send for entelix_memory::NeverConsolidate
+impl core::marker::Sync for entelix_memory::NeverConsolidate
+impl core::marker::Unpin for entelix_memory::NeverConsolidate
+impl core::marker::UnsafeUnpin for entelix_memory::NeverConsolidate
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::NeverConsolidate
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::NeverConsolidate
+pub struct entelix_memory::NodeId(_)
+impl entelix_memory::NodeId
+pub fn entelix_memory::NodeId::as_str(&self) -> &str
+pub fn entelix_memory::NodeId::from_string(s: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_memory::NodeId::new() -> Self
+impl core::clone::Clone for entelix_memory::NodeId
+pub fn entelix_memory::NodeId::clone(&self) -> entelix_memory::NodeId
+impl core::cmp::Eq for entelix_memory::NodeId
+impl core::cmp::Ord for entelix_memory::NodeId
+pub fn entelix_memory::NodeId::cmp(&self, other: &entelix_memory::NodeId) -> core::cmp::Ordering
+impl core::cmp::PartialEq for entelix_memory::NodeId
+pub fn entelix_memory::NodeId::eq(&self, other: &entelix_memory::NodeId) -> bool
+impl core::cmp::PartialOrd for entelix_memory::NodeId
+pub fn entelix_memory::NodeId::partial_cmp(&self, other: &entelix_memory::NodeId) -> core::option::Option<core::cmp::Ordering>
+impl core::default::Default for entelix_memory::NodeId
+pub fn entelix_memory::NodeId::default() -> Self
+impl core::fmt::Debug for entelix_memory::NodeId
+pub fn entelix_memory::NodeId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_memory::NodeId
+pub fn entelix_memory::NodeId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_memory::NodeId
+pub fn entelix_memory::NodeId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for entelix_memory::NodeId
+impl serde_core::ser::Serialize for entelix_memory::NodeId
+pub fn entelix_memory::NodeId::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_memory::NodeId
+pub fn entelix_memory::NodeId::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_memory::NodeId
+impl core::marker::Send for entelix_memory::NodeId
+impl core::marker::Sync for entelix_memory::NodeId
+impl core::marker::Unpin for entelix_memory::NodeId
+impl core::marker::UnsafeUnpin for entelix_memory::NodeId
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::NodeId
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::NodeId
+pub struct entelix_memory::OnMessageCount
+pub entelix_memory::OnMessageCount::max_messages: usize
+impl entelix_memory::OnMessageCount
+pub const fn entelix_memory::OnMessageCount::new(max_messages: usize) -> Self
+impl core::clone::Clone for entelix_memory::OnMessageCount
+pub fn entelix_memory::OnMessageCount::clone(&self) -> entelix_memory::OnMessageCount
+impl core::cmp::Eq for entelix_memory::OnMessageCount
+impl core::cmp::PartialEq for entelix_memory::OnMessageCount
+pub fn entelix_memory::OnMessageCount::eq(&self, other: &entelix_memory::OnMessageCount) -> bool
+impl core::fmt::Debug for entelix_memory::OnMessageCount
+pub fn entelix_memory::OnMessageCount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_memory::OnMessageCount
+pub fn entelix_memory::OnMessageCount::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_memory::OnMessageCount
+impl core::marker::StructuralPartialEq for entelix_memory::OnMessageCount
+impl entelix_memory::ConsolidationPolicy for entelix_memory::OnMessageCount
+pub fn entelix_memory::OnMessageCount::should_consolidate(&self, ctx: &entelix_memory::ConsolidationContext<'_>) -> bool
+impl core::marker::Freeze for entelix_memory::OnMessageCount
+impl core::marker::Send for entelix_memory::OnMessageCount
+impl core::marker::Sync for entelix_memory::OnMessageCount
+impl core::marker::Unpin for entelix_memory::OnMessageCount
+impl core::marker::UnsafeUnpin for entelix_memory::OnMessageCount
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::OnMessageCount
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::OnMessageCount
+pub struct entelix_memory::OnTokenBudget
+pub entelix_memory::OnTokenBudget::max_bytes: usize
+impl entelix_memory::OnTokenBudget
+pub const fn entelix_memory::OnTokenBudget::new(max_bytes: usize) -> Self
+impl core::clone::Clone for entelix_memory::OnTokenBudget
+pub fn entelix_memory::OnTokenBudget::clone(&self) -> entelix_memory::OnTokenBudget
+impl core::cmp::Eq for entelix_memory::OnTokenBudget
+impl core::cmp::PartialEq for entelix_memory::OnTokenBudget
+pub fn entelix_memory::OnTokenBudget::eq(&self, other: &entelix_memory::OnTokenBudget) -> bool
+impl core::fmt::Debug for entelix_memory::OnTokenBudget
+pub fn entelix_memory::OnTokenBudget::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_memory::OnTokenBudget
+pub fn entelix_memory::OnTokenBudget::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_memory::OnTokenBudget
+impl core::marker::StructuralPartialEq for entelix_memory::OnTokenBudget
+impl entelix_memory::ConsolidationPolicy for entelix_memory::OnTokenBudget
+pub fn entelix_memory::OnTokenBudget::should_consolidate(&self, ctx: &entelix_memory::ConsolidationContext<'_>) -> bool
+impl core::marker::Freeze for entelix_memory::OnTokenBudget
+impl core::marker::Send for entelix_memory::OnTokenBudget
+impl core::marker::Sync for entelix_memory::OnTokenBudget
+impl core::marker::Unpin for entelix_memory::OnTokenBudget
+impl core::marker::UnsafeUnpin for entelix_memory::OnTokenBudget
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::OnTokenBudget
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::OnTokenBudget
+pub struct entelix_memory::PolicyExtras
+pub entelix_memory::PolicyExtras::context_tokens_available: core::option::Option<usize>
+pub entelix_memory::PolicyExtras::context_tokens_used: core::option::Option<usize>
+pub entelix_memory::PolicyExtras::last_consolidated_at: core::option::Option<chrono::datetime::DateTime<chrono::offset::utc::Utc>>
+impl core::clone::Clone for entelix_memory::PolicyExtras
+pub fn entelix_memory::PolicyExtras::clone(&self) -> entelix_memory::PolicyExtras
+impl core::default::Default for entelix_memory::PolicyExtras
+pub fn entelix_memory::PolicyExtras::default() -> entelix_memory::PolicyExtras
+impl core::fmt::Debug for entelix_memory::PolicyExtras
+pub fn entelix_memory::PolicyExtras::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_memory::PolicyExtras
+impl core::marker::Freeze for entelix_memory::PolicyExtras
+impl core::marker::Send for entelix_memory::PolicyExtras
+impl core::marker::Sync for entelix_memory::PolicyExtras
+impl core::marker::Unpin for entelix_memory::PolicyExtras
+impl core::marker::UnsafeUnpin for entelix_memory::PolicyExtras
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::PolicyExtras
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::PolicyExtras
+#[non_exhaustive] pub struct entelix_memory::PutOptions
+pub entelix_memory::PutOptions::ttl: core::option::Option<core::time::Duration>
+impl entelix_memory::PutOptions
+pub const fn entelix_memory::PutOptions::with_ttl(self, ttl: core::time::Duration) -> Self
+impl core::clone::Clone for entelix_memory::PutOptions
+pub fn entelix_memory::PutOptions::clone(&self) -> entelix_memory::PutOptions
+impl core::default::Default for entelix_memory::PutOptions
+pub fn entelix_memory::PutOptions::default() -> entelix_memory::PutOptions
+impl core::fmt::Debug for entelix_memory::PutOptions
+pub fn entelix_memory::PutOptions::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_memory::PutOptions
+impl core::marker::Send for entelix_memory::PutOptions
+impl core::marker::Sync for entelix_memory::PutOptions
+impl core::marker::Unpin for entelix_memory::PutOptions
+impl core::marker::UnsafeUnpin for entelix_memory::PutOptions
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::PutOptions
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::PutOptions
+pub struct entelix_memory::RerankedDocument
+pub entelix_memory::RerankedDocument::document: entelix_memory::Document
+pub entelix_memory::RerankedDocument::rerank_score: f32
+impl entelix_memory::RerankedDocument
+pub const fn entelix_memory::RerankedDocument::new(document: entelix_memory::Document, rerank_score: f32) -> Self
+impl core::clone::Clone for entelix_memory::RerankedDocument
+pub fn entelix_memory::RerankedDocument::clone(&self) -> entelix_memory::RerankedDocument
+impl core::cmp::PartialEq for entelix_memory::RerankedDocument
+pub fn entelix_memory::RerankedDocument::eq(&self, other: &entelix_memory::RerankedDocument) -> bool
+impl core::fmt::Debug for entelix_memory::RerankedDocument
+pub fn entelix_memory::RerankedDocument::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_memory::RerankedDocument
+impl serde_core::ser::Serialize for entelix_memory::RerankedDocument
+pub fn entelix_memory::RerankedDocument::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_memory::RerankedDocument
+pub fn entelix_memory::RerankedDocument::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_memory::RerankedDocument
+impl core::marker::Send for entelix_memory::RerankedDocument
+impl core::marker::Sync for entelix_memory::RerankedDocument
+impl core::marker::Unpin for entelix_memory::RerankedDocument
+impl core::marker::UnsafeUnpin for entelix_memory::RerankedDocument
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::RerankedDocument
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::RerankedDocument
+#[non_exhaustive] pub struct entelix_memory::RetrievalQuery
+pub entelix_memory::RetrievalQuery::filter: core::option::Option<entelix_memory::VectorFilter>
+pub entelix_memory::RetrievalQuery::min_score: core::option::Option<f32>
+pub entelix_memory::RetrievalQuery::text: alloc::string::String
+pub entelix_memory::RetrievalQuery::top_k: usize
+impl entelix_memory::RetrievalQuery
+pub fn entelix_memory::RetrievalQuery::new(text: impl core::convert::Into<alloc::string::String>, top_k: usize) -> Self
+pub fn entelix_memory::RetrievalQuery::with_filter(self, filter: entelix_memory::VectorFilter) -> Self
+pub const fn entelix_memory::RetrievalQuery::with_min_score(self, min_score: f32) -> Self
+impl core::clone::Clone for entelix_memory::RetrievalQuery
+pub fn entelix_memory::RetrievalQuery::clone(&self) -> entelix_memory::RetrievalQuery
+impl core::fmt::Debug for entelix_memory::RetrievalQuery
+pub fn entelix_memory::RetrievalQuery::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_memory::RetrievalQuery
+impl core::marker::Send for entelix_memory::RetrievalQuery
+impl core::marker::Sync for entelix_memory::RetrievalQuery
+impl core::marker::Unpin for entelix_memory::RetrievalQuery
+impl core::marker::UnsafeUnpin for entelix_memory::RetrievalQuery
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::RetrievalQuery
+impl core::panic::unwind_safe::UnwindSafe for entelix_memory::RetrievalQuery
+pub struct entelix_memory::SemanticMemory<E, V> where E: entelix_memory::Embedder, V: entelix_memory::VectorStore
+impl<E, V> entelix_memory::SemanticMemory<E, V> where E: entelix_memory::Embedder, V: entelix_memory::VectorStore
+pub async fn entelix_memory::SemanticMemory<E, V>::add(&self, ctx: &entelix_core::context::ExecutionContext, document: entelix_memory::Document) -> entelix_core::error::Result<()>
+pub async fn entelix_memory::SemanticMemory<E, V>::batch_add(&self, ctx: &entelix_core::context::ExecutionContext, documents: alloc::vec::Vec<entelix_memory::Document>) -> entelix_core::error::Result<()>
+pub async fn entelix_memory::SemanticMemory<E, V>::count(&self, ctx: &entelix_core::context::ExecutionContext, filter: core::option::Option<&entelix_memory::VectorFilter>) -> entelix_core::error::Result<usize>
+pub async fn entelix_memory::SemanticMemory<E, V>::delete(&self, ctx: &entelix_core::context::ExecutionContext, doc_id: &str) -> entelix_core::error::Result<()>
+pub async fn entelix_memory::SemanticMemory<E, V>::list(&self, ctx: &entelix_core::context::ExecutionContext, filter: core::option::Option<&entelix_memory::VectorFilter>, limit: usize, offset: usize) -> entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>
+pub const fn entelix_memory::SemanticMemory<E, V>::namespace(&self) -> &entelix_memory::Namespace
+pub fn entelix_memory::SemanticMemory<E, V>::new(embedder: alloc::sync::Arc<E>, vector_store: alloc::sync::Arc<V>, namespace: entelix_memory::Namespace) -> entelix_core::error::Result<Self>
+pub async fn entelix_memory::SemanticMemory<E, V>::search(&self, ctx: &entelix_core::context::ExecutionContext, query: &str, top_k: usize) -> entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>
+pub async fn entelix_memory::SemanticMemory<E, V>::search_filtered(&self, ctx: &entelix_core::context::ExecutionContext, query: &str, top_k: usize, filter: &entelix_memory::VectorFilter) -> entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>
+pub async fn entelix_memory::SemanticMemory<E, V>::search_with_rerank<R: entelix_memory::Reranker>(&self, ctx: &entelix_core::context::ExecutionContext, query: &str, top_k: usize, candidates: usize, reranker: &R) -> entelix_core::error::Result<alloc::vec::Vec<entelix_memory::RerankedDocument>>
+pub async fn entelix_memory::SemanticMemory<E, V>::update(&self, ctx: &entelix_core::context::ExecutionContext, doc_id: &str, document: entelix_memory::Document) -> entelix_core::error::Result<()>
+impl<E, V> entelix_memory::SemanticMemoryBackend for entelix_memory::SemanticMemory<E, V> where E: entelix_memory::Embedder, V: entelix_memory::VectorStore
+pub fn entelix_memory::SemanticMemory<E, V>::add<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, document: entelix_memory::Document) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::batch_add<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, documents: alloc::vec::Vec<entelix_memory::Document>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::count<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, filter: core::option::Option<&'life2 entelix_memory::VectorFilter>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::delete<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, doc_id: &'life2 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::dimension(&self) -> usize
+pub fn entelix_memory::SemanticMemory<E, V>::list<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, filter: core::option::Option<&'life2 entelix_memory::VectorFilter>, limit: usize, offset: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::namespace(&self) -> &entelix_memory::Namespace
+pub fn entelix_memory::SemanticMemory<E, V>::search<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, query: &'life2 str, top_k: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::search_filtered<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, query: &'life2 str, top_k: usize, filter: &'life3 entelix_memory::VectorFilter) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::search_with_rerank_dyn<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, query: &'life2 str, top_k: usize, candidates: usize, reranker: &'life3 dyn entelix_memory::Reranker) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::RerankedDocument>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::update<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, doc_id: &'life2 str, document: entelix_memory::Document) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl<E, V> core::marker::Freeze for entelix_memory::SemanticMemory<E, V>
+impl<E, V> core::marker::Send for entelix_memory::SemanticMemory<E, V>
+impl<E, V> core::marker::Sync for entelix_memory::SemanticMemory<E, V>
+impl<E, V> core::marker::Unpin for entelix_memory::SemanticMemory<E, V>
+impl<E, V> core::marker::UnsafeUnpin for entelix_memory::SemanticMemory<E, V>
+impl<E, V> core::panic::unwind_safe::RefUnwindSafe for entelix_memory::SemanticMemory<E, V> where E: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<E, V> core::panic::unwind_safe::UnwindSafe for entelix_memory::SemanticMemory<E, V> where E: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+pub struct entelix_memory::SummaryMemory
+impl entelix_memory::SummaryMemory
+pub async fn entelix_memory::SummaryMemory::append(&self, ctx: &entelix_core::context::ExecutionContext, addition: &str) -> entelix_core::error::Result<()>
+pub async fn entelix_memory::SummaryMemory::clear(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<()>
+pub async fn entelix_memory::SummaryMemory::get(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<core::option::Option<alloc::string::String>>
+pub const fn entelix_memory::SummaryMemory::namespace(&self) -> &entelix_memory::Namespace
+pub fn entelix_memory::SummaryMemory::new(store: alloc::sync::Arc<dyn entelix_memory::Store<alloc::string::String>>, namespace: entelix_memory::Namespace) -> Self
+pub async fn entelix_memory::SummaryMemory::set(&self, ctx: &entelix_core::context::ExecutionContext, summary: impl core::convert::Into<alloc::string::String>) -> entelix_core::error::Result<()>
+impl core::marker::Freeze for entelix_memory::SummaryMemory
+impl core::marker::Send for entelix_memory::SummaryMemory
+impl core::marker::Sync for entelix_memory::SummaryMemory
+impl core::marker::Unpin for entelix_memory::SummaryMemory
+impl core::marker::UnsafeUnpin for entelix_memory::SummaryMemory
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_memory::SummaryMemory
+impl !core::panic::unwind_safe::UnwindSafe for entelix_memory::SummaryMemory
+pub trait entelix_memory::ConsolidationPolicy: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::ConsolidationPolicy::should_consolidate(&self, ctx: &entelix_memory::ConsolidationContext<'_>) -> bool
+impl entelix_memory::ConsolidationPolicy for entelix_memory::NeverConsolidate
+pub fn entelix_memory::NeverConsolidate::should_consolidate(&self, _ctx: &entelix_memory::ConsolidationContext<'_>) -> bool
+impl entelix_memory::ConsolidationPolicy for entelix_memory::OnMessageCount
+pub fn entelix_memory::OnMessageCount::should_consolidate(&self, ctx: &entelix_memory::ConsolidationContext<'_>) -> bool
+impl entelix_memory::ConsolidationPolicy for entelix_memory::OnTokenBudget
+pub fn entelix_memory::OnTokenBudget::should_consolidate(&self, ctx: &entelix_memory::ConsolidationContext<'_>) -> bool
+pub trait entelix_memory::Embedder: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::Embedder::dimension(&self) -> usize
+pub fn entelix_memory::Embedder::embed<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, text: &'life1 str, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_memory::Embedding>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::Embedder::embed_batch<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, texts: &'life1 [alloc::string::String], ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Embedding>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl<E> entelix_memory::Embedder for entelix_memory::MeteredEmbedder<E> where E: entelix_memory::Embedder
+pub fn entelix_memory::MeteredEmbedder<E>::dimension(&self) -> usize
+pub fn entelix_memory::MeteredEmbedder<E>::embed<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, text: &'life1 str, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_memory::Embedding>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::MeteredEmbedder<E>::embed_batch<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, texts: &'life1 [alloc::string::String], ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Embedding>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub trait entelix_memory::EmbeddingCostCalculator: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::EmbeddingCostCalculator::compute_cost<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, model: &'life1 str, usage: &'life2 entelix_memory::EmbeddingUsage, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<f64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl entelix_memory::EmbeddingCostCalculator for entelix_memory::CostCalculatorAdapter
+pub fn entelix_memory::CostCalculatorAdapter::compute_cost<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, model: &'life1 str, usage: &'life2 entelix_memory::EmbeddingUsage, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<f64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub trait entelix_memory::GraphMemory<N, E> where N: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, E: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::GraphMemory::add_edge<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, from: &'life3 entelix_memory::NodeId, to: &'life4 entelix_memory::NodeId, edge: E, timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_memory::EdgeId>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_memory::GraphMemory::add_edges_batch<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, edges: alloc::vec::Vec<(entelix_memory::NodeId, entelix_memory::NodeId, E, chrono::datetime::DateTime<chrono::offset::utc::Utc>)>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::EdgeId>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::GraphMemory::add_node<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, node: N) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_memory::NodeId>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::GraphMemory::delete_edge<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, edge_id: &'life3 entelix_memory::EdgeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::GraphMemory::delete_node<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, node_id: &'life3 entelix_memory::NodeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::GraphMemory::edge<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, _ns: &'life2 entelix_memory::Namespace, _edge_id: &'life3 entelix_memory::EdgeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<entelix_memory::GraphHop<E>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::GraphMemory::edge_count<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, _ns: &'life2 entelix_memory::Namespace) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::GraphMemory::find_path<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, from: &'life3 entelix_memory::NodeId, to: &'life4 entelix_memory::NodeId, direction: entelix_memory::Direction, max_depth: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<alloc::vec::Vec<entelix_memory::GraphHop<E>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_memory::GraphMemory::neighbors<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, node: &'life3 entelix_memory::NodeId, direction: entelix_memory::Direction) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<(entelix_memory::EdgeId, entelix_memory::NodeId, E)>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::GraphMemory::node<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, id: &'life3 entelix_memory::NodeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<N>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::GraphMemory::node_count<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, _ns: &'life2 entelix_memory::Namespace) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::GraphMemory::prune_older_than<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, _ns: &'life2 entelix_memory::Namespace, _ttl: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::GraphMemory::temporal_filter<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, from: chrono::datetime::DateTime<chrono::offset::utc::Utc>, to: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::GraphHop<E>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::GraphMemory::traverse<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, start: &'life3 entelix_memory::NodeId, direction: entelix_memory::Direction, max_depth: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::GraphHop<E>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl<N, E> entelix_memory::GraphMemory<N, E> for entelix_memory::InMemoryGraphMemory<N, E> where N: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, E: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::add_edge<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, from: &'life3 entelix_memory::NodeId, to: &'life4 entelix_memory::NodeId, edge: E, timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_memory::EdgeId>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::add_edges_batch<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, edges: alloc::vec::Vec<(entelix_memory::NodeId, entelix_memory::NodeId, E, chrono::datetime::DateTime<chrono::offset::utc::Utc>)>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::EdgeId>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::add_node<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, node: N) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_memory::NodeId>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::delete_edge<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, edge_id: &'life3 entelix_memory::EdgeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::delete_node<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, node_id: &'life3 entelix_memory::NodeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::edge<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, edge_id: &'life3 entelix_memory::EdgeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<entelix_memory::GraphHop<E>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::edge_count<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::find_path<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, from: &'life3 entelix_memory::NodeId, to: &'life4 entelix_memory::NodeId, direction: entelix_memory::Direction, max_depth: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<alloc::vec::Vec<entelix_memory::GraphHop<E>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::neighbors<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, node: &'life3 entelix_memory::NodeId, direction: entelix_memory::Direction) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<(entelix_memory::EdgeId, entelix_memory::NodeId, E)>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::node<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, id: &'life3 entelix_memory::NodeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<N>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::node_count<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::prune_older_than<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, ttl: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::temporal_filter<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, from: chrono::datetime::DateTime<chrono::offset::utc::Utc>, to: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::GraphHop<E>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryGraphMemory<N, E>::traverse<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, start: &'life3 entelix_memory::NodeId, direction: entelix_memory::Direction, max_depth: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::GraphHop<E>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub trait entelix_memory::Reranker: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::Reranker::rerank<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, query: &'life1 str, candidates: alloc::vec::Vec<entelix_memory::Document>, top_k: usize, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::RerankedDocument>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl entelix_memory::Reranker for entelix_memory::IdentityReranker
+pub fn entelix_memory::IdentityReranker::rerank<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _query: &'life1 str, candidates: alloc::vec::Vec<entelix_memory::Document>, top_k: usize, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::RerankedDocument>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl entelix_memory::Reranker for entelix_memory::MmrReranker
+pub fn entelix_memory::MmrReranker::rerank<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, query: &'life1 str, candidates: alloc::vec::Vec<entelix_memory::Document>, top_k: usize, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::RerankedDocument>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub trait entelix_memory::Retriever: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::Retriever::retrieve<'life0, 'life1, 'async_trait>(&'life0 self, query: entelix_memory::RetrievalQuery, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub trait entelix_memory::SemanticMemoryBackend: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::SemanticMemoryBackend::add<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, document: entelix_memory::Document) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_memory::SemanticMemoryBackend::batch_add<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, documents: alloc::vec::Vec<entelix_memory::Document>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_memory::SemanticMemoryBackend::count<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, filter: core::option::Option<&'life2 entelix_memory::VectorFilter>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::SemanticMemoryBackend::delete<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, doc_id: &'life2 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::SemanticMemoryBackend::dimension(&self) -> usize
+pub fn entelix_memory::SemanticMemoryBackend::list<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, filter: core::option::Option<&'life2 entelix_memory::VectorFilter>, limit: usize, offset: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::SemanticMemoryBackend::namespace(&self) -> &entelix_memory::Namespace
+pub fn entelix_memory::SemanticMemoryBackend::search<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, query: &'life2 str, top_k: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::SemanticMemoryBackend::search_filtered<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, query: &'life2 str, top_k: usize, filter: &'life3 entelix_memory::VectorFilter) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::SemanticMemoryBackend::search_with_rerank_dyn<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, query: &'life2 str, top_k: usize, candidates: usize, reranker: &'life3 dyn entelix_memory::Reranker) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::RerankedDocument>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::SemanticMemoryBackend::update<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, doc_id: &'life2 str, document: entelix_memory::Document) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl<E, V> entelix_memory::SemanticMemoryBackend for entelix_memory::SemanticMemory<E, V> where E: entelix_memory::Embedder, V: entelix_memory::VectorStore
+pub fn entelix_memory::SemanticMemory<E, V>::add<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, document: entelix_memory::Document) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::batch_add<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, documents: alloc::vec::Vec<entelix_memory::Document>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::count<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, filter: core::option::Option<&'life2 entelix_memory::VectorFilter>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::delete<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, doc_id: &'life2 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::dimension(&self) -> usize
+pub fn entelix_memory::SemanticMemory<E, V>::list<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, filter: core::option::Option<&'life2 entelix_memory::VectorFilter>, limit: usize, offset: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::namespace(&self) -> &entelix_memory::Namespace
+pub fn entelix_memory::SemanticMemory<E, V>::search<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, query: &'life2 str, top_k: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::search_filtered<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, query: &'life2 str, top_k: usize, filter: &'life3 entelix_memory::VectorFilter) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::search_with_rerank_dyn<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, query: &'life2 str, top_k: usize, candidates: usize, reranker: &'life3 dyn entelix_memory::Reranker) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::RerankedDocument>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::SemanticMemory<E, V>::update<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, doc_id: &'life2 str, document: entelix_memory::Document) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub trait entelix_memory::Store<V> where V: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::Store::delete<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, key: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::Store::evict_expired<'life0, 'life1, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_memory::Store::get<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, key: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<V>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::Store::list<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, prefix: core::option::Option<&'life3 str>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<alloc::string::String>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::Store::list_namespaces<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, _prefix: &'life2 entelix_memory::NamespacePrefix) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Namespace>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::Store::put<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, key: &'life3 str, value: V) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::Store::put_with_options<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, key: &'life3 str, value: V, options: entelix_memory::PutOptions) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl<V> entelix_memory::Store<V> for entelix_memory::InMemoryStore<V> where V: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::InMemoryStore<V>::delete<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, key: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryStore<V>::evict_expired<'life0, 'life1, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_memory::InMemoryStore<V>::get<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, key: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<V>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryStore<V>::list<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, prefix: core::option::Option<&'life3 str>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<alloc::string::String>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryStore<V>::list_namespaces<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, prefix: &'life2 entelix_memory::NamespacePrefix) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Namespace>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryStore<V>::put<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, key: &'life3 str, value: V) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryStore<V>::put_with_options<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, key: &'life3 str, value: V, options: entelix_memory::PutOptions) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub trait entelix_memory::Summarizer: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::Summarizer::summarize<'life0, 'life1, 'async_trait>(&'life0 self, messages: alloc::vec::Vec<entelix_core::ir::message::Message>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::string::String>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub trait entelix_memory::VectorStore: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_memory::VectorStore::add<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, document: entelix_memory::Document, vector: alloc::vec::Vec<f32>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::VectorStore::batch_add<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, items: alloc::vec::Vec<(entelix_memory::Document, alloc::vec::Vec<f32>)>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::VectorStore::count<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, _ns: &'life2 entelix_memory::Namespace, _filter: core::option::Option<&'life3 entelix_memory::VectorFilter>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::VectorStore::delete<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, _ns: &'life2 entelix_memory::Namespace, _doc_id: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::VectorStore::dimension(&self) -> usize
+pub fn entelix_memory::VectorStore::list<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, _ns: &'life2 entelix_memory::Namespace, _filter: core::option::Option<&'life3 entelix_memory::VectorFilter>, _limit: usize, _offset: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::VectorStore::search<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, query_vector: &'life3 [f32], top_k: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::VectorStore::search_filtered<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, _ns: &'life2 entelix_memory::Namespace, _query_vector: &'life3 [f32], _top_k: usize, _filter: &'life4 entelix_memory::VectorFilter) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_memory::VectorStore::update<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, doc_id: &'life3 str, document: entelix_memory::Document, vector: alloc::vec::Vec<f32>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl entelix_memory::VectorStore for entelix_memory::InMemoryVectorStore
+pub fn entelix_memory::InMemoryVectorStore::add<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, document: entelix_memory::Document, vector: alloc::vec::Vec<f32>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::batch_add<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, items: alloc::vec::Vec<(entelix_memory::Document, alloc::vec::Vec<f32>)>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::count<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, filter: core::option::Option<&'life3 entelix_memory::VectorFilter>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::delete<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, doc_id: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::dimension(&self) -> usize
+pub fn entelix_memory::InMemoryVectorStore::list<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, filter: core::option::Option<&'life3 entelix_memory::VectorFilter>, limit: usize, offset: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::search<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, query_vector: &'life3 [f32], top_k: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::search_filtered<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, query_vector: &'life3 [f32], top_k: usize, filter: &'life4 entelix_memory::VectorFilter) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_memory::InMemoryVectorStore::update<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::Namespace, doc_id: &'life3 str, document: entelix_memory::Document, vector: alloc::vec::Vec<f32>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub type entelix_memory::DocumentId = alloc::string::String

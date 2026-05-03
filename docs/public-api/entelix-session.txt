@@ -1,0 +1,157 @@
+pub mod entelix_session
+#[non_exhaustive] pub enum entelix_session::GraphEvent
+pub entelix_session::GraphEvent::AgentHandoff
+pub entelix_session::GraphEvent::AgentHandoff::from: core::option::Option<alloc::string::String>
+pub entelix_session::GraphEvent::AgentHandoff::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::AgentHandoff::to: alloc::string::String
+pub entelix_session::GraphEvent::AssistantMessage
+pub entelix_session::GraphEvent::AssistantMessage::content: alloc::vec::Vec<entelix_core::ir::content::ContentPart>
+pub entelix_session::GraphEvent::AssistantMessage::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::AssistantMessage::usage: core::option::Option<entelix_core::ir::usage::Usage>
+pub entelix_session::GraphEvent::BranchCreated
+pub entelix_session::GraphEvent::BranchCreated::branch_id: alloc::string::String
+pub entelix_session::GraphEvent::BranchCreated::parent_event: usize
+pub entelix_session::GraphEvent::BranchCreated::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::Cancelled
+pub entelix_session::GraphEvent::Cancelled::reason: alloc::string::String
+pub entelix_session::GraphEvent::Cancelled::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::CheckpointMarker
+pub entelix_session::GraphEvent::CheckpointMarker::checkpoint_id: alloc::string::String
+pub entelix_session::GraphEvent::CheckpointMarker::thread_id: alloc::string::String
+pub entelix_session::GraphEvent::CheckpointMarker::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::Error
+pub entelix_session::GraphEvent::Error::class: alloc::string::String
+pub entelix_session::GraphEvent::Error::message: alloc::string::String
+pub entelix_session::GraphEvent::Error::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::Interrupt
+pub entelix_session::GraphEvent::Interrupt::payload: serde_json::value::Value
+pub entelix_session::GraphEvent::Interrupt::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::MemoryRecall
+pub entelix_session::GraphEvent::MemoryRecall::hits: usize
+pub entelix_session::GraphEvent::MemoryRecall::namespace_key: alloc::string::String
+pub entelix_session::GraphEvent::MemoryRecall::tier: alloc::string::String
+pub entelix_session::GraphEvent::MemoryRecall::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::RateLimit
+pub entelix_session::GraphEvent::RateLimit::snapshot: entelix_core::rate_limit::RateLimitSnapshot
+pub entelix_session::GraphEvent::RateLimit::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::Resumed
+pub entelix_session::GraphEvent::Resumed::from_checkpoint: alloc::string::String
+pub entelix_session::GraphEvent::Resumed::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::SubAgentInvoked
+pub entelix_session::GraphEvent::SubAgentInvoked::agent_id: alloc::string::String
+pub entelix_session::GraphEvent::SubAgentInvoked::sub_thread_id: alloc::string::String
+pub entelix_session::GraphEvent::SubAgentInvoked::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::ThinkingDelta
+pub entelix_session::GraphEvent::ThinkingDelta::signature: core::option::Option<alloc::string::String>
+pub entelix_session::GraphEvent::ThinkingDelta::text: alloc::string::String
+pub entelix_session::GraphEvent::ThinkingDelta::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::ToolCall
+pub entelix_session::GraphEvent::ToolCall::id: alloc::string::String
+pub entelix_session::GraphEvent::ToolCall::input: serde_json::value::Value
+pub entelix_session::GraphEvent::ToolCall::name: alloc::string::String
+pub entelix_session::GraphEvent::ToolCall::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::ToolResult
+pub entelix_session::GraphEvent::ToolResult::content: entelix_core::ir::content::ToolResultContent
+pub entelix_session::GraphEvent::ToolResult::is_error: bool
+pub entelix_session::GraphEvent::ToolResult::name: alloc::string::String
+pub entelix_session::GraphEvent::ToolResult::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::ToolResult::tool_use_id: alloc::string::String
+pub entelix_session::GraphEvent::UserMessage
+pub entelix_session::GraphEvent::UserMessage::content: alloc::vec::Vec<entelix_core::ir::content::ContentPart>
+pub entelix_session::GraphEvent::UserMessage::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::Warning
+pub entelix_session::GraphEvent::Warning::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::Warning::warning: entelix_core::ir::warning::ModelWarning
+impl entelix_session::GraphEvent
+pub const fn entelix_session::GraphEvent::timestamp(&self) -> &chrono::datetime::DateTime<chrono::offset::utc::Utc>
+impl core::clone::Clone for entelix_session::GraphEvent
+pub fn entelix_session::GraphEvent::clone(&self) -> entelix_session::GraphEvent
+impl core::cmp::Eq for entelix_session::GraphEvent
+impl core::cmp::PartialEq for entelix_session::GraphEvent
+pub fn entelix_session::GraphEvent::eq(&self, other: &entelix_session::GraphEvent) -> bool
+impl core::fmt::Debug for entelix_session::GraphEvent
+pub fn entelix_session::GraphEvent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_session::GraphEvent
+impl serde_core::ser::Serialize for entelix_session::GraphEvent
+pub fn entelix_session::GraphEvent::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_session::GraphEvent
+pub fn entelix_session::GraphEvent::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_session::GraphEvent
+impl core::marker::Send for entelix_session::GraphEvent
+impl core::marker::Sync for entelix_session::GraphEvent
+impl core::marker::Unpin for entelix_session::GraphEvent
+impl core::marker::UnsafeUnpin for entelix_session::GraphEvent
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_session::GraphEvent
+impl core::panic::unwind_safe::UnwindSafe for entelix_session::GraphEvent
+pub struct entelix_session::InMemorySessionLog
+impl entelix_session::InMemorySessionLog
+pub fn entelix_session::InMemorySessionLog::new() -> Self
+impl core::default::Default for entelix_session::InMemorySessionLog
+pub fn entelix_session::InMemorySessionLog::default() -> entelix_session::InMemorySessionLog
+impl entelix_session::SessionLog for entelix_session::InMemorySessionLog
+pub fn entelix_session::InMemorySessionLog::append<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, events: &'life2 [entelix_session::GraphEvent]) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<u64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_session::InMemorySessionLog::archive_before<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, watermark: u64) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_session::InMemorySessionLog::load_since<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, cursor: u64) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_session::GraphEvent>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl !core::marker::Freeze for entelix_session::InMemorySessionLog
+impl core::marker::Send for entelix_session::InMemorySessionLog
+impl core::marker::Sync for entelix_session::InMemorySessionLog
+impl core::marker::Unpin for entelix_session::InMemorySessionLog
+impl core::marker::UnsafeUnpin for entelix_session::InMemorySessionLog
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_session::InMemorySessionLog
+impl core::panic::unwind_safe::UnwindSafe for entelix_session::InMemorySessionLog
+pub struct entelix_session::SessionAuditSink
+impl entelix_session::SessionAuditSink
+pub const fn entelix_session::SessionAuditSink::new(log: alloc::sync::Arc<dyn entelix_session::SessionLog>, key: entelix_core::thread_key::ThreadKey) -> Self
+pub fn entelix_session::SessionAuditSink::with_thread_key(self, key: entelix_core::thread_key::ThreadKey) -> Self
+impl core::fmt::Debug for entelix_session::SessionAuditSink
+pub fn entelix_session::SessionAuditSink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::audit::AuditSink for entelix_session::SessionAuditSink
+pub fn entelix_session::SessionAuditSink::record_agent_handoff(&self, from: core::option::Option<&str>, to: &str)
+pub fn entelix_session::SessionAuditSink::record_memory_recall(&self, tier: &str, namespace_key: &str, hits: usize)
+pub fn entelix_session::SessionAuditSink::record_resumed(&self, from_checkpoint: &str)
+pub fn entelix_session::SessionAuditSink::record_sub_agent_invoked(&self, agent_id: &str, sub_thread_id: &str)
+impl core::marker::Freeze for entelix_session::SessionAuditSink
+impl core::marker::Send for entelix_session::SessionAuditSink
+impl core::marker::Sync for entelix_session::SessionAuditSink
+impl core::marker::Unpin for entelix_session::SessionAuditSink
+impl core::marker::UnsafeUnpin for entelix_session::SessionAuditSink
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_session::SessionAuditSink
+impl !core::panic::unwind_safe::UnwindSafe for entelix_session::SessionAuditSink
+#[non_exhaustive] pub struct entelix_session::SessionGraph
+pub entelix_session::SessionGraph::events: alloc::vec::Vec<entelix_session::GraphEvent>
+pub entelix_session::SessionGraph::thread_id: alloc::string::String
+impl entelix_session::SessionGraph
+pub fn entelix_session::SessionGraph::append(&mut self, event: entelix_session::GraphEvent) -> usize
+pub const fn entelix_session::SessionGraph::archival_watermark(&self) -> usize
+pub const fn entelix_session::SessionGraph::archive_before(&mut self, watermark: usize)
+pub fn entelix_session::SessionGraph::branch_events(&self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, usize)>
+pub fn entelix_session::SessionGraph::current_branch_messages(&self) -> alloc::vec::Vec<entelix_core::ir::message::Message>
+pub fn entelix_session::SessionGraph::events_since(&self, cursor: usize) -> &[entelix_session::GraphEvent]
+pub fn entelix_session::SessionGraph::fork(&mut self, branch_at: usize, new_thread_id: impl core::convert::Into<alloc::string::String>) -> core::option::Option<Self>
+pub const fn entelix_session::SessionGraph::is_empty(&self) -> bool
+pub const fn entelix_session::SessionGraph::len(&self) -> usize
+pub fn entelix_session::SessionGraph::new(thread_id: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_session::SessionGraph::replay_into<S, R>(&self, initial: S, reducer: R) -> S where R: core::ops::function::FnMut(&mut S, &entelix_session::GraphEvent)
+impl core::clone::Clone for entelix_session::SessionGraph
+pub fn entelix_session::SessionGraph::clone(&self) -> entelix_session::SessionGraph
+impl core::fmt::Debug for entelix_session::SessionGraph
+pub fn entelix_session::SessionGraph::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for entelix_session::SessionGraph
+pub fn entelix_session::SessionGraph::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_session::SessionGraph
+pub fn entelix_session::SessionGraph::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_session::SessionGraph
+impl core::marker::Send for entelix_session::SessionGraph
+impl core::marker::Sync for entelix_session::SessionGraph
+impl core::marker::Unpin for entelix_session::SessionGraph
+impl core::marker::UnsafeUnpin for entelix_session::SessionGraph
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_session::SessionGraph
+impl core::panic::unwind_safe::UnwindSafe for entelix_session::SessionGraph
+pub trait entelix_session::SessionLog: core::marker::Send + core::marker::Sync
+pub fn entelix_session::SessionLog::append<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, events: &'life2 [entelix_session::GraphEvent]) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<u64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_session::SessionLog::archive_before<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, watermark: u64) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_session::SessionLog::load_since<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, cursor: u64) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_session::GraphEvent>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl entelix_session::SessionLog for entelix_session::InMemorySessionLog
+pub fn entelix_session::InMemorySessionLog::append<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, events: &'life2 [entelix_session::GraphEvent]) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<u64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_session::InMemorySessionLog::archive_before<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, watermark: u64) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_session::InMemorySessionLog::load_since<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, cursor: u64) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_session::GraphEvent>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait

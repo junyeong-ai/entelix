@@ -1,0 +1,73 @@
+pub mod entelix_server
+#[non_exhaustive] pub enum entelix_server::BuildError
+pub entelix_server::BuildError::InvalidTenantHeader
+pub entelix_server::BuildError::InvalidTenantHeader::name: alloc::string::String
+impl core::error::Error for entelix_server::BuildError
+impl core::fmt::Debug for entelix_server::BuildError
+pub fn entelix_server::BuildError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_server::BuildError
+pub fn entelix_server::BuildError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_server::BuildError
+impl core::marker::Send for entelix_server::BuildError
+impl core::marker::Sync for entelix_server::BuildError
+impl core::marker::Unpin for entelix_server::BuildError
+impl core::marker::UnsafeUnpin for entelix_server::BuildError
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_server::BuildError
+impl core::panic::unwind_safe::UnwindSafe for entelix_server::BuildError
+#[non_exhaustive] pub enum entelix_server::ServerError
+pub entelix_server::ServerError::BadRequest(alloc::string::String)
+pub entelix_server::ServerError::Core(entelix_core::error::Error)
+pub entelix_server::ServerError::MissingTenantHeader
+pub entelix_server::ServerError::MissingTenantHeader::header: alloc::string::String
+pub entelix_server::ServerError::NotFound(alloc::string::String)
+impl axum_core::response::into_response::IntoResponse for entelix_server::ServerError
+pub fn entelix_server::ServerError::into_response(self) -> axum_core::response::Response
+impl core::convert::From<entelix_core::error::Error> for entelix_server::ServerError
+pub fn entelix_server::ServerError::from(source: entelix_core::error::Error) -> Self
+impl core::error::Error for entelix_server::ServerError
+pub fn entelix_server::ServerError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for entelix_server::ServerError
+pub fn entelix_server::ServerError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_server::ServerError
+pub fn entelix_server::ServerError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_server::ServerError
+impl core::marker::Send for entelix_server::ServerError
+impl core::marker::Sync for entelix_server::ServerError
+impl core::marker::Unpin for entelix_server::ServerError
+impl core::marker::UnsafeUnpin for entelix_server::ServerError
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_server::ServerError
+impl !core::panic::unwind_safe::UnwindSafe for entelix_server::ServerError
+#[non_exhaustive] pub enum entelix_server::TenantMode
+pub entelix_server::TenantMode::Default
+pub entelix_server::TenantMode::RequiredHeader
+pub entelix_server::TenantMode::RequiredHeader::header: http::header::name::HeaderName
+impl core::clone::Clone for entelix_server::TenantMode
+pub fn entelix_server::TenantMode::clone(&self) -> entelix_server::TenantMode
+impl core::default::Default for entelix_server::TenantMode
+pub fn entelix_server::TenantMode::default() -> entelix_server::TenantMode
+impl core::fmt::Debug for entelix_server::TenantMode
+pub fn entelix_server::TenantMode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl !core::marker::Freeze for entelix_server::TenantMode
+impl core::marker::Send for entelix_server::TenantMode
+impl core::marker::Sync for entelix_server::TenantMode
+impl core::marker::Unpin for entelix_server::TenantMode
+impl core::marker::UnsafeUnpin for entelix_server::TenantMode
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_server::TenantMode
+impl core::panic::unwind_safe::UnwindSafe for entelix_server::TenantMode
+pub struct entelix_server::AgentRouterBuilder<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + serde_core::ser::Serialize + serde_core::de::DeserializeOwned + 'static
+impl<S> entelix_server::AgentRouterBuilder<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + serde_core::ser::Serialize + serde_core::de::DeserializeOwned + 'static
+pub fn entelix_server::AgentRouterBuilder<S>::build(self) -> entelix_server::BuildResult<axum::routing::Router>
+pub fn entelix_server::AgentRouterBuilder<S>::new<R>(runnable: R) -> Self where R: entelix_runnable::runnable::Runnable<S, S> + 'static
+pub fn entelix_server::AgentRouterBuilder<S>::with_checkpointer(self, cp: alloc::sync::Arc<dyn entelix_graph::checkpoint::Checkpointer<S>>) -> Self
+pub fn entelix_server::AgentRouterBuilder<S>::with_tenant_header(self, name: impl core::convert::AsRef<[u8]>) -> Self
+pub fn entelix_server::AgentRouterBuilder<S>::with_tenant_mode(self, mode: entelix_server::TenantMode) -> Self
+impl<S> !core::marker::Freeze for entelix_server::AgentRouterBuilder<S>
+impl<S> core::marker::Send for entelix_server::AgentRouterBuilder<S>
+impl<S> core::marker::Sync for entelix_server::AgentRouterBuilder<S>
+impl<S> core::marker::Unpin for entelix_server::AgentRouterBuilder<S>
+impl<S> core::marker::UnsafeUnpin for entelix_server::AgentRouterBuilder<S>
+impl<S> !core::panic::unwind_safe::RefUnwindSafe for entelix_server::AgentRouterBuilder<S>
+impl<S> !core::panic::unwind_safe::UnwindSafe for entelix_server::AgentRouterBuilder<S>
+pub const entelix_server::DEFAULT_TENANT_HEADER: &str
+pub type entelix_server::BuildResult<T> = core::result::Result<T, entelix_server::BuildError>
+pub type entelix_server::ServerResult<T> = core::result::Result<T, entelix_server::ServerError>

@@ -1,0 +1,78 @@
+pub mod entelix_graphmemory_pg
+#[non_exhaustive] pub enum entelix_graphmemory_pg::PgGraphMemoryError
+pub entelix_graphmemory_pg::PgGraphMemoryError::Codec(serde_json::error::Error)
+pub entelix_graphmemory_pg::PgGraphMemoryError::Config(alloc::string::String)
+pub entelix_graphmemory_pg::PgGraphMemoryError::Malformed(alloc::string::String)
+pub entelix_graphmemory_pg::PgGraphMemoryError::Sqlx(sqlx_core::error::Error)
+impl core::convert::From<entelix_graphmemory_pg::PgGraphMemoryError> for entelix_core::error::Error
+pub fn entelix_core::error::Error::from(err: entelix_graphmemory_pg::PgGraphMemoryError) -> Self
+impl core::convert::From<serde_json::error::Error> for entelix_graphmemory_pg::PgGraphMemoryError
+pub fn entelix_graphmemory_pg::PgGraphMemoryError::from(source: serde_json::error::Error) -> Self
+impl core::convert::From<sqlx_core::error::Error> for entelix_graphmemory_pg::PgGraphMemoryError
+pub fn entelix_graphmemory_pg::PgGraphMemoryError::from(source: sqlx_core::error::Error) -> Self
+impl core::error::Error for entelix_graphmemory_pg::PgGraphMemoryError
+pub fn entelix_graphmemory_pg::PgGraphMemoryError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for entelix_graphmemory_pg::PgGraphMemoryError
+pub fn entelix_graphmemory_pg::PgGraphMemoryError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_graphmemory_pg::PgGraphMemoryError
+pub fn entelix_graphmemory_pg::PgGraphMemoryError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_graphmemory_pg::PgGraphMemoryError
+impl core::marker::Send for entelix_graphmemory_pg::PgGraphMemoryError
+impl core::marker::Sync for entelix_graphmemory_pg::PgGraphMemoryError
+impl core::marker::Unpin for entelix_graphmemory_pg::PgGraphMemoryError
+impl core::marker::UnsafeUnpin for entelix_graphmemory_pg::PgGraphMemoryError
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_graphmemory_pg::PgGraphMemoryError
+impl !core::panic::unwind_safe::UnwindSafe for entelix_graphmemory_pg::PgGraphMemoryError
+pub struct entelix_graphmemory_pg::PgGraphMemory<N, E>
+impl<N, E> entelix_graphmemory_pg::PgGraphMemory<N, E>
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::builder() -> entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>
+pub async fn entelix_graphmemory_pg::PgGraphMemory<N, E>::list_edge_records(&self, ns: &entelix_memory::namespace::Namespace, limit: usize, offset: usize) -> entelix_core::error::Result<alloc::vec::Vec<entelix_memory::graph::GraphHop<E>>> where E: serde_core::de::DeserializeOwned
+pub async fn entelix_graphmemory_pg::PgGraphMemory<N, E>::list_edges(&self, ns: &entelix_memory::namespace::Namespace, limit: usize, offset: usize) -> entelix_core::error::Result<alloc::vec::Vec<entelix_memory::graph::EdgeId>>
+pub async fn entelix_graphmemory_pg::PgGraphMemory<N, E>::list_node_records(&self, ns: &entelix_memory::namespace::Namespace, limit: usize, offset: usize) -> entelix_core::error::Result<alloc::vec::Vec<(entelix_memory::graph::NodeId, N)>> where N: serde_core::de::DeserializeOwned
+pub async fn entelix_graphmemory_pg::PgGraphMemory<N, E>::list_nodes(&self, ns: &entelix_memory::namespace::Namespace, limit: usize, offset: usize) -> entelix_core::error::Result<alloc::vec::Vec<entelix_memory::graph::NodeId>>
+pub async fn entelix_graphmemory_pg::PgGraphMemory<N, E>::prune_orphan_nodes(&self, ns: &entelix_memory::namespace::Namespace) -> entelix_core::error::Result<usize>
+impl<N, E> core::clone::Clone for entelix_graphmemory_pg::PgGraphMemory<N, E>
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::clone(&self) -> Self
+impl<N, E> core::fmt::Debug for entelix_graphmemory_pg::PgGraphMemory<N, E>
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<N, E> entelix_memory::graph::GraphMemory<N, E> for entelix_graphmemory_pg::PgGraphMemory<N, E> where N: core::clone::Clone + core::marker::Send + core::marker::Sync + serde_core::ser::Serialize + serde_core::de::DeserializeOwned + 'static, E: core::clone::Clone + core::marker::Send + core::marker::Sync + serde_core::ser::Serialize + serde_core::de::DeserializeOwned + 'static
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::add_edge<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, from: &'life3 entelix_memory::graph::NodeId, to: &'life4 entelix_memory::graph::NodeId, edge: E, timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_memory::graph::EdgeId>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::add_edges_batch<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, edges: alloc::vec::Vec<(entelix_memory::graph::NodeId, entelix_memory::graph::NodeId, E, chrono::datetime::DateTime<chrono::offset::utc::Utc>)>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::graph::EdgeId>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::add_node<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, node: N) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_memory::graph::NodeId>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::delete_edge<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, edge_id: &'life3 entelix_memory::graph::EdgeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::delete_node<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, node_id: &'life3 entelix_memory::graph::NodeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::edge<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, edge_id: &'life3 entelix_memory::graph::EdgeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<entelix_memory::graph::GraphHop<E>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::edge_count<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::find_path<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, from: &'life3 entelix_memory::graph::NodeId, to: &'life4 entelix_memory::graph::NodeId, direction: entelix_memory::graph::Direction, max_depth: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<alloc::vec::Vec<entelix_memory::graph::GraphHop<E>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::neighbors<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, node: &'life3 entelix_memory::graph::NodeId, direction: entelix_memory::graph::Direction) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<(entelix_memory::graph::EdgeId, entelix_memory::graph::NodeId, E)>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::node<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, id: &'life3 entelix_memory::graph::NodeId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<N>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::node_count<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::prune_older_than<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, ttl: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::temporal_filter<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, from: chrono::datetime::DateTime<chrono::offset::utc::Utc>, to: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::graph::GraphHop<E>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_graphmemory_pg::PgGraphMemory<N, E>::traverse<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _ctx: &'life1 entelix_core::context::ExecutionContext, ns: &'life2 entelix_memory::namespace::Namespace, start: &'life3 entelix_memory::graph::NodeId, direction: entelix_memory::graph::Direction, max_depth: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::graph::GraphHop<E>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl<N, E> core::marker::Freeze for entelix_graphmemory_pg::PgGraphMemory<N, E>
+impl<N, E> core::marker::Send for entelix_graphmemory_pg::PgGraphMemory<N, E>
+impl<N, E> core::marker::Sync for entelix_graphmemory_pg::PgGraphMemory<N, E>
+impl<N, E> core::marker::Unpin for entelix_graphmemory_pg::PgGraphMemory<N, E>
+impl<N, E> core::marker::UnsafeUnpin for entelix_graphmemory_pg::PgGraphMemory<N, E>
+impl<N, E> !core::panic::unwind_safe::RefUnwindSafe for entelix_graphmemory_pg::PgGraphMemory<N, E>
+impl<N, E> !core::panic::unwind_safe::UnwindSafe for entelix_graphmemory_pg::PgGraphMemory<N, E>
+pub struct entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>
+impl<N, E> entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>
+pub async fn entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>::build(self) -> entelix_graphmemory_pg::PgGraphMemoryResult<entelix_graphmemory_pg::PgGraphMemory<N, E>>
+pub fn entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>::new() -> Self
+pub const fn entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>::with_auto_migrate(self, on: bool) -> Self
+pub fn entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>::with_connection_string(self, url: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>::with_edges_table(self, name: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>::with_nodes_table(self, name: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>::with_pool(self, pool: alloc::sync::Arc<sqlx_postgres::PgPool>) -> Self
+impl<N, E> core::default::Default for entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>
+pub fn entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>::default() -> Self
+impl<N, E> core::marker::Freeze for entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>
+impl<N, E> core::marker::Send for entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>
+impl<N, E> core::marker::Sync for entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>
+impl<N, E> core::marker::Unpin for entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>
+impl<N, E> core::marker::UnsafeUnpin for entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>
+impl<N, E> !core::panic::unwind_safe::RefUnwindSafe for entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>
+impl<N, E> !core::panic::unwind_safe::UnwindSafe for entelix_graphmemory_pg::PgGraphMemoryBuilder<N, E>
+pub type entelix_graphmemory_pg::PgGraphMemoryResult<T> = core::result::Result<T, entelix_graphmemory_pg::PgGraphMemoryError>

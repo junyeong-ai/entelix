@@ -1,0 +1,231 @@
+pub mod entelix_persistence
+pub mod entelix_persistence::advisory_key
+pub struct entelix_persistence::advisory_key::AdvisoryKey
+impl entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::advisory_key::AdvisoryKey::for_session(tenant_id: &str, thread_id: &str) -> Self
+pub fn entelix_persistence::advisory_key::AdvisoryKey::from_strings(parts: &[&str]) -> Self
+pub const fn entelix_persistence::advisory_key::AdvisoryKey::halves(&self) -> (i32, i32)
+pub const fn entelix_persistence::advisory_key::AdvisoryKey::raw(&self) -> i64
+pub fn entelix_persistence::advisory_key::AdvisoryKey::redis_key(&self) -> &str
+impl core::clone::Clone for entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::advisory_key::AdvisoryKey::clone(&self) -> entelix_persistence::advisory_key::AdvisoryKey
+impl core::cmp::Eq for entelix_persistence::advisory_key::AdvisoryKey
+impl core::cmp::PartialEq for entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::advisory_key::AdvisoryKey::eq(&self, other: &entelix_persistence::advisory_key::AdvisoryKey) -> bool
+impl core::fmt::Debug for entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::advisory_key::AdvisoryKey::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::advisory_key::AdvisoryKey::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::advisory_key::AdvisoryKey::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_persistence::advisory_key::AdvisoryKey
+impl core::marker::StructuralPartialEq for entelix_persistence::advisory_key::AdvisoryKey
+impl core::marker::Freeze for entelix_persistence::advisory_key::AdvisoryKey
+impl core::marker::Send for entelix_persistence::advisory_key::AdvisoryKey
+impl core::marker::Sync for entelix_persistence::advisory_key::AdvisoryKey
+impl core::marker::Unpin for entelix_persistence::advisory_key::AdvisoryKey
+impl core::marker::UnsafeUnpin for entelix_persistence::advisory_key::AdvisoryKey
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_persistence::advisory_key::AdvisoryKey
+impl core::panic::unwind_safe::UnwindSafe for entelix_persistence::advisory_key::AdvisoryKey
+pub mod entelix_persistence::error
+#[non_exhaustive] pub enum entelix_persistence::error::PersistenceError
+pub entelix_persistence::error::PersistenceError::Backend(alloc::string::String)
+pub entelix_persistence::error::PersistenceError::Config(alloc::string::String)
+pub entelix_persistence::error::PersistenceError::LockAcquireTimeout
+pub entelix_persistence::error::PersistenceError::LockAcquireTimeout::attempts: u32
+pub entelix_persistence::error::PersistenceError::LockAcquireTimeout::key: alloc::string::String
+pub entelix_persistence::error::PersistenceError::LockHeld
+pub entelix_persistence::error::PersistenceError::LockHeld::key: alloc::string::String
+pub entelix_persistence::error::PersistenceError::SchemaVersionMismatch
+pub entelix_persistence::error::PersistenceError::SchemaVersionMismatch::current: u32
+pub entelix_persistence::error::PersistenceError::SchemaVersionMismatch::min: u32
+pub entelix_persistence::error::PersistenceError::SchemaVersionMismatch::payload: u32
+pub entelix_persistence::error::PersistenceError::Serde(serde_json::error::Error)
+impl core::convert::From<entelix_persistence::error::PersistenceError> for entelix_core::error::Error
+pub fn entelix_core::error::Error::from(err: entelix_persistence::error::PersistenceError) -> Self
+impl core::convert::From<serde_json::error::Error> for entelix_persistence::error::PersistenceError
+pub fn entelix_persistence::error::PersistenceError::from(source: serde_json::error::Error) -> Self
+impl core::error::Error for entelix_persistence::error::PersistenceError
+pub fn entelix_persistence::error::PersistenceError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for entelix_persistence::error::PersistenceError
+pub fn entelix_persistence::error::PersistenceError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_persistence::error::PersistenceError
+pub fn entelix_persistence::error::PersistenceError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_persistence::error::PersistenceError
+impl core::marker::Send for entelix_persistence::error::PersistenceError
+impl core::marker::Sync for entelix_persistence::error::PersistenceError
+impl core::marker::Unpin for entelix_persistence::error::PersistenceError
+impl core::marker::UnsafeUnpin for entelix_persistence::error::PersistenceError
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_persistence::error::PersistenceError
+impl !core::panic::unwind_safe::UnwindSafe for entelix_persistence::error::PersistenceError
+pub type entelix_persistence::error::PersistenceResult<T> = core::result::Result<T, entelix_persistence::error::PersistenceError>
+pub mod entelix_persistence::lock
+pub struct entelix_persistence::lock::LockGuard
+impl entelix_persistence::lock::LockGuard
+pub fn entelix_persistence::lock::LockGuard::held_for(&self) -> core::time::Duration
+pub const fn entelix_persistence::lock::LockGuard::key(&self) -> &entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::lock::LockGuard::mark_released(&mut self)
+pub fn entelix_persistence::lock::LockGuard::new(key: entelix_persistence::advisory_key::AdvisoryKey) -> Self
+pub fn entelix_persistence::lock::LockGuard::token(&self) -> &str
+impl core::fmt::Debug for entelix_persistence::lock::LockGuard
+pub fn entelix_persistence::lock::LockGuard::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for entelix_persistence::lock::LockGuard
+pub fn entelix_persistence::lock::LockGuard::drop(&mut self)
+impl core::marker::Freeze for entelix_persistence::lock::LockGuard
+impl core::marker::Send for entelix_persistence::lock::LockGuard
+impl core::marker::Sync for entelix_persistence::lock::LockGuard
+impl core::marker::Unpin for entelix_persistence::lock::LockGuard
+impl core::marker::UnsafeUnpin for entelix_persistence::lock::LockGuard
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_persistence::lock::LockGuard
+impl core::panic::unwind_safe::UnwindSafe for entelix_persistence::lock::LockGuard
+pub const entelix_persistence::lock::DEFAULT_SESSION_LOCK_DEADLINE: core::time::Duration
+pub const entelix_persistence::lock::DEFAULT_SESSION_LOCK_TTL: core::time::Duration
+pub trait entelix_persistence::lock::DistributedLock: core::marker::Send + core::marker::Sync
+pub fn entelix_persistence::lock::DistributedLock::acquire<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_persistence::advisory_key::AdvisoryKey, ttl: core::time::Duration, deadline: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<entelix_persistence::lock::LockGuard>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_persistence::lock::DistributedLock::extend<'life0, 'life1, 'async_trait>(&'life0 self, guard: &'life1 entelix_persistence::lock::LockGuard, ttl: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<bool>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_persistence::lock::DistributedLock::release<'life0, 'async_trait>(&'life0 self, guard: entelix_persistence::lock::LockGuard) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_persistence::lock::DistributedLock::try_acquire<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_persistence::advisory_key::AdvisoryKey, ttl: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<core::option::Option<entelix_persistence::lock::LockGuard>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub async fn entelix_persistence::lock::with_session_lock<L, F, Fut, T, E>(lock: &L, tenant_id: &str, thread_id: &str, ttl: core::option::Option<core::time::Duration>, deadline: core::option::Option<core::time::Duration>, f: F) -> entelix_persistence::error::PersistenceResult<T> where L: entelix_persistence::lock::DistributedLock + ?core::marker::Sized, F: core::ops::function::FnOnce() -> Fut, Fut: core::future::future::Future<Output = core::result::Result<T, E>>, E: core::convert::Into<entelix_persistence::error::PersistenceError>
+pub mod entelix_persistence::schema_version
+pub struct entelix_persistence::schema_version::SessionSchemaVersion(pub u32)
+impl entelix_persistence::schema_version::SessionSchemaVersion
+pub const entelix_persistence::schema_version::SessionSchemaVersion::CURRENT: Self
+pub const fn entelix_persistence::schema_version::SessionSchemaVersion::raw(self) -> u32
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::validate(self) -> entelix_persistence::error::PersistenceResult<()>
+impl core::clone::Clone for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::clone(&self) -> entelix_persistence::schema_version::SessionSchemaVersion
+impl core::cmp::Eq for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::cmp::PartialEq for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::eq(&self, other: &entelix_persistence::schema_version::SessionSchemaVersion) -> bool
+impl core::default::Default for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::default() -> Self
+impl core::fmt::Debug for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::marker::StructuralPartialEq for entelix_persistence::schema_version::SessionSchemaVersion
+impl serde_core::ser::Serialize for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::marker::Send for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::marker::Sync for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::marker::Unpin for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::marker::UnsafeUnpin for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::panic::unwind_safe::UnwindSafe for entelix_persistence::schema_version::SessionSchemaVersion
+pub const entelix_persistence::schema_version::CURRENT_VERSION: u32
+pub const entelix_persistence::schema_version::MIN_SUPPORTED_VERSION: u32
+#[non_exhaustive] pub enum entelix_persistence::PersistenceError
+pub entelix_persistence::PersistenceError::Backend(alloc::string::String)
+pub entelix_persistence::PersistenceError::Config(alloc::string::String)
+pub entelix_persistence::PersistenceError::LockAcquireTimeout
+pub entelix_persistence::PersistenceError::LockAcquireTimeout::attempts: u32
+pub entelix_persistence::PersistenceError::LockAcquireTimeout::key: alloc::string::String
+pub entelix_persistence::PersistenceError::LockHeld
+pub entelix_persistence::PersistenceError::LockHeld::key: alloc::string::String
+pub entelix_persistence::PersistenceError::SchemaVersionMismatch
+pub entelix_persistence::PersistenceError::SchemaVersionMismatch::current: u32
+pub entelix_persistence::PersistenceError::SchemaVersionMismatch::min: u32
+pub entelix_persistence::PersistenceError::SchemaVersionMismatch::payload: u32
+pub entelix_persistence::PersistenceError::Serde(serde_json::error::Error)
+impl core::convert::From<entelix_persistence::error::PersistenceError> for entelix_core::error::Error
+pub fn entelix_core::error::Error::from(err: entelix_persistence::error::PersistenceError) -> Self
+impl core::convert::From<serde_json::error::Error> for entelix_persistence::error::PersistenceError
+pub fn entelix_persistence::error::PersistenceError::from(source: serde_json::error::Error) -> Self
+impl core::error::Error for entelix_persistence::error::PersistenceError
+pub fn entelix_persistence::error::PersistenceError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for entelix_persistence::error::PersistenceError
+pub fn entelix_persistence::error::PersistenceError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_persistence::error::PersistenceError
+pub fn entelix_persistence::error::PersistenceError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_persistence::error::PersistenceError
+impl core::marker::Send for entelix_persistence::error::PersistenceError
+impl core::marker::Sync for entelix_persistence::error::PersistenceError
+impl core::marker::Unpin for entelix_persistence::error::PersistenceError
+impl core::marker::UnsafeUnpin for entelix_persistence::error::PersistenceError
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_persistence::error::PersistenceError
+impl !core::panic::unwind_safe::UnwindSafe for entelix_persistence::error::PersistenceError
+pub struct entelix_persistence::AdvisoryKey
+impl entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::advisory_key::AdvisoryKey::for_session(tenant_id: &str, thread_id: &str) -> Self
+pub fn entelix_persistence::advisory_key::AdvisoryKey::from_strings(parts: &[&str]) -> Self
+pub const fn entelix_persistence::advisory_key::AdvisoryKey::halves(&self) -> (i32, i32)
+pub const fn entelix_persistence::advisory_key::AdvisoryKey::raw(&self) -> i64
+pub fn entelix_persistence::advisory_key::AdvisoryKey::redis_key(&self) -> &str
+impl core::clone::Clone for entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::advisory_key::AdvisoryKey::clone(&self) -> entelix_persistence::advisory_key::AdvisoryKey
+impl core::cmp::Eq for entelix_persistence::advisory_key::AdvisoryKey
+impl core::cmp::PartialEq for entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::advisory_key::AdvisoryKey::eq(&self, other: &entelix_persistence::advisory_key::AdvisoryKey) -> bool
+impl core::fmt::Debug for entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::advisory_key::AdvisoryKey::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::advisory_key::AdvisoryKey::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::advisory_key::AdvisoryKey::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_persistence::advisory_key::AdvisoryKey
+impl core::marker::StructuralPartialEq for entelix_persistence::advisory_key::AdvisoryKey
+impl core::marker::Freeze for entelix_persistence::advisory_key::AdvisoryKey
+impl core::marker::Send for entelix_persistence::advisory_key::AdvisoryKey
+impl core::marker::Sync for entelix_persistence::advisory_key::AdvisoryKey
+impl core::marker::Unpin for entelix_persistence::advisory_key::AdvisoryKey
+impl core::marker::UnsafeUnpin for entelix_persistence::advisory_key::AdvisoryKey
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_persistence::advisory_key::AdvisoryKey
+impl core::panic::unwind_safe::UnwindSafe for entelix_persistence::advisory_key::AdvisoryKey
+pub struct entelix_persistence::LockGuard
+impl entelix_persistence::lock::LockGuard
+pub fn entelix_persistence::lock::LockGuard::held_for(&self) -> core::time::Duration
+pub const fn entelix_persistence::lock::LockGuard::key(&self) -> &entelix_persistence::advisory_key::AdvisoryKey
+pub fn entelix_persistence::lock::LockGuard::mark_released(&mut self)
+pub fn entelix_persistence::lock::LockGuard::new(key: entelix_persistence::advisory_key::AdvisoryKey) -> Self
+pub fn entelix_persistence::lock::LockGuard::token(&self) -> &str
+impl core::fmt::Debug for entelix_persistence::lock::LockGuard
+pub fn entelix_persistence::lock::LockGuard::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for entelix_persistence::lock::LockGuard
+pub fn entelix_persistence::lock::LockGuard::drop(&mut self)
+impl core::marker::Freeze for entelix_persistence::lock::LockGuard
+impl core::marker::Send for entelix_persistence::lock::LockGuard
+impl core::marker::Sync for entelix_persistence::lock::LockGuard
+impl core::marker::Unpin for entelix_persistence::lock::LockGuard
+impl core::marker::UnsafeUnpin for entelix_persistence::lock::LockGuard
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_persistence::lock::LockGuard
+impl core::panic::unwind_safe::UnwindSafe for entelix_persistence::lock::LockGuard
+pub struct entelix_persistence::SessionSchemaVersion(pub u32)
+impl entelix_persistence::schema_version::SessionSchemaVersion
+pub const entelix_persistence::schema_version::SessionSchemaVersion::CURRENT: Self
+pub const fn entelix_persistence::schema_version::SessionSchemaVersion::raw(self) -> u32
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::validate(self) -> entelix_persistence::error::PersistenceResult<()>
+impl core::clone::Clone for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::clone(&self) -> entelix_persistence::schema_version::SessionSchemaVersion
+impl core::cmp::Eq for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::cmp::PartialEq for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::eq(&self, other: &entelix_persistence::schema_version::SessionSchemaVersion) -> bool
+impl core::default::Default for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::default() -> Self
+impl core::fmt::Debug for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::marker::StructuralPartialEq for entelix_persistence::schema_version::SessionSchemaVersion
+impl serde_core::ser::Serialize for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_persistence::schema_version::SessionSchemaVersion
+pub fn entelix_persistence::schema_version::SessionSchemaVersion::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::marker::Send for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::marker::Sync for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::marker::Unpin for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::marker::UnsafeUnpin for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_persistence::schema_version::SessionSchemaVersion
+impl core::panic::unwind_safe::UnwindSafe for entelix_persistence::schema_version::SessionSchemaVersion
+pub trait entelix_persistence::DistributedLock: core::marker::Send + core::marker::Sync
+pub fn entelix_persistence::DistributedLock::acquire<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_persistence::advisory_key::AdvisoryKey, ttl: core::time::Duration, deadline: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<entelix_persistence::lock::LockGuard>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_persistence::DistributedLock::extend<'life0, 'life1, 'async_trait>(&'life0 self, guard: &'life1 entelix_persistence::lock::LockGuard, ttl: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<bool>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_persistence::DistributedLock::release<'life0, 'async_trait>(&'life0 self, guard: entelix_persistence::lock::LockGuard) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_persistence::DistributedLock::try_acquire<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_persistence::advisory_key::AdvisoryKey, ttl: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<core::option::Option<entelix_persistence::lock::LockGuard>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub async fn entelix_persistence::with_session_lock<L, F, Fut, T, E>(lock: &L, tenant_id: &str, thread_id: &str, ttl: core::option::Option<core::time::Duration>, deadline: core::option::Option<core::time::Duration>, f: F) -> entelix_persistence::error::PersistenceResult<T> where L: entelix_persistence::lock::DistributedLock + ?core::marker::Sized, F: core::ops::function::FnOnce() -> Fut, Fut: core::future::future::Future<Output = core::result::Result<T, E>>, E: core::convert::Into<entelix_persistence::error::PersistenceError>
+pub type entelix_persistence::PersistenceResult<T> = core::result::Result<T, entelix_persistence::error::PersistenceError>

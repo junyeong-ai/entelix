@@ -1,0 +1,822 @@
+pub mod entelix_mcp
+#[non_exhaustive] pub enum entelix_mcp::ElicitationResponse
+pub entelix_mcp::ElicitationResponse::Accept(serde_json::value::Value)
+pub entelix_mcp::ElicitationResponse::Cancel
+pub entelix_mcp::ElicitationResponse::Decline
+impl core::clone::Clone for entelix_mcp::ElicitationResponse
+pub fn entelix_mcp::ElicitationResponse::clone(&self) -> entelix_mcp::ElicitationResponse
+impl core::cmp::Eq for entelix_mcp::ElicitationResponse
+impl core::cmp::PartialEq for entelix_mcp::ElicitationResponse
+pub fn entelix_mcp::ElicitationResponse::eq(&self, other: &entelix_mcp::ElicitationResponse) -> bool
+impl core::fmt::Debug for entelix_mcp::ElicitationResponse
+pub fn entelix_mcp::ElicitationResponse::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::ElicitationResponse
+impl serde_core::ser::Serialize for entelix_mcp::ElicitationResponse
+pub fn entelix_mcp::ElicitationResponse::serialize<S>(&self, serializer: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error> where S: serde_core::ser::Serializer
+impl core::marker::Freeze for entelix_mcp::ElicitationResponse
+impl core::marker::Send for entelix_mcp::ElicitationResponse
+impl core::marker::Sync for entelix_mcp::ElicitationResponse
+impl core::marker::Unpin for entelix_mcp::ElicitationResponse
+impl core::marker::UnsafeUnpin for entelix_mcp::ElicitationResponse
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::ElicitationResponse
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::ElicitationResponse
+#[non_exhaustive] pub enum entelix_mcp::IncludeContext
+pub entelix_mcp::IncludeContext::AllServers
+pub entelix_mcp::IncludeContext::None
+pub entelix_mcp::IncludeContext::ThisServer
+impl core::clone::Clone for entelix_mcp::IncludeContext
+pub fn entelix_mcp::IncludeContext::clone(&self) -> entelix_mcp::IncludeContext
+impl core::cmp::Eq for entelix_mcp::IncludeContext
+impl core::cmp::PartialEq for entelix_mcp::IncludeContext
+pub fn entelix_mcp::IncludeContext::eq(&self, other: &entelix_mcp::IncludeContext) -> bool
+impl core::default::Default for entelix_mcp::IncludeContext
+pub fn entelix_mcp::IncludeContext::default() -> entelix_mcp::IncludeContext
+impl core::fmt::Debug for entelix_mcp::IncludeContext
+pub fn entelix_mcp::IncludeContext::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_mcp::IncludeContext
+impl core::marker::StructuralPartialEq for entelix_mcp::IncludeContext
+impl serde_core::ser::Serialize for entelix_mcp::IncludeContext
+pub fn entelix_mcp::IncludeContext::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::IncludeContext
+pub fn entelix_mcp::IncludeContext::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::IncludeContext
+impl core::marker::Send for entelix_mcp::IncludeContext
+impl core::marker::Sync for entelix_mcp::IncludeContext
+impl core::marker::Unpin for entelix_mcp::IncludeContext
+impl core::marker::UnsafeUnpin for entelix_mcp::IncludeContext
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::IncludeContext
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::IncludeContext
+#[non_exhaustive] pub enum entelix_mcp::McpClientState
+pub entelix_mcp::McpClientState::CacheWarmup = 8
+pub entelix_mcp::McpClientState::Failed = 10
+pub entelix_mcp::McpClientState::Handshake = 2
+pub entelix_mcp::McpClientState::InitializeProtocol = 3
+pub entelix_mcp::McpClientState::ListPrompts = 7
+pub entelix_mcp::McpClientState::ListResources = 6
+pub entelix_mcp::McpClientState::ListTools = 5
+pub entelix_mcp::McpClientState::NegotiateCapabilities = 4
+pub entelix_mcp::McpClientState::Queued = 0
+pub entelix_mcp::McpClientState::Ready = 9
+pub entelix_mcp::McpClientState::Spawn = 1
+impl entelix_mcp::McpClientState
+pub fn entelix_mcp::McpClientState::is_forward(from: Self, to: Self) -> bool
+impl core::clone::Clone for entelix_mcp::McpClientState
+pub fn entelix_mcp::McpClientState::clone(&self) -> entelix_mcp::McpClientState
+impl core::cmp::Eq for entelix_mcp::McpClientState
+impl core::cmp::PartialEq for entelix_mcp::McpClientState
+pub fn entelix_mcp::McpClientState::eq(&self, other: &entelix_mcp::McpClientState) -> bool
+impl core::fmt::Debug for entelix_mcp::McpClientState
+pub fn entelix_mcp::McpClientState::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_mcp::McpClientState
+pub fn entelix_mcp::McpClientState::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_mcp::McpClientState
+impl core::marker::StructuralPartialEq for entelix_mcp::McpClientState
+impl core::marker::Freeze for entelix_mcp::McpClientState
+impl core::marker::Send for entelix_mcp::McpClientState
+impl core::marker::Sync for entelix_mcp::McpClientState
+impl core::marker::Unpin for entelix_mcp::McpClientState
+impl core::marker::UnsafeUnpin for entelix_mcp::McpClientState
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpClientState
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpClientState
+#[non_exhaustive] pub enum entelix_mcp::McpCompletionReference
+pub entelix_mcp::McpCompletionReference::Prompt
+pub entelix_mcp::McpCompletionReference::Prompt::name: alloc::string::String
+pub entelix_mcp::McpCompletionReference::Resource
+pub entelix_mcp::McpCompletionReference::Resource::uri: alloc::string::String
+impl core::clone::Clone for entelix_mcp::McpCompletionReference
+pub fn entelix_mcp::McpCompletionReference::clone(&self) -> entelix_mcp::McpCompletionReference
+impl core::cmp::Eq for entelix_mcp::McpCompletionReference
+impl core::cmp::PartialEq for entelix_mcp::McpCompletionReference
+pub fn entelix_mcp::McpCompletionReference::eq(&self, other: &entelix_mcp::McpCompletionReference) -> bool
+impl core::fmt::Debug for entelix_mcp::McpCompletionReference
+pub fn entelix_mcp::McpCompletionReference::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::McpCompletionReference
+impl serde_core::ser::Serialize for entelix_mcp::McpCompletionReference
+pub fn entelix_mcp::McpCompletionReference::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::McpCompletionReference
+pub fn entelix_mcp::McpCompletionReference::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::McpCompletionReference
+impl core::marker::Send for entelix_mcp::McpCompletionReference
+impl core::marker::Sync for entelix_mcp::McpCompletionReference
+impl core::marker::Unpin for entelix_mcp::McpCompletionReference
+impl core::marker::UnsafeUnpin for entelix_mcp::McpCompletionReference
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpCompletionReference
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpCompletionReference
+#[non_exhaustive] pub enum entelix_mcp::McpError
+pub entelix_mcp::McpError::Config(alloc::string::String)
+pub entelix_mcp::McpError::JsonRpc
+pub entelix_mcp::McpError::JsonRpc::code: i64
+pub entelix_mcp::McpError::JsonRpc::message: alloc::string::String
+pub entelix_mcp::McpError::MalformedResponse
+pub entelix_mcp::McpError::MalformedResponse::message: alloc::string::String
+pub entelix_mcp::McpError::MalformedResponse::source: core::option::Option<alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>>
+pub entelix_mcp::McpError::Network
+pub entelix_mcp::McpError::Network::message: alloc::string::String
+pub entelix_mcp::McpError::Network::source: core::option::Option<alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>>
+pub entelix_mcp::McpError::ResourceBounded
+pub entelix_mcp::McpError::ResourceBounded::kind: entelix_mcp::ResourceBoundKind
+pub entelix_mcp::McpError::ResourceBounded::message: alloc::string::String
+pub entelix_mcp::McpError::Serde(serde_json::error::Error)
+pub entelix_mcp::McpError::UnknownServer
+pub entelix_mcp::McpError::UnknownServer::server: alloc::string::String
+pub entelix_mcp::McpError::UnknownServer::tenant_id: alloc::string::String
+pub entelix_mcp::McpError::Unreachable
+pub entelix_mcp::McpError::Unreachable::attempts: u32
+pub entelix_mcp::McpError::Unreachable::server: alloc::string::String
+impl entelix_mcp::McpError
+pub fn entelix_mcp::McpError::malformed<E>(source: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_mcp::McpError::malformed_msg(message: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_mcp::McpError::network<E>(source: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_mcp::McpError::network_status(message: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::convert::From<entelix_mcp::McpError> for entelix_core::error::Error
+pub fn entelix_core::error::Error::from(err: entelix_mcp::McpError) -> Self
+impl core::convert::From<serde_json::error::Error> for entelix_mcp::McpError
+pub fn entelix_mcp::McpError::from(source: serde_json::error::Error) -> Self
+impl core::error::Error for entelix_mcp::McpError
+pub fn entelix_mcp::McpError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for entelix_mcp::McpError
+pub fn entelix_mcp::McpError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_mcp::McpError
+pub fn entelix_mcp::McpError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_mcp::McpError
+impl core::marker::Send for entelix_mcp::McpError
+impl core::marker::Sync for entelix_mcp::McpError
+impl core::marker::Unpin for entelix_mcp::McpError
+impl core::marker::UnsafeUnpin for entelix_mcp::McpError
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpError
+impl !core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpError
+#[non_exhaustive] pub enum entelix_mcp::McpPromptContent
+pub entelix_mcp::McpPromptContent::Image
+pub entelix_mcp::McpPromptContent::Image::data: alloc::string::String
+pub entelix_mcp::McpPromptContent::Image::mime_type: alloc::string::String
+pub entelix_mcp::McpPromptContent::Resource
+pub entelix_mcp::McpPromptContent::Resource::resource: entelix_mcp::McpPromptResourceRef
+pub entelix_mcp::McpPromptContent::Text
+pub entelix_mcp::McpPromptContent::Text::text: alloc::string::String
+impl core::clone::Clone for entelix_mcp::McpPromptContent
+pub fn entelix_mcp::McpPromptContent::clone(&self) -> entelix_mcp::McpPromptContent
+impl core::cmp::Eq for entelix_mcp::McpPromptContent
+impl core::cmp::PartialEq for entelix_mcp::McpPromptContent
+pub fn entelix_mcp::McpPromptContent::eq(&self, other: &entelix_mcp::McpPromptContent) -> bool
+impl core::fmt::Debug for entelix_mcp::McpPromptContent
+pub fn entelix_mcp::McpPromptContent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::McpPromptContent
+impl serde_core::ser::Serialize for entelix_mcp::McpPromptContent
+pub fn entelix_mcp::McpPromptContent::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::McpPromptContent
+pub fn entelix_mcp::McpPromptContent::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::McpPromptContent
+impl core::marker::Send for entelix_mcp::McpPromptContent
+impl core::marker::Sync for entelix_mcp::McpPromptContent
+impl core::marker::Unpin for entelix_mcp::McpPromptContent
+impl core::marker::UnsafeUnpin for entelix_mcp::McpPromptContent
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpPromptContent
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpPromptContent
+#[non_exhaustive] pub enum entelix_mcp::McpResourceContent
+pub entelix_mcp::McpResourceContent::Blob
+pub entelix_mcp::McpResourceContent::Blob::blob: alloc::string::String
+pub entelix_mcp::McpResourceContent::Blob::mime_type: core::option::Option<alloc::string::String>
+pub entelix_mcp::McpResourceContent::Blob::uri: alloc::string::String
+pub entelix_mcp::McpResourceContent::Text
+pub entelix_mcp::McpResourceContent::Text::mime_type: core::option::Option<alloc::string::String>
+pub entelix_mcp::McpResourceContent::Text::text: alloc::string::String
+pub entelix_mcp::McpResourceContent::Text::uri: alloc::string::String
+impl core::clone::Clone for entelix_mcp::McpResourceContent
+pub fn entelix_mcp::McpResourceContent::clone(&self) -> entelix_mcp::McpResourceContent
+impl core::cmp::Eq for entelix_mcp::McpResourceContent
+impl core::cmp::PartialEq for entelix_mcp::McpResourceContent
+pub fn entelix_mcp::McpResourceContent::eq(&self, other: &entelix_mcp::McpResourceContent) -> bool
+impl core::fmt::Debug for entelix_mcp::McpResourceContent
+pub fn entelix_mcp::McpResourceContent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::McpResourceContent
+impl serde_core::ser::Serialize for entelix_mcp::McpResourceContent
+pub fn entelix_mcp::McpResourceContent::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::McpResourceContent
+pub fn entelix_mcp::McpResourceContent::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::McpResourceContent
+impl core::marker::Send for entelix_mcp::McpResourceContent
+impl core::marker::Sync for entelix_mcp::McpResourceContent
+impl core::marker::Unpin for entelix_mcp::McpResourceContent
+impl core::marker::UnsafeUnpin for entelix_mcp::McpResourceContent
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpResourceContent
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpResourceContent
+#[non_exhaustive] pub enum entelix_mcp::ResourceBoundKind
+pub entelix_mcp::ResourceBoundKind::FrameSize
+impl core::clone::Clone for entelix_mcp::ResourceBoundKind
+pub fn entelix_mcp::ResourceBoundKind::clone(&self) -> entelix_mcp::ResourceBoundKind
+impl core::cmp::Eq for entelix_mcp::ResourceBoundKind
+impl core::cmp::PartialEq for entelix_mcp::ResourceBoundKind
+pub fn entelix_mcp::ResourceBoundKind::eq(&self, other: &entelix_mcp::ResourceBoundKind) -> bool
+impl core::fmt::Debug for entelix_mcp::ResourceBoundKind
+pub fn entelix_mcp::ResourceBoundKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_mcp::ResourceBoundKind
+pub fn entelix_mcp::ResourceBoundKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_mcp::ResourceBoundKind
+impl core::marker::StructuralPartialEq for entelix_mcp::ResourceBoundKind
+impl core::marker::Freeze for entelix_mcp::ResourceBoundKind
+impl core::marker::Send for entelix_mcp::ResourceBoundKind
+impl core::marker::Sync for entelix_mcp::ResourceBoundKind
+impl core::marker::Unpin for entelix_mcp::ResourceBoundKind
+impl core::marker::UnsafeUnpin for entelix_mcp::ResourceBoundKind
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::ResourceBoundKind
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::ResourceBoundKind
+#[non_exhaustive] pub enum entelix_mcp::SamplingContent
+pub entelix_mcp::SamplingContent::Audio
+pub entelix_mcp::SamplingContent::Audio::data: alloc::string::String
+pub entelix_mcp::SamplingContent::Audio::mime_type: alloc::string::String
+pub entelix_mcp::SamplingContent::Image
+pub entelix_mcp::SamplingContent::Image::data: alloc::string::String
+pub entelix_mcp::SamplingContent::Image::mime_type: alloc::string::String
+pub entelix_mcp::SamplingContent::Text
+pub entelix_mcp::SamplingContent::Text::text: alloc::string::String
+impl core::clone::Clone for entelix_mcp::SamplingContent
+pub fn entelix_mcp::SamplingContent::clone(&self) -> entelix_mcp::SamplingContent
+impl core::cmp::Eq for entelix_mcp::SamplingContent
+impl core::cmp::PartialEq for entelix_mcp::SamplingContent
+pub fn entelix_mcp::SamplingContent::eq(&self, other: &entelix_mcp::SamplingContent) -> bool
+impl core::fmt::Debug for entelix_mcp::SamplingContent
+pub fn entelix_mcp::SamplingContent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::SamplingContent
+impl serde_core::ser::Serialize for entelix_mcp::SamplingContent
+pub fn entelix_mcp::SamplingContent::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::SamplingContent
+pub fn entelix_mcp::SamplingContent::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::SamplingContent
+impl core::marker::Send for entelix_mcp::SamplingContent
+impl core::marker::Sync for entelix_mcp::SamplingContent
+impl core::marker::Unpin for entelix_mcp::SamplingContent
+impl core::marker::UnsafeUnpin for entelix_mcp::SamplingContent
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::SamplingContent
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::SamplingContent
+pub struct entelix_mcp::ElicitationRequest
+pub entelix_mcp::ElicitationRequest::message: alloc::string::String
+pub entelix_mcp::ElicitationRequest::requested_schema: serde_json::value::Value
+impl core::clone::Clone for entelix_mcp::ElicitationRequest
+pub fn entelix_mcp::ElicitationRequest::clone(&self) -> entelix_mcp::ElicitationRequest
+impl core::cmp::Eq for entelix_mcp::ElicitationRequest
+impl core::cmp::PartialEq for entelix_mcp::ElicitationRequest
+pub fn entelix_mcp::ElicitationRequest::eq(&self, other: &entelix_mcp::ElicitationRequest) -> bool
+impl core::fmt::Debug for entelix_mcp::ElicitationRequest
+pub fn entelix_mcp::ElicitationRequest::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::ElicitationRequest
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::ElicitationRequest
+pub fn entelix_mcp::ElicitationRequest::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::ElicitationRequest
+impl core::marker::Send for entelix_mcp::ElicitationRequest
+impl core::marker::Sync for entelix_mcp::ElicitationRequest
+impl core::marker::Unpin for entelix_mcp::ElicitationRequest
+impl core::marker::UnsafeUnpin for entelix_mcp::ElicitationRequest
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::ElicitationRequest
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::ElicitationRequest
+pub struct entelix_mcp::HttpMcpClient
+impl entelix_mcp::HttpMcpClient
+pub fn entelix_mcp::HttpMcpClient::new(config: entelix_mcp::McpServerConfig) -> entelix_mcp::McpResult<Self>
+impl core::ops::drop::Drop for entelix_mcp::HttpMcpClient
+pub fn entelix_mcp::HttpMcpClient::drop(&mut self)
+impl entelix_mcp::McpClient for entelix_mcp::HttpMcpClient
+pub fn entelix_mcp::HttpMcpClient::call_tool<'life0, 'life1, 'async_trait>(&'life0 self, name: &'life1 str, arguments: serde_json::value::Value) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::complete<'life0, 'async_trait>(&'life0 self, reference: entelix_mcp::McpCompletionReference, argument: entelix_mcp::McpCompletionArgument) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<entelix_mcp::McpCompletionResult>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::get_prompt<'life0, 'life1, 'async_trait>(&'life0 self, name: &'life1 str, arguments: alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::string::String>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<entelix_mcp::McpPromptInvocation>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::initialize<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpToolDefinition>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::list_prompts<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpPrompt>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::list_resources<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpResource>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::notify_roots_changed<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::read_resource<'life0, 'life1, 'async_trait>(&'life0 self, uri: &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpResourceContent>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::state(&self) -> entelix_mcp::McpClientState
+impl !core::marker::Freeze for entelix_mcp::HttpMcpClient
+impl core::marker::Send for entelix_mcp::HttpMcpClient
+impl core::marker::Sync for entelix_mcp::HttpMcpClient
+impl core::marker::Unpin for entelix_mcp::HttpMcpClient
+impl core::marker::UnsafeUnpin for entelix_mcp::HttpMcpClient
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::HttpMcpClient
+impl !core::panic::unwind_safe::UnwindSafe for entelix_mcp::HttpMcpClient
+pub struct entelix_mcp::McpCompletionArgument
+pub entelix_mcp::McpCompletionArgument::name: alloc::string::String
+pub entelix_mcp::McpCompletionArgument::value: alloc::string::String
+impl core::clone::Clone for entelix_mcp::McpCompletionArgument
+pub fn entelix_mcp::McpCompletionArgument::clone(&self) -> entelix_mcp::McpCompletionArgument
+impl core::cmp::Eq for entelix_mcp::McpCompletionArgument
+impl core::cmp::PartialEq for entelix_mcp::McpCompletionArgument
+pub fn entelix_mcp::McpCompletionArgument::eq(&self, other: &entelix_mcp::McpCompletionArgument) -> bool
+impl core::fmt::Debug for entelix_mcp::McpCompletionArgument
+pub fn entelix_mcp::McpCompletionArgument::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::McpCompletionArgument
+impl serde_core::ser::Serialize for entelix_mcp::McpCompletionArgument
+pub fn entelix_mcp::McpCompletionArgument::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::McpCompletionArgument
+pub fn entelix_mcp::McpCompletionArgument::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::McpCompletionArgument
+impl core::marker::Send for entelix_mcp::McpCompletionArgument
+impl core::marker::Sync for entelix_mcp::McpCompletionArgument
+impl core::marker::Unpin for entelix_mcp::McpCompletionArgument
+impl core::marker::UnsafeUnpin for entelix_mcp::McpCompletionArgument
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpCompletionArgument
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpCompletionArgument
+pub struct entelix_mcp::McpCompletionResult
+pub entelix_mcp::McpCompletionResult::has_more: bool
+pub entelix_mcp::McpCompletionResult::total: core::option::Option<u32>
+pub entelix_mcp::McpCompletionResult::values: alloc::vec::Vec<alloc::string::String>
+impl core::clone::Clone for entelix_mcp::McpCompletionResult
+pub fn entelix_mcp::McpCompletionResult::clone(&self) -> entelix_mcp::McpCompletionResult
+impl core::cmp::Eq for entelix_mcp::McpCompletionResult
+impl core::cmp::PartialEq for entelix_mcp::McpCompletionResult
+pub fn entelix_mcp::McpCompletionResult::eq(&self, other: &entelix_mcp::McpCompletionResult) -> bool
+impl core::fmt::Debug for entelix_mcp::McpCompletionResult
+pub fn entelix_mcp::McpCompletionResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::McpCompletionResult
+impl serde_core::ser::Serialize for entelix_mcp::McpCompletionResult
+pub fn entelix_mcp::McpCompletionResult::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::McpCompletionResult
+pub fn entelix_mcp::McpCompletionResult::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::McpCompletionResult
+impl core::marker::Send for entelix_mcp::McpCompletionResult
+impl core::marker::Sync for entelix_mcp::McpCompletionResult
+impl core::marker::Unpin for entelix_mcp::McpCompletionResult
+impl core::marker::UnsafeUnpin for entelix_mcp::McpCompletionResult
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpCompletionResult
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpCompletionResult
+pub struct entelix_mcp::McpManager
+impl entelix_mcp::McpManager
+pub fn entelix_mcp::McpManager::builder() -> entelix_mcp::McpManagerBuilder
+pub async fn entelix_mcp::McpManager::call_tool(&self, ctx: &entelix_core::context::ExecutionContext, server: &str, tool: &str, arguments: serde_json::value::Value) -> entelix_mcp::McpResult<serde_json::value::Value>
+pub async fn entelix_mcp::McpManager::complete(&self, ctx: &entelix_core::context::ExecutionContext, server: &str, reference: entelix_mcp::McpCompletionReference, argument: entelix_mcp::McpCompletionArgument) -> entelix_mcp::McpResult<entelix_mcp::McpCompletionResult>
+pub async fn entelix_mcp::McpManager::get_prompt(&self, ctx: &entelix_core::context::ExecutionContext, server: &str, prompt: &str, arguments: alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::string::String>) -> entelix_mcp::McpResult<entelix_mcp::McpPromptInvocation>
+pub async fn entelix_mcp::McpManager::list_prompts(&self, ctx: &entelix_core::context::ExecutionContext, server: &str) -> entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpPrompt>>
+pub async fn entelix_mcp::McpManager::list_resources(&self, ctx: &entelix_core::context::ExecutionContext, server: &str) -> entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpResource>>
+pub async fn entelix_mcp::McpManager::list_tools(&self, ctx: &entelix_core::context::ExecutionContext, server: &str) -> entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpToolDefinition>>
+pub async fn entelix_mcp::McpManager::notify_roots_changed(&self, ctx: &entelix_core::context::ExecutionContext, server: &str) -> entelix_mcp::McpResult<()>
+pub fn entelix_mcp::McpManager::pool_size(&self) -> usize
+pub fn entelix_mcp::McpManager::prune_idle(&self, max_idle: core::time::Duration) -> usize
+pub fn entelix_mcp::McpManager::prune_idle_per_config(&self) -> usize
+pub async fn entelix_mcp::McpManager::read_resource(&self, ctx: &entelix_core::context::ExecutionContext, server: &str, uri: &str) -> entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpResourceContent>>
+pub fn entelix_mcp::McpManager::server_names(&self) -> impl core::iter::traits::iterator::Iterator<Item = &str>
+impl core::clone::Clone for entelix_mcp::McpManager
+pub fn entelix_mcp::McpManager::clone(&self) -> entelix_mcp::McpManager
+impl core::fmt::Debug for entelix_mcp::McpManager
+pub fn entelix_mcp::McpManager::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_mcp::McpManager
+impl core::marker::Send for entelix_mcp::McpManager
+impl core::marker::Sync for entelix_mcp::McpManager
+impl core::marker::Unpin for entelix_mcp::McpManager
+impl core::marker::UnsafeUnpin for entelix_mcp::McpManager
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpManager
+impl !core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpManager
+pub struct entelix_mcp::McpManagerBuilder
+impl entelix_mcp::McpManagerBuilder
+pub fn entelix_mcp::McpManagerBuilder::build(self) -> entelix_mcp::McpResult<entelix_mcp::McpManager>
+pub fn entelix_mcp::McpManagerBuilder::new() -> Self
+pub fn entelix_mcp::McpManagerBuilder::register(self, config: entelix_mcp::McpServerConfig) -> Self
+impl core::default::Default for entelix_mcp::McpManagerBuilder
+pub fn entelix_mcp::McpManagerBuilder::default() -> Self
+impl core::marker::Freeze for entelix_mcp::McpManagerBuilder
+impl core::marker::Send for entelix_mcp::McpManagerBuilder
+impl core::marker::Sync for entelix_mcp::McpManagerBuilder
+impl core::marker::Unpin for entelix_mcp::McpManagerBuilder
+impl core::marker::UnsafeUnpin for entelix_mcp::McpManagerBuilder
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpManagerBuilder
+impl !core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpManagerBuilder
+pub struct entelix_mcp::McpPrompt
+pub entelix_mcp::McpPrompt::arguments: alloc::vec::Vec<entelix_mcp::McpPromptArgument>
+pub entelix_mcp::McpPrompt::description: core::option::Option<alloc::string::String>
+pub entelix_mcp::McpPrompt::extras: serde_json::map::Map<alloc::string::String, serde_json::value::Value>
+pub entelix_mcp::McpPrompt::name: alloc::string::String
+impl core::clone::Clone for entelix_mcp::McpPrompt
+pub fn entelix_mcp::McpPrompt::clone(&self) -> entelix_mcp::McpPrompt
+impl core::cmp::Eq for entelix_mcp::McpPrompt
+impl core::cmp::PartialEq for entelix_mcp::McpPrompt
+pub fn entelix_mcp::McpPrompt::eq(&self, other: &entelix_mcp::McpPrompt) -> bool
+impl core::fmt::Debug for entelix_mcp::McpPrompt
+pub fn entelix_mcp::McpPrompt::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::McpPrompt
+impl serde_core::ser::Serialize for entelix_mcp::McpPrompt
+pub fn entelix_mcp::McpPrompt::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::McpPrompt
+pub fn entelix_mcp::McpPrompt::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::McpPrompt
+impl core::marker::Send for entelix_mcp::McpPrompt
+impl core::marker::Sync for entelix_mcp::McpPrompt
+impl core::marker::Unpin for entelix_mcp::McpPrompt
+impl core::marker::UnsafeUnpin for entelix_mcp::McpPrompt
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpPrompt
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpPrompt
+pub struct entelix_mcp::McpPromptArgument
+pub entelix_mcp::McpPromptArgument::description: core::option::Option<alloc::string::String>
+pub entelix_mcp::McpPromptArgument::name: alloc::string::String
+pub entelix_mcp::McpPromptArgument::required: bool
+impl core::clone::Clone for entelix_mcp::McpPromptArgument
+pub fn entelix_mcp::McpPromptArgument::clone(&self) -> entelix_mcp::McpPromptArgument
+impl core::cmp::Eq for entelix_mcp::McpPromptArgument
+impl core::cmp::PartialEq for entelix_mcp::McpPromptArgument
+pub fn entelix_mcp::McpPromptArgument::eq(&self, other: &entelix_mcp::McpPromptArgument) -> bool
+impl core::fmt::Debug for entelix_mcp::McpPromptArgument
+pub fn entelix_mcp::McpPromptArgument::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::McpPromptArgument
+impl serde_core::ser::Serialize for entelix_mcp::McpPromptArgument
+pub fn entelix_mcp::McpPromptArgument::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::McpPromptArgument
+pub fn entelix_mcp::McpPromptArgument::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::McpPromptArgument
+impl core::marker::Send for entelix_mcp::McpPromptArgument
+impl core::marker::Sync for entelix_mcp::McpPromptArgument
+impl core::marker::Unpin for entelix_mcp::McpPromptArgument
+impl core::marker::UnsafeUnpin for entelix_mcp::McpPromptArgument
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpPromptArgument
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpPromptArgument
+pub struct entelix_mcp::McpPromptInvocation
+pub entelix_mcp::McpPromptInvocation::description: core::option::Option<alloc::string::String>
+pub entelix_mcp::McpPromptInvocation::messages: alloc::vec::Vec<entelix_mcp::McpPromptMessage>
+impl core::clone::Clone for entelix_mcp::McpPromptInvocation
+pub fn entelix_mcp::McpPromptInvocation::clone(&self) -> entelix_mcp::McpPromptInvocation
+impl core::cmp::Eq for entelix_mcp::McpPromptInvocation
+impl core::cmp::PartialEq for entelix_mcp::McpPromptInvocation
+pub fn entelix_mcp::McpPromptInvocation::eq(&self, other: &entelix_mcp::McpPromptInvocation) -> bool
+impl core::fmt::Debug for entelix_mcp::McpPromptInvocation
+pub fn entelix_mcp::McpPromptInvocation::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::McpPromptInvocation
+impl serde_core::ser::Serialize for entelix_mcp::McpPromptInvocation
+pub fn entelix_mcp::McpPromptInvocation::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::McpPromptInvocation
+pub fn entelix_mcp::McpPromptInvocation::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::McpPromptInvocation
+impl core::marker::Send for entelix_mcp::McpPromptInvocation
+impl core::marker::Sync for entelix_mcp::McpPromptInvocation
+impl core::marker::Unpin for entelix_mcp::McpPromptInvocation
+impl core::marker::UnsafeUnpin for entelix_mcp::McpPromptInvocation
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpPromptInvocation
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpPromptInvocation
+pub struct entelix_mcp::McpPromptMessage
+pub entelix_mcp::McpPromptMessage::content: entelix_mcp::McpPromptContent
+pub entelix_mcp::McpPromptMessage::role: alloc::string::String
+impl core::clone::Clone for entelix_mcp::McpPromptMessage
+pub fn entelix_mcp::McpPromptMessage::clone(&self) -> entelix_mcp::McpPromptMessage
+impl core::cmp::Eq for entelix_mcp::McpPromptMessage
+impl core::cmp::PartialEq for entelix_mcp::McpPromptMessage
+pub fn entelix_mcp::McpPromptMessage::eq(&self, other: &entelix_mcp::McpPromptMessage) -> bool
+impl core::fmt::Debug for entelix_mcp::McpPromptMessage
+pub fn entelix_mcp::McpPromptMessage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::McpPromptMessage
+impl serde_core::ser::Serialize for entelix_mcp::McpPromptMessage
+pub fn entelix_mcp::McpPromptMessage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::McpPromptMessage
+pub fn entelix_mcp::McpPromptMessage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::McpPromptMessage
+impl core::marker::Send for entelix_mcp::McpPromptMessage
+impl core::marker::Sync for entelix_mcp::McpPromptMessage
+impl core::marker::Unpin for entelix_mcp::McpPromptMessage
+impl core::marker::UnsafeUnpin for entelix_mcp::McpPromptMessage
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpPromptMessage
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpPromptMessage
+pub struct entelix_mcp::McpPromptResourceRef
+pub entelix_mcp::McpPromptResourceRef::blob: core::option::Option<alloc::string::String>
+pub entelix_mcp::McpPromptResourceRef::mime_type: core::option::Option<alloc::string::String>
+pub entelix_mcp::McpPromptResourceRef::text: core::option::Option<alloc::string::String>
+pub entelix_mcp::McpPromptResourceRef::uri: alloc::string::String
+impl core::clone::Clone for entelix_mcp::McpPromptResourceRef
+pub fn entelix_mcp::McpPromptResourceRef::clone(&self) -> entelix_mcp::McpPromptResourceRef
+impl core::cmp::Eq for entelix_mcp::McpPromptResourceRef
+impl core::cmp::PartialEq for entelix_mcp::McpPromptResourceRef
+pub fn entelix_mcp::McpPromptResourceRef::eq(&self, other: &entelix_mcp::McpPromptResourceRef) -> bool
+impl core::fmt::Debug for entelix_mcp::McpPromptResourceRef
+pub fn entelix_mcp::McpPromptResourceRef::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::McpPromptResourceRef
+impl serde_core::ser::Serialize for entelix_mcp::McpPromptResourceRef
+pub fn entelix_mcp::McpPromptResourceRef::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::McpPromptResourceRef
+pub fn entelix_mcp::McpPromptResourceRef::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::McpPromptResourceRef
+impl core::marker::Send for entelix_mcp::McpPromptResourceRef
+impl core::marker::Sync for entelix_mcp::McpPromptResourceRef
+impl core::marker::Unpin for entelix_mcp::McpPromptResourceRef
+impl core::marker::UnsafeUnpin for entelix_mcp::McpPromptResourceRef
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpPromptResourceRef
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpPromptResourceRef
+pub struct entelix_mcp::McpResource
+pub entelix_mcp::McpResource::description: core::option::Option<alloc::string::String>
+pub entelix_mcp::McpResource::extras: serde_json::map::Map<alloc::string::String, serde_json::value::Value>
+pub entelix_mcp::McpResource::mime_type: core::option::Option<alloc::string::String>
+pub entelix_mcp::McpResource::name: alloc::string::String
+pub entelix_mcp::McpResource::uri: alloc::string::String
+impl core::clone::Clone for entelix_mcp::McpResource
+pub fn entelix_mcp::McpResource::clone(&self) -> entelix_mcp::McpResource
+impl core::cmp::Eq for entelix_mcp::McpResource
+impl core::cmp::PartialEq for entelix_mcp::McpResource
+pub fn entelix_mcp::McpResource::eq(&self, other: &entelix_mcp::McpResource) -> bool
+impl core::fmt::Debug for entelix_mcp::McpResource
+pub fn entelix_mcp::McpResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::McpResource
+impl serde_core::ser::Serialize for entelix_mcp::McpResource
+pub fn entelix_mcp::McpResource::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::McpResource
+pub fn entelix_mcp::McpResource::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::McpResource
+impl core::marker::Send for entelix_mcp::McpResource
+impl core::marker::Sync for entelix_mcp::McpResource
+impl core::marker::Unpin for entelix_mcp::McpResource
+impl core::marker::UnsafeUnpin for entelix_mcp::McpResource
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpResource
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpResource
+pub struct entelix_mcp::McpRoot
+pub entelix_mcp::McpRoot::name: core::option::Option<alloc::string::String>
+pub entelix_mcp::McpRoot::uri: alloc::string::String
+impl entelix_mcp::McpRoot
+pub fn entelix_mcp::McpRoot::new(uri: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_mcp::McpRoot::with_name(self, name: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for entelix_mcp::McpRoot
+pub fn entelix_mcp::McpRoot::clone(&self) -> entelix_mcp::McpRoot
+impl core::cmp::Eq for entelix_mcp::McpRoot
+impl core::cmp::PartialEq for entelix_mcp::McpRoot
+pub fn entelix_mcp::McpRoot::eq(&self, other: &entelix_mcp::McpRoot) -> bool
+impl core::fmt::Debug for entelix_mcp::McpRoot
+pub fn entelix_mcp::McpRoot::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::McpRoot
+impl serde_core::ser::Serialize for entelix_mcp::McpRoot
+pub fn entelix_mcp::McpRoot::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::McpRoot
+pub fn entelix_mcp::McpRoot::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::McpRoot
+impl core::marker::Send for entelix_mcp::McpRoot
+impl core::marker::Sync for entelix_mcp::McpRoot
+impl core::marker::Unpin for entelix_mcp::McpRoot
+impl core::marker::UnsafeUnpin for entelix_mcp::McpRoot
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpRoot
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpRoot
+pub struct entelix_mcp::McpServerConfig
+impl entelix_mcp::McpServerConfig
+pub fn entelix_mcp::McpServerConfig::http(name: impl core::convert::Into<alloc::string::String>, url: impl core::convert::Into<alloc::string::String>) -> entelix_mcp::McpResult<Self>
+pub const fn entelix_mcp::McpServerConfig::idle_ttl(&self) -> core::time::Duration
+pub const fn entelix_mcp::McpServerConfig::listener_concurrency(&self) -> usize
+pub const fn entelix_mcp::McpServerConfig::max_frame_bytes(&self) -> usize
+pub fn entelix_mcp::McpServerConfig::name(&self) -> &str
+pub fn entelix_mcp::McpServerConfig::url(&self) -> &str
+pub fn entelix_mcp::McpServerConfig::with_bearer(self, token: secrecy::SecretString) -> Self
+pub fn entelix_mcp::McpServerConfig::with_elicitation_provider(self, provider: alloc::sync::Arc<dyn entelix_mcp::ElicitationProvider>) -> Self
+pub const fn entelix_mcp::McpServerConfig::with_idle_ttl(self, ttl: core::time::Duration) -> Self
+pub const fn entelix_mcp::McpServerConfig::with_listener_concurrency(self, n: usize) -> Self
+pub const fn entelix_mcp::McpServerConfig::with_max_frame_bytes(self, n: usize) -> Self
+pub fn entelix_mcp::McpServerConfig::with_request_decorator(self, decorator: entelix_mcp::RequestDecorator) -> Self
+pub fn entelix_mcp::McpServerConfig::with_roots_provider(self, provider: alloc::sync::Arc<dyn entelix_mcp::RootsProvider>) -> Self
+pub fn entelix_mcp::McpServerConfig::with_sampling_provider(self, provider: alloc::sync::Arc<dyn entelix_mcp::SamplingProvider>) -> Self
+pub const fn entelix_mcp::McpServerConfig::with_timeout(self, timeout: core::time::Duration) -> Self
+impl core::clone::Clone for entelix_mcp::McpServerConfig
+pub fn entelix_mcp::McpServerConfig::clone(&self) -> entelix_mcp::McpServerConfig
+impl core::fmt::Debug for entelix_mcp::McpServerConfig
+pub fn entelix_mcp::McpServerConfig::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_mcp::McpServerConfig
+impl core::marker::Send for entelix_mcp::McpServerConfig
+impl core::marker::Sync for entelix_mcp::McpServerConfig
+impl core::marker::Unpin for entelix_mcp::McpServerConfig
+impl core::marker::UnsafeUnpin for entelix_mcp::McpServerConfig
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpServerConfig
+impl !core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpServerConfig
+pub struct entelix_mcp::McpToolAdapter
+impl entelix_mcp::McpToolAdapter
+pub const fn entelix_mcp::McpToolAdapter::definition(&self) -> &entelix_mcp::McpToolDefinition
+pub fn entelix_mcp::McpToolAdapter::mcp_tool_name(&self) -> &str
+pub fn entelix_mcp::McpToolAdapter::new(manager: entelix_mcp::McpManager, server: impl core::convert::Into<alloc::string::String>, definition: entelix_mcp::McpToolDefinition) -> Self
+pub fn entelix_mcp::McpToolAdapter::server(&self) -> &str
+pub fn entelix_mcp::McpToolAdapter::with_unqualified_name(self) -> Self
+impl entelix_core::tools::tool::Tool for entelix_mcp::McpToolAdapter
+pub fn entelix_mcp::McpToolAdapter::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_mcp::McpToolAdapter::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_mcp::McpToolAdapter
+impl core::marker::Send for entelix_mcp::McpToolAdapter
+impl core::marker::Sync for entelix_mcp::McpToolAdapter
+impl core::marker::Unpin for entelix_mcp::McpToolAdapter
+impl core::marker::UnsafeUnpin for entelix_mcp::McpToolAdapter
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpToolAdapter
+impl !core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpToolAdapter
+pub struct entelix_mcp::McpToolDefinition
+pub entelix_mcp::McpToolDefinition::description: alloc::string::String
+pub entelix_mcp::McpToolDefinition::extras: serde_json::map::Map<alloc::string::String, serde_json::value::Value>
+pub entelix_mcp::McpToolDefinition::input_schema: serde_json::value::Value
+pub entelix_mcp::McpToolDefinition::name: alloc::string::String
+impl core::clone::Clone for entelix_mcp::McpToolDefinition
+pub fn entelix_mcp::McpToolDefinition::clone(&self) -> entelix_mcp::McpToolDefinition
+impl core::cmp::Eq for entelix_mcp::McpToolDefinition
+impl core::cmp::PartialEq for entelix_mcp::McpToolDefinition
+pub fn entelix_mcp::McpToolDefinition::eq(&self, other: &entelix_mcp::McpToolDefinition) -> bool
+impl core::fmt::Debug for entelix_mcp::McpToolDefinition
+pub fn entelix_mcp::McpToolDefinition::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::McpToolDefinition
+impl serde_core::ser::Serialize for entelix_mcp::McpToolDefinition
+pub fn entelix_mcp::McpToolDefinition::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::McpToolDefinition
+pub fn entelix_mcp::McpToolDefinition::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::McpToolDefinition
+impl core::marker::Send for entelix_mcp::McpToolDefinition
+impl core::marker::Sync for entelix_mcp::McpToolDefinition
+impl core::marker::Unpin for entelix_mcp::McpToolDefinition
+impl core::marker::UnsafeUnpin for entelix_mcp::McpToolDefinition
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::McpToolDefinition
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::McpToolDefinition
+pub struct entelix_mcp::ModelHint
+pub entelix_mcp::ModelHint::name: alloc::string::String
+impl core::clone::Clone for entelix_mcp::ModelHint
+pub fn entelix_mcp::ModelHint::clone(&self) -> entelix_mcp::ModelHint
+impl core::cmp::Eq for entelix_mcp::ModelHint
+impl core::cmp::PartialEq for entelix_mcp::ModelHint
+pub fn entelix_mcp::ModelHint::eq(&self, other: &entelix_mcp::ModelHint) -> bool
+impl core::fmt::Debug for entelix_mcp::ModelHint
+pub fn entelix_mcp::ModelHint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::ModelHint
+impl serde_core::ser::Serialize for entelix_mcp::ModelHint
+pub fn entelix_mcp::ModelHint::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::ModelHint
+pub fn entelix_mcp::ModelHint::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::ModelHint
+impl core::marker::Send for entelix_mcp::ModelHint
+impl core::marker::Sync for entelix_mcp::ModelHint
+impl core::marker::Unpin for entelix_mcp::ModelHint
+impl core::marker::UnsafeUnpin for entelix_mcp::ModelHint
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::ModelHint
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::ModelHint
+pub struct entelix_mcp::ModelPreferences
+pub entelix_mcp::ModelPreferences::cost_priority: core::option::Option<f64>
+pub entelix_mcp::ModelPreferences::hints: alloc::vec::Vec<entelix_mcp::ModelHint>
+pub entelix_mcp::ModelPreferences::intelligence_priority: core::option::Option<f64>
+pub entelix_mcp::ModelPreferences::speed_priority: core::option::Option<f64>
+impl core::clone::Clone for entelix_mcp::ModelPreferences
+pub fn entelix_mcp::ModelPreferences::clone(&self) -> entelix_mcp::ModelPreferences
+impl core::cmp::PartialEq for entelix_mcp::ModelPreferences
+pub fn entelix_mcp::ModelPreferences::eq(&self, other: &entelix_mcp::ModelPreferences) -> bool
+impl core::default::Default for entelix_mcp::ModelPreferences
+pub fn entelix_mcp::ModelPreferences::default() -> entelix_mcp::ModelPreferences
+impl core::fmt::Debug for entelix_mcp::ModelPreferences
+pub fn entelix_mcp::ModelPreferences::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::ModelPreferences
+impl serde_core::ser::Serialize for entelix_mcp::ModelPreferences
+pub fn entelix_mcp::ModelPreferences::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::ModelPreferences
+pub fn entelix_mcp::ModelPreferences::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::ModelPreferences
+impl core::marker::Send for entelix_mcp::ModelPreferences
+impl core::marker::Sync for entelix_mcp::ModelPreferences
+impl core::marker::Unpin for entelix_mcp::ModelPreferences
+impl core::marker::UnsafeUnpin for entelix_mcp::ModelPreferences
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::ModelPreferences
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::ModelPreferences
+pub struct entelix_mcp::SamplingMessage
+pub entelix_mcp::SamplingMessage::content: entelix_mcp::SamplingContent
+pub entelix_mcp::SamplingMessage::role: alloc::string::String
+impl core::clone::Clone for entelix_mcp::SamplingMessage
+pub fn entelix_mcp::SamplingMessage::clone(&self) -> entelix_mcp::SamplingMessage
+impl core::cmp::Eq for entelix_mcp::SamplingMessage
+impl core::cmp::PartialEq for entelix_mcp::SamplingMessage
+pub fn entelix_mcp::SamplingMessage::eq(&self, other: &entelix_mcp::SamplingMessage) -> bool
+impl core::fmt::Debug for entelix_mcp::SamplingMessage
+pub fn entelix_mcp::SamplingMessage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::SamplingMessage
+impl serde_core::ser::Serialize for entelix_mcp::SamplingMessage
+pub fn entelix_mcp::SamplingMessage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::SamplingMessage
+pub fn entelix_mcp::SamplingMessage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::SamplingMessage
+impl core::marker::Send for entelix_mcp::SamplingMessage
+impl core::marker::Sync for entelix_mcp::SamplingMessage
+impl core::marker::Unpin for entelix_mcp::SamplingMessage
+impl core::marker::UnsafeUnpin for entelix_mcp::SamplingMessage
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::SamplingMessage
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::SamplingMessage
+pub struct entelix_mcp::SamplingRequest
+pub entelix_mcp::SamplingRequest::include_context: core::option::Option<entelix_mcp::IncludeContext>
+pub entelix_mcp::SamplingRequest::max_tokens: core::option::Option<u32>
+pub entelix_mcp::SamplingRequest::messages: alloc::vec::Vec<entelix_mcp::SamplingMessage>
+pub entelix_mcp::SamplingRequest::metadata: core::option::Option<serde_json::value::Value>
+pub entelix_mcp::SamplingRequest::model_preferences: core::option::Option<entelix_mcp::ModelPreferences>
+pub entelix_mcp::SamplingRequest::stop_sequences: alloc::vec::Vec<alloc::string::String>
+pub entelix_mcp::SamplingRequest::system_prompt: core::option::Option<alloc::string::String>
+pub entelix_mcp::SamplingRequest::temperature: core::option::Option<f64>
+impl core::clone::Clone for entelix_mcp::SamplingRequest
+pub fn entelix_mcp::SamplingRequest::clone(&self) -> entelix_mcp::SamplingRequest
+impl core::cmp::PartialEq for entelix_mcp::SamplingRequest
+pub fn entelix_mcp::SamplingRequest::eq(&self, other: &entelix_mcp::SamplingRequest) -> bool
+impl core::fmt::Debug for entelix_mcp::SamplingRequest
+pub fn entelix_mcp::SamplingRequest::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::SamplingRequest
+impl serde_core::ser::Serialize for entelix_mcp::SamplingRequest
+pub fn entelix_mcp::SamplingRequest::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::SamplingRequest
+pub fn entelix_mcp::SamplingRequest::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::SamplingRequest
+impl core::marker::Send for entelix_mcp::SamplingRequest
+impl core::marker::Sync for entelix_mcp::SamplingRequest
+impl core::marker::Unpin for entelix_mcp::SamplingRequest
+impl core::marker::UnsafeUnpin for entelix_mcp::SamplingRequest
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::SamplingRequest
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::SamplingRequest
+pub struct entelix_mcp::SamplingResponse
+pub entelix_mcp::SamplingResponse::content: entelix_mcp::SamplingContent
+pub entelix_mcp::SamplingResponse::model: alloc::string::String
+pub entelix_mcp::SamplingResponse::role: alloc::string::String
+pub entelix_mcp::SamplingResponse::stop_reason: alloc::string::String
+impl core::clone::Clone for entelix_mcp::SamplingResponse
+pub fn entelix_mcp::SamplingResponse::clone(&self) -> entelix_mcp::SamplingResponse
+impl core::cmp::Eq for entelix_mcp::SamplingResponse
+impl core::cmp::PartialEq for entelix_mcp::SamplingResponse
+pub fn entelix_mcp::SamplingResponse::eq(&self, other: &entelix_mcp::SamplingResponse) -> bool
+impl core::fmt::Debug for entelix_mcp::SamplingResponse
+pub fn entelix_mcp::SamplingResponse::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_mcp::SamplingResponse
+impl serde_core::ser::Serialize for entelix_mcp::SamplingResponse
+pub fn entelix_mcp::SamplingResponse::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_mcp::SamplingResponse
+pub fn entelix_mcp::SamplingResponse::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_mcp::SamplingResponse
+impl core::marker::Send for entelix_mcp::SamplingResponse
+impl core::marker::Sync for entelix_mcp::SamplingResponse
+impl core::marker::Unpin for entelix_mcp::SamplingResponse
+impl core::marker::UnsafeUnpin for entelix_mcp::SamplingResponse
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::SamplingResponse
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::SamplingResponse
+pub struct entelix_mcp::StaticElicitationProvider
+impl entelix_mcp::StaticElicitationProvider
+pub fn entelix_mcp::StaticElicitationProvider::accept(content: serde_json::value::Value) -> Self
+pub fn entelix_mcp::StaticElicitationProvider::cancel() -> Self
+pub fn entelix_mcp::StaticElicitationProvider::decline() -> Self
+impl core::clone::Clone for entelix_mcp::StaticElicitationProvider
+pub fn entelix_mcp::StaticElicitationProvider::clone(&self) -> entelix_mcp::StaticElicitationProvider
+impl core::fmt::Debug for entelix_mcp::StaticElicitationProvider
+pub fn entelix_mcp::StaticElicitationProvider::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_mcp::ElicitationProvider for entelix_mcp::StaticElicitationProvider
+pub fn entelix_mcp::StaticElicitationProvider::elicit<'life0, 'async_trait>(&'life0 self, _request: entelix_mcp::ElicitationRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<entelix_mcp::ElicitationResponse>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl core::marker::Freeze for entelix_mcp::StaticElicitationProvider
+impl core::marker::Send for entelix_mcp::StaticElicitationProvider
+impl core::marker::Sync for entelix_mcp::StaticElicitationProvider
+impl core::marker::Unpin for entelix_mcp::StaticElicitationProvider
+impl core::marker::UnsafeUnpin for entelix_mcp::StaticElicitationProvider
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::StaticElicitationProvider
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::StaticElicitationProvider
+pub struct entelix_mcp::StaticRootsProvider
+impl entelix_mcp::StaticRootsProvider
+pub fn entelix_mcp::StaticRootsProvider::new(roots: impl core::iter::traits::collect::IntoIterator<Item = entelix_mcp::McpRoot>) -> Self
+impl core::clone::Clone for entelix_mcp::StaticRootsProvider
+pub fn entelix_mcp::StaticRootsProvider::clone(&self) -> entelix_mcp::StaticRootsProvider
+impl core::fmt::Debug for entelix_mcp::StaticRootsProvider
+pub fn entelix_mcp::StaticRootsProvider::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_mcp::RootsProvider for entelix_mcp::StaticRootsProvider
+pub fn entelix_mcp::StaticRootsProvider::list_roots<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpRoot>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl core::marker::Freeze for entelix_mcp::StaticRootsProvider
+impl core::marker::Send for entelix_mcp::StaticRootsProvider
+impl core::marker::Sync for entelix_mcp::StaticRootsProvider
+impl core::marker::Unpin for entelix_mcp::StaticRootsProvider
+impl core::marker::UnsafeUnpin for entelix_mcp::StaticRootsProvider
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::StaticRootsProvider
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::StaticRootsProvider
+pub struct entelix_mcp::StaticSamplingProvider
+impl entelix_mcp::StaticSamplingProvider
+pub const fn entelix_mcp::StaticSamplingProvider::new(response: entelix_mcp::SamplingResponse) -> Self
+pub fn entelix_mcp::StaticSamplingProvider::text(model: impl core::convert::Into<alloc::string::String>, text: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for entelix_mcp::StaticSamplingProvider
+pub fn entelix_mcp::StaticSamplingProvider::clone(&self) -> entelix_mcp::StaticSamplingProvider
+impl core::fmt::Debug for entelix_mcp::StaticSamplingProvider
+pub fn entelix_mcp::StaticSamplingProvider::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_mcp::SamplingProvider for entelix_mcp::StaticSamplingProvider
+pub fn entelix_mcp::StaticSamplingProvider::sample<'life0, 'async_trait>(&'life0 self, _request: entelix_mcp::SamplingRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<entelix_mcp::SamplingResponse>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl core::marker::Freeze for entelix_mcp::StaticSamplingProvider
+impl core::marker::Send for entelix_mcp::StaticSamplingProvider
+impl core::marker::Sync for entelix_mcp::StaticSamplingProvider
+impl core::marker::Unpin for entelix_mcp::StaticSamplingProvider
+impl core::marker::UnsafeUnpin for entelix_mcp::StaticSamplingProvider
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_mcp::StaticSamplingProvider
+impl core::panic::unwind_safe::UnwindSafe for entelix_mcp::StaticSamplingProvider
+pub const entelix_mcp::DEFAULT_IDLE_TTL: core::time::Duration
+pub const entelix_mcp::DEFAULT_LISTENER_CONCURRENCY: usize
+pub const entelix_mcp::DEFAULT_MAX_FRAME_BYTES: usize
+pub const entelix_mcp::DEFAULT_TIMEOUT: core::time::Duration
+pub const entelix_mcp::PROTOCOL_VERSION: &str
+pub trait entelix_mcp::ElicitationProvider: core::marker::Send + core::marker::Sync + 'static + core::fmt::Debug
+pub fn entelix_mcp::ElicitationProvider::elicit<'life0, 'async_trait>(&'life0 self, request: entelix_mcp::ElicitationRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<entelix_mcp::ElicitationResponse>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl entelix_mcp::ElicitationProvider for entelix_mcp::StaticElicitationProvider
+pub fn entelix_mcp::StaticElicitationProvider::elicit<'life0, 'async_trait>(&'life0 self, _request: entelix_mcp::ElicitationRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<entelix_mcp::ElicitationResponse>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub trait entelix_mcp::McpClient: core::marker::Send + core::marker::Sync
+pub fn entelix_mcp::McpClient::call_tool<'life0, 'life1, 'async_trait>(&'life0 self, name: &'life1 str, arguments: serde_json::value::Value) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_mcp::McpClient::complete<'life0, 'async_trait>(&'life0 self, _reference: entelix_mcp::McpCompletionReference, _argument: entelix_mcp::McpCompletionArgument) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<entelix_mcp::McpCompletionResult>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::McpClient::get_prompt<'life0, 'life1, 'async_trait>(&'life0 self, _name: &'life1 str, _arguments: alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::string::String>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<entelix_mcp::McpPromptInvocation>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_mcp::McpClient::initialize<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpToolDefinition>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::McpClient::list_prompts<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpPrompt>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::McpClient::list_resources<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpResource>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::McpClient::notify_roots_changed<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::McpClient::read_resource<'life0, 'life1, 'async_trait>(&'life0 self, _uri: &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpResourceContent>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_mcp::McpClient::state(&self) -> entelix_mcp::McpClientState
+impl entelix_mcp::McpClient for entelix_mcp::HttpMcpClient
+pub fn entelix_mcp::HttpMcpClient::call_tool<'life0, 'life1, 'async_trait>(&'life0 self, name: &'life1 str, arguments: serde_json::value::Value) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::complete<'life0, 'async_trait>(&'life0 self, reference: entelix_mcp::McpCompletionReference, argument: entelix_mcp::McpCompletionArgument) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<entelix_mcp::McpCompletionResult>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::get_prompt<'life0, 'life1, 'async_trait>(&'life0 self, name: &'life1 str, arguments: alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::string::String>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<entelix_mcp::McpPromptInvocation>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::initialize<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpToolDefinition>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::list_prompts<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpPrompt>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::list_resources<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpResource>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::notify_roots_changed<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::read_resource<'life0, 'life1, 'async_trait>(&'life0 self, uri: &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpResourceContent>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_mcp::HttpMcpClient::state(&self) -> entelix_mcp::McpClientState
+pub trait entelix_mcp::RootsProvider: core::marker::Send + core::marker::Sync + 'static + core::fmt::Debug
+pub fn entelix_mcp::RootsProvider::list_roots<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpRoot>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl entelix_mcp::RootsProvider for entelix_mcp::StaticRootsProvider
+pub fn entelix_mcp::StaticRootsProvider::list_roots<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<alloc::vec::Vec<entelix_mcp::McpRoot>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub trait entelix_mcp::SamplingProvider: core::marker::Send + core::marker::Sync + 'static + core::fmt::Debug
+pub fn entelix_mcp::SamplingProvider::sample<'life0, 'async_trait>(&'life0 self, request: entelix_mcp::SamplingRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<entelix_mcp::SamplingResponse>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl entelix_mcp::SamplingProvider for entelix_mcp::StaticSamplingProvider
+pub fn entelix_mcp::StaticSamplingProvider::sample<'life0, 'async_trait>(&'life0 self, _request: entelix_mcp::SamplingRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_mcp::McpResult<entelix_mcp::SamplingResponse>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_mcp::qualified_name(server: &str, tool: &str) -> alloc::string::String
+pub fn entelix_mcp::validate_server_name(name: &str) -> entelix_mcp::McpResult<()>
+pub type entelix_mcp::McpResult<T> = core::result::Result<T, entelix_mcp::McpError>
+pub type entelix_mcp::RequestDecorator = alloc::sync::Arc<(dyn core::ops::function::Fn(&mut http::header::map::HeaderMap) + core::marker::Send + core::marker::Sync + 'static)>

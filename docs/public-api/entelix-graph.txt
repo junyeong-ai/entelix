@@ -1,0 +1,387 @@
+pub mod entelix_graph
+pub use entelix_graph::StateMerge
+#[non_exhaustive] pub enum entelix_graph::CheckpointGranularity
+pub entelix_graph::CheckpointGranularity::Off
+pub entelix_graph::CheckpointGranularity::PerNode
+impl core::clone::Clone for entelix_graph::CheckpointGranularity
+pub fn entelix_graph::CheckpointGranularity::clone(&self) -> entelix_graph::CheckpointGranularity
+impl core::cmp::Eq for entelix_graph::CheckpointGranularity
+impl core::cmp::PartialEq for entelix_graph::CheckpointGranularity
+pub fn entelix_graph::CheckpointGranularity::eq(&self, other: &entelix_graph::CheckpointGranularity) -> bool
+impl core::default::Default for entelix_graph::CheckpointGranularity
+pub fn entelix_graph::CheckpointGranularity::default() -> entelix_graph::CheckpointGranularity
+impl core::fmt::Debug for entelix_graph::CheckpointGranularity
+pub fn entelix_graph::CheckpointGranularity::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_graph::CheckpointGranularity
+pub fn entelix_graph::CheckpointGranularity::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_graph::CheckpointGranularity
+impl core::marker::StructuralPartialEq for entelix_graph::CheckpointGranularity
+impl core::marker::Freeze for entelix_graph::CheckpointGranularity
+impl core::marker::Send for entelix_graph::CheckpointGranularity
+impl core::marker::Sync for entelix_graph::CheckpointGranularity
+impl core::marker::Unpin for entelix_graph::CheckpointGranularity
+impl core::marker::UnsafeUnpin for entelix_graph::CheckpointGranularity
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_graph::CheckpointGranularity
+impl core::panic::unwind_safe::UnwindSafe for entelix_graph::CheckpointGranularity
+#[non_exhaustive] pub enum entelix_graph::Command<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub entelix_graph::Command::ApproveTool
+pub entelix_graph::Command::ApproveTool::decision: entelix_core::approval::ApprovalDecision
+pub entelix_graph::Command::ApproveTool::tool_use_id: alloc::string::String
+pub entelix_graph::Command::GoTo(alloc::string::String)
+pub entelix_graph::Command::Resume
+pub entelix_graph::Command::Update(S)
+impl<S> core::clone::Clone for entelix_graph::Command<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static + core::clone::Clone
+pub fn entelix_graph::Command<S>::clone(&self) -> entelix_graph::Command<S>
+impl<S> core::fmt::Debug for entelix_graph::Command<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static + core::fmt::Debug
+pub fn entelix_graph::Command<S>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<S> core::marker::Freeze for entelix_graph::Command<S> where S: core::marker::Freeze
+impl<S> core::marker::Send for entelix_graph::Command<S>
+impl<S> core::marker::Sync for entelix_graph::Command<S>
+impl<S> core::marker::Unpin for entelix_graph::Command<S> where S: core::marker::Unpin
+impl<S> core::marker::UnsafeUnpin for entelix_graph::Command<S> where S: core::marker::UnsafeUnpin
+impl<S> core::panic::unwind_safe::RefUnwindSafe for entelix_graph::Command<S> where S: core::panic::unwind_safe::RefUnwindSafe
+impl<S> core::panic::unwind_safe::UnwindSafe for entelix_graph::Command<S> where S: core::panic::unwind_safe::UnwindSafe
+pub struct entelix_graph::Annotated<T, R> where R: entelix_graph::Reducer<T>
+pub entelix_graph::Annotated::value: T
+impl<T, R> entelix_graph::Annotated<T, R> where R: entelix_graph::Reducer<T>
+pub fn entelix_graph::Annotated<T, R>::into_value(self) -> T
+pub fn entelix_graph::Annotated<T, R>::merge(self, other: Self) -> Self
+pub const fn entelix_graph::Annotated<T, R>::new(value: T, reducer: R) -> Self
+pub fn entelix_graph::Annotated<T, R>::reduce_in_place(&mut self, update: T) where T: core::default::Default
+pub fn entelix_graph::Annotated<T, R>::reduced(self, update: T) -> Self where R: core::clone::Clone
+pub const fn entelix_graph::Annotated<T, R>::reducer(&self) -> &R
+impl<T, R> core::default::Default for entelix_graph::Annotated<T, R> where T: core::default::Default, R: entelix_graph::Reducer<T> + core::default::Default
+pub fn entelix_graph::Annotated<T, R>::default() -> Self
+impl<T: core::clone::Clone, R> core::clone::Clone for entelix_graph::Annotated<T, R> where R: entelix_graph::Reducer<T> + core::clone::Clone
+pub fn entelix_graph::Annotated<T, R>::clone(&self) -> entelix_graph::Annotated<T, R>
+impl<T: core::fmt::Debug, R> core::fmt::Debug for entelix_graph::Annotated<T, R> where R: entelix_graph::Reducer<T> + core::fmt::Debug
+pub fn entelix_graph::Annotated<T, R>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T, R> core::marker::Freeze for entelix_graph::Annotated<T, R> where T: core::marker::Freeze, R: core::marker::Freeze
+impl<T, R> core::marker::Send for entelix_graph::Annotated<T, R> where T: core::marker::Send
+impl<T, R> core::marker::Sync for entelix_graph::Annotated<T, R> where T: core::marker::Sync
+impl<T, R> core::marker::Unpin for entelix_graph::Annotated<T, R> where T: core::marker::Unpin, R: core::marker::Unpin
+impl<T, R> core::marker::UnsafeUnpin for entelix_graph::Annotated<T, R> where T: core::marker::UnsafeUnpin, R: core::marker::UnsafeUnpin
+impl<T, R> core::panic::unwind_safe::RefUnwindSafe for entelix_graph::Annotated<T, R> where T: core::panic::unwind_safe::RefUnwindSafe, R: core::panic::unwind_safe::RefUnwindSafe
+impl<T, R> core::panic::unwind_safe::UnwindSafe for entelix_graph::Annotated<T, R> where T: core::panic::unwind_safe::UnwindSafe, R: core::panic::unwind_safe::UnwindSafe
+pub struct entelix_graph::Append<U>(_)
+impl<U> entelix_graph::Append<U>
+pub const fn entelix_graph::Append<U>::new() -> Self
+impl<U: core::clone::Clone> core::clone::Clone for entelix_graph::Append<U>
+pub fn entelix_graph::Append<U>::clone(&self) -> entelix_graph::Append<U>
+impl<U: core::fmt::Debug> core::fmt::Debug for entelix_graph::Append<U>
+pub fn entelix_graph::Append<U>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<U: core::marker::Copy> core::marker::Copy for entelix_graph::Append<U>
+impl<U> core::default::Default for entelix_graph::Append<U>
+pub fn entelix_graph::Append<U>::default() -> Self
+impl<U> entelix_graph::Reducer<alloc::vec::Vec<U>> for entelix_graph::Append<U> where U: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::Append<U>::reduce(&self, current: alloc::vec::Vec<U>, update: alloc::vec::Vec<U>) -> alloc::vec::Vec<U>
+impl<U> core::marker::Freeze for entelix_graph::Append<U>
+impl<U> core::marker::Send for entelix_graph::Append<U>
+impl<U> core::marker::Sync for entelix_graph::Append<U>
+impl<U> core::marker::Unpin for entelix_graph::Append<U>
+impl<U> core::marker::UnsafeUnpin for entelix_graph::Append<U>
+impl<U> core::panic::unwind_safe::RefUnwindSafe for entelix_graph::Append<U>
+impl<U> core::panic::unwind_safe::UnwindSafe for entelix_graph::Append<U>
+#[non_exhaustive] pub struct entelix_graph::Checkpoint<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub entelix_graph::Checkpoint::id: entelix_graph::CheckpointId
+pub entelix_graph::Checkpoint::next_node: core::option::Option<alloc::string::String>
+pub entelix_graph::Checkpoint::parent_id: core::option::Option<entelix_graph::CheckpointId>
+pub entelix_graph::Checkpoint::state: S
+pub entelix_graph::Checkpoint::step: usize
+pub entelix_graph::Checkpoint::tenant_id: alloc::string::String
+pub entelix_graph::Checkpoint::thread_id: alloc::string::String
+pub entelix_graph::Checkpoint::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+impl<S> entelix_graph::Checkpoint<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::Checkpoint<S>::from_parts(id: entelix_graph::CheckpointId, key: &entelix_core::thread_key::ThreadKey, parent_id: core::option::Option<entelix_graph::CheckpointId>, step: usize, state: S, next_node: core::option::Option<alloc::string::String>, timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> Self
+pub fn entelix_graph::Checkpoint<S>::key(&self) -> entelix_core::thread_key::ThreadKey
+pub fn entelix_graph::Checkpoint<S>::new(key: &entelix_core::thread_key::ThreadKey, step: usize, state: S, next_node: core::option::Option<alloc::string::String>) -> Self
+pub const fn entelix_graph::Checkpoint<S>::with_parent(self, parent_id: entelix_graph::CheckpointId) -> Self
+impl<S> core::clone::Clone for entelix_graph::Checkpoint<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static + core::clone::Clone
+pub fn entelix_graph::Checkpoint<S>::clone(&self) -> entelix_graph::Checkpoint<S>
+impl<S> core::fmt::Debug for entelix_graph::Checkpoint<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static + core::fmt::Debug
+pub fn entelix_graph::Checkpoint<S>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<S> core::marker::Freeze for entelix_graph::Checkpoint<S> where S: core::marker::Freeze
+impl<S> core::marker::Send for entelix_graph::Checkpoint<S>
+impl<S> core::marker::Sync for entelix_graph::Checkpoint<S>
+impl<S> core::marker::Unpin for entelix_graph::Checkpoint<S> where S: core::marker::Unpin
+impl<S> core::marker::UnsafeUnpin for entelix_graph::Checkpoint<S> where S: core::marker::UnsafeUnpin
+impl<S> core::panic::unwind_safe::RefUnwindSafe for entelix_graph::Checkpoint<S> where S: core::panic::unwind_safe::RefUnwindSafe
+impl<S> core::panic::unwind_safe::UnwindSafe for entelix_graph::Checkpoint<S> where S: core::panic::unwind_safe::UnwindSafe
+pub struct entelix_graph::CheckpointId(_)
+impl entelix_graph::CheckpointId
+pub const fn entelix_graph::CheckpointId::as_uuid(&self) -> &uuid::Uuid
+pub const fn entelix_graph::CheckpointId::from_uuid(uuid: uuid::Uuid) -> Self
+pub fn entelix_graph::CheckpointId::new() -> Self
+pub fn entelix_graph::CheckpointId::to_hyphenated_string(&self) -> alloc::string::String
+impl core::clone::Clone for entelix_graph::CheckpointId
+pub fn entelix_graph::CheckpointId::clone(&self) -> entelix_graph::CheckpointId
+impl core::cmp::Eq for entelix_graph::CheckpointId
+impl core::cmp::PartialEq for entelix_graph::CheckpointId
+pub fn entelix_graph::CheckpointId::eq(&self, other: &entelix_graph::CheckpointId) -> bool
+impl core::default::Default for entelix_graph::CheckpointId
+pub fn entelix_graph::CheckpointId::default() -> Self
+impl core::fmt::Debug for entelix_graph::CheckpointId
+pub fn entelix_graph::CheckpointId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_graph::CheckpointId
+pub fn entelix_graph::CheckpointId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for entelix_graph::CheckpointId
+impl serde_core::ser::Serialize for entelix_graph::CheckpointId
+pub fn entelix_graph::CheckpointId::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_graph::CheckpointId
+pub fn entelix_graph::CheckpointId::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_graph::CheckpointId
+impl core::marker::Send for entelix_graph::CheckpointId
+impl core::marker::Sync for entelix_graph::CheckpointId
+impl core::marker::Unpin for entelix_graph::CheckpointId
+impl core::marker::UnsafeUnpin for entelix_graph::CheckpointId
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_graph::CheckpointId
+impl core::panic::unwind_safe::UnwindSafe for entelix_graph::CheckpointId
+pub struct entelix_graph::CompiledGraph<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+impl<S> entelix_graph::CompiledGraph<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub const fn entelix_graph::CompiledGraph<S>::checkpoint_granularity(&self) -> entelix_graph::CheckpointGranularity
+pub fn entelix_graph::CompiledGraph<S>::entry_point(&self) -> &str
+pub fn entelix_graph::CompiledGraph<S>::finish_point_count(&self) -> usize
+pub fn entelix_graph::CompiledGraph<S>::has_checkpointer(&self) -> bool
+pub const fn entelix_graph::CompiledGraph<S>::recursion_limit(&self) -> usize
+pub async fn entelix_graph::CompiledGraph<S>::resume(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<S>
+pub async fn entelix_graph::CompiledGraph<S>::resume_from(&self, checkpoint_id: &entelix_graph::CheckpointId, command: entelix_graph::Command<S>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<S>
+pub async fn entelix_graph::CompiledGraph<S>::resume_with(&self, command: entelix_graph::Command<S>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<S>
+impl<S> core::fmt::Debug for entelix_graph::CompiledGraph<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::CompiledGraph<S>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<S> entelix_runnable::runnable::Runnable<S, S> for entelix_graph::CompiledGraph<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::CompiledGraph<S>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: S, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<S>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_graph::CompiledGraph<S>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: S, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<S>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<S> core::marker::Freeze for entelix_graph::CompiledGraph<S>
+impl<S> core::marker::Send for entelix_graph::CompiledGraph<S>
+impl<S> core::marker::Sync for entelix_graph::CompiledGraph<S>
+impl<S> core::marker::Unpin for entelix_graph::CompiledGraph<S>
+impl<S> core::marker::UnsafeUnpin for entelix_graph::CompiledGraph<S>
+impl<S> !core::panic::unwind_safe::RefUnwindSafe for entelix_graph::CompiledGraph<S>
+impl<S> !core::panic::unwind_safe::UnwindSafe for entelix_graph::CompiledGraph<S>
+pub struct entelix_graph::ConditionalEdge<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub entelix_graph::ConditionalEdge::mapping: std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>
+pub entelix_graph::ConditionalEdge::selector: entelix_graph::EdgeSelector<S>
+impl<S> core::marker::Freeze for entelix_graph::ConditionalEdge<S>
+impl<S> core::marker::Send for entelix_graph::ConditionalEdge<S>
+impl<S> core::marker::Sync for entelix_graph::ConditionalEdge<S>
+impl<S> core::marker::Unpin for entelix_graph::ConditionalEdge<S>
+impl<S> core::marker::UnsafeUnpin for entelix_graph::ConditionalEdge<S>
+impl<S> !core::panic::unwind_safe::RefUnwindSafe for entelix_graph::ConditionalEdge<S>
+impl<S> !core::panic::unwind_safe::UnwindSafe for entelix_graph::ConditionalEdge<S>
+pub struct entelix_graph::ContributingNodeAdapter<S> where S: entelix_graph::StateMerge + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+impl<S> entelix_graph::ContributingNodeAdapter<S> where S: entelix_graph::StateMerge + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::ContributingNodeAdapter<S>::new<R>(inner: R) -> Self where R: entelix_runnable::runnable::Runnable<S, <S as entelix_graph::StateMerge>::Contribution> + 'static
+impl<S> core::fmt::Debug for entelix_graph::ContributingNodeAdapter<S> where S: entelix_graph::StateMerge + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::ContributingNodeAdapter<S>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<S> entelix_runnable::runnable::Runnable<S, S> for entelix_graph::ContributingNodeAdapter<S> where S: entelix_graph::StateMerge + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::ContributingNodeAdapter<S>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: S, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<S>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<S> core::marker::Freeze for entelix_graph::ContributingNodeAdapter<S>
+impl<S> core::marker::Send for entelix_graph::ContributingNodeAdapter<S>
+impl<S> core::marker::Sync for entelix_graph::ContributingNodeAdapter<S>
+impl<S> core::marker::Unpin for entelix_graph::ContributingNodeAdapter<S>
+impl<S> core::marker::UnsafeUnpin for entelix_graph::ContributingNodeAdapter<S>
+impl<S> !core::panic::unwind_safe::RefUnwindSafe for entelix_graph::ContributingNodeAdapter<S>
+impl<S> !core::panic::unwind_safe::UnwindSafe for entelix_graph::ContributingNodeAdapter<S>
+pub struct entelix_graph::Dispatch<T>
+pub entelix_graph::Dispatch::payload: T
+impl<T> entelix_graph::Dispatch<T>
+pub const fn entelix_graph::Dispatch<T>::new(payload: T) -> Self
+impl<T: core::clone::Clone> core::clone::Clone for entelix_graph::Dispatch<T>
+pub fn entelix_graph::Dispatch<T>::clone(&self) -> entelix_graph::Dispatch<T>
+impl<T: core::fmt::Debug> core::fmt::Debug for entelix_graph::Dispatch<T>
+pub fn entelix_graph::Dispatch<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T> core::convert::From<T> for entelix_graph::Dispatch<T>
+pub fn entelix_graph::Dispatch<T>::from(payload: T) -> Self
+impl<T> core::marker::Freeze for entelix_graph::Dispatch<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for entelix_graph::Dispatch<T> where T: core::marker::Send
+impl<T> core::marker::Sync for entelix_graph::Dispatch<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for entelix_graph::Dispatch<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for entelix_graph::Dispatch<T> where T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for entelix_graph::Dispatch<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for entelix_graph::Dispatch<T> where T: core::panic::unwind_safe::UnwindSafe
+pub struct entelix_graph::FinalizingStream<St, F> where F: core::ops::function::FnOnce()
+impl<St, F> entelix_graph::FinalizingStream<St, F> where F: core::ops::function::FnOnce()
+pub const fn entelix_graph::FinalizingStream<St, F>::new(inner: St, finalize: F) -> Self
+impl<'__pin, St, F> core::marker::Unpin for entelix_graph::FinalizingStream<St, F> where pin_project_lite::__private::PinnedFieldsOf<__Origin<'__pin, St, F>>: core::marker::Unpin, F: core::ops::function::FnOnce()
+impl<St, F> core::ops::drop::Drop for entelix_graph::FinalizingStream<St, F> where F: core::ops::function::FnOnce()
+pub fn entelix_graph::FinalizingStream<St, F>::drop(&mut self)
+impl<St, F> futures_core::stream::Stream for entelix_graph::FinalizingStream<St, F> where St: futures_core::stream::Stream, F: core::ops::function::FnOnce()
+pub type entelix_graph::FinalizingStream<St, F>::Item = <St as futures_core::stream::Stream>::Item
+pub fn entelix_graph::FinalizingStream<St, F>::poll_next(self: core::pin::Pin<&mut Self>, cx: &mut core::task::wake::Context<'_>) -> core::task::poll::Poll<core::option::Option<Self::Item>>
+pub fn entelix_graph::FinalizingStream<St, F>::size_hint(&self) -> (usize, core::option::Option<usize>)
+impl<St, F> core::marker::Freeze for entelix_graph::FinalizingStream<St, F> where St: core::marker::Freeze, F: core::marker::Freeze
+impl<St, F> core::marker::Send for entelix_graph::FinalizingStream<St, F> where St: core::marker::Send, F: core::marker::Send
+impl<St, F> core::marker::Sync for entelix_graph::FinalizingStream<St, F> where St: core::marker::Sync, F: core::marker::Sync
+impl<St, F> core::marker::UnsafeUnpin for entelix_graph::FinalizingStream<St, F> where St: core::marker::UnsafeUnpin, F: core::marker::UnsafeUnpin
+impl<St, F> core::panic::unwind_safe::RefUnwindSafe for entelix_graph::FinalizingStream<St, F> where St: core::panic::unwind_safe::RefUnwindSafe, F: core::panic::unwind_safe::RefUnwindSafe
+impl<St, F> core::panic::unwind_safe::UnwindSafe for entelix_graph::FinalizingStream<St, F> where St: core::panic::unwind_safe::UnwindSafe, F: core::panic::unwind_safe::UnwindSafe
+pub struct entelix_graph::InMemoryCheckpointer<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+impl<S> entelix_graph::InMemoryCheckpointer<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::InMemoryCheckpointer<S>::new() -> Self
+pub fn entelix_graph::InMemoryCheckpointer<S>::thread_count(&self) -> usize
+pub fn entelix_graph::InMemoryCheckpointer<S>::total_checkpoints(&self) -> usize
+impl<S> core::clone::Clone for entelix_graph::InMemoryCheckpointer<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static + core::clone::Clone
+pub fn entelix_graph::InMemoryCheckpointer<S>::clone(&self) -> entelix_graph::InMemoryCheckpointer<S>
+impl<S> core::default::Default for entelix_graph::InMemoryCheckpointer<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::InMemoryCheckpointer<S>::default() -> Self
+impl<S> entelix_graph::Checkpointer<S> for entelix_graph::InMemoryCheckpointer<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::InMemoryCheckpointer<S>::by_id<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, id: &'life2 entelix_graph::CheckpointId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<entelix_graph::Checkpoint<S>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_graph::InMemoryCheckpointer<S>::history<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, limit: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_graph::Checkpoint<S>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_graph::InMemoryCheckpointer<S>::latest<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<entelix_graph::Checkpoint<S>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_graph::InMemoryCheckpointer<S>::put<'life0, 'async_trait>(&'life0 self, checkpoint: entelix_graph::Checkpoint<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_graph::InMemoryCheckpointer<S>::update_state<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, parent_id: &'life2 entelix_graph::CheckpointId, new_state: S) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_graph::CheckpointId>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl<S> core::marker::Freeze for entelix_graph::InMemoryCheckpointer<S>
+impl<S> core::marker::Send for entelix_graph::InMemoryCheckpointer<S>
+impl<S> core::marker::Sync for entelix_graph::InMemoryCheckpointer<S>
+impl<S> core::marker::Unpin for entelix_graph::InMemoryCheckpointer<S>
+impl<S> core::marker::UnsafeUnpin for entelix_graph::InMemoryCheckpointer<S>
+impl<S> !core::panic::unwind_safe::RefUnwindSafe for entelix_graph::InMemoryCheckpointer<S>
+impl<S> !core::panic::unwind_safe::UnwindSafe for entelix_graph::InMemoryCheckpointer<S>
+pub struct entelix_graph::Max<T>(_)
+impl<T> entelix_graph::Max<T>
+pub const fn entelix_graph::Max<T>::new() -> Self
+impl<T: core::clone::Clone> core::clone::Clone for entelix_graph::Max<T>
+pub fn entelix_graph::Max<T>::clone(&self) -> entelix_graph::Max<T>
+impl<T: core::fmt::Debug> core::fmt::Debug for entelix_graph::Max<T>
+pub fn entelix_graph::Max<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T: core::marker::Copy> core::marker::Copy for entelix_graph::Max<T>
+impl<T> core::default::Default for entelix_graph::Max<T>
+pub fn entelix_graph::Max<T>::default() -> Self
+impl<T> entelix_graph::Reducer<T> for entelix_graph::Max<T> where T: core::cmp::Ord + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::Max<T>::reduce(&self, current: T, update: T) -> T
+impl<T> core::marker::Freeze for entelix_graph::Max<T>
+impl<T> core::marker::Send for entelix_graph::Max<T>
+impl<T> core::marker::Sync for entelix_graph::Max<T>
+impl<T> core::marker::Unpin for entelix_graph::Max<T>
+impl<T> core::marker::UnsafeUnpin for entelix_graph::Max<T>
+impl<T> core::panic::unwind_safe::RefUnwindSafe for entelix_graph::Max<T>
+impl<T> core::panic::unwind_safe::UnwindSafe for entelix_graph::Max<T>
+pub struct entelix_graph::MergeMap<K, V>(_)
+impl<K, V> entelix_graph::MergeMap<K, V>
+pub const fn entelix_graph::MergeMap<K, V>::new() -> Self
+impl<K, V> core::default::Default for entelix_graph::MergeMap<K, V>
+pub fn entelix_graph::MergeMap<K, V>::default() -> Self
+impl<K, V> entelix_graph::Reducer<std::collections::hash::map::HashMap<K, V>> for entelix_graph::MergeMap<K, V> where K: core::cmp::Eq + core::hash::Hash + core::marker::Send + core::marker::Sync + 'static, V: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::MergeMap<K, V>::reduce(&self, current: std::collections::hash::map::HashMap<K, V>, update: std::collections::hash::map::HashMap<K, V>) -> std::collections::hash::map::HashMap<K, V>
+impl<K: core::clone::Clone, V: core::clone::Clone> core::clone::Clone for entelix_graph::MergeMap<K, V>
+pub fn entelix_graph::MergeMap<K, V>::clone(&self) -> entelix_graph::MergeMap<K, V>
+impl<K: core::fmt::Debug, V: core::fmt::Debug> core::fmt::Debug for entelix_graph::MergeMap<K, V>
+pub fn entelix_graph::MergeMap<K, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<K: core::marker::Copy, V: core::marker::Copy> core::marker::Copy for entelix_graph::MergeMap<K, V>
+impl<K, V> core::marker::Freeze for entelix_graph::MergeMap<K, V>
+impl<K, V> core::marker::Send for entelix_graph::MergeMap<K, V>
+impl<K, V> core::marker::Sync for entelix_graph::MergeMap<K, V>
+impl<K, V> core::marker::Unpin for entelix_graph::MergeMap<K, V>
+impl<K, V> core::marker::UnsafeUnpin for entelix_graph::MergeMap<K, V>
+impl<K, V> core::panic::unwind_safe::RefUnwindSafe for entelix_graph::MergeMap<K, V>
+impl<K, V> core::panic::unwind_safe::UnwindSafe for entelix_graph::MergeMap<K, V>
+pub struct entelix_graph::MergeNodeAdapter<S, U, F> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, U: core::marker::Send + core::marker::Sync + 'static, F: core::ops::function::Fn(S, U) -> entelix_core::error::Result<S> + core::marker::Send + core::marker::Sync + 'static
+impl<S, U, F> entelix_graph::MergeNodeAdapter<S, U, F> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, U: core::marker::Send + core::marker::Sync + 'static, F: core::ops::function::Fn(S, U) -> entelix_core::error::Result<S> + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::MergeNodeAdapter<S, U, F>::new<R>(inner: R, merger: F) -> Self where R: entelix_runnable::runnable::Runnable<S, U> + 'static
+impl<S, U, F> core::fmt::Debug for entelix_graph::MergeNodeAdapter<S, U, F> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, U: core::marker::Send + core::marker::Sync + 'static, F: core::ops::function::Fn(S, U) -> entelix_core::error::Result<S> + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::MergeNodeAdapter<S, U, F>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<S, U, F> entelix_runnable::runnable::Runnable<S, S> for entelix_graph::MergeNodeAdapter<S, U, F> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, U: core::marker::Send + core::marker::Sync + 'static, F: core::ops::function::Fn(S, U) -> entelix_core::error::Result<S> + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::MergeNodeAdapter<S, U, F>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: S, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<S>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<S, U, F> core::marker::Freeze for entelix_graph::MergeNodeAdapter<S, U, F> where F: core::marker::Freeze
+impl<S, U, F> core::marker::Send for entelix_graph::MergeNodeAdapter<S, U, F>
+impl<S, U, F> core::marker::Sync for entelix_graph::MergeNodeAdapter<S, U, F>
+impl<S, U, F> core::marker::Unpin for entelix_graph::MergeNodeAdapter<S, U, F> where F: core::marker::Unpin
+impl<S, U, F> core::marker::UnsafeUnpin for entelix_graph::MergeNodeAdapter<S, U, F> where F: core::marker::UnsafeUnpin
+impl<S, U, F> !core::panic::unwind_safe::RefUnwindSafe for entelix_graph::MergeNodeAdapter<S, U, F>
+impl<S, U, F> !core::panic::unwind_safe::UnwindSafe for entelix_graph::MergeNodeAdapter<S, U, F>
+pub struct entelix_graph::Replace
+impl core::clone::Clone for entelix_graph::Replace
+pub fn entelix_graph::Replace::clone(&self) -> entelix_graph::Replace
+impl core::default::Default for entelix_graph::Replace
+pub fn entelix_graph::Replace::default() -> entelix_graph::Replace
+impl core::fmt::Debug for entelix_graph::Replace
+pub fn entelix_graph::Replace::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_graph::Replace
+impl<T> entelix_graph::Reducer<T> for entelix_graph::Replace where T: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::Replace::reduce(&self, _current: T, update: T) -> T
+impl core::marker::Freeze for entelix_graph::Replace
+impl core::marker::Send for entelix_graph::Replace
+impl core::marker::Sync for entelix_graph::Replace
+impl core::marker::Unpin for entelix_graph::Replace
+impl core::marker::UnsafeUnpin for entelix_graph::Replace
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_graph::Replace
+impl core::panic::unwind_safe::UnwindSafe for entelix_graph::Replace
+pub struct entelix_graph::SendEdge<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub entelix_graph::SendEdge::join: alloc::string::String
+pub entelix_graph::SendEdge::merger: entelix_graph::SendMerger<S>
+pub entelix_graph::SendEdge::selector: entelix_graph::SendSelector<S>
+impl<S> entelix_graph::SendEdge<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::SendEdge<S>::has_target(&self, name: &str) -> bool
+pub fn entelix_graph::SendEdge<S>::new(targets: impl core::iter::traits::collect::IntoIterator<Item = alloc::string::String>, selector: entelix_graph::SendSelector<S>, merger: entelix_graph::SendMerger<S>, join: alloc::string::String) -> Self
+pub fn entelix_graph::SendEdge<S>::targets(&self) -> &[alloc::string::String]
+impl<S> core::marker::Freeze for entelix_graph::SendEdge<S>
+impl<S> core::marker::Send for entelix_graph::SendEdge<S>
+impl<S> core::marker::Sync for entelix_graph::SendEdge<S>
+impl<S> core::marker::Unpin for entelix_graph::SendEdge<S>
+impl<S> core::marker::UnsafeUnpin for entelix_graph::SendEdge<S>
+impl<S> !core::panic::unwind_safe::RefUnwindSafe for entelix_graph::SendEdge<S>
+impl<S> !core::panic::unwind_safe::UnwindSafe for entelix_graph::SendEdge<S>
+pub struct entelix_graph::StateGraph<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+impl<S> entelix_graph::StateGraph<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::StateGraph<S>::add_conditional_edges<F, K, V>(self, from: impl core::convert::Into<alloc::string::String>, selector: F, mapping: impl core::iter::traits::collect::IntoIterator<Item = (K, V)>) -> Self where F: core::ops::function::Fn(&S) -> alloc::string::String + core::marker::Send + core::marker::Sync + 'static, K: core::convert::Into<alloc::string::String>, V: core::convert::Into<alloc::string::String>
+pub fn entelix_graph::StateGraph<S>::add_contributing_node<R>(self, name: impl core::convert::Into<alloc::string::String>, runnable: R) -> Self where R: entelix_runnable::runnable::Runnable<S, <S as entelix_graph::StateMerge>::Contribution> + 'static, S: entelix_graph::StateMerge
+pub fn entelix_graph::StateGraph<S>::add_edge(self, from: impl core::convert::Into<alloc::string::String>, to: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_graph::StateGraph<S>::add_finish_point(self, name: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_graph::StateGraph<S>::add_node<R>(self, name: impl core::convert::Into<alloc::string::String>, runnable: R) -> Self where R: entelix_runnable::runnable::Runnable<S, S> + 'static
+pub fn entelix_graph::StateGraph<S>::add_node_with<R, U, F>(self, name: impl core::convert::Into<alloc::string::String>, runnable: R, merger: F) -> Self where R: entelix_runnable::runnable::Runnable<S, U> + 'static, U: core::marker::Send + core::marker::Sync + 'static, F: core::ops::function::Fn(S, U) -> entelix_core::error::Result<S> + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::StateGraph<S>::add_send_edges<F, I, T>(self, from: impl core::convert::Into<alloc::string::String>, targets: I, selector: F, join: impl core::convert::Into<alloc::string::String>) -> Self where F: core::ops::function::Fn(&S) -> alloc::vec::Vec<(alloc::string::String, S)> + core::marker::Send + core::marker::Sync + 'static, I: core::iter::traits::collect::IntoIterator<Item = T>, T: core::convert::Into<alloc::string::String>, S: entelix_graph::StateMerge
+pub fn entelix_graph::StateGraph<S>::compile(self) -> entelix_core::error::Result<entelix_graph::CompiledGraph<S>>
+pub fn entelix_graph::StateGraph<S>::conditional_edge_count(&self) -> usize
+pub fn entelix_graph::StateGraph<S>::edge_count(&self) -> usize
+pub fn entelix_graph::StateGraph<S>::interrupt_after<I, T>(self, nodes: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = T>, T: core::convert::Into<alloc::string::String>
+pub fn entelix_graph::StateGraph<S>::interrupt_before<I, T>(self, nodes: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = T>, T: core::convert::Into<alloc::string::String>
+pub fn entelix_graph::StateGraph<S>::new() -> Self
+pub fn entelix_graph::StateGraph<S>::node_count(&self) -> usize
+pub fn entelix_graph::StateGraph<S>::set_entry_point(self, name: impl core::convert::Into<alloc::string::String>) -> Self
+pub const fn entelix_graph::StateGraph<S>::with_checkpoint_granularity(self, g: entelix_graph::CheckpointGranularity) -> Self
+pub fn entelix_graph::StateGraph<S>::with_checkpointer(self, checkpointer: alloc::sync::Arc<dyn entelix_graph::Checkpointer<S>>) -> Self
+pub const fn entelix_graph::StateGraph<S>::with_recursion_limit(self, n: usize) -> Self
+impl<S> core::default::Default for entelix_graph::StateGraph<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::StateGraph<S>::default() -> Self
+impl<S> core::fmt::Debug for entelix_graph::StateGraph<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::StateGraph<S>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<S> core::marker::Freeze for entelix_graph::StateGraph<S>
+impl<S> core::marker::Send for entelix_graph::StateGraph<S>
+impl<S> core::marker::Sync for entelix_graph::StateGraph<S>
+impl<S> core::marker::Unpin for entelix_graph::StateGraph<S>
+impl<S> core::marker::UnsafeUnpin for entelix_graph::StateGraph<S>
+impl<S> !core::panic::unwind_safe::RefUnwindSafe for entelix_graph::StateGraph<S>
+impl<S> !core::panic::unwind_safe::UnwindSafe for entelix_graph::StateGraph<S>
+pub const entelix_graph::DEFAULT_RECURSION_LIMIT: usize
+pub const entelix_graph::END: &str
+pub trait entelix_graph::Checkpointer<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::Checkpointer::by_id<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, id: &'life2 entelix_graph::CheckpointId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<entelix_graph::Checkpoint<S>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_graph::Checkpointer::history<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, limit: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_graph::Checkpoint<S>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_graph::Checkpointer::latest<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<entelix_graph::Checkpoint<S>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_graph::Checkpointer::put<'life0, 'async_trait>(&'life0 self, checkpoint: entelix_graph::Checkpoint<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_graph::Checkpointer::update_state<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, parent_id: &'life2 entelix_graph::CheckpointId, new_state: S) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_graph::CheckpointId>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl<S> entelix_graph::Checkpointer<S> for entelix_graph::InMemoryCheckpointer<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::InMemoryCheckpointer<S>::by_id<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, id: &'life2 entelix_graph::CheckpointId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<entelix_graph::Checkpoint<S>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_graph::InMemoryCheckpointer<S>::history<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, limit: usize) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_graph::Checkpoint<S>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_graph::InMemoryCheckpointer<S>::latest<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<core::option::Option<entelix_graph::Checkpoint<S>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_graph::InMemoryCheckpointer<S>::put<'life0, 'async_trait>(&'life0 self, checkpoint: entelix_graph::Checkpoint<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_graph::InMemoryCheckpointer<S>::update_state<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, parent_id: &'life2 entelix_graph::CheckpointId, new_state: S) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_graph::CheckpointId>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub trait entelix_graph::Reducer<T>: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::Reducer::reduce(&self, current: T, update: T) -> T
+impl<K, V> entelix_graph::Reducer<std::collections::hash::map::HashMap<K, V>> for entelix_graph::MergeMap<K, V> where K: core::cmp::Eq + core::hash::Hash + core::marker::Send + core::marker::Sync + 'static, V: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::MergeMap<K, V>::reduce(&self, current: std::collections::hash::map::HashMap<K, V>, update: std::collections::hash::map::HashMap<K, V>) -> std::collections::hash::map::HashMap<K, V>
+impl<T> entelix_graph::Reducer<T> for entelix_graph::Max<T> where T: core::cmp::Ord + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::Max<T>::reduce(&self, current: T, update: T) -> T
+impl<T> entelix_graph::Reducer<T> for entelix_graph::Replace where T: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::Replace::reduce(&self, _current: T, update: T) -> T
+impl<U> entelix_graph::Reducer<alloc::vec::Vec<U>> for entelix_graph::Append<U> where U: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::Append<U>::reduce(&self, current: alloc::vec::Vec<U>, update: alloc::vec::Vec<U>) -> alloc::vec::Vec<U>
+pub trait entelix_graph::StateMerge: core::marker::Sized
+pub type entelix_graph::StateMerge::Contribution: core::default::Default + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_graph::StateMerge::merge(self, update: Self) -> Self
+pub fn entelix_graph::StateMerge::merge_contribution(self, contribution: Self::Contribution) -> Self
+pub const fn entelix_graph::interrupt<T>(payload: serde_json::value::Value) -> entelix_core::error::Result<T>
+pub async fn entelix_graph::scatter<R, I, O>(runnable: alloc::sync::Arc<R>, sends: alloc::vec::Vec<entelix_graph::Dispatch<I>>, ctx: &entelix_core::context::ExecutionContext, concurrency: usize) -> entelix_core::error::Result<alloc::vec::Vec<O>> where R: entelix_runnable::runnable::Runnable<I, O> + 'static, I: core::marker::Send + core::marker::Sync + 'static, O: core::marker::Send + core::marker::Sync + 'static
+pub type entelix_graph::EdgeSelector<S> = alloc::sync::Arc<(dyn core::ops::function::Fn(&S) -> alloc::string::String + core::marker::Send + core::marker::Sync)>
+pub type entelix_graph::SendMerger<S> = alloc::sync::Arc<(dyn core::ops::function::Fn(S, S) -> S + core::marker::Send + core::marker::Sync)>
+pub type entelix_graph::SendSelector<S> = alloc::sync::Arc<(dyn core::ops::function::Fn(&S) -> alloc::vec::Vec<(alloc::string::String, S)> + core::marker::Send + core::marker::Sync)>

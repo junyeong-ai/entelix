@@ -1,0 +1,537 @@
+pub mod entelix_runnable
+pub mod entelix_runnable::stream
+#[non_exhaustive] pub enum entelix_runnable::stream::DebugEvent
+pub entelix_runnable::stream::DebugEvent::Final
+pub entelix_runnable::stream::DebugEvent::NodeEnd
+pub entelix_runnable::stream::DebugEvent::NodeEnd::node: alloc::string::String
+pub entelix_runnable::stream::DebugEvent::NodeEnd::step: usize
+pub entelix_runnable::stream::DebugEvent::NodeStart
+pub entelix_runnable::stream::DebugEvent::NodeStart::node: alloc::string::String
+pub entelix_runnable::stream::DebugEvent::NodeStart::step: usize
+impl core::clone::Clone for entelix_runnable::stream::DebugEvent
+pub fn entelix_runnable::stream::DebugEvent::clone(&self) -> entelix_runnable::stream::DebugEvent
+impl core::cmp::Eq for entelix_runnable::stream::DebugEvent
+impl core::cmp::PartialEq for entelix_runnable::stream::DebugEvent
+pub fn entelix_runnable::stream::DebugEvent::eq(&self, other: &entelix_runnable::stream::DebugEvent) -> bool
+impl core::fmt::Debug for entelix_runnable::stream::DebugEvent
+pub fn entelix_runnable::stream::DebugEvent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_runnable::stream::DebugEvent
+impl core::marker::Freeze for entelix_runnable::stream::DebugEvent
+impl core::marker::Send for entelix_runnable::stream::DebugEvent
+impl core::marker::Sync for entelix_runnable::stream::DebugEvent
+impl core::marker::Unpin for entelix_runnable::stream::DebugEvent
+impl core::marker::UnsafeUnpin for entelix_runnable::stream::DebugEvent
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::stream::DebugEvent
+impl core::panic::unwind_safe::UnwindSafe for entelix_runnable::stream::DebugEvent
+#[non_exhaustive] pub enum entelix_runnable::stream::RunnableEvent
+pub entelix_runnable::stream::RunnableEvent::Finished
+pub entelix_runnable::stream::RunnableEvent::Finished::name: alloc::string::String
+pub entelix_runnable::stream::RunnableEvent::Finished::ok: bool
+pub entelix_runnable::stream::RunnableEvent::Started
+pub entelix_runnable::stream::RunnableEvent::Started::name: alloc::string::String
+impl core::clone::Clone for entelix_runnable::stream::RunnableEvent
+pub fn entelix_runnable::stream::RunnableEvent::clone(&self) -> entelix_runnable::stream::RunnableEvent
+impl core::cmp::Eq for entelix_runnable::stream::RunnableEvent
+impl core::cmp::PartialEq for entelix_runnable::stream::RunnableEvent
+pub fn entelix_runnable::stream::RunnableEvent::eq(&self, other: &entelix_runnable::stream::RunnableEvent) -> bool
+impl core::fmt::Debug for entelix_runnable::stream::RunnableEvent
+pub fn entelix_runnable::stream::RunnableEvent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_runnable::stream::RunnableEvent
+impl core::marker::Freeze for entelix_runnable::stream::RunnableEvent
+impl core::marker::Send for entelix_runnable::stream::RunnableEvent
+impl core::marker::Sync for entelix_runnable::stream::RunnableEvent
+impl core::marker::Unpin for entelix_runnable::stream::RunnableEvent
+impl core::marker::UnsafeUnpin for entelix_runnable::stream::RunnableEvent
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::stream::RunnableEvent
+impl core::panic::unwind_safe::UnwindSafe for entelix_runnable::stream::RunnableEvent
+#[non_exhaustive] pub enum entelix_runnable::stream::StreamChunk<O>
+pub entelix_runnable::stream::StreamChunk::Debug(entelix_runnable::stream::DebugEvent)
+pub entelix_runnable::stream::StreamChunk::Event(entelix_runnable::stream::RunnableEvent)
+pub entelix_runnable::stream::StreamChunk::Message(entelix_core::stream::StreamDelta)
+pub entelix_runnable::stream::StreamChunk::Update
+pub entelix_runnable::stream::StreamChunk::Update::node: alloc::string::String
+pub entelix_runnable::stream::StreamChunk::Update::value: O
+pub entelix_runnable::stream::StreamChunk::Value(O)
+impl<O> entelix_runnable::stream::StreamChunk<O>
+pub fn entelix_runnable::stream::StreamChunk<O>::into_output(self) -> core::option::Option<O>
+pub const fn entelix_runnable::stream::StreamChunk<O>::output(&self) -> core::option::Option<&O>
+impl<O: core::clone::Clone> core::clone::Clone for entelix_runnable::stream::StreamChunk<O>
+pub fn entelix_runnable::stream::StreamChunk<O>::clone(&self) -> entelix_runnable::stream::StreamChunk<O>
+impl<O: core::fmt::Debug> core::fmt::Debug for entelix_runnable::stream::StreamChunk<O>
+pub fn entelix_runnable::stream::StreamChunk<O>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<O> core::marker::Freeze for entelix_runnable::stream::StreamChunk<O> where O: core::marker::Freeze
+impl<O> core::marker::Send for entelix_runnable::stream::StreamChunk<O> where O: core::marker::Send
+impl<O> core::marker::Sync for entelix_runnable::stream::StreamChunk<O> where O: core::marker::Sync
+impl<O> core::marker::Unpin for entelix_runnable::stream::StreamChunk<O> where O: core::marker::Unpin
+impl<O> core::marker::UnsafeUnpin for entelix_runnable::stream::StreamChunk<O> where O: core::marker::UnsafeUnpin
+impl<O> core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::stream::StreamChunk<O> where O: core::panic::unwind_safe::RefUnwindSafe
+impl<O> core::panic::unwind_safe::UnwindSafe for entelix_runnable::stream::StreamChunk<O> where O: core::panic::unwind_safe::UnwindSafe
+#[non_exhaustive] pub enum entelix_runnable::stream::StreamMode
+pub entelix_runnable::stream::StreamMode::Debug
+pub entelix_runnable::stream::StreamMode::Events
+pub entelix_runnable::stream::StreamMode::Messages
+pub entelix_runnable::stream::StreamMode::Updates
+pub entelix_runnable::stream::StreamMode::Values
+impl core::clone::Clone for entelix_runnable::stream::StreamMode
+pub fn entelix_runnable::stream::StreamMode::clone(&self) -> entelix_runnable::stream::StreamMode
+impl core::cmp::Eq for entelix_runnable::stream::StreamMode
+impl core::cmp::PartialEq for entelix_runnable::stream::StreamMode
+pub fn entelix_runnable::stream::StreamMode::eq(&self, other: &entelix_runnable::stream::StreamMode) -> bool
+impl core::fmt::Debug for entelix_runnable::stream::StreamMode
+pub fn entelix_runnable::stream::StreamMode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_runnable::stream::StreamMode
+pub fn entelix_runnable::stream::StreamMode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_runnable::stream::StreamMode
+impl core::marker::StructuralPartialEq for entelix_runnable::stream::StreamMode
+impl core::marker::Freeze for entelix_runnable::stream::StreamMode
+impl core::marker::Send for entelix_runnable::stream::StreamMode
+impl core::marker::Sync for entelix_runnable::stream::StreamMode
+impl core::marker::Unpin for entelix_runnable::stream::StreamMode
+impl core::marker::UnsafeUnpin for entelix_runnable::stream::StreamMode
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::stream::StreamMode
+impl core::panic::unwind_safe::UnwindSafe for entelix_runnable::stream::StreamMode
+pub type entelix_runnable::stream::BoxStream<'a, T> = core::pin::Pin<alloc::boxed::Box<(dyn futures_core::stream::Stream<Item = T> + core::marker::Send + 'a)>>
+#[non_exhaustive] pub enum entelix_runnable::DebugEvent
+pub entelix_runnable::DebugEvent::Final
+pub entelix_runnable::DebugEvent::NodeEnd
+pub entelix_runnable::DebugEvent::NodeEnd::node: alloc::string::String
+pub entelix_runnable::DebugEvent::NodeEnd::step: usize
+pub entelix_runnable::DebugEvent::NodeStart
+pub entelix_runnable::DebugEvent::NodeStart::node: alloc::string::String
+pub entelix_runnable::DebugEvent::NodeStart::step: usize
+impl core::clone::Clone for entelix_runnable::stream::DebugEvent
+pub fn entelix_runnable::stream::DebugEvent::clone(&self) -> entelix_runnable::stream::DebugEvent
+impl core::cmp::Eq for entelix_runnable::stream::DebugEvent
+impl core::cmp::PartialEq for entelix_runnable::stream::DebugEvent
+pub fn entelix_runnable::stream::DebugEvent::eq(&self, other: &entelix_runnable::stream::DebugEvent) -> bool
+impl core::fmt::Debug for entelix_runnable::stream::DebugEvent
+pub fn entelix_runnable::stream::DebugEvent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_runnable::stream::DebugEvent
+impl core::marker::Freeze for entelix_runnable::stream::DebugEvent
+impl core::marker::Send for entelix_runnable::stream::DebugEvent
+impl core::marker::Sync for entelix_runnable::stream::DebugEvent
+impl core::marker::Unpin for entelix_runnable::stream::DebugEvent
+impl core::marker::UnsafeUnpin for entelix_runnable::stream::DebugEvent
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::stream::DebugEvent
+impl core::panic::unwind_safe::UnwindSafe for entelix_runnable::stream::DebugEvent
+#[non_exhaustive] pub enum entelix_runnable::RunnableEvent
+pub entelix_runnable::RunnableEvent::Finished
+pub entelix_runnable::RunnableEvent::Finished::name: alloc::string::String
+pub entelix_runnable::RunnableEvent::Finished::ok: bool
+pub entelix_runnable::RunnableEvent::Started
+pub entelix_runnable::RunnableEvent::Started::name: alloc::string::String
+impl core::clone::Clone for entelix_runnable::stream::RunnableEvent
+pub fn entelix_runnable::stream::RunnableEvent::clone(&self) -> entelix_runnable::stream::RunnableEvent
+impl core::cmp::Eq for entelix_runnable::stream::RunnableEvent
+impl core::cmp::PartialEq for entelix_runnable::stream::RunnableEvent
+pub fn entelix_runnable::stream::RunnableEvent::eq(&self, other: &entelix_runnable::stream::RunnableEvent) -> bool
+impl core::fmt::Debug for entelix_runnable::stream::RunnableEvent
+pub fn entelix_runnable::stream::RunnableEvent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_runnable::stream::RunnableEvent
+impl core::marker::Freeze for entelix_runnable::stream::RunnableEvent
+impl core::marker::Send for entelix_runnable::stream::RunnableEvent
+impl core::marker::Sync for entelix_runnable::stream::RunnableEvent
+impl core::marker::Unpin for entelix_runnable::stream::RunnableEvent
+impl core::marker::UnsafeUnpin for entelix_runnable::stream::RunnableEvent
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::stream::RunnableEvent
+impl core::panic::unwind_safe::UnwindSafe for entelix_runnable::stream::RunnableEvent
+#[non_exhaustive] pub enum entelix_runnable::StreamChunk<O>
+pub entelix_runnable::StreamChunk::Debug(entelix_runnable::stream::DebugEvent)
+pub entelix_runnable::StreamChunk::Event(entelix_runnable::stream::RunnableEvent)
+pub entelix_runnable::StreamChunk::Message(entelix_core::stream::StreamDelta)
+pub entelix_runnable::StreamChunk::Update
+pub entelix_runnable::StreamChunk::Update::node: alloc::string::String
+pub entelix_runnable::StreamChunk::Update::value: O
+pub entelix_runnable::StreamChunk::Value(O)
+impl<O> entelix_runnable::stream::StreamChunk<O>
+pub fn entelix_runnable::stream::StreamChunk<O>::into_output(self) -> core::option::Option<O>
+pub const fn entelix_runnable::stream::StreamChunk<O>::output(&self) -> core::option::Option<&O>
+impl<O: core::clone::Clone> core::clone::Clone for entelix_runnable::stream::StreamChunk<O>
+pub fn entelix_runnable::stream::StreamChunk<O>::clone(&self) -> entelix_runnable::stream::StreamChunk<O>
+impl<O: core::fmt::Debug> core::fmt::Debug for entelix_runnable::stream::StreamChunk<O>
+pub fn entelix_runnable::stream::StreamChunk<O>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<O> core::marker::Freeze for entelix_runnable::stream::StreamChunk<O> where O: core::marker::Freeze
+impl<O> core::marker::Send for entelix_runnable::stream::StreamChunk<O> where O: core::marker::Send
+impl<O> core::marker::Sync for entelix_runnable::stream::StreamChunk<O> where O: core::marker::Sync
+impl<O> core::marker::Unpin for entelix_runnable::stream::StreamChunk<O> where O: core::marker::Unpin
+impl<O> core::marker::UnsafeUnpin for entelix_runnable::stream::StreamChunk<O> where O: core::marker::UnsafeUnpin
+impl<O> core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::stream::StreamChunk<O> where O: core::panic::unwind_safe::RefUnwindSafe
+impl<O> core::panic::unwind_safe::UnwindSafe for entelix_runnable::stream::StreamChunk<O> where O: core::panic::unwind_safe::UnwindSafe
+#[non_exhaustive] pub enum entelix_runnable::StreamMode
+pub entelix_runnable::StreamMode::Debug
+pub entelix_runnable::StreamMode::Events
+pub entelix_runnable::StreamMode::Messages
+pub entelix_runnable::StreamMode::Updates
+pub entelix_runnable::StreamMode::Values
+impl core::clone::Clone for entelix_runnable::stream::StreamMode
+pub fn entelix_runnable::stream::StreamMode::clone(&self) -> entelix_runnable::stream::StreamMode
+impl core::cmp::Eq for entelix_runnable::stream::StreamMode
+impl core::cmp::PartialEq for entelix_runnable::stream::StreamMode
+pub fn entelix_runnable::stream::StreamMode::eq(&self, other: &entelix_runnable::stream::StreamMode) -> bool
+impl core::fmt::Debug for entelix_runnable::stream::StreamMode
+pub fn entelix_runnable::stream::StreamMode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_runnable::stream::StreamMode
+pub fn entelix_runnable::stream::StreamMode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_runnable::stream::StreamMode
+impl core::marker::StructuralPartialEq for entelix_runnable::stream::StreamMode
+impl core::marker::Freeze for entelix_runnable::stream::StreamMode
+impl core::marker::Send for entelix_runnable::stream::StreamMode
+impl core::marker::Sync for entelix_runnable::stream::StreamMode
+impl core::marker::Unpin for entelix_runnable::stream::StreamMode
+impl core::marker::UnsafeUnpin for entelix_runnable::stream::StreamMode
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::stream::StreamMode
+impl core::panic::unwind_safe::UnwindSafe for entelix_runnable::stream::StreamMode
+pub struct entelix_runnable::Configured<R, F, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, F: core::ops::function::Fn(&mut entelix_core::context::ExecutionContext) + core::marker::Send + core::marker::Sync + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static
+impl<R, F, I, O> entelix_runnable::Configured<R, F, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, F: core::ops::function::Fn(&mut entelix_core::context::ExecutionContext) + core::marker::Send + core::marker::Sync + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Configured<R, F, I, O>::new(inner: R, configurer: F) -> Self
+impl<R, F, I, O> core::fmt::Debug for entelix_runnable::Configured<R, F, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, F: core::ops::function::Fn(&mut entelix_core::context::ExecutionContext) + core::marker::Send + core::marker::Sync + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Configured<R, F, I, O>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<R, F, I, O> entelix_runnable::Runnable<I, O> for entelix_runnable::Configured<R, F, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, F: core::ops::function::Fn(&mut entelix_core::context::ExecutionContext) + core::marker::Send + core::marker::Sync + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Configured<R, F, I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Configured<R, F, I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Configured<R, F, I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::Configured<R, F, I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<R, F, I, O> core::marker::Freeze for entelix_runnable::Configured<R, F, I, O>
+impl<R, F, I, O> core::marker::Send for entelix_runnable::Configured<R, F, I, O>
+impl<R, F, I, O> core::marker::Sync for entelix_runnable::Configured<R, F, I, O>
+impl<R, F, I, O> core::marker::Unpin for entelix_runnable::Configured<R, F, I, O>
+impl<R, F, I, O> core::marker::UnsafeUnpin for entelix_runnable::Configured<R, F, I, O>
+impl<R, F, I, O> core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::Configured<R, F, I, O> where R: core::panic::unwind_safe::RefUnwindSafe, F: core::panic::unwind_safe::RefUnwindSafe
+impl<R, F, I, O> core::panic::unwind_safe::UnwindSafe for entelix_runnable::Configured<R, F, I, O> where R: core::panic::unwind_safe::RefUnwindSafe, F: core::panic::unwind_safe::RefUnwindSafe
+pub struct entelix_runnable::Fallback<R, F, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, F: entelix_runnable::Runnable<I, O> + 'static, I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static
+impl<R, F, I, O> entelix_runnable::Fallback<R, F, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, F: entelix_runnable::Runnable<I, O> + 'static, I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Fallback<R, F, I, O>::new(primary: R, fallbacks: alloc::vec::Vec<F>) -> Self
+pub fn entelix_runnable::Fallback<R, F, I, O>::with_classifier(self, classifier: alloc::sync::Arc<dyn entelix_core::transports::retry::RetryClassifier>) -> Self
+impl<R, F, I, O> core::fmt::Debug for entelix_runnable::Fallback<R, F, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, F: entelix_runnable::Runnable<I, O> + 'static, I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Fallback<R, F, I, O>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<R, F, I, O> entelix_runnable::Runnable<I, O> for entelix_runnable::Fallback<R, F, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, F: entelix_runnable::Runnable<I, O> + 'static, I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Fallback<R, F, I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Fallback<R, F, I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Fallback<R, F, I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::Fallback<R, F, I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<R, F, I, O> core::marker::Freeze for entelix_runnable::Fallback<R, F, I, O>
+impl<R, F, I, O> core::marker::Send for entelix_runnable::Fallback<R, F, I, O>
+impl<R, F, I, O> core::marker::Sync for entelix_runnable::Fallback<R, F, I, O>
+impl<R, F, I, O> core::marker::Unpin for entelix_runnable::Fallback<R, F, I, O>
+impl<R, F, I, O> core::marker::UnsafeUnpin for entelix_runnable::Fallback<R, F, I, O>
+impl<R, F, I, O> !core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::Fallback<R, F, I, O>
+impl<R, F, I, O> !core::panic::unwind_safe::UnwindSafe for entelix_runnable::Fallback<R, F, I, O>
+pub struct entelix_runnable::FixingOutputParser<O, P, M> where O: core::marker::Send + 'static, P: entelix_runnable::Runnable<entelix_core::ir::message::Message, O>, M: entelix_runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message>
+impl<O, P, M> entelix_runnable::FixingOutputParser<O, P, M> where O: core::marker::Send + 'static, P: entelix_runnable::Runnable<entelix_core::ir::message::Message, O>, M: entelix_runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message>
+pub fn entelix_runnable::FixingOutputParser<O, P, M>::new(inner: P, fixer: M) -> Self
+pub fn entelix_runnable::FixingOutputParser<O, P, M>::with_instructions(self, instructions: impl core::convert::Into<alloc::string::String>) -> Self
+pub const fn entelix_runnable::FixingOutputParser<O, P, M>::with_max_retries(self, max_retries: usize) -> Self
+impl<O, P, M> entelix_runnable::Runnable<entelix_core::ir::message::Message, O> for entelix_runnable::FixingOutputParser<O, P, M> where O: core::marker::Send + 'static, P: entelix_runnable::Runnable<entelix_core::ir::message::Message, O> + 'static, M: entelix_runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_runnable::FixingOutputParser<O, P, M>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::FixingOutputParser<O, P, M>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: entelix_core::ir::message::Message, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::FixingOutputParser<O, P, M>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::FixingOutputParser<O, P, M>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<O, P, M> core::marker::Freeze for entelix_runnable::FixingOutputParser<O, P, M> where P: core::marker::Freeze, M: core::marker::Freeze
+impl<O, P, M> core::marker::Send for entelix_runnable::FixingOutputParser<O, P, M>
+impl<O, P, M> core::marker::Sync for entelix_runnable::FixingOutputParser<O, P, M>
+impl<O, P, M> core::marker::Unpin for entelix_runnable::FixingOutputParser<O, P, M> where P: core::marker::Unpin, M: core::marker::Unpin
+impl<O, P, M> core::marker::UnsafeUnpin for entelix_runnable::FixingOutputParser<O, P, M> where P: core::marker::UnsafeUnpin, M: core::marker::UnsafeUnpin
+impl<O, P, M> core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::FixingOutputParser<O, P, M> where P: core::panic::unwind_safe::RefUnwindSafe, M: core::panic::unwind_safe::RefUnwindSafe
+impl<O, P, M> core::panic::unwind_safe::UnwindSafe for entelix_runnable::FixingOutputParser<O, P, M> where P: core::panic::unwind_safe::UnwindSafe, M: core::panic::unwind_safe::UnwindSafe
+pub struct entelix_runnable::JsonOutputParser<T>
+impl<T> entelix_runnable::JsonOutputParser<T>
+pub const fn entelix_runnable::JsonOutputParser<T>::new() -> Self
+impl<T> core::clone::Clone for entelix_runnable::JsonOutputParser<T>
+pub fn entelix_runnable::JsonOutputParser<T>::clone(&self) -> Self
+impl<T> core::default::Default for entelix_runnable::JsonOutputParser<T>
+pub fn entelix_runnable::JsonOutputParser<T>::default() -> Self
+impl<T> core::marker::Copy for entelix_runnable::JsonOutputParser<T>
+impl<T> entelix_runnable::Runnable<entelix_core::ir::message::Message, T> for entelix_runnable::JsonOutputParser<T> where T: serde_core::de::DeserializeOwned + core::marker::Send + 'static
+pub fn entelix_runnable::JsonOutputParser<T>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::JsonOutputParser<T>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: entelix_core::ir::message::Message, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<T>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::JsonOutputParser<T>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::JsonOutputParser<T>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<T> core::marker::Freeze for entelix_runnable::JsonOutputParser<T>
+impl<T> core::marker::Send for entelix_runnable::JsonOutputParser<T>
+impl<T> core::marker::Sync for entelix_runnable::JsonOutputParser<T>
+impl<T> core::marker::Unpin for entelix_runnable::JsonOutputParser<T>
+impl<T> core::marker::UnsafeUnpin for entelix_runnable::JsonOutputParser<T>
+impl<T> core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::JsonOutputParser<T>
+impl<T> core::panic::unwind_safe::UnwindSafe for entelix_runnable::JsonOutputParser<T>
+pub struct entelix_runnable::Mapping<R, F, I, O, P> where R: entelix_runnable::Runnable<I, O> + 'static, F: core::ops::function::Fn(O) -> P + core::marker::Send + core::marker::Sync + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static, P: core::marker::Send + 'static
+impl<R, F, I, O, P> entelix_runnable::Mapping<R, F, I, O, P> where R: entelix_runnable::Runnable<I, O> + 'static, F: core::ops::function::Fn(O) -> P + core::marker::Send + core::marker::Sync + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static, P: core::marker::Send + 'static
+pub fn entelix_runnable::Mapping<R, F, I, O, P>::new(inner: R, f: F) -> Self
+impl<R, F, I, O, P> core::fmt::Debug for entelix_runnable::Mapping<R, F, I, O, P> where R: entelix_runnable::Runnable<I, O> + 'static, F: core::ops::function::Fn(O) -> P + core::marker::Send + core::marker::Sync + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static, P: core::marker::Send + 'static
+pub fn entelix_runnable::Mapping<R, F, I, O, P>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<R, F, I, O, P> entelix_runnable::Runnable<I, P> for entelix_runnable::Mapping<R, F, I, O, P> where R: entelix_runnable::Runnable<I, O> + 'static, F: core::ops::function::Fn(O) -> P + core::marker::Send + core::marker::Sync + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static, P: core::marker::Send + 'static
+pub fn entelix_runnable::Mapping<R, F, I, O, P>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Mapping<R, F, I, O, P>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<P>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Mapping<R, F, I, O, P>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::Mapping<R, F, I, O, P>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<R, F, I, O, P> core::marker::Freeze for entelix_runnable::Mapping<R, F, I, O, P>
+impl<R, F, I, O, P> core::marker::Send for entelix_runnable::Mapping<R, F, I, O, P>
+impl<R, F, I, O, P> core::marker::Sync for entelix_runnable::Mapping<R, F, I, O, P>
+impl<R, F, I, O, P> core::marker::Unpin for entelix_runnable::Mapping<R, F, I, O, P>
+impl<R, F, I, O, P> core::marker::UnsafeUnpin for entelix_runnable::Mapping<R, F, I, O, P>
+impl<R, F, I, O, P> core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::Mapping<R, F, I, O, P> where R: core::panic::unwind_safe::RefUnwindSafe, F: core::panic::unwind_safe::RefUnwindSafe
+impl<R, F, I, O, P> core::panic::unwind_safe::UnwindSafe for entelix_runnable::Mapping<R, F, I, O, P> where R: core::panic::unwind_safe::RefUnwindSafe, F: core::panic::unwind_safe::RefUnwindSafe
+pub struct entelix_runnable::RetryParser<I, O, P> where I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static, P: entelix_runnable::Runnable<I, O>
+impl<I, O, P> entelix_runnable::RetryParser<I, O, P> where I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static, P: entelix_runnable::Runnable<I, O>
+pub const fn entelix_runnable::RetryParser<I, O, P>::new(inner: P) -> Self
+pub const fn entelix_runnable::RetryParser<I, O, P>::with_max_retries(self, max_retries: usize) -> Self
+impl<I, O, P> entelix_runnable::Runnable<I, O> for entelix_runnable::RetryParser<I, O, P> where I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static, P: entelix_runnable::Runnable<I, O> + 'static
+pub fn entelix_runnable::RetryParser<I, O, P>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RetryParser<I, O, P>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RetryParser<I, O, P>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::RetryParser<I, O, P>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<I, O, P> core::marker::Freeze for entelix_runnable::RetryParser<I, O, P> where P: core::marker::Freeze
+impl<I, O, P> core::marker::Send for entelix_runnable::RetryParser<I, O, P>
+impl<I, O, P> core::marker::Sync for entelix_runnable::RetryParser<I, O, P>
+impl<I, O, P> core::marker::Unpin for entelix_runnable::RetryParser<I, O, P> where P: core::marker::Unpin
+impl<I, O, P> core::marker::UnsafeUnpin for entelix_runnable::RetryParser<I, O, P> where P: core::marker::UnsafeUnpin
+impl<I, O, P> core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::RetryParser<I, O, P> where P: core::panic::unwind_safe::RefUnwindSafe
+impl<I, O, P> core::panic::unwind_safe::UnwindSafe for entelix_runnable::RetryParser<I, O, P> where P: core::panic::unwind_safe::UnwindSafe
+pub struct entelix_runnable::Retrying<R, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static
+impl<R, I, O> entelix_runnable::Retrying<R, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Retrying<R, I, O>::new(inner: R, policy: entelix_core::transports::retry::RetryPolicy) -> Self
+impl<R, I, O> core::fmt::Debug for entelix_runnable::Retrying<R, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Retrying<R, I, O>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<R, I, O> entelix_runnable::Runnable<I, O> for entelix_runnable::Retrying<R, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Retrying<R, I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Retrying<R, I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Retrying<R, I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::Retrying<R, I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<R, I, O> core::marker::Freeze for entelix_runnable::Retrying<R, I, O>
+impl<R, I, O> core::marker::Send for entelix_runnable::Retrying<R, I, O>
+impl<R, I, O> core::marker::Sync for entelix_runnable::Retrying<R, I, O>
+impl<R, I, O> core::marker::Unpin for entelix_runnable::Retrying<R, I, O>
+impl<R, I, O> core::marker::UnsafeUnpin for entelix_runnable::Retrying<R, I, O>
+impl<R, I, O> !core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::Retrying<R, I, O>
+impl<R, I, O> !core::panic::unwind_safe::UnwindSafe for entelix_runnable::Retrying<R, I, O>
+pub struct entelix_runnable::RunnableLambda<I, O> where I: core::marker::Send + 'static, O: core::marker::Send + 'static
+impl<I, O> entelix_runnable::RunnableLambda<I, O> where I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableLambda<I, O>::new<F, Fut>(f: F) -> Self where F: core::ops::function::Fn(I, entelix_core::context::ExecutionContext) -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'static
+impl<I, O> core::clone::Clone for entelix_runnable::RunnableLambda<I, O> where I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableLambda<I, O>::clone(&self) -> Self
+impl<I, O> entelix_runnable::Runnable<I, O> for entelix_runnable::RunnableLambda<I, O> where I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableLambda<I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableLambda<I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableLambda<I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::RunnableLambda<I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<I, O> core::marker::Freeze for entelix_runnable::RunnableLambda<I, O>
+impl<I, O> core::marker::Send for entelix_runnable::RunnableLambda<I, O>
+impl<I, O> core::marker::Sync for entelix_runnable::RunnableLambda<I, O>
+impl<I, O> core::marker::Unpin for entelix_runnable::RunnableLambda<I, O>
+impl<I, O> core::marker::UnsafeUnpin for entelix_runnable::RunnableLambda<I, O>
+impl<I, O> !core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::RunnableLambda<I, O>
+impl<I, O> !core::panic::unwind_safe::UnwindSafe for entelix_runnable::RunnableLambda<I, O>
+pub struct entelix_runnable::RunnableParallel<I, O> where I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static
+impl<I, O> entelix_runnable::RunnableParallel<I, O> where I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableParallel<I, O>::branch<R>(self, name: impl core::convert::Into<alloc::string::String>, runnable: R) -> Self where R: entelix_runnable::Runnable<I, O> + 'static
+pub fn entelix_runnable::RunnableParallel<I, O>::is_empty(&self) -> bool
+pub fn entelix_runnable::RunnableParallel<I, O>::len(&self) -> usize
+pub fn entelix_runnable::RunnableParallel<I, O>::new() -> Self
+impl<I, O> core::default::Default for entelix_runnable::RunnableParallel<I, O> where I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableParallel<I, O>::default() -> Self
+impl<I, O> entelix_runnable::Runnable<I, std::collections::hash::map::HashMap<alloc::string::String, O>> for entelix_runnable::RunnableParallel<I, O> where I: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableParallel<I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableParallel<I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<std::collections::hash::map::HashMap<alloc::string::String, O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableParallel<I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::RunnableParallel<I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<I, O> core::marker::Freeze for entelix_runnable::RunnableParallel<I, O>
+impl<I, O> core::marker::Send for entelix_runnable::RunnableParallel<I, O>
+impl<I, O> core::marker::Sync for entelix_runnable::RunnableParallel<I, O>
+impl<I, O> core::marker::Unpin for entelix_runnable::RunnableParallel<I, O>
+impl<I, O> core::marker::UnsafeUnpin for entelix_runnable::RunnableParallel<I, O>
+impl<I, O> !core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::RunnableParallel<I, O>
+impl<I, O> !core::panic::unwind_safe::UnwindSafe for entelix_runnable::RunnableParallel<I, O>
+pub struct entelix_runnable::RunnablePassthrough
+impl core::clone::Clone for entelix_runnable::RunnablePassthrough
+pub fn entelix_runnable::RunnablePassthrough::clone(&self) -> entelix_runnable::RunnablePassthrough
+impl core::default::Default for entelix_runnable::RunnablePassthrough
+pub fn entelix_runnable::RunnablePassthrough::default() -> entelix_runnable::RunnablePassthrough
+impl core::fmt::Debug for entelix_runnable::RunnablePassthrough
+pub fn entelix_runnable::RunnablePassthrough::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_runnable::RunnablePassthrough
+impl<T> entelix_runnable::Runnable<T, T> for entelix_runnable::RunnablePassthrough where T: core::marker::Send + 'static
+pub fn entelix_runnable::RunnablePassthrough::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnablePassthrough::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: T, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<T>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnablePassthrough::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::RunnablePassthrough::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for entelix_runnable::RunnablePassthrough
+impl core::marker::Send for entelix_runnable::RunnablePassthrough
+impl core::marker::Sync for entelix_runnable::RunnablePassthrough
+impl core::marker::Unpin for entelix_runnable::RunnablePassthrough
+impl core::marker::UnsafeUnpin for entelix_runnable::RunnablePassthrough
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::RunnablePassthrough
+impl core::panic::unwind_safe::UnwindSafe for entelix_runnable::RunnablePassthrough
+pub struct entelix_runnable::RunnableRouter<I, O> where I: core::marker::Send + 'static, O: core::marker::Send + 'static
+impl<I, O> entelix_runnable::RunnableRouter<I, O> where I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableRouter<I, O>::fallback<R>(self, runnable: R) -> Self where R: entelix_runnable::Runnable<I, O> + 'static
+pub fn entelix_runnable::RunnableRouter<I, O>::is_empty(&self) -> bool
+pub fn entelix_runnable::RunnableRouter<I, O>::len(&self) -> usize
+pub fn entelix_runnable::RunnableRouter<I, O>::new() -> Self
+pub fn entelix_runnable::RunnableRouter<I, O>::route<F, R>(self, predicate: F, runnable: R) -> Self where F: core::ops::function::Fn(&I) -> bool + core::marker::Send + core::marker::Sync + 'static, R: entelix_runnable::Runnable<I, O> + 'static
+impl<I, O> core::default::Default for entelix_runnable::RunnableRouter<I, O> where I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableRouter<I, O>::default() -> Self
+impl<I, O> entelix_runnable::Runnable<I, O> for entelix_runnable::RunnableRouter<I, O> where I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableRouter<I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableRouter<I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableRouter<I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::RunnableRouter<I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<I, O> core::marker::Freeze for entelix_runnable::RunnableRouter<I, O>
+impl<I, O> core::marker::Send for entelix_runnable::RunnableRouter<I, O>
+impl<I, O> core::marker::Sync for entelix_runnable::RunnableRouter<I, O>
+impl<I, O> core::marker::Unpin for entelix_runnable::RunnableRouter<I, O>
+impl<I, O> core::marker::UnsafeUnpin for entelix_runnable::RunnableRouter<I, O>
+impl<I, O> !core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::RunnableRouter<I, O>
+impl<I, O> !core::panic::unwind_safe::UnwindSafe for entelix_runnable::RunnableRouter<I, O>
+pub struct entelix_runnable::RunnableSequence<I, M, O> where I: core::marker::Send + 'static, M: core::marker::Send + 'static, O: core::marker::Send + 'static
+impl<I, M, O> entelix_runnable::RunnableSequence<I, M, O> where I: core::marker::Send + 'static, M: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableSequence<I, M, O>::new(first: alloc::sync::Arc<dyn entelix_runnable::Runnable<I, M>>, second: alloc::sync::Arc<dyn entelix_runnable::Runnable<M, O>>) -> Self
+impl<I, M, O> entelix_runnable::Runnable<I, O> for entelix_runnable::RunnableSequence<I, M, O> where I: core::marker::Send + 'static, M: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableSequence<I, M, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableSequence<I, M, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableSequence<I, M, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::RunnableSequence<I, M, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<I, M, O> core::marker::Freeze for entelix_runnable::RunnableSequence<I, M, O>
+impl<I, M, O> core::marker::Send for entelix_runnable::RunnableSequence<I, M, O>
+impl<I, M, O> core::marker::Sync for entelix_runnable::RunnableSequence<I, M, O>
+impl<I, M, O> core::marker::Unpin for entelix_runnable::RunnableSequence<I, M, O>
+impl<I, M, O> core::marker::UnsafeUnpin for entelix_runnable::RunnableSequence<I, M, O>
+impl<I, M, O> !core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::RunnableSequence<I, M, O>
+impl<I, M, O> !core::panic::unwind_safe::UnwindSafe for entelix_runnable::RunnableSequence<I, M, O>
+pub struct entelix_runnable::Timed<R, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static
+impl<R, I, O> entelix_runnable::Timed<R, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Timed<R, I, O>::new(inner: R, timeout: core::time::Duration) -> Self
+impl<R, I, O> core::fmt::Debug for entelix_runnable::Timed<R, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Timed<R, I, O>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<R, I, O> entelix_runnable::Runnable<I, O> for entelix_runnable::Timed<R, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Timed<R, I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Timed<R, I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Timed<R, I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::Timed<R, I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<R, I, O> core::marker::Freeze for entelix_runnable::Timed<R, I, O>
+impl<R, I, O> core::marker::Send for entelix_runnable::Timed<R, I, O>
+impl<R, I, O> core::marker::Sync for entelix_runnable::Timed<R, I, O>
+impl<R, I, O> core::marker::Unpin for entelix_runnable::Timed<R, I, O>
+impl<R, I, O> core::marker::UnsafeUnpin for entelix_runnable::Timed<R, I, O>
+impl<R, I, O> core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::Timed<R, I, O> where R: core::panic::unwind_safe::RefUnwindSafe
+impl<R, I, O> core::panic::unwind_safe::UnwindSafe for entelix_runnable::Timed<R, I, O> where R: core::panic::unwind_safe::RefUnwindSafe
+pub struct entelix_runnable::ToolToRunnableAdapter
+impl entelix_runnable::ToolToRunnableAdapter
+pub fn entelix_runnable::ToolToRunnableAdapter::from_arc(tool: alloc::sync::Arc<dyn entelix_core::tools::tool::Tool>) -> Self
+pub fn entelix_runnable::ToolToRunnableAdapter::inner(&self) -> &alloc::sync::Arc<dyn entelix_core::tools::tool::Tool>
+pub fn entelix_runnable::ToolToRunnableAdapter::new<T: entelix_core::tools::tool::Tool>(tool: T) -> Self
+impl core::clone::Clone for entelix_runnable::ToolToRunnableAdapter
+pub fn entelix_runnable::ToolToRunnableAdapter::clone(&self) -> Self
+impl entelix_runnable::Runnable<serde_json::value::Value, serde_json::value::Value> for entelix_runnable::ToolToRunnableAdapter
+pub fn entelix_runnable::ToolToRunnableAdapter::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::ToolToRunnableAdapter::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::ToolToRunnableAdapter::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::ToolToRunnableAdapter::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for entelix_runnable::ToolToRunnableAdapter
+impl core::marker::Send for entelix_runnable::ToolToRunnableAdapter
+impl core::marker::Sync for entelix_runnable::ToolToRunnableAdapter
+impl core::marker::Unpin for entelix_runnable::ToolToRunnableAdapter
+impl core::marker::UnsafeUnpin for entelix_runnable::ToolToRunnableAdapter
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_runnable::ToolToRunnableAdapter
+impl !core::panic::unwind_safe::UnwindSafe for entelix_runnable::ToolToRunnableAdapter
+pub const entelix_runnable::DEFAULT_PARSER_RETRIES: usize
+pub trait entelix_runnable::AnyRunnable: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_runnable::AnyRunnable::invoke_any<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::AnyRunnable::name(&self) -> alloc::borrow::Cow<'_, str>
+pub trait entelix_runnable::Runnable<I, O> where I: core::marker::Send + 'static, O: core::marker::Send + 'static: core::marker::Send + core::marker::Sync
+pub fn entelix_runnable::Runnable::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Runnable::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Runnable::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::Runnable::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl entelix_runnable::Runnable<serde_json::value::Value, serde_json::value::Value> for entelix_runnable::ToolToRunnableAdapter
+pub fn entelix_runnable::ToolToRunnableAdapter::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::ToolToRunnableAdapter::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::ToolToRunnableAdapter::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::ToolToRunnableAdapter::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<C, T> entelix_runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> for entelix_core::chat::ChatModel<C, T> where C: entelix_core::codecs::codec::Codec, T: entelix_core::transports::transport::Transport
+pub fn entelix_core::chat::ChatModel<C, T>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_core::chat::ChatModel<C, T>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: alloc::vec::Vec<entelix_core::ir::message::Message>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::ir::message::Message>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_core::chat::ChatModel<C, T>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_core::chat::ChatModel<C, T>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: alloc::vec::Vec<entelix_core::ir::message::Message>, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<entelix_core::ir::message::Message>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<I, M, O> entelix_runnable::Runnable<I, O> for entelix_runnable::RunnableSequence<I, M, O> where I: core::marker::Send + 'static, M: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableSequence<I, M, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableSequence<I, M, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableSequence<I, M, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::RunnableSequence<I, M, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<I, O, P> entelix_runnable::Runnable<I, O> for entelix_runnable::RetryParser<I, O, P> where I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static, P: entelix_runnable::Runnable<I, O> + 'static
+pub fn entelix_runnable::RetryParser<I, O, P>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RetryParser<I, O, P>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RetryParser<I, O, P>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::RetryParser<I, O, P>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<I, O> entelix_runnable::Runnable<I, O> for entelix_runnable::RunnableLambda<I, O> where I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableLambda<I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableLambda<I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableLambda<I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::RunnableLambda<I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<I, O> entelix_runnable::Runnable<I, O> for entelix_runnable::RunnableRouter<I, O> where I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableRouter<I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableRouter<I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableRouter<I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::RunnableRouter<I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<I, O> entelix_runnable::Runnable<I, std::collections::hash::map::HashMap<alloc::string::String, O>> for entelix_runnable::RunnableParallel<I, O> where I: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableParallel<I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableParallel<I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<std::collections::hash::map::HashMap<alloc::string::String, O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableParallel<I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::RunnableParallel<I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<O, P, M> entelix_runnable::Runnable<entelix_core::ir::message::Message, O> for entelix_runnable::FixingOutputParser<O, P, M> where O: core::marker::Send + 'static, P: entelix_runnable::Runnable<entelix_core::ir::message::Message, O> + 'static, M: entelix_runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_runnable::FixingOutputParser<O, P, M>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::FixingOutputParser<O, P, M>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: entelix_core::ir::message::Message, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::FixingOutputParser<O, P, M>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::FixingOutputParser<O, P, M>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<R, F, I, O, P> entelix_runnable::Runnable<I, P> for entelix_runnable::Mapping<R, F, I, O, P> where R: entelix_runnable::Runnable<I, O> + 'static, F: core::ops::function::Fn(O) -> P + core::marker::Send + core::marker::Sync + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static, P: core::marker::Send + 'static
+pub fn entelix_runnable::Mapping<R, F, I, O, P>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Mapping<R, F, I, O, P>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<P>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Mapping<R, F, I, O, P>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::Mapping<R, F, I, O, P>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<R, F, I, O> entelix_runnable::Runnable<I, O> for entelix_runnable::Configured<R, F, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, F: core::ops::function::Fn(&mut entelix_core::context::ExecutionContext) + core::marker::Send + core::marker::Sync + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Configured<R, F, I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Configured<R, F, I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Configured<R, F, I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::Configured<R, F, I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<R, F, I, O> entelix_runnable::Runnable<I, O> for entelix_runnable::Fallback<R, F, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, F: entelix_runnable::Runnable<I, O> + 'static, I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Fallback<R, F, I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Fallback<R, F, I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Fallback<R, F, I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::Fallback<R, F, I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<R, I, O> entelix_runnable::Runnable<I, O> for entelix_runnable::Retrying<R, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, I: core::clone::Clone + core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Retrying<R, I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Retrying<R, I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Retrying<R, I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::Retrying<R, I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<R, I, O> entelix_runnable::Runnable<I, O> for entelix_runnable::Timed<R, I, O> where R: entelix_runnable::Runnable<I, O> + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn entelix_runnable::Timed<R, I, O>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Timed<R, I, O>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: I, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<O>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::Timed<R, I, O>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::Timed<R, I, O>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<T> entelix_runnable::Runnable<T, T> for entelix_runnable::RunnablePassthrough where T: core::marker::Send + 'static
+pub fn entelix_runnable::RunnablePassthrough::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnablePassthrough::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: T, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<T>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnablePassthrough::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::RunnablePassthrough::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<T> entelix_runnable::Runnable<entelix_core::ir::message::Message, T> for entelix_runnable::JsonOutputParser<T> where T: serde_core::de::DeserializeOwned + core::marker::Send + 'static
+pub fn entelix_runnable::JsonOutputParser<T>::batch<'life0, 'life1, 'async_trait>(&'life0 self, inputs: alloc::vec::Vec<I>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<O>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::JsonOutputParser<T>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: entelix_core::ir::message::Message, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<T>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::JsonOutputParser<T>::name(&self) -> alloc::borrow::Cow<'_, str>
+pub fn entelix_runnable::JsonOutputParser<T>::stream<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub trait entelix_runnable::RunnableExt<I, O> where I: core::marker::Send + 'static, O: core::marker::Send + 'static: entelix_runnable::Runnable<I, O> + core::marker::Sized + 'static
+pub fn entelix_runnable::RunnableExt::map<F, P>(self, f: F) -> entelix_runnable::Mapping<Self, F, I, O, P> where F: core::ops::function::Fn(O) -> P + core::marker::Send + core::marker::Sync + 'static, P: core::marker::Send + 'static
+pub fn entelix_runnable::RunnableExt::pipe<P, R>(self, next: R) -> entelix_runnable::RunnableSequence<I, O, P> where P: core::marker::Send + 'static, R: entelix_runnable::Runnable<O, P> + 'static
+pub fn entelix_runnable::RunnableExt::stream_with<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: core::marker::Sync + 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_runnable::RunnableExt::with_config<F>(self, configurer: F) -> entelix_runnable::Configured<Self, F, I, O> where F: core::ops::function::Fn(&mut entelix_core::context::ExecutionContext) + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_runnable::RunnableExt::with_fallbacks<F>(self, fallbacks: alloc::vec::Vec<F>) -> entelix_runnable::Fallback<Self, F, I, O> where F: entelix_runnable::Runnable<I, O> + 'static, I: core::clone::Clone
+pub fn entelix_runnable::RunnableExt::with_retry(self, policy: entelix_core::transports::retry::RetryPolicy) -> entelix_runnable::Retrying<Self, I, O> where I: core::clone::Clone
+pub fn entelix_runnable::RunnableExt::with_timeout(self, timeout: core::time::Duration) -> entelix_runnable::Timed<Self, I, O>
+impl<T, I, O> entelix_runnable::RunnableExt<I, O> for T where T: entelix_runnable::Runnable<I, O> + core::marker::Sized + 'static, I: core::marker::Send + 'static, O: core::marker::Send + 'static
+pub fn T::map<F, P>(self, f: F) -> entelix_runnable::Mapping<Self, F, I, O, P> where F: core::ops::function::Fn(O) -> P + core::marker::Send + core::marker::Sync + 'static, P: core::marker::Send + 'static
+pub fn T::pipe<P, R>(self, next: R) -> entelix_runnable::RunnableSequence<I, O, P> where P: core::marker::Send + 'static, R: entelix_runnable::Runnable<O, P> + 'static
+pub fn T::stream_with<'life0, 'life1, 'async_trait>(&'life0 self, input: I, mode: entelix_runnable::stream::StreamMode, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_runnable::stream::BoxStream<'_, entelix_core::error::Result<entelix_runnable::stream::StreamChunk<O>>>>> + core::marker::Send + 'async_trait)>> where Self: core::marker::Sync + 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn T::with_config<F>(self, configurer: F) -> entelix_runnable::Configured<Self, F, I, O> where F: core::ops::function::Fn(&mut entelix_core::context::ExecutionContext) + core::marker::Send + core::marker::Sync + 'static
+pub fn T::with_fallbacks<F>(self, fallbacks: alloc::vec::Vec<F>) -> entelix_runnable::Fallback<Self, F, I, O> where F: entelix_runnable::Runnable<I, O> + 'static, I: core::clone::Clone
+pub fn T::with_retry(self, policy: entelix_core::transports::retry::RetryPolicy) -> entelix_runnable::Retrying<Self, I, O> where I: core::clone::Clone
+pub fn T::with_timeout(self, timeout: core::time::Duration) -> entelix_runnable::Timed<Self, I, O>
+pub fn entelix_runnable::erase<R, I, O>(runnable: R) -> entelix_runnable::AnyRunnableHandle where R: entelix_runnable::Runnable<I, O> + 'static, I: serde_core::de::DeserializeOwned + core::marker::Send + 'static, O: serde_core::ser::Serialize + core::marker::Send + 'static
+pub type entelix_runnable::AnyRunnableHandle = alloc::sync::Arc<dyn entelix_runnable::AnyRunnable>
+pub type entelix_runnable::BoxStream<'a, T> = core::pin::Pin<alloc::boxed::Box<(dyn futures_core::stream::Stream<Item = T> + core::marker::Send + 'a)>>

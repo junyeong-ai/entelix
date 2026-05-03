@@ -1,0 +1,65 @@
+pub mod entelix_cloud
+pub mod entelix_cloud::refresh
+pub struct entelix_cloud::refresh::CachedTokenProvider<T> where T: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+impl<T> entelix_cloud::refresh::CachedTokenProvider<T> where T: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub async fn entelix_cloud::refresh::CachedTokenProvider<T>::current(&self) -> core::result::Result<T, entelix_cloud::CloudError>
+pub fn entelix_cloud::refresh::CachedTokenProvider<T>::invalidate(&self)
+pub fn entelix_cloud::refresh::CachedTokenProvider<T>::new(refresher: alloc::sync::Arc<dyn entelix_cloud::refresh::TokenRefresher<T>>) -> Self
+pub fn entelix_cloud::refresh::CachedTokenProvider<T>::with_refresh_buffer(refresher: alloc::sync::Arc<dyn entelix_cloud::refresh::TokenRefresher<T>>, refresh_buffer: core::time::Duration) -> Self
+impl<T> !core::marker::Freeze for entelix_cloud::refresh::CachedTokenProvider<T>
+impl<T> core::marker::Send for entelix_cloud::refresh::CachedTokenProvider<T>
+impl<T> core::marker::Sync for entelix_cloud::refresh::CachedTokenProvider<T>
+impl<T> core::marker::Unpin for entelix_cloud::refresh::CachedTokenProvider<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for entelix_cloud::refresh::CachedTokenProvider<T> where T: core::marker::UnsafeUnpin
+impl<T> !core::panic::unwind_safe::RefUnwindSafe for entelix_cloud::refresh::CachedTokenProvider<T>
+impl<T> !core::panic::unwind_safe::UnwindSafe for entelix_cloud::refresh::CachedTokenProvider<T>
+pub struct entelix_cloud::refresh::TokenSnapshot<T>
+pub entelix_cloud::refresh::TokenSnapshot::expires_at: std::time::Instant
+pub entelix_cloud::refresh::TokenSnapshot::value: T
+impl<T: core::clone::Clone> core::clone::Clone for entelix_cloud::refresh::TokenSnapshot<T>
+pub fn entelix_cloud::refresh::TokenSnapshot<T>::clone(&self) -> entelix_cloud::refresh::TokenSnapshot<T>
+impl<T: core::fmt::Debug> core::fmt::Debug for entelix_cloud::refresh::TokenSnapshot<T>
+pub fn entelix_cloud::refresh::TokenSnapshot<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T> core::marker::Freeze for entelix_cloud::refresh::TokenSnapshot<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for entelix_cloud::refresh::TokenSnapshot<T> where T: core::marker::Send
+impl<T> core::marker::Sync for entelix_cloud::refresh::TokenSnapshot<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for entelix_cloud::refresh::TokenSnapshot<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for entelix_cloud::refresh::TokenSnapshot<T> where T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for entelix_cloud::refresh::TokenSnapshot<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for entelix_cloud::refresh::TokenSnapshot<T> where T: core::panic::unwind_safe::UnwindSafe
+pub const entelix_cloud::refresh::DEFAULT_REFRESH_BUFFER: core::time::Duration
+pub trait entelix_cloud::refresh::TokenRefresher<T> where T: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static: core::marker::Send + core::marker::Sync
+pub fn entelix_cloud::refresh::TokenRefresher::refresh<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<entelix_cloud::refresh::TokenSnapshot<T>, entelix_cloud::CloudError>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+#[non_exhaustive] pub enum entelix_cloud::CloudError
+pub entelix_cloud::CloudError::Config(alloc::string::String)
+pub entelix_cloud::CloudError::Credential
+pub entelix_cloud::CloudError::Credential::message: alloc::string::String
+pub entelix_cloud::CloudError::Credential::source: core::option::Option<alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>>
+pub entelix_cloud::CloudError::Network
+pub entelix_cloud::CloudError::Network::message: alloc::string::String
+pub entelix_cloud::CloudError::Network::source: core::option::Option<alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>>
+pub entelix_cloud::CloudError::Signing
+pub entelix_cloud::CloudError::Signing::message: alloc::string::String
+pub entelix_cloud::CloudError::Signing::source: core::option::Option<alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>>
+impl entelix_cloud::CloudError
+pub fn entelix_cloud::CloudError::credential<E>(source: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_cloud::CloudError::credential_msg(message: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_cloud::CloudError::network<E>(source: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_cloud::CloudError::network_msg(message: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_cloud::CloudError::signing<E>(source: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_cloud::CloudError::signing_msg(message: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::convert::From<entelix_cloud::CloudError> for entelix_core::error::Error
+pub fn entelix_core::error::Error::from(err: entelix_cloud::CloudError) -> Self
+impl core::error::Error for entelix_cloud::CloudError
+pub fn entelix_cloud::CloudError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for entelix_cloud::CloudError
+pub fn entelix_cloud::CloudError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_cloud::CloudError
+pub fn entelix_cloud::CloudError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_cloud::CloudError
+impl core::marker::Send for entelix_cloud::CloudError
+impl core::marker::Sync for entelix_cloud::CloudError
+impl core::marker::Unpin for entelix_cloud::CloudError
+impl core::marker::UnsafeUnpin for entelix_cloud::CloudError
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_cloud::CloudError
+impl !core::panic::unwind_safe::UnwindSafe for entelix_cloud::CloudError

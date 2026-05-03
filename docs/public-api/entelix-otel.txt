@@ -1,0 +1,163 @@
+pub mod entelix_otel
+pub mod entelix_otel::semconv
+pub const entelix_otel::semconv::METRIC_OPERATION_DURATION: &str
+pub const entelix_otel::semconv::METRIC_TOKEN_USAGE: &str
+pub const entelix_otel::semconv::OPERATION_NAME: &str
+pub const entelix_otel::semconv::REQUEST_FREQUENCY_PENALTY: &str
+pub const entelix_otel::semconv::REQUEST_MAX_TOKENS: &str
+pub const entelix_otel::semconv::REQUEST_MODEL: &str
+pub const entelix_otel::semconv::REQUEST_PRESENCE_PENALTY: &str
+pub const entelix_otel::semconv::REQUEST_STOP_SEQUENCES: &str
+pub const entelix_otel::semconv::REQUEST_TEMPERATURE: &str
+pub const entelix_otel::semconv::REQUEST_TOP_K: &str
+pub const entelix_otel::semconv::REQUEST_TOP_P: &str
+pub const entelix_otel::semconv::RESPONSE_FINISH_REASONS: &str
+pub const entelix_otel::semconv::RESPONSE_ID: &str
+pub const entelix_otel::semconv::RESPONSE_MODEL: &str
+pub const entelix_otel::semconv::RUN_ID: &str
+pub const entelix_otel::semconv::SYSTEM: &str
+pub const entelix_otel::semconv::TENANT_ID: &str
+pub const entelix_otel::semconv::THREAD_ID: &str
+pub const entelix_otel::semconv::TOKEN_TYPE: &str
+pub const entelix_otel::semconv::TOKEN_TYPE_CACHED: &str
+pub const entelix_otel::semconv::TOKEN_TYPE_CACHE_CREATION: &str
+pub const entelix_otel::semconv::TOKEN_TYPE_INPUT: &str
+pub const entelix_otel::semconv::TOKEN_TYPE_OUTPUT: &str
+pub const entelix_otel::semconv::TOKEN_TYPE_REASONING: &str
+pub const entelix_otel::semconv::TOOL_CALL_ID: &str
+pub const entelix_otel::semconv::TOOL_NAME: &str
+pub const entelix_otel::semconv::USAGE_CACHED_INPUT_TOKENS: &str
+pub const entelix_otel::semconv::USAGE_CACHE_CREATION_INPUT_TOKENS: &str
+pub const entelix_otel::semconv::USAGE_INPUT_TOKENS: &str
+pub const entelix_otel::semconv::USAGE_OUTPUT_TOKENS: &str
+pub const entelix_otel::semconv::USAGE_REASONING_TOKENS: &str
+#[non_exhaustive] pub enum entelix_otel::OperationKind
+pub entelix_otel::OperationKind::Chat
+pub entelix_otel::OperationKind::Embeddings
+pub entelix_otel::OperationKind::ExecuteTool
+pub entelix_otel::OperationKind::TextCompletion
+impl entelix_otel::OperationKind
+pub const fn entelix_otel::OperationKind::as_str(self) -> &'static str
+impl core::clone::Clone for entelix_otel::OperationKind
+pub fn entelix_otel::OperationKind::clone(&self) -> entelix_otel::OperationKind
+impl core::cmp::Eq for entelix_otel::OperationKind
+impl core::cmp::PartialEq for entelix_otel::OperationKind
+pub fn entelix_otel::OperationKind::eq(&self, other: &entelix_otel::OperationKind) -> bool
+impl core::fmt::Debug for entelix_otel::OperationKind
+pub fn entelix_otel::OperationKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_otel::OperationKind
+impl core::marker::StructuralPartialEq for entelix_otel::OperationKind
+impl serde_core::ser::Serialize for entelix_otel::OperationKind
+pub fn entelix_otel::OperationKind::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_otel::OperationKind
+pub fn entelix_otel::OperationKind::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_otel::OperationKind
+impl core::marker::Send for entelix_otel::OperationKind
+impl core::marker::Sync for entelix_otel::OperationKind
+impl core::marker::Unpin for entelix_otel::OperationKind
+impl core::marker::UnsafeUnpin for entelix_otel::OperationKind
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_otel::OperationKind
+impl core::panic::unwind_safe::UnwindSafe for entelix_otel::OperationKind
+#[non_exhaustive] pub enum entelix_otel::ToolIoCaptureMode
+pub entelix_otel::ToolIoCaptureMode::Full
+pub entelix_otel::ToolIoCaptureMode::Off
+pub entelix_otel::ToolIoCaptureMode::Truncated
+pub entelix_otel::ToolIoCaptureMode::Truncated::max_bytes: usize
+impl core::clone::Clone for entelix_otel::ToolIoCaptureMode
+pub fn entelix_otel::ToolIoCaptureMode::clone(&self) -> entelix_otel::ToolIoCaptureMode
+impl core::cmp::Eq for entelix_otel::ToolIoCaptureMode
+impl core::cmp::PartialEq for entelix_otel::ToolIoCaptureMode
+pub fn entelix_otel::ToolIoCaptureMode::eq(&self, other: &entelix_otel::ToolIoCaptureMode) -> bool
+impl core::default::Default for entelix_otel::ToolIoCaptureMode
+pub fn entelix_otel::ToolIoCaptureMode::default() -> Self
+impl core::fmt::Debug for entelix_otel::ToolIoCaptureMode
+pub fn entelix_otel::ToolIoCaptureMode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_otel::ToolIoCaptureMode
+impl core::marker::StructuralPartialEq for entelix_otel::ToolIoCaptureMode
+impl core::marker::Freeze for entelix_otel::ToolIoCaptureMode
+impl core::marker::Send for entelix_otel::ToolIoCaptureMode
+impl core::marker::Sync for entelix_otel::ToolIoCaptureMode
+impl core::marker::Unpin for entelix_otel::ToolIoCaptureMode
+impl core::marker::UnsafeUnpin for entelix_otel::ToolIoCaptureMode
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_otel::ToolIoCaptureMode
+impl core::panic::unwind_safe::UnwindSafe for entelix_otel::ToolIoCaptureMode
+pub struct entelix_otel::GenAiMetrics
+impl entelix_otel::GenAiMetrics
+pub fn entelix_otel::GenAiMetrics::new(meter: &opentelemetry::metrics::meter::Meter) -> Self
+pub fn entelix_otel::GenAiMetrics::record_call(&self, system: &str, operation: entelix_otel::OperationKind, request_model: &str, response_model: &str, usage: &entelix_core::ir::usage::Usage, duration: core::time::Duration)
+impl core::clone::Clone for entelix_otel::GenAiMetrics
+pub fn entelix_otel::GenAiMetrics::clone(&self) -> entelix_otel::GenAiMetrics
+impl core::fmt::Debug for entelix_otel::GenAiMetrics
+pub fn entelix_otel::GenAiMetrics::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_otel::GenAiMetrics
+impl core::marker::Send for entelix_otel::GenAiMetrics
+impl core::marker::Sync for entelix_otel::GenAiMetrics
+impl core::marker::Unpin for entelix_otel::GenAiMetrics
+impl core::marker::UnsafeUnpin for entelix_otel::GenAiMetrics
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_otel::GenAiMetrics
+impl !core::panic::unwind_safe::UnwindSafe for entelix_otel::GenAiMetrics
+pub struct entelix_otel::OtelLayer
+impl entelix_otel::OtelLayer
+pub fn entelix_otel::OtelLayer::new(system: impl core::convert::Into<alloc::sync::Arc<str>>) -> Self
+pub fn entelix_otel::OtelLayer::with_cost_calculator(self, calculator: alloc::sync::Arc<dyn entelix_core::cost::CostCalculator>) -> Self
+pub fn entelix_otel::OtelLayer::with_metrics(self, metrics: entelix_otel::GenAiMetrics) -> Self
+pub fn entelix_otel::OtelLayer::with_tool_cost_calculator(self, calculator: alloc::sync::Arc<dyn entelix_core::cost::ToolCostCalculator>) -> Self
+pub const fn entelix_otel::OtelLayer::with_tool_io_capture(self, mode: entelix_otel::ToolIoCaptureMode) -> Self
+impl core::clone::Clone for entelix_otel::OtelLayer
+pub fn entelix_otel::OtelLayer::clone(&self) -> entelix_otel::OtelLayer
+impl core::fmt::Debug for entelix_otel::OtelLayer
+pub fn entelix_otel::OtelLayer::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<S> tower_layer::Layer<S> for entelix_otel::OtelLayer
+pub type entelix_otel::OtelLayer::Service = entelix_otel::OtelService<S>
+pub fn entelix_otel::OtelLayer::layer(&self, inner: S) -> Self::Service
+impl core::marker::Freeze for entelix_otel::OtelLayer
+impl core::marker::Send for entelix_otel::OtelLayer
+impl core::marker::Sync for entelix_otel::OtelLayer
+impl core::marker::Unpin for entelix_otel::OtelLayer
+impl core::marker::UnsafeUnpin for entelix_otel::OtelLayer
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_otel::OtelLayer
+impl !core::panic::unwind_safe::UnwindSafe for entelix_otel::OtelLayer
+pub struct entelix_otel::OtelService<S>
+impl<S: core::clone::Clone> core::clone::Clone for entelix_otel::OtelService<S>
+pub fn entelix_otel::OtelService<S>::clone(&self) -> entelix_otel::OtelService<S>
+impl<S> tower_service::Service<entelix_core::service::ModelInvocation> for entelix_otel::OtelService<S> where S: tower_service::Service<entelix_core::service::ModelInvocation, Response = entelix_core::ir::response::ModelResponse, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <S as tower_service::Service>::Future: core::marker::Send + 'static
+pub type entelix_otel::OtelService<S>::Error = entelix_core::error::Error
+pub type entelix_otel::OtelService<S>::Future = core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<entelix_core::ir::response::ModelResponse, entelix_core::error::Error>> + core::marker::Send)>>
+pub type entelix_otel::OtelService<S>::Response = entelix_core::ir::response::ModelResponse
+pub fn entelix_otel::OtelService<S>::call(&mut self, invocation: entelix_core::service::ModelInvocation) -> Self::Future
+pub fn entelix_otel::OtelService<S>::poll_ready(&mut self, cx: &mut core::task::wake::Context<'_>) -> core::task::poll::Poll<entelix_core::error::Result<()>>
+impl<S> tower_service::Service<entelix_core::service::ToolInvocation> for entelix_otel::OtelService<S> where S: tower_service::Service<entelix_core::service::ToolInvocation, Response = serde_json::value::Value, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <S as tower_service::Service>::Future: core::marker::Send + 'static
+pub type entelix_otel::OtelService<S>::Error = entelix_core::error::Error
+pub type entelix_otel::OtelService<S>::Future = core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<serde_json::value::Value, entelix_core::error::Error>> + core::marker::Send)>>
+pub type entelix_otel::OtelService<S>::Response = serde_json::value::Value
+pub fn entelix_otel::OtelService<S>::call(&mut self, invocation: entelix_core::service::ToolInvocation) -> Self::Future
+pub fn entelix_otel::OtelService<S>::poll_ready(&mut self, cx: &mut core::task::wake::Context<'_>) -> core::task::poll::Poll<entelix_core::error::Result<()>>
+impl<S> core::marker::Freeze for entelix_otel::OtelService<S> where S: core::marker::Freeze
+impl<S> core::marker::Send for entelix_otel::OtelService<S> where S: core::marker::Send
+impl<S> core::marker::Sync for entelix_otel::OtelService<S> where S: core::marker::Sync
+impl<S> core::marker::Unpin for entelix_otel::OtelService<S> where S: core::marker::Unpin
+impl<S> core::marker::UnsafeUnpin for entelix_otel::OtelService<S> where S: core::marker::UnsafeUnpin
+impl<S> !core::panic::unwind_safe::RefUnwindSafe for entelix_otel::OtelService<S>
+impl<S> !core::panic::unwind_safe::UnwindSafe for entelix_otel::OtelService<S>
+pub struct entelix_otel::TraceContextTransport<T: entelix_core::transports::transport::Transport>
+impl<T: entelix_core::transports::transport::Transport> entelix_otel::TraceContextTransport<T>
+pub fn entelix_otel::TraceContextTransport<T>::from_arc(inner: alloc::sync::Arc<T>) -> Self
+pub fn entelix_otel::TraceContextTransport<T>::inner(&self) -> &alloc::sync::Arc<T>
+pub fn entelix_otel::TraceContextTransport<T>::new(inner: T) -> Self
+impl<T: entelix_core::transports::transport::Transport> core::clone::Clone for entelix_otel::TraceContextTransport<T>
+pub fn entelix_otel::TraceContextTransport<T>::clone(&self) -> Self
+impl<T: entelix_core::transports::transport::Transport> core::fmt::Debug for entelix_otel::TraceContextTransport<T>
+pub fn entelix_otel::TraceContextTransport<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T: entelix_core::transports::transport::Transport> entelix_core::transports::transport::Transport for entelix_otel::TraceContextTransport<T>
+pub fn entelix_otel::TraceContextTransport<T>::name(&self) -> &'static str
+pub fn entelix_otel::TraceContextTransport<T>::send<'life0, 'life1, 'async_trait>(&'life0 self, request: entelix_core::codecs::codec::EncodedRequest, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::transports::transport::TransportResponse>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_otel::TraceContextTransport<T>::send_streaming<'life0, 'life1, 'async_trait>(&'life0 self, request: entelix_core::codecs::codec::EncodedRequest, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::transports::transport::TransportStream>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<T> core::marker::Freeze for entelix_otel::TraceContextTransport<T>
+impl<T> core::marker::Send for entelix_otel::TraceContextTransport<T>
+impl<T> core::marker::Sync for entelix_otel::TraceContextTransport<T>
+impl<T> core::marker::Unpin for entelix_otel::TraceContextTransport<T>
+impl<T> core::marker::UnsafeUnpin for entelix_otel::TraceContextTransport<T>
+impl<T> core::panic::unwind_safe::RefUnwindSafe for entelix_otel::TraceContextTransport<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for entelix_otel::TraceContextTransport<T> where T: core::panic::unwind_safe::RefUnwindSafe
+pub const entelix_otel::DEFAULT_TOOL_IO_TRUNCATION: usize
+pub fn entelix_otel::trace_context_injector() -> alloc::sync::Arc<(dyn core::ops::function::Fn(&mut http::header::map::HeaderMap) + core::marker::Send + core::marker::Sync + 'static)>

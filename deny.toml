@@ -1,0 +1,72 @@
+# Cargo-deny supply-chain policy for the entelix workspace.
+# https://embarkstudios.github.io/cargo-deny/
+#
+# Three layers:
+#   - advisories: RustSec database — known CVEs / unmaintained / unsound.
+#   - licenses:   allow-list of OSI-approved permissive licenses only.
+#   - bans:       explicit duplicate-version + multiple-versions policy.
+
+[graph]
+all-features = true
+
+[advisories]
+yanked = "deny"
+ignore = [
+    # RUSTSEC-2023-0071 — `rsa 0.9.10` Marvin timing sidechannel.
+    # Pulled in transitively by `sqlx-mysql` through sqlx 0.8's macro
+    # crate, even though entelix selects only the `postgres` driver.
+    # sqlx 0.9 is still alpha; entelix uses sqlx 0.8 stable. No host-
+    # local fix path; the vulnerability is academic for our usage
+    # (no MySQL connection ever opens) and the upstream sqlx team
+    # tracks it as `sqlx-macros` cleanup deferred to 0.9.
+    "RUSTSEC-2023-0071",
+    # RUSTSEC-2026-0118 — hickory-proto NSEC3 unbounded loop.
+    # No upstream fix available as of hickory 0.26.1. Triggered only
+    # by a malicious DNS server returning crafted NSEC3 records on
+    # cross-zone responses; entelix-tools' SsrfSafeDnsResolver only
+    # ever resolves A/AAAA records and discards NSEC3, so the
+    # exploit path is structurally absent in our use.
+    "RUSTSEC-2026-0118",
+    # RUSTSEC-2025-0134 — rustls-pemfile unmaintained.
+    # Transitive via tonic 0.12 → qdrant-client 1.17. tonic 0.13+
+    # drops the dep but qdrant-client has not yet upgraded.
+    # Tracked by qdrant-client tonic 0.13 migration upstream.
+    "RUSTSEC-2025-0134",
+]
+
+[licenses]
+allow = [
+    "MIT",
+    "MIT-0",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "BSL-1.0",
+    "ISC",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "Zlib",
+    "MPL-2.0",
+    "CDLA-Permissive-2.0",
+]
+confidence-threshold = 0.93
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+deny = [
+    # Hard-rejects per invariant 9 — first-party crates do not import
+    # filesystem, shell, or sandbox primitives. CI-enforced by
+    # scripts/check-no-fs.sh; cargo-deny adds the dependency-graph
+    # layer (a transitive that pulls landlock / seatbelt / tree-sitter
+    # surfaces it here even when no first-party `use` statement does).
+    { name = "landlock" },
+    { name = "seatbelt" },
+    { name = "tree-sitter" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

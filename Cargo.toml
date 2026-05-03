@@ -1,0 +1,240 @@
+# entelix — workspace manifest (1.0.0-rc.1)
+#
+# Rust 1.94, Edition 2024, resolver v3.
+# Lockstep workspace — every member crate carries the same version on
+# crates.io. All dependencies pinned at workspace root; members inherit
+# via `dep = { workspace = true }`. See ADR-0064 for the release
+# charter and the canonical member list below.
+
+[workspace]
+resolver = "3"
+members = [
+    # ── facade ──────────────────────────────────────────────────────────
+    "crates/entelix",
+
+    # ── DAG root ────────────────────────────────────────────────────────
+    "crates/entelix-core",            # IR, Codec, Transport, Tool, Auth, Hooks, Events, ExecutionContext
+
+    # ── composition + control flow ──────────────────────────────────────
+    "crates/entelix-runnable",        # Runnable trait, LCEL pipe, Sequence/Parallel/Router/Lambda
+    "crates/entelix-prompt",          # PromptTemplate, ChatPromptTemplate, MessagesPlaceholder, FewShot
+    "crates/entelix-graph",           # StateGraph, reducer, conditional edges, Send, subgraphs, Checkpointer trait, interrupts
+    "crates/entelix-graph-derive",    # proc-macro — #[derive(StateMerge)] for per-field Annotated<T, R> reducer composition
+
+    # ── state / memory ──────────────────────────────────────────────────
+    "crates/entelix-session",         # SessionGraph (event log), fork, archival watermark
+    "crates/entelix-memory",          # Store/Embedder/Retriever/VectorStore traits, Buffer/Summary/Entity, SemanticMemory generic
+    "crates/entelix-memory-openai",   # concrete OpenAI Embedder — text-embedding-3-{small,large}
+    "crates/entelix-memory-qdrant",   # concrete VectorStore — qdrant-client gRPC
+    "crates/entelix-memory-pgvector", # concrete VectorStore — sqlx + pgvector extension
+    "crates/entelix-graphmemory-pg",  # concrete GraphMemory — sqlx + Postgres (nodes + typed edges)
+    "crates/entelix-persistence",     # Postgres + Redis impls (Checkpointer + Store + SessionLog), distributed lock
+
+    # ── action surface ──────────────────────────────────────────────────
+    "crates/entelix-tools",           # http_fetch, search adapter trait, calculator
+    "crates/entelix-mcp",             # MCP client (JSON-RPC 2.0 over HTTP)
+    "crates/entelix-mcp-chatmodel",   # companion — bridges MCP sampling/createMessage onto ChatModel<C, T>
+    "crates/entelix-cloud",           # Bedrock + Vertex + Foundry transports
+
+    # ── operational ─────────────────────────────────────────────────────
+    "crates/entelix-policy",          # tenant, rate-limit, PII, cost meter, quota
+    "crates/entelix-otel",            # OpenTelemetry GenAI semconv
+    "crates/entelix-server",          # axum + 5-mode SSE streaming
+
+    # ── recipes ─────────────────────────────────────────────────────────
+    "crates/entelix-agents",          # ReAct, Supervisor, Hierarchical, Chat pre-built recipes
+]
+
+[workspace.package]
+version = "1.0.0-rc.1"
+edition = "2024"
+rust-version = "1.94"
+license = "MIT"
+authors = ["junyeong-ai"]
+repository = "https://github.com/junyeong-ai/entelix"
+homepage = "https://github.com/junyeong-ai/entelix"
+documentation = "https://docs.rs/entelix"
+keywords = ["ai", "agent", "llm", "graph", "runtime"]
+categories = ["api-bindings", "asynchronous"]
+
+# ─────────────────────────────────────────────────────────────────────────
+# [workspace.dependencies] — pinned 2026-04-26 (latest stable)
+# ─────────────────────────────────────────────────────────────────────────
+
+[workspace.dependencies]
+
+# ── Async / HTTP ─────────────────────────────────────────────────────────
+tokio = { version = "1.52", features = ["rt-multi-thread", "macros", "sync", "time", "io-util", "signal"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "stream", "rustls", "http2", "multipart"] }
+http = "1.4"
+axum = { version = "0.8", features = ["macros", "tokio", "http2"] }
+tower = { version = "0.5", features = ["util"] }
+
+# ── Serialization / Schema ───────────────────────────────────────────────
+serde = { version = "1.0", features = ["derive", "rc"] }
+serde_json = "1.0"
+schemars = "1.2"
+jsonschema = { version = "0.46", default-features = false }
+bytes = "1.11"
+
+# ── Async primitives ─────────────────────────────────────────────────────
+futures = "0.3"
+async-stream = "0.3"
+async-trait = "0.1"
+pin-project-lite = "0.2"
+tokio-util = { version = "0.7", features = ["time", "io"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+
+# ── Proc-macro tooling (entelix-graph-derive) ───────────────────────────
+syn = { version = "2", features = ["full", "extra-traits"] }
+quote = "1"
+proc-macro2 = "1"
+
+# ── Errors / Tracing ─────────────────────────────────────────────────────
+thiserror = "2.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# ── Core types ───────────────────────────────────────────────────────────
+uuid = { version = "1.23", features = ["v4", "v7", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+time = "0.3"
+url = "2.5"
+idna = "1.1"
+hickory-resolver = { version = "0.26", default-features = false, features = ["system-config", "tokio"] }
+secrecy = { version = "0.10", features = ["serde"] }
+rust_decimal = { version = "1", features = ["serde", "serde-with-str"] }
+
+# ── Concurrency / Hashing ────────────────────────────────────────────────
+dashmap = "6.1"
+parking_lot = "0.12"
+rand = "0.10"
+twox-hash = "2.1"
+sha2 = "0.10"
+
+# ── Regex ────────────────────────────────────────────────────────────────
+regex = "1"
+
+# ── Templating ───────────────────────────────────────────────────────────
+minijinja = { version = "2", default-features = false, features = ["builtins", "loader", "preserve_order", "serde"] }
+
+# ── Persistence ──────────────────────────────────────────────────────────
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls", "postgres", "json", "chrono", "uuid", "rust_decimal", "macros", "migrate"] }
+redis = { version = "1.2", features = ["tokio-comp", "connection-manager", "tokio-rustls-comp"] }
+
+# ── Vector backends (companion crates only) ─────────────────────────────
+qdrant-client = "1"
+pgvector = { version = "0.4", features = ["sqlx"] }
+
+# ── Observability ────────────────────────────────────────────────────────
+opentelemetry = "0.31"
+opentelemetry_sdk = { version = "0.31", features = ["rt-tokio", "metrics", "logs"] }
+opentelemetry-otlp = { version = "0.31", features = ["http-proto", "metrics", "logs", "reqwest-client"] }
+tracing-opentelemetry = "0.32"
+http-body-util = "0.1"
+
+# ── Cloud (optional, gated per crate) ────────────────────────────────────
+aws-config = "1.8"
+aws-credential-types = "1.2"
+aws-sigv4 = "1.3"
+aws-smithy-runtime-api = "1.9"
+gcp_auth = "0.12"
+azure_identity = "0.33"
+azure_core = "0.33"
+crc32fast = "1"
+
+# ── Test / dev tooling (per-crate `[dev-dependencies]` inherits these) ──
+wiremock = "0.6"
+testcontainers = { version = "0.27", features = ["watchdog"] }
+testcontainers-modules = { version = "0.15", features = ["postgres", "redis"] }
+proptest = "1.7"
+
+# ── Internal crate references ────────────────────────────────────────────
+entelix-core        = { version = "1.0.0-rc.1", path = "crates/entelix-core" }
+entelix-runnable    = { version = "1.0.0-rc.1", path = "crates/entelix-runnable" }
+entelix-prompt      = { version = "1.0.0-rc.1", path = "crates/entelix-prompt" }
+entelix-graph       = { version = "1.0.0-rc.1", path = "crates/entelix-graph" }
+entelix-graph-derive = { version = "1.0.0-rc.1", path = "crates/entelix-graph-derive" }
+entelix-session     = { version = "1.0.0-rc.1", path = "crates/entelix-session" }
+entelix-memory      = { version = "1.0.0-rc.1", path = "crates/entelix-memory" }
+entelix-memory-openai   = { version = "1.0.0-rc.1", path = "crates/entelix-memory-openai" }
+entelix-memory-qdrant   = { version = "1.0.0-rc.1", path = "crates/entelix-memory-qdrant" }
+entelix-memory-pgvector = { version = "1.0.0-rc.1", path = "crates/entelix-memory-pgvector" }
+entelix-graphmemory-pg  = { version = "1.0.0-rc.1", path = "crates/entelix-graphmemory-pg" }
+entelix-persistence = { version = "1.0.0-rc.1", path = "crates/entelix-persistence" }
+entelix-tools       = { version = "1.0.0-rc.1", path = "crates/entelix-tools" }
+entelix-mcp         = { version = "1.0.0-rc.1", path = "crates/entelix-mcp" }
+entelix-mcp-chatmodel = { version = "1.0.0-rc.1", path = "crates/entelix-mcp-chatmodel" }
+entelix-cloud       = { version = "1.0.0-rc.1", path = "crates/entelix-cloud" }
+entelix-policy      = { version = "1.0.0-rc.1", path = "crates/entelix-policy" }
+entelix-otel        = { version = "1.0.0-rc.1", path = "crates/entelix-otel" }
+entelix-server      = { version = "1.0.0-rc.1", path = "crates/entelix-server" }
+entelix-agents      = { version = "1.0.0-rc.1", path = "crates/entelix-agents" }
+
+# ─────────────────────────────────────────────────────────────────────────
+# Lints — workspace-wide
+# ─────────────────────────────────────────────────────────────────────────
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+rust_2024_compatibility = { level = "warn", priority = -1 }
+unreachable_pub = "warn"
+
+[workspace.lints.rustdoc]
+# Rustdoc hygiene — broken doc links are silent surface bugs that
+# rustdoc emits as warnings by default; deny so the build fails
+# without needing `RUSTDOCFLAGS=-D warnings` at every invocation.
+broken_intra_doc_links = "deny"
+private_intra_doc_links = "deny"
+invalid_codeblock_attributes = "deny"
+invalid_html_tags = "deny"
+invalid_rust_codeblocks = "deny"
+bare_urls = "deny"
+unescaped_backticks = "deny"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+# Pragmatic exceptions for SDK ergonomics
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"
+return_self_not_must_use = "allow"
+# Hard rules
+unwrap_used = "warn"
+expect_used = "warn"
+indexing_slicing = "warn"
+todo = "warn"
+unimplemented = "warn"
+dbg_macro = "deny"
+print_stdout = "deny"
+print_stderr = "deny"
+# CLAUDE.md §"Lock ordering" — locks must never be held across
+# `.await` on a user-supplied future. Clippy's lint catches the
+# whole class statically; deny across the workspace.
+await_holding_lock = "deny"
+await_holding_refcell_ref = "deny"
+# Naming consistency (ADR-0010)
+similar_names = "warn"
+struct_excessive_bools = "warn"
+
+# ─────────────────────────────────────────────────────────────────────────
+# Profile tuning
+# ─────────────────────────────────────────────────────────────────────────
+
+[profile.dev]
+debug = "limited"
+incremental = true
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
+
+[profile.bench]
+inherits = "release"
+debug = "line-tables-only"

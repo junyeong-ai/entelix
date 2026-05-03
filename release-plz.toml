@@ -1,0 +1,83 @@
+# release-plz configuration — automated workspace versioning + publishing.
+#
+# Used by the `MarcoIeni/release-plz-action` GitHub Action (or the
+# `release-plz` CLI run locally) to:
+#
+# 1. Open a "Release PR" that bumps every workspace crate's version
+#    in lockstep on every commit to `main`.
+# 2. On merge of that PR, publish all crates to crates.io in
+#    topological order and tag the release.
+#
+# entelix specifics:
+# - Every workspace member shares `version.workspace = true`, so a
+#   single workspace-level bump cascades. release-plz sees this and
+#   keeps the bump synchronized.
+# - The changelog body and PR title are pinned for reviewer recognition.
+# - Per-crate `CHANGELOG.md` files are disabled — the workspace ships
+#   one root `CHANGELOG.md`.
+#
+# See: https://release-plz.dev/docs
+
+[workspace]
+# Synchronize the version of every package in the workspace.
+dependencies_update = true
+release_commits = "^(feat|fix|perf|deprecate|remove)"
+git_release_enable = true
+git_release_type = "auto"
+publish_allow_dirty = false
+
+# Changelog body — one entry per release covering every workspace
+# member. Per-crate `CHANGELOG.md` files are disabled; the root file
+# is the single source of release notes.
+changelog_path = "CHANGELOG.md"
+changelog_update = true
+
+# Single Release PR aggregating every workspace member. The reviewer
+# sees one diff; CI re-runs the enforcement gate suite against the
+# version bump.
+single_changelog = true
+
+[changelog]
+header = """\
+# Changelog
+
+All notable changes to entelix are documented here. Format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
+[Conventional Commits](https://www.conventionalcommits.org/). The
+workspace ships in lockstep: every crate carries the same version on
+crates.io.
+"""
+body = """\
+
+## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | upper_first }}
+{% for commit in commits %}
+- {{ commit.message | upper_first }}\
+{% endfor %}
+{% endfor %}
+"""
+trim = true
+commit_parsers = [
+    { message = "^feat", group = "Added" },
+    { message = "^fix", group = "Fixed" },
+    { message = "^perf", group = "Performance" },
+    { message = "^refactor", group = "Refactored" },
+    { message = "^doc", group = "Documentation" },
+    { message = "^test", group = "Tests" },
+    { message = "^chore\\(release\\)", skip = true },
+    { message = "^chore\\(deps\\)", group = "Dependencies" },
+    { message = "^chore", skip = true },
+    { message = "^ci", skip = true },
+    { message = "^build", skip = true },
+    { message = "^revert", group = "Reverted" },
+]
+
+# Per-crate overrides — release-plz already orders publish
+# topologically; the facade entry is informational so the lockstep
+# contract is visible at the override layer too.
+
+[[package]]
+name = "entelix"
+publish = true
+release_first = false

@@ -1,0 +1,44 @@
+[package]
+name = "entelix-agents"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+documentation.workspace = true
+description = "entelix pre-built agent recipes — ReAct, Supervisor, Hierarchical, Chat (LangGraph create_react_agent parity)"
+keywords.workspace = true
+categories.workspace = true
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+entelix-core = { workspace = true }
+entelix-graph = { workspace = true }
+entelix-memory = { workspace = true }
+entelix-prompt = { workspace = true }
+entelix-runnable = { workspace = true }
+entelix-session = { workspace = true }
+entelix-tools = { workspace = true }
+async-stream = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+futures = { workspace = true }
+parking_lot = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["sync"] }
+tower = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+async-trait = { workspace = true }
+parking_lot = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "sync"] }
+tracing-subscriber = { workspace = true }

@@ -1,0 +1,693 @@
+//! `Agent<S>` — production agent runtime wrapping any `Runnable<S, S>`
+//! with an event sink, execution mode, and lifecycle observers.
+//!
+//! `Agent<S>` is the surface every production caller targets:
+//!
+//! ```ignore
+//! let agent = create_react_agent(model, tools)?;
+//! let final_state = agent.execute(initial, &ctx).await?;  // sync drain
+//!
+//! let mut stream = agent.execute_stream(initial, &ctx);
+//! while let Some(event) = stream.next().await {
+//!     match event? { /* AgentEvent variants */ }
+//! }
+//! ```
+//!
+//! The runtime is deliberately a *thin wrapper* over the inner
+//! `Runnable<S, S>` (typically a `CompiledGraph<S>`):
+//!
+//! - **`execute`** drives the inner runnable via
+//!   [`Runnable::invoke`] and emits a `Started` / `Complete` pair
+//!   on the sink for observability — returns the terminal state.
+//! - **`execute_stream`** uses the same lifecycle and inner
+//!   primitive (`Runnable::invoke`) but returns a stream of
+//!   `AgentEvent` values for callers wiring to SSE or other
+//!   incremental consumers. Both surfaces observe one canonical
+//!   `Started` → `Complete(state)` sequence regardless of which
+//!   the caller picks.
+//!
+//! ## Composability
+//!
+//! `Agent<S>` itself implements `Runnable<S, S>`, so an agent is a
+//! valid node in a parent `StateGraph<ParentState>` that maps state
+//! across the boundary. Recursive sub-agent dispatch follows the
+//! same pattern as any other `Runnable` composition.
+//!
+//! ## Information density (ADR-0024 §7)
+//!
+//! Events emitted to the sink carry the full observability surface
+//! (ids, durations, classifications). The agent's own re-feed path
+//! to the model — when consuming a `ToolComplete` to synthesize the
+//! next message — reads only the LLM-facing fields (`output`,
+//! `delta`, lean `error_message`). Test fixtures verify both
+//! surfaces independently.
+
+mod approval_layer;
+mod approver;
+mod event;
+mod mode;
+mod observer;
+mod sink;
+mod tool_event_layer;
+
+use std::sync::Arc;
+
+use async_trait::async_trait;
+use entelix_core::context::ExecutionContext;
+use entelix_core::error::Result;
+use entelix_runnable::Runnable;
+use entelix_runnable::stream::BoxStream;
+use tracing::Instrument;
+
+pub use self::approval_layer::{
+    ApprovalLayer, ApprovalService, ToolApprovalEventSink, ToolApprovalEventSinkHandle,
+};
+pub use self::approver::{
+    AlwaysApprove, ApprovalDecision, ApprovalRequest, Approver, ChannelApprover,
+    ChannelApproverConfig, PendingApproval,
+};
+pub use self::event::AgentEvent;
+pub use self::mode::ExecutionMode;
+pub use self::observer::{AgentObserver, DynObserver};
+pub use self::sink::{AgentEventSink, BroadcastSink, CaptureSink, ChannelSink, DroppingSink};
+pub use self::tool_event_layer::{ToolEventLayer, ToolEventService};
+
+/// Production agent runtime.
+///
+/// Construct via [`Agent::builder`]; finalize with
+/// [`AgentBuilder::build`]. See module docs for the abstraction
+/// model and information-density discipline.
+pub struct Agent<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    name: String,
+    runnable: Arc<dyn Runnable<S, S>>,
+    sink: Arc<dyn AgentEventSink<S>>,
+    observers: Vec<DynObserver<S>>,
+    execution_mode: ExecutionMode,
+    approver: Option<Arc<dyn Approver>>,
+}
+
+impl<S> Agent<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    /// Start a fluent builder.
+    #[must_use]
+    pub fn builder() -> AgentBuilder<S> {
+        AgentBuilder::default()
+    }
+
+    /// Borrow the agent's stable name. Always non-empty —
+    /// `AgentBuilder::build` rejects empty / unset names so trace
+    /// correlation never silently breaks.
+    #[must_use]
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Borrow the underlying runnable. Useful when an agent is
+    /// embedded as a node in a larger graph and the parent needs
+    /// direct access to the inner shape (e.g. for checkpointing).
+    #[must_use]
+    pub fn inner(&self) -> &Arc<dyn Runnable<S, S>> {
+        &self.runnable
+    }
+
+    /// Run to completion, returning the terminal state.
+    ///
+    /// Emits a `Started{run_id}` opener, fires every registered
+    /// observer at the appropriate lifecycle point, then emits
+    /// either `Complete{run_id, state}` or `Failed{run_id, error}`
+    /// on the sink — every run produces exactly one terminal event
+    /// (ADR-0029).
+    ///
+    /// The `run_id` is inherited from `ctx.run_id()` when present,
+    /// otherwise a fresh UUID v7 is generated and propagated to the
+    /// inner runnable through a cloned context.
+    pub async fn execute(&self, input: S, ctx: &ExecutionContext) -> Result<S> {
+        let (run_id, scoped_ctx) = Self::scoped_run_context(ctx);
+        let ctx = scoped_ctx.as_ref().map_or(ctx, |scoped| scoped);
+
+        // Attach the type-erased approval-event sink handle so any
+        // `ApprovalLayer` deeper in the dispatch stack can emit
+        // `ToolCallApproved` / `ToolCallDenied` through the agent's
+        // typed sink without taking it as a constructor arg
+        // (which would tie the layer to a specific `S`). The
+        // attachment is unconditional — operators without an
+        // `ApprovalLayer` pay only the cost of an unused
+        // `Extensions` slot.
+        let scoped_with_sink =
+            ctx.clone()
+                .add_extension(ToolApprovalEventSinkHandle::for_agent_sink(Arc::clone(
+                    &self.sink,
+                )));
+
+        self.execute_inner(input, run_id, &scoped_with_sink).await
+    }
+
+    /// Convenience entry that attaches a [`entelix_core::RunOverrides`] extension
+    /// to the context for the duration of the call. Equivalent to
+    /// `agent.execute(input, &ctx.add_extension(overrides))` —
+    /// shorter at the call site and signals the per-call shape at
+    /// a glance.
+    ///
+    /// Operators threading multiple per-call extensions stay on
+    /// [`Self::execute`] with their own `add_extension` chain.
+    pub async fn execute_with(
+        &self,
+        input: S,
+        overrides: entelix_core::RunOverrides,
+        ctx: &ExecutionContext,
+    ) -> Result<S> {
+        let scoped = ctx.clone().add_extension(overrides);
+        self.execute(input, &scoped).await
+    }
+
+    async fn execute_inner(&self, input: S, run_id: String, ctx: &ExecutionContext) -> Result<S> {
+        self.sink
+            .send(AgentEvent::Started {
+                run_id: run_id.clone(),
+                agent: self.name.clone(),
+            })
+            .await?;
+
+        // The model + tool service-layer spans fire inside
+        // `run_inner`. Instrumenting *that* future with the
+        // agent-run span makes those layer spans children of the
+        // agent root in the OTel trace tree — operators see one
+        // tree per agent run instead of layer spans floating
+        // side by side. `Started` / `Failed` / `Complete` are
+        // sink emissions, not tracing spans, so they live
+        // outside the instrumented future without losing
+        // observability.
+        let outcome = self
+            .run_inner(input, ctx)
+            .instrument(self.run_span(&run_id, ctx))
+            .await;
+        match outcome {
+            Ok(state) => {
+                self.sink
+                    .send(AgentEvent::Complete {
+                        run_id,
+                        state: state.clone(),
+                    })
+                    .await?;
+                Ok(state)
+            }
+            Err(err) => {
+                // Best-effort `Failed` emission — if the sink itself
+                // errors (dropped receiver), swallow the secondary
+                // error so the original surfaces unchanged.
+                let _ = self
+                    .sink
+                    .send(AgentEvent::Failed {
+                        run_id,
+                        error: err.to_string(),
+                    })
+                    .await;
+                Err(err)
+            }
+        }
+    }
+
+    /// Build the `entelix.agent.run` tracing span for one
+    /// `execute` / `execute_stream` invocation. Span fields use
+    /// the `gen_ai.agent.*` / `entelix.*` namespaces that match
+    /// the rest of the OTel surface so dashboards joining on
+    /// run_id stay consistent across the layer / agent stack.
+    fn run_span(&self, run_id: &str, ctx: &ExecutionContext) -> tracing::Span {
+        tracing::info_span!(
+            target: "gen_ai",
+            "entelix.agent.run",
+            gen_ai.agent.name = %self.name,
+            entelix.run_id = %run_id,
+            entelix.tenant_id = %ctx.tenant_id(),
+            entelix.thread_id = ctx.thread_id(),
+        )
+    }
+
+    /// Drive observers + inner runnable as one cohesive unit so the
+    /// outer terminal-event branching (`Complete` vs `Failed`) only
+    /// matches once.
+    async fn run_inner(&self, input: S, ctx: &ExecutionContext) -> Result<S> {
+        for observer in &self.observers {
+            observer.pre_turn(&input, ctx).await?;
+        }
+        let state = self.runnable.invoke(input, ctx).await?;
+        // on_complete fires before any terminal event so observers
+        // can mutate side-channel state (vector store writes,
+        // summary persistence) and have those writes reflected in
+        // the same audit trail row.
+        for observer in &self.observers {
+            observer.on_complete(&state, ctx).await?;
+        }
+        Ok(state)
+    }
+
+    /// Compute `(run_id, ctx_with_run_id_when_minted)` for an entry
+    /// boundary. Returns the existing `run_id` if the caller already
+    /// stamped one; otherwise mints UUID v7 and clones the context
+    /// so the inner runnable sees the same id.
+    fn scoped_run_context(ctx: &ExecutionContext) -> (String, Option<ExecutionContext>) {
+        ctx.run_id().map_or_else(
+            || {
+                let fresh = uuid::Uuid::now_v7().to_string();
+                let scoped = ctx.clone().with_run_id(fresh.clone());
+                (fresh, Some(scoped))
+            },
+            |existing| (existing.to_owned(), None),
+        )
+    }
+
+    /// Borrow the configured execution mode.
+    #[must_use]
+    pub const fn execution_mode(&self) -> ExecutionMode {
+        self.execution_mode
+    }
+
+    /// Borrow the configured approver (`None` in `Auto` mode).
+    #[must_use]
+    pub fn approver(&self) -> Option<&Arc<dyn Approver>> {
+        self.approver.as_ref()
+    }
+
+    /// Number of registered lifecycle observers.
+    #[must_use]
+    pub fn observer_count(&self) -> usize {
+        self.observers.len()
+    }
+
+    /// Run with `AgentEvent` book-ends as a stream. Sinks
+    /// attached at construction time receive the same events for
+    /// fan-out telemetry.
+    ///
+    /// The returned stream is the caller-facing view; the sink
+    /// is the observability-facing view. **Both observe the same
+    /// `Started` → `Complete(state)` sequence** that
+    /// [`Self::execute`] produces — the only difference is the
+    /// return shape (a stream of events vs the awaited terminal
+    /// state).
+    ///
+    /// Drives the inner runnable via [`Runnable::invoke`] rather
+    /// than [`Runnable::stream`] so the lifecycle is identical to
+    /// `execute` and the `Complete` event always fires on
+    /// successful runs (a previous design routed through
+    /// `Runnable::stream`'s `Updates` mode and could silently skip
+    /// `Complete` for runnables that emit no per-node updates).
+    ///
+    /// Construction is synchronous and infallible — every event
+    /// (including the initial `Started`) yields lazily as the
+    /// stream is polled. Callers consume with `.next().await` like
+    /// any `Stream`; no extra `.await` on the constructor itself.
+    #[must_use]
+    pub fn execute_stream<'a>(
+        &'a self,
+        input: S,
+        ctx: &'a ExecutionContext,
+    ) -> BoxStream<'a, Result<AgentEvent<S>>> {
+        Box::pin(self.book_end_stream(input, ctx))
+    }
+
+    /// Async-stream body for `execute_stream`. Mirrors
+    /// [`Self::execute`] exactly so observers / sinks see one
+    /// canonical lifecycle regardless of which surface the caller
+    /// picked.
+    #[allow(clippy::redundant_async_block)]
+    fn book_end_stream<'a>(
+        &'a self,
+        input: S,
+        ctx: &'a ExecutionContext,
+    ) -> impl futures::Stream<Item = Result<AgentEvent<S>>> + Send + 'a {
+        async_stream::stream! {
+            let (run_id, scoped) = Self::scoped_run_context(ctx);
+            // Bind the borrowed-or-owned ctx as a single `&ExecutionContext`
+            // — keeping `scoped` alive across the `await` boundaries below
+            // so the run-id-stamped child context lives for the whole call.
+            let inner_ctx: &ExecutionContext = scoped.as_ref().map_or(ctx, |child| child);
+
+            // Started book-end (sink + caller stream).
+            let started = AgentEvent::Started {
+                run_id: run_id.clone(),
+                agent: self.name.clone(),
+            };
+            self.sink.send(started.clone()).await?;
+            yield Ok(started);
+
+            // Same instrument pattern as `execute` — model +
+            // tool layer spans inside `run_inner` nest under the
+            // agent-run span. Sink emissions (book-end events)
+            // stay outside the span; they're sink-only, not
+            // tracing events.
+            let outcome = self
+                .run_inner(input, inner_ctx)
+                .instrument(self.run_span(&run_id, inner_ctx))
+                .await;
+            // `scoped` lives at least until here — the borrow above is
+            // valid for the whole stream body.
+            drop(scoped);
+            match outcome {
+                Ok(state) => {
+                    let complete = AgentEvent::Complete { run_id, state };
+                    self.sink.send(complete.clone()).await?;
+                    yield Ok(complete);
+                }
+                Err(err) => {
+                    let failed = AgentEvent::Failed {
+                        run_id,
+                        error: err.to_string(),
+                    };
+                    let _ = self.sink.send(failed.clone()).await;
+                    yield Ok(failed);
+                    yield Err(err);
+                }
+            }
+        }
+    }
+}
+
+impl<S> std::fmt::Debug for Agent<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Agent")
+            .field("name", &self.name)
+            .finish_non_exhaustive()
+    }
+}
+
+/// `Agent<S>` is itself a [`Runnable<S, S>`] so it composes inside
+/// larger graphs (recursive sub-agent dispatch).
+#[async_trait]
+impl<S> Runnable<S, S> for Agent<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    async fn invoke(&self, input: S, ctx: &ExecutionContext) -> Result<S> {
+        self.execute(input, ctx).await
+    }
+}
+
+/// Fluent builder for [`Agent<S>`].
+///
+/// Required fields (build fails otherwise):
+/// - `name` — non-empty, surfaces in `AgentEvent::Started { agent }`
+///   and `OTel` spans for trace correlation
+/// - `runnable` — the inner state machine the agent drives
+///
+/// Optional fields with sensible defaults:
+/// - `sink`: [`DroppingSink`] (telemetry-free)
+/// - `observers`: empty (no lifecycle hooks fire)
+/// - `execution_mode`: [`ExecutionMode::Auto`]
+/// - `approver`: `None` (only meaningful in `Supervised` mode)
+pub struct AgentBuilder<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    name: Option<String>,
+    runnable: Option<Arc<dyn Runnable<S, S>>>,
+    sink: Option<Arc<dyn AgentEventSink<S>>>,
+    observers: Vec<DynObserver<S>>,
+    execution_mode: ExecutionMode,
+    approver: Option<Arc<dyn Approver>>,
+}
+
+impl<S> Default for AgentBuilder<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    fn default() -> Self {
+        Self {
+            name: None,
+            runnable: None,
+            sink: None,
+            observers: Vec::new(),
+            execution_mode: ExecutionMode::default(),
+            approver: None,
+        }
+    }
+}
+
+impl<S> AgentBuilder<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    /// Set the agent's stable identifier — required, surfaces in
+    /// `AgentEvent::Started { agent }` and `OTel` spans for trace
+    /// correlation. Must be non-empty after `Into::into`; the
+    /// build call returns `Error::Config` otherwise.
+    #[must_use]
+    pub fn with_name(mut self, name: impl Into<String>) -> Self {
+        self.name = Some(name.into());
+        self
+    }
+
+    /// Required — the agent's underlying [`Runnable<S, S>`]. The
+    /// build call returns `Error::Config` otherwise.
+    #[must_use]
+    pub fn with_runnable<R>(mut self, runnable: R) -> Self
+    where
+        R: Runnable<S, S> + 'static,
+    {
+        self.runnable = Some(Arc::new(runnable));
+        self
+    }
+
+    /// Reuse an `Arc<dyn Runnable<S, S>>` directly — useful when
+    /// the inner has already been boxed elsewhere (recipes do this
+    /// to share a `CompiledGraph<S>` between the agent and other
+    /// composition sites).
+    #[must_use]
+    pub fn with_runnable_arc(mut self, runnable: Arc<dyn Runnable<S, S>>) -> Self {
+        self.runnable = Some(runnable);
+        self
+    }
+
+    /// Defaults to [`DroppingSink`].
+    #[must_use]
+    pub fn with_sink<K>(mut self, sink: K) -> Self
+    where
+        K: AgentEventSink<S> + 'static,
+    {
+        self.sink = Some(Arc::new(sink));
+        self
+    }
+
+    /// Reuse an `Arc<dyn AgentEventSink<S>>` directly.
+    #[must_use]
+    pub fn with_sink_arc(mut self, sink: Arc<dyn AgentEventSink<S>>) -> Self {
+        self.sink = Some(sink);
+        self
+    }
+
+    /// Register a lifecycle observer. Observers are appended in
+    /// registration order; the agent fires them in that order at
+    /// each lifecycle event. Multiple observers are supported via
+    /// repeated calls.
+    #[must_use]
+    pub fn with_observer<O>(mut self, observer: O) -> Self
+    where
+        O: AgentObserver<S> + 'static,
+    {
+        self.observers.push(Arc::new(observer));
+        self
+    }
+
+    /// Register an `Arc<dyn AgentObserver<S>>` directly — useful
+    /// when the observer is also held by another consumer (e.g.
+    /// the same observer drives both an agent and an HTTP route
+    /// for direct inspection).
+    #[must_use]
+    pub fn with_observer_arc(mut self, observer: DynObserver<S>) -> Self {
+        self.observers.push(observer);
+        self
+    }
+
+    /// Defaults to [`ExecutionMode::Auto`]. `Supervised` requires an
+    /// [`Approver`] (set via [`Self::with_approver`]); the call to
+    /// [`Self::build`] returns `Error::Config` if mode is
+    /// `Supervised` and no approver was registered.
+    #[must_use]
+    pub const fn with_execution_mode(mut self, mode: ExecutionMode) -> Self {
+        self.execution_mode = mode;
+        self
+    }
+
+    /// Attach the approver used in `Supervised` mode. Has no
+    /// effect in `Auto` mode but is preserved across builder
+    /// calls so a single fluent chain can configure both modes
+    /// before deciding.
+    #[must_use]
+    pub fn with_approver<A>(mut self, approver: A) -> Self
+    where
+        A: Approver + 'static,
+    {
+        self.approver = Some(Arc::new(approver));
+        self
+    }
+
+    /// Reuse an `Arc<dyn Approver>` directly.
+    #[must_use]
+    pub fn with_approver_arc(mut self, approver: Arc<dyn Approver>) -> Self {
+        self.approver = Some(approver);
+        self
+    }
+
+    /// Finalize. Returns [`entelix_core::Error::Config`] when:
+    /// - `name` was not set or is empty (every agent must be
+    ///   identifiable in traces — empty-string defaults silently
+    ///   destroy correlation), or
+    /// - `runnable` was not set, or
+    /// - `execution_mode` is `Supervised` but no `approver` was
+    ///   registered (supervised mode without an approver is a
+    ///   programming error — there is no decision-maker).
+    pub fn build(self) -> Result<Agent<S>> {
+        let name = self.name.filter(|n| !n.is_empty()).ok_or_else(|| {
+            entelix_core::Error::config(
+                "AgentBuilder::build: name is required and must be non-empty \
+                     (call .with_name(...) — surfaces in AgentEvent::Started and OTel spans)",
+            )
+        })?;
+        let runnable = self.runnable.ok_or_else(|| {
+            entelix_core::Error::config(
+                "AgentBuilder::build: runnable is required (call .with_runnable(...) or .with_runnable_arc(...))",
+            )
+        })?;
+        if self.execution_mode.requires_approval() && self.approver.is_none() {
+            return Err(entelix_core::Error::config(
+                "AgentBuilder::build: ExecutionMode::Supervised requires an Approver \
+                 (call .with_approver(...) or .with_approver_arc(...))",
+            ));
+        }
+        let sink = self.sink.unwrap_or_else(|| Arc::new(DroppingSink));
+        Ok(Agent {
+            name,
+            runnable,
+            sink,
+            observers: self.observers,
+            execution_mode: self.execution_mode,
+            approver: self.approver,
+        })
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::indexing_slicing)]
+mod tests {
+    use entelix_runnable::RunnableLambda;
+    use futures::StreamExt;
+
+    use super::*;
+
+    fn echo_runnable() -> impl Runnable<i32, i32> {
+        RunnableLambda::new(|n: i32, _ctx| async move { Ok::<_, _>(n + 1) })
+    }
+
+    #[tokio::test]
+    async fn build_requires_name() {
+        let err = Agent::<i32>::builder()
+            .with_runnable(echo_runnable())
+            .build()
+            .unwrap_err();
+        assert!(format!("{err}").contains("name is required"));
+    }
+
+    #[tokio::test]
+    async fn build_rejects_empty_name() {
+        // Empty string defaults destroy trace correlation — guard
+        // against the silent-failure mode at build time.
+        let err = Agent::<i32>::builder()
+            .with_name("")
+            .with_runnable(echo_runnable())
+            .build()
+            .unwrap_err();
+        assert!(format!("{err}").contains("name is required"));
+    }
+
+    #[tokio::test]
+    async fn build_requires_runnable() {
+        let err = Agent::<i32>::builder()
+            .with_name("needs-runnable")
+            .build()
+            .unwrap_err();
+        assert!(format!("{err}").contains("runnable is required"));
+    }
+
+    #[tokio::test]
+    async fn execute_drives_inner_and_emits_book_ends() {
+        let sink = CaptureSink::<i32>::new();
+        let agent = Agent::<i32>::builder()
+            .with_name("test-agent")
+            .with_runnable(echo_runnable())
+            .with_sink(sink.clone())
+            .build()
+            .unwrap();
+
+        let out = agent.execute(41, &ExecutionContext::new()).await.unwrap();
+        assert_eq!(out, 42);
+        let events = sink.events();
+        assert_eq!(events.len(), 2);
+        assert!(matches!(&events[0], AgentEvent::Started { agent, .. } if agent == "test-agent"));
+        assert!(matches!(events[1], AgentEvent::Complete { state: 42, .. }));
+    }
+
+    #[tokio::test]
+    async fn agent_is_runnable_so_it_composes() {
+        // Demonstrate that Agent<S>: Runnable<S, S> — the agent is
+        // itself usable as a node in a larger composition.
+        let inner = Agent::<i32>::builder()
+            .with_name("composed-inner")
+            .with_runnable(echo_runnable())
+            .build()
+            .unwrap();
+        let composed: Arc<dyn Runnable<i32, i32>> = Arc::new(inner);
+        let result = composed.invoke(10, &ExecutionContext::new()).await.unwrap();
+        assert_eq!(result, 11);
+    }
+
+    #[tokio::test]
+    async fn execute_stream_emits_started_and_complete() {
+        let sink = CaptureSink::<i32>::new();
+        let agent = Agent::<i32>::builder()
+            .with_name("streamer")
+            .with_runnable(echo_runnable())
+            .with_sink(sink.clone())
+            .build()
+            .unwrap();
+
+        let ctx = ExecutionContext::new();
+        let mut stream = agent.execute_stream(7, &ctx);
+        let mut received = Vec::new();
+        while let Some(event) = stream.next().await {
+            received.push(event.unwrap());
+        }
+
+        // Events should be: Started → Complete(8). Both surfaces
+        // (caller stream + sink) see the same sequence.
+        assert!(matches!(received[0], AgentEvent::Started { .. }));
+        assert!(matches!(
+            received.last(),
+            Some(AgentEvent::Complete { state: 8, .. })
+        ));
+        assert_eq!(received.len(), sink.len());
+    }
+
+    #[tokio::test]
+    async fn execute_stream_with_dropping_sink_does_not_block() {
+        // Caller-facing stream still works when sink is a no-op.
+        let agent = Agent::<i32>::builder()
+            .with_name("dropping-sink")
+            .with_runnable(echo_runnable())
+            .build()
+            .unwrap();
+        let ctx = ExecutionContext::new();
+        let mut stream = agent.execute_stream(0, &ctx);
+        let mut count = 0;
+        while stream.next().await.is_some() {
+            count += 1;
+        }
+        assert!(count >= 2, "expected at least Started + Complete");
+    }
+}

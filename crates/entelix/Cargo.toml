@@ -1,0 +1,85 @@
+[package]
+name = "entelix"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+documentation.workspace = true
+description = "entelix — web-service-native Rust agentic AI SDK (facade re-export crate)"
+keywords.workspace = true
+categories.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+mcp = ["dep:entelix-mcp"]
+mcp-chatmodel = ["mcp", "dep:entelix-mcp-chatmodel"]
+postgres = ["dep:entelix-persistence", "entelix-persistence/postgres"]
+redis = ["dep:entelix-persistence", "entelix-persistence/redis"]
+otel = ["dep:entelix-otel"]
+aws = ["entelix-cloud/aws"]
+gcp = ["entelix-cloud/gcp"]
+azure = ["entelix-cloud/azure"]
+policy = ["dep:entelix-policy"]
+server = ["dep:entelix-server"]
+embedders-openai = ["dep:entelix-memory-openai"]
+vectorstores-qdrant = ["dep:entelix-memory-qdrant"]
+vectorstores-pgvector = ["dep:entelix-memory-pgvector"]
+graphmemory-pg = ["dep:entelix-graphmemory-pg"]
+full = ["mcp", "mcp-chatmodel", "postgres", "redis", "otel", "aws", "gcp", "azure", "policy", "server", "embedders-openai", "vectorstores-qdrant", "vectorstores-pgvector", "graphmemory-pg"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+entelix-core = { workspace = true }
+entelix-runnable = { workspace = true }
+entelix-prompt = { workspace = true }
+entelix-graph = { workspace = true }
+entelix-memory = { workspace = true }
+entelix-session = { workspace = true }
+entelix-agents = { workspace = true }
+entelix-cloud = { workspace = true }
+entelix-tools = { workspace = true }
+entelix-mcp = { workspace = true, optional = true }
+entelix-mcp-chatmodel = { workspace = true, optional = true }
+entelix-memory-openai = { workspace = true, optional = true }
+entelix-memory-pgvector = { workspace = true, optional = true }
+entelix-memory-qdrant = { workspace = true, optional = true }
+entelix-graphmemory-pg = { workspace = true, optional = true }
+entelix-otel = { workspace = true, optional = true }
+entelix-persistence = { workspace = true, optional = true }
+entelix-policy = { workspace = true, optional = true }
+entelix-server = { workspace = true, optional = true }
+
+[dev-dependencies]
+async-trait = { workspace = true }
+axum = { workspace = true }
+bytes = { workspace = true }
+entelix-core = { workspace = true }
+entelix-mcp = { workspace = true }
+entelix-mcp-chatmodel = { workspace = true }
+entelix-policy = { workspace = true }
+http = { workspace = true }
+futures = { workspace = true }
+http-body-util = { workspace = true }
+rust_decimal = { workspace = true }
+secrecy = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
+tower = { workspace = true }
+wiremock = { workspace = true }
+
+[[example]]
+name = "12_compat_matrix"
+required-features = ["aws", "gcp", "azure"]
+
+[[example]]
+name = "14_serve_agent"
+required-features = ["server"]

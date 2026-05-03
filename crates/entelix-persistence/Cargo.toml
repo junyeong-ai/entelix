@@ -1,0 +1,50 @@
+[package]
+name = "entelix-persistence"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+documentation.workspace = true
+description = "entelix persistence — Postgres + Redis impls of Checkpointer, Store, SessionLog, plus distributed session lock"
+keywords.workspace = true
+categories.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+postgres = ["dep:sqlx"]
+redis = ["dep:redis"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+entelix-core = { workspace = true }
+entelix-graph = { workspace = true }
+entelix-memory = { workspace = true }
+entelix-session = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+dashmap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+twox-hash = { workspace = true }
+uuid = { workspace = true }
+
+# Optional backends
+sqlx = { workspace = true, optional = true }
+redis = { workspace = true, optional = true }
+
+[dev-dependencies]
+parking_lot = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
+testcontainers = { workspace = true }
+testcontainers-modules = { workspace = true }

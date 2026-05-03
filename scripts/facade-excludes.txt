@@ -1,0 +1,25 @@
+# scripts/facade-excludes.txt — items intentionally NOT in the entelix facade.
+#
+# Each line is `entelix-<crate>::<Item>` plus a comment explaining why.
+# `scripts/check-facade-completeness.sh` skips these from the gap report.
+# Add an entry only when the item is genuinely advanced / internal and
+# operators are expected to reach through the underlying crate path.
+
+# Low-level parallel-fanout dispatch primitives. The
+# `add_send_edges` builder method on `StateGraph` is the
+# operator-facing surface; `Dispatch`, `scatter`, and
+# `FinalizingStream` are the internals it stitches together. Per
+# `crates/entelix/CLAUDE.md`'s "Forbidden" rule, advanced runtime
+# internals stay behind sub-crate paths.
+entelix-graph::Dispatch
+entelix-graph::scatter
+entelix-graph::FinalizingStream
+
+# `ApprovalDecision` is defined in `entelix-core::approval` and
+# re-exported by the facade as `entelix::ApprovalDecision` (from
+# entelix-core, the canonical owner). `entelix-agents::approver`
+# re-exports it again so existing `entelix_agents::ApprovalDecision`
+# import paths keep working — the facade-completeness check sees
+# the entelix-agents re-export but the canonical reach is through
+# the entelix-core path. ADR-0072.
+entelix-agents::ApprovalDecision

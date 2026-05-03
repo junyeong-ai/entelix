@@ -1,0 +1,91 @@
+name: live-API verification
+
+# Manual-trigger only. There is intentionally no `push` /
+# `pull_request` / `schedule` trigger — running the live smoke
+# costs vendor cents per invocation, and the cost ceiling
+# discipline demands explicit operator intent.
+#
+# How to run:
+#   1. GitHub UI → Actions → "live-API verification" → "Run workflow"
+#   2. Optionally pass a comma-separated `vendors` input to scope
+#      the sweep (e.g. `anthropic,openai_chat`).
+#
+# Required secrets (per vendor — only those you supply will run):
+#   - ANTHROPIC_API_KEY
+#   - OPENAI_API_KEY
+#   - GEMINI_API_KEY
+#   - AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY + AWS_REGION
+#
+# Each smoke is `#[ignore]`-gated; this workflow opts in via
+# `-- --ignored` and `--test live_<vendor>` filters.
+
+on:
+  workflow_dispatch:
+    inputs:
+      vendors:
+        description: |
+          Comma-separated subset of {anthropic,openai_chat,openai_responses,gemini,bedrock,openai_embedder}.
+          Empty = run every vendor whose secret is configured.
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  live-api:
+    name: live-API smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RUSTFLAGS: "-D warnings"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.94.0
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Anthropic smoke
+        if: ${{ env.ANTHROPIC_API_KEY != '' && (inputs.vendors == '' || contains(inputs.vendors, 'anthropic')) }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: cargo test -p entelix-core --test live_anthropic -- --ignored
+
+      - name: OpenAI Chat smoke
+        if: ${{ env.OPENAI_API_KEY != '' && (inputs.vendors == '' || contains(inputs.vendors, 'openai_chat')) }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: cargo test -p entelix-core --test live_openai_chat -- --ignored
+
+      - name: OpenAI Responses smoke
+        if: ${{ env.OPENAI_API_KEY != '' && (inputs.vendors == '' || contains(inputs.vendors, 'openai_responses')) }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: cargo test -p entelix-core --test live_openai_responses -- --ignored
+
+      - name: Gemini smoke
+        if: ${{ env.GEMINI_API_KEY != '' && (inputs.vendors == '' || contains(inputs.vendors, 'gemini')) }}
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: cargo test -p entelix-core --test live_gemini -- --ignored
+
+      - name: Bedrock smoke
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' && (inputs.vendors == '' || contains(inputs.vendors, 'bedrock')) }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: cargo test -p entelix-cloud --features aws --test live_bedrock -- --ignored
+
+      - name: OpenAI Embedder smoke
+        if: ${{ env.OPENAI_API_KEY != '' && (inputs.vendors == '' || contains(inputs.vendors, 'openai_embedder')) }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: cargo test -p entelix-memory-openai --test live_openai_embedder -- --ignored

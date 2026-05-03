@@ -1,0 +1,182 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Fast pre-flight: format + invariant scripts ────────────────────────────
+  preflight:
+    name: preflight (fmt + invariants)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain (rustfmt only)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: cargo fmt --all -- --check
+        run: cargo fmt --all -- --check
+
+      - name: scripts/check-no-fs.sh (invariant 9)
+        run: bash scripts/check-no-fs.sh
+
+      - name: scripts/check-managed-shape.sh (invariants 1-4, 10)
+        run: bash scripts/check-managed-shape.sh
+
+      - name: scripts/check-naming.sh (ADR-0010)
+        run: bash scripts/check-naming.sh
+
+      - name: scripts/check-surface-hygiene.sh (#[non_exhaustive] + source chains)
+        run: bash scripts/check-surface-hygiene.sh
+
+      - name: scripts/check-silent-fallback.sh (invariant 15)
+        run: bash scripts/check-silent-fallback.sh
+
+      - name: scripts/check-magic-constants.sh (invariant 17)
+        run: bash scripts/check-magic-constants.sh
+
+      - name: scripts/check-no-shims.sh (invariant 14)
+        run: bash scripts/check-no-shims.sh
+
+      - name: scripts/check-lock-ordering.sh (CLAUDE.md §"Lock ordering")
+        run: bash scripts/check-lock-ordering.sh
+
+      - name: scripts/check-dead-deps.sh (workspace.dependencies hygiene)
+        run: bash scripts/check-dead-deps.sh
+
+      - name: scripts/check-facade-completeness.sh (every pub item reachable via facade)
+        run: bash scripts/check-facade-completeness.sh
+
+      - name: scripts/check-doc-canonical-paths.sh (live docs use facade canonical)
+        run: bash scripts/check-doc-canonical-paths.sh
+
+  # ── Supply-chain — cargo audit + cargo deny ────────────────────────────────
+  supply-chain:
+    name: supply-chain (cargo audit + cargo deny)
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ubuntu-latest
+      - name: Install cargo-audit + cargo-deny
+        run: cargo install cargo-audit cargo-deny --locked --quiet
+      - name: scripts/check-supply-chain.sh
+        run: bash scripts/check-supply-chain.sh
+
+  # ── Build + clippy + test matrix ───────────────────────────────────────────
+  build:
+    name: build (${{ matrix.os }})
+    needs: preflight
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache cargo registry + target
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ${{ matrix.os }}
+
+      - name: cargo clippy --workspace --all-features
+        run: cargo clippy --workspace --all-features --all-targets -- -D warnings
+
+      - name: cargo build --workspace --all-features
+        run: cargo build --workspace --all-features
+
+      - name: cargo test --workspace --all-features (excluding ignored)
+        run: cargo test --workspace --all-features --no-fail-fast
+
+  # ── Doc build (rustdoc warnings denied) ────────────────────────────────────
+  docs:
+    name: docs (rustdoc -D warnings)
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ubuntu-latest
+      - name: cargo doc --workspace --all-features --no-deps
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+        run: cargo doc --workspace --all-features --no-deps
+
+  # ── Facade feature isolation matrix ────────────────────────────────────────
+  feature-matrix:
+    name: feature-matrix (each facade feature compiles alone)
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ubuntu-latest
+      - name: scripts/check-feature-matrix.sh
+        run: bash scripts/check-feature-matrix.sh
+
+  # ── Public-API drift gate (requires cargo-public-api) ──────────────────────
+  public-api:
+    name: public-API drift
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ubuntu-latest
+      - name: Install cargo-public-api
+        run: cargo install cargo-public-api --locked --quiet
+      - name: scripts/check-public-api.sh
+        run: bash scripts/check-public-api.sh
+
+  # ── Live integration tests (opt-in; requires API keys) ─────────────────────
+  # Triggered only on workflow_dispatch or when the commit message contains
+  # `[live]`. Costs real money — `--ignored` tests hit the live vendor APIs.
+  live:
+    name: live integration (--ignored)
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[live]')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ubuntu-latest
+      - name: cargo test --workspace --all-features -- --ignored
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: cargo test --workspace --all-features -- --ignored

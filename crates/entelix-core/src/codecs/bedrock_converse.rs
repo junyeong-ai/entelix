@@ -346,32 +346,19 @@ fn encode_messages(
     warnings: &mut Vec<ModelWarning>,
 ) -> (Vec<Value>, Vec<Value>) {
     // Bedrock Converse system surface is `[{text, cachePoint?}, ...]`.
-    // Bedrock supports cachePoint markers between blocks for
-    // Claude / Llama models — emit them when the IR block carries
-    // a cache_control directive. The cachePoint goes AFTER the
-    // text block it should cache (Bedrock's documented contract).
+    // The `cachePoint` marker goes AFTER the text block it should
+    // cache (Bedrock's documented contract). `attach_cache_point`
+    // shares the TTL coercion + warning logic with the message and
+    // tool encoders below.
     let mut system_blocks: Vec<Value> = Vec::new();
-    for block in request.system.blocks() {
+    for (idx, block) in request.system.blocks().iter().enumerate() {
         system_blocks.push(json!({ "text": block.text.clone() }));
-        if let Some(cache) = block.cache_control {
-            // Bedrock Converse `cachePoint` only knows `{type:
-            // "default"}` today — there is no per-tier TTL channel
-            // (the cache lifetime is set per-model server-side). When
-            // the IR carries a non-default TTL we still emit the
-            // marker but warn that the tier was coerced.
-            if cache.ttl != crate::ir::CacheTtl::FiveMinutes {
-                warnings.push(ModelWarning::LossyEncode {
-                    field: "system.cache_control.ttl".into(),
-                    detail: format!(
-                        "Bedrock cachePoint has no TTL knob — IR ttl `{:?}` coerced to vendor default",
-                        cache.ttl
-                    ),
-                });
-            }
-            system_blocks.push(json!({
-                "cachePoint": { "type": "default" }
-            }));
-        }
+        attach_cache_point(
+            &mut system_blocks,
+            block.cache_control,
+            || format!("system[{idx}]"),
+            warnings,
+        );
     }
     let mut messages = Vec::new();
 
@@ -430,6 +417,7 @@ fn encode_user_content(
     let mut out = Vec::new();
     for (part_idx, part) in parts.iter().enumerate() {
         let path = || format!("messages[{msg_idx}].content[{part_idx}]");
+        let cache = content_part_cache_control(part);
         match part {
             ContentPart::Text { text, .. } => out.push(json!({ "text": text })),
             ContentPart::Image { source, .. } => match source {
@@ -506,6 +494,7 @@ fn encode_user_content(
                 });
             }
         }
+        attach_cache_point(&mut out, cache, path, warnings);
     }
     out
 }
@@ -518,6 +507,7 @@ fn encode_assistant_content(
     let mut out = Vec::new();
     for (part_idx, part) in parts.iter().enumerate() {
         let path = || format!("messages[{msg_idx}].content[{part_idx}]");
+        let cache = content_part_cache_control(part);
         match part {
             ContentPart::Text { text, .. } => out.push(json!({ "text": text })),
             ContentPart::ToolUse { id, name, input } => {
@@ -550,6 +540,7 @@ fn encode_assistant_content(
                 });
             }
         }
+        attach_cache_point(&mut out, cache, path, warnings);
     }
     out
 }
@@ -561,6 +552,8 @@ fn encode_tool_results(
 ) -> Vec<Value> {
     let mut out = Vec::new();
     for (part_idx, part) in parts.iter().enumerate() {
+        let path = || format!("messages[{msg_idx}].content[{part_idx}]");
+        let cache = content_part_cache_control(part);
         if let ContentPart::ToolResult {
             tool_use_id,
             content,
@@ -581,12 +574,35 @@ fn encode_tool_results(
             }));
         } else {
             warnings.push(ModelWarning::LossyEncode {
-                field: format!("messages[{msg_idx}].content[{part_idx}]"),
+                field: path(),
                 detail: "non-tool_result part on Role::Tool dropped".into(),
             });
         }
+        attach_cache_point(&mut out, cache, path, warnings);
     }
     out
+}
+
+/// Read the optional `cache_control` field from any `ContentPart`
+/// variant. Variants the IR documents as carrying a cache directive
+/// (text / image / audio / video / document / thinking / citation /
+/// tool_result) return their stored value; variants that are model
+/// output and emitted fresh per turn (tool_use / image_output /
+/// audio_output) carry no directive and return `None`.
+const fn content_part_cache_control(part: &ContentPart) -> Option<crate::ir::CacheControl> {
+    match part {
+        ContentPart::Text { cache_control, .. }
+        | ContentPart::Image { cache_control, .. }
+        | ContentPart::Audio { cache_control, .. }
+        | ContentPart::Video { cache_control, .. }
+        | ContentPart::Document { cache_control, .. }
+        | ContentPart::Thinking { cache_control, .. }
+        | ContentPart::Citation { cache_control, .. }
+        | ContentPart::ToolResult { cache_control, .. } => *cache_control,
+        ContentPart::ToolUse { .. }
+        | ContentPart::ImageOutput { .. }
+        | ContentPart::AudioOutput { .. } => None,
+    }
 }
 
 fn encode_tools(tools: &[crate::ir::ToolSpec], warnings: &mut Vec<ModelWarning>) -> Value {
@@ -617,8 +633,42 @@ fn encode_tools(tools: &[crate::ir::ToolSpec], warnings: &mut Vec<ModelWarning>)
                 "inputSchema": { "json": input_schema.clone() },
             },
         }));
+        attach_cache_point(
+            &mut arr,
+            t.cache_control,
+            || format!("tools[{idx}]"),
+            warnings,
+        );
     }
     Value::Array(arr)
+}
+
+/// Push a Bedrock Converse `cachePoint` marker after `out`'s most
+/// recent block when `cache` is set. Emits a `LossyEncode` warning
+/// when the IR's TTL diverges from Bedrock's vendor default — the
+/// `cachePoint` block has no TTL knob (cache lifetime is set per
+/// model server-side; 5-minute default on Converse, 1h needs the
+/// InvokeModel API). The `field` prefix locates the originating IR
+/// site for operator diagnostics.
+fn attach_cache_point(
+    out: &mut Vec<Value>,
+    cache: Option<crate::ir::CacheControl>,
+    field: impl FnOnce() -> String,
+    warnings: &mut Vec<ModelWarning>,
+) {
+    let Some(cache) = cache else {
+        return;
+    };
+    if cache.ttl != crate::ir::CacheTtl::FiveMinutes {
+        warnings.push(ModelWarning::LossyEncode {
+            field: format!("{}.cache_control.ttl", field()),
+            detail: format!(
+                "Bedrock cachePoint has no TTL knob — IR ttl `{:?}` coerced to vendor default",
+                cache.ttl
+            ),
+        });
+    }
+    out.push(json!({ "cachePoint": { "type": "default" } }));
 }
 
 fn encode_tool_choice(choice: &ToolChoice) -> Value {

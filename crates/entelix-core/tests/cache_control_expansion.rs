@@ -249,3 +249,140 @@ fn cache_control_helper_is_noop_on_tool_use() {
         .with_cache_control(CacheControl::five_minutes());
     assert_eq!(original, after);
 }
+
+#[test]
+fn bedrock_user_message_cache_control_emits_cache_point() {
+    // Bedrock Converse `cachePoint: { type: "default" }` is the
+    // first-class native caching channel (added Dec 2024). The marker
+    // goes AFTER the content block it caches.
+    let codec = BedrockConverseCodec::new();
+    let req = ModelRequest {
+        model: "anthropic.claude-opus-4-v1:0".into(),
+        messages: vec![Message::new(
+            Role::User,
+            vec![
+                ContentPart::text("uncached prefix"),
+                ContentPart::Text {
+                    text: "cached prefix".into(),
+                    cache_control: Some(CacheControl::five_minutes()),
+                },
+                ContentPart::text("post-marker tail"),
+            ],
+        )],
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    let body = parse(&encoded.body);
+    let content = body["messages"][0]["content"].as_array().unwrap();
+    // 3 content parts + 1 cachePoint marker after block 1 = 4 wire blocks.
+    assert_eq!(content.len(), 4);
+    assert!(content[0].get("text").is_some() && content[0].get("cachePoint").is_none());
+    assert!(content[1].get("text").is_some() && content[1].get("cachePoint").is_none());
+    assert_eq!(content[2]["cachePoint"]["type"], "default");
+    assert!(content[3].get("text").is_some() && content[3].get("cachePoint").is_none());
+}
+
+#[test]
+fn bedrock_assistant_thinking_cache_control_emits_cache_point() {
+    // Assistant-side thinking blocks accept a cache directive too.
+    let codec = BedrockConverseCodec::new();
+    let req = ModelRequest {
+        model: "anthropic.claude-opus-4-v1:0".into(),
+        messages: vec![Message::new(
+            Role::Assistant,
+            vec![ContentPart::Thinking {
+                text: "reasoning".into(),
+                signature: None,
+                cache_control: Some(CacheControl::five_minutes()),
+            }],
+        )],
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    let body = parse(&encoded.body);
+    let content = body["messages"][0]["content"].as_array().unwrap();
+    assert_eq!(content.len(), 2);
+    assert!(content[0].get("reasoningContent").is_some());
+    assert_eq!(content[1]["cachePoint"]["type"], "default");
+}
+
+#[test]
+fn bedrock_tool_result_cache_control_emits_cache_point() {
+    // Tool results carry the heaviest payloads (RAG retrievals);
+    // caching them is the canonical use case.
+    let codec = BedrockConverseCodec::new();
+    let req = ModelRequest {
+        model: "anthropic.claude-opus-4-v1:0".into(),
+        messages: vec![Message::new(
+            Role::Tool,
+            vec![ContentPart::ToolResult {
+                tool_use_id: "t1".into(),
+                name: "search".into(),
+                content: entelix_core::ir::ToolResultContent::Text("retrieval result".into()),
+                is_error: false,
+                cache_control: Some(CacheControl::five_minutes()),
+            }],
+        )],
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    let body = parse(&encoded.body);
+    let content = body["messages"][0]["content"].as_array().unwrap();
+    assert_eq!(content.len(), 2);
+    assert!(content[0].get("toolResult").is_some());
+    assert_eq!(content[1]["cachePoint"]["type"], "default");
+}
+
+#[test]
+fn bedrock_tool_spec_cache_control_emits_cache_point_after_tool() {
+    // ToolSpec.cache_control marks the end of the cacheable tool
+    // declaration block — Bedrock supports this pattern for prefix
+    // caching of large tool catalogs.
+    let codec = BedrockConverseCodec::new();
+    let req = ModelRequest {
+        model: "anthropic.claude-opus-4-v1:0".into(),
+        messages: vec![Message::new(
+            Role::User,
+            vec![ContentPart::text("call a tool")],
+        )],
+        tools: vec![
+            ToolSpec::function("search", "Search the web", serde_json::json!({})),
+            ToolSpec::function("read_file", "Read a file", serde_json::json!({}))
+                .with_cache_control(CacheControl::five_minutes()),
+        ],
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    let body = parse(&encoded.body);
+    let tools = body["toolConfig"]["tools"].as_array().unwrap();
+    // 2 toolSpec entries + 1 cachePoint marker after the second tool.
+    assert_eq!(tools.len(), 3);
+    assert!(tools[0].get("toolSpec").is_some());
+    assert!(tools[1].get("toolSpec").is_some());
+    assert_eq!(tools[2]["cachePoint"]["type"], "default");
+}
+
+#[test]
+fn bedrock_one_hour_ttl_emits_lossy_encode_warning() {
+    // Bedrock Converse `cachePoint` has no TTL knob — the cache
+    // lifetime is fixed per-model server-side (5m default). When
+    // the IR carries a non-default TTL we still emit the marker
+    // but warn that the tier was coerced.
+    let codec = BedrockConverseCodec::new();
+    let req = ModelRequest {
+        model: "anthropic.claude-opus-4-v1:0".into(),
+        messages: vec![Message::new(
+            Role::User,
+            vec![ContentPart::Text {
+                text: "long-lived prefix".into(),
+                cache_control: Some(CacheControl::one_hour()),
+            }],
+        )],
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    assert!(lossy_for(
+        &encoded.warnings,
+        "messages[0].content[0].cache_control.ttl"
+    ));
+}

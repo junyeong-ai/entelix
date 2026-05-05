@@ -57,6 +57,7 @@ impl TenantId {
     ///
     /// Panics on empty input.
     #[must_use]
+    #[allow(clippy::expect_used)]
     pub fn new(s: impl AsRef<str>) -> Self {
         Self::try_from(s.as_ref()).expect("TenantId::new: tenant_id must be non-empty")
     }

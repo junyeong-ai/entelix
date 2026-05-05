@@ -122,12 +122,25 @@ impl RetryDecision {
 ///   Request Timeout / Too Early / Too Many Requests / 5xx server.
 ///
 /// Permanent failures (`InvalidRequest`, `Config`, `Cancelled`,
-/// `DeadlineExceeded`, `Interrupted`, `Serde`, and 4xx other than
-/// 408 / 425 / 429) are not retried.
+/// `DeadlineExceeded`, `Interrupted`, `Serde`, `UsageLimitExceeded`,
+/// and 4xx other than 408 / 425 / 429) are not retried.
+/// `UsageLimitExceeded` is matched explicitly — the wildcard arm
+/// would catch it, but a future variant inserted between
+/// `Provider` and the wildcard could accidentally be classified
+/// retryable; the explicit arm pins budget breach as terminal
+/// regardless of what new variants land (ADR-0082).
 #[derive(Clone, Copy, Debug, Default)]
 pub struct DefaultRetryClassifier;
 
 impl RetryClassifier for DefaultRetryClassifier {
+    // The explicit `UsageLimitExceeded` arm is intentional defence
+    // (ADR-0082): the wildcard below would absorb the variant
+    // identically today, but a future variant inserted between
+    // `Provider` and the wildcard could accidentally land budget
+    // breach on the retry path. Clippy's `match_same_arms` lint
+    // would have us collapse the arm — that defeats the explicit
+    // future-proofing the ADR pinned.
+    #[allow(clippy::match_same_arms)]
     fn should_retry(&self, error: &Error, _attempt: u32) -> RetryDecision {
         match error {
             Error::Provider {
@@ -136,6 +149,13 @@ impl RetryClassifier for DefaultRetryClassifier {
                 Some(after) => RetryDecision::retry_after(*after),
                 None => RetryDecision::RETRY,
             },
+            // Budget breach is terminal — re-issuing the same call
+            // after `RunBudget` rejected it produces the same
+            // `UsageLimitExceeded` and burns one more counter slot
+            // on the way (the pre-call CAS still increments before
+            // the cap check). Explicit match defends against future
+            // variants accidentally landing on the retry path.
+            Error::UsageLimitExceeded { .. } => RetryDecision::STOP,
             // Everything else is deterministic, caller-intent, or HITL —
             // retrying produces the same outcome (or violates intent).
             _ => RetryDecision::STOP,
@@ -514,6 +534,26 @@ mod tests {
         assert!(!c.should_retry(&Error::DeadlineExceeded, 0).retry);
         assert!(!c.should_retry(&Error::invalid_request("nope"), 0).retry);
         assert!(!c.should_retry(&Error::config("bad"), 0).retry);
+    }
+
+    #[test]
+    fn default_classifier_does_not_retry_usage_limit_exceeded() {
+        // Budget breach is terminal — re-issuing burns one more
+        // counter slot on each attempt's pre-call CAS without
+        // changing the outcome. Explicit arm pins the
+        // classification so a future variant inserted between
+        // `Provider` and the wildcard cannot accidentally land
+        // budget breach on the retry path (ADR-0082).
+        use crate::run_budget::UsageLimitAxis;
+        let c = DefaultRetryClassifier;
+        let err = Error::UsageLimitExceeded {
+            axis: UsageLimitAxis::Requests,
+            limit: 5,
+            observed: 5,
+        };
+        let decision = c.should_retry(&err, 0);
+        assert!(!decision.retry);
+        assert_eq!(decision.after, None);
     }
 
     #[test]

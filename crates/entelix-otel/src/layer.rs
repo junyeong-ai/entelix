@@ -345,6 +345,15 @@ where
         self.inner.poll_ready(cx)
     }
 
+    // The streaming-side `Service::call` interleaves request-side
+    // observability (vendor identifier emit + metric attribute
+    // setup) with the post-stream completion-future wrap (cost
+    // computation + token-usage histogram + terminal Ok / Err
+    // event emit). Splitting the body into two helpers would
+    // separate the metric-name SSoT from the call-site, which the
+    // semconv discipline (entelix-otel CLAUDE.md) wants colocated.
+    // The 127-line body is intentional.
+    #[allow(clippy::too_many_lines)]
     fn call(&mut self, invocation: StreamingModelInvocation) -> Self::Future {
         let inner = self.inner.clone();
         let system = Arc::clone(&self.system);

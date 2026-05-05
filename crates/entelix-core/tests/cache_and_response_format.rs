@@ -198,12 +198,17 @@ fn gemini_native_response_format_emits_response_json_schema() {
 
 #[test]
 fn anthropic_native_response_format_emits_output_config() {
+    use entelix_core::ir::OutputStrategy;
     let codec = AnthropicMessagesCodec::new();
     let schema = JsonSchemaSpec::new("user", json!({"type": "object"})).unwrap();
     let request = ModelRequest {
         model: "claude-opus-4-7".into(),
         messages: vec![Message::user("hi")],
-        response_format: Some(ResponseFormat::strict(schema)),
+        // Per ADR-0079 the Anthropic auto resolver picks `Tool`
+        // (forced-tool is the more mature surface). This test
+        // exercises the explicit `Native` path; the auto path is
+        // covered by the dedicated forced-tool dispatch tests.
+        response_format: Some(ResponseFormat::strict(schema).with_strategy(OutputStrategy::Native)),
         max_tokens: Some(1024),
         ..ModelRequest::default()
     };
@@ -243,12 +248,15 @@ fn anthropic_non_strict_response_format_warns_about_implicit_strict() {
 
 #[test]
 fn bedrock_native_response_format_routes_through_additional_model_request_fields() {
+    use entelix_core::ir::OutputStrategy;
     let codec = BedrockConverseCodec::new();
     let schema = JsonSchemaSpec::new("user", json!({"type": "object"})).unwrap();
     let request = ModelRequest {
         model: "anthropic.claude-opus-4".into(),
         messages: vec![Message::user("hi")],
-        response_format: Some(ResponseFormat::strict(schema)),
+        // Bedrock-Anthropic auto-resolves to `Tool` per ADR-0079;
+        // the native passthrough is covered here explicitly.
+        response_format: Some(ResponseFormat::strict(schema).with_strategy(OutputStrategy::Native)),
         ..ModelRequest::default()
     };
     let encoded = codec.encode(&request).unwrap();

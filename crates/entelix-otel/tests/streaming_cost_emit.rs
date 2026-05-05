@@ -11,7 +11,16 @@
 //! by a `tracing::subscriber` so the assertion is on the actual
 //! emitted attributes, not on a derived metric.
 
-#![allow(clippy::unwrap_used, clippy::expect_used)]
+// `option_if_let_else` would force the substantial 2-branch
+// `match inject_at` body into a `map_or_else` chain that hurts
+// readability — the branches build distinct delta sequences and
+// belong as readable per-arm code, not as closures. Opted out by
+// intent.
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::option_if_let_else
+)]
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};

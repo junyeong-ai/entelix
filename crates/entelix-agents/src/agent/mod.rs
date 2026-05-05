@@ -225,6 +225,17 @@ where
     /// the `gen_ai.agent.*` / `entelix.*` namespaces that match
     /// the rest of the OTel surface so dashboards joining on
     /// run_id stay consistent across the layer / agent stack.
+    ///
+    /// The five `gen_ai.usage.*` / `entelix.usage.*` fields are
+    /// declared as [`tracing::field::Empty`] placeholders and
+    /// populated by [`Self::run_inner`] at the
+    /// [`AgentRunResult::usage`] freeze point — a `RunBudget`
+    /// attached to the [`ExecutionContext`] surfaces its frozen
+    /// counters as span attributes so OTel dashboards filter
+    /// per-run consumption without consumers having to harvest
+    /// the envelope return value. Runs without a budget keep the
+    /// fields `Empty`; the `tracing-opentelemetry` bridge omits
+    /// empty fields from the exported span attributes (ADR-0082).
     fn run_span(&self, run_id: &str, ctx: &ExecutionContext) -> tracing::Span {
         tracing::info_span!(
             target: "gen_ai",
@@ -233,6 +244,11 @@ where
             entelix.run_id = %run_id,
             entelix.tenant_id = %ctx.tenant_id(),
             entelix.thread_id = ctx.thread_id(),
+            gen_ai.usage.input_tokens = tracing::field::Empty,
+            gen_ai.usage.output_tokens = tracing::field::Empty,
+            gen_ai.usage.total_tokens = tracing::field::Empty,
+            entelix.usage.requests = tracing::field::Empty,
+            entelix.usage.tool_calls = tracing::field::Empty,
         )
     }
 
@@ -259,6 +275,21 @@ where
         }
         let state = self.runnable.invoke(input, ctx).await?;
         let usage = ctx.run_budget().map(|budget| budget.snapshot());
+        // Mirror the frozen snapshot onto the `entelix.agent.run`
+        // span declared in `run_span` — `Span::current()` here is
+        // that root span (this future is `.instrument`-ed by
+        // `execute_inner` / `book_end_stream`). Runs without a
+        // budget leave the fields as `tracing::field::Empty`, which
+        // the `tracing-opentelemetry` bridge drops from the
+        // exported span (no zero-valued attributes ride through).
+        if let Some(snapshot) = usage {
+            let span = tracing::Span::current();
+            span.record("gen_ai.usage.input_tokens", snapshot.input_tokens);
+            span.record("gen_ai.usage.output_tokens", snapshot.output_tokens);
+            span.record("gen_ai.usage.total_tokens", snapshot.total_tokens());
+            span.record("entelix.usage.requests", snapshot.requests);
+            span.record("entelix.usage.tool_calls", snapshot.tool_calls);
+        }
         // on_complete fires before any terminal event so observers
         // can mutate side-channel state (vector store writes,
         // summary persistence) and have those writes reflected in
@@ -608,7 +639,7 @@ where
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::indexing_slicing)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use entelix_runnable::RunnableLambda;
     use futures::StreamExt;
@@ -689,10 +720,13 @@ mod tests {
             .build()
             .unwrap();
 
-        let budget = RunBudget::unlimited();
-        // Pre-stamp the budget with a single request so the snapshot
-        // reflects observable counter state — the inner runnable
-        // does not call ChatModel here.
+        // `unlimited()` plus a non-`None` `request_limit` so the
+        // pre-call CAS actually increments — `check_pre_request`
+        // early-returns when no cap is attached and never touches
+        // the counter (the runtime path that consumes a budget
+        // always sets at least one cap, so this is the realistic
+        // shape).
+        let budget = RunBudget::unlimited().with_request_limit(100);
         budget.check_pre_request().unwrap();
         let ctx = ExecutionContext::new().with_run_budget(budget.clone());
 

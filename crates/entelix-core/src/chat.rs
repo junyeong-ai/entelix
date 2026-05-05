@@ -297,6 +297,15 @@ impl<C: Codec + 'static, T: Transport + 'static> Service<StreamingModelInvocatio
             // would borrow from a stack-local `codec` binding
             // that drops at the end of `call`.
             let codec_for_stream = Arc::clone(&codec);
+            // The Rust 2024 tail-expr-drop-order change is benign
+            // here — the `async_stream::stream!` block holds a
+            // pinned mutable iterator (`inner`) over the codec's
+            // decode pipeline; whether the temporaries inside drop
+            // at end-of-block (Edition 2021) or end-of-statement
+            // (Edition 2024) does not change observable
+            // semantics, since `inner` is fully consumed before
+            // the block returns.
+            #[allow(tail_expr_drop_order)]
             let codec_stream: BoxDeltaStream<'static> = Box::pin(async_stream::stream! {
                 let inner = codec_for_stream.decode_stream(stream.body, warnings);
                 futures::pin_mut!(inner);
@@ -768,6 +777,16 @@ impl<C: Codec + 'static, T: Transport + 'static> std::fmt::Debug for ChatModel<C
 /// helper tries the tool path first (Anthropic / Bedrock-Anthropic
 /// default), then falls through to the text path (OpenAI /
 /// Gemini default).
+// `response` is taken by value to express ownership of the
+// response payload — the function consumes the response's
+// stop reason / warnings semantics from the caller's
+// perspective even though only `content` is read. Clippy's
+// `needless_pass_by_value` would have us borrow, but a borrow
+// would let the caller continue to inspect `response.warnings`
+// (etc.) after `parse_typed_response` succeeded, masking the
+// "this response has been consumed" intent the typed surface
+// communicates.
+#[allow(clippy::needless_pass_by_value)]
 fn parse_typed_response<O>(response: ModelResponse) -> Result<O>
 where
     O: serde::de::DeserializeOwned,

@@ -449,7 +449,11 @@ mod tests {
 
     #[test]
     fn snapshot_returns_owned_values() {
-        let budget = RunBudget::unlimited();
+        // `with_request_limit` so the pre-call CAS actually
+        // increments — `check_pre_request` early-returns when no
+        // cap is set (`unlimited` alone leaves every counter at
+        // zero, hiding the snapshot's frozen-at-call contract).
+        let budget = RunBudget::unlimited().with_request_limit(100);
         budget.check_pre_request().unwrap();
         budget.observe_usage(&Usage::new(10, 5)).unwrap();
         let snap = budget.snapshot();

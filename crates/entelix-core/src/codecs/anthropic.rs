@@ -412,7 +412,12 @@ fn encode_anthropic_structured_output(
 /// Resolve [`OutputStrategy::Auto`] to Anthropic's preferred
 /// dispatch shape — currently `Tool` (the native `output_config`
 /// channel ships without a strict toggle and is less mature than
-/// the tool-call surface).
+/// the tool-call surface). The explicit per-variant arms keep the
+/// resolver readable as the cross-vendor `OutputStrategy` enum
+/// gains future variants — Clippy's `match_same_arms` would have
+/// us merge the identity arms but that hides the explicit
+/// per-variant intent (ADR-0079).
+#[allow(clippy::match_same_arms)]
 const fn resolve_output_strategy(strategy: OutputStrategy, _model: &str) -> OutputStrategy {
     match strategy {
         OutputStrategy::Auto => OutputStrategy::Tool,

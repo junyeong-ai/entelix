@@ -29,10 +29,12 @@
 use std::sync::Arc;
 use std::task::{Context, Poll};
 
+use futures::future::BoxFuture;
 use serde_json::Value;
 use tower::Service;
 use tower::util::BoxCloneService;
 
+use crate::codecs::BoxDeltaStream;
 use crate::context::ExecutionContext;
 use crate::error::Error;
 use crate::ir::{ModelRequest, ModelResponse};
@@ -52,6 +54,59 @@ impl ModelInvocation {
     /// Bundle `request` + `ctx` into one invocation.
     pub const fn new(request: ModelRequest, ctx: ExecutionContext) -> Self {
         Self { request, ctx }
+    }
+}
+
+/// Streaming-side counterpart to [`ModelInvocation`] — the same
+/// `request + ctx` payload but a distinct request type so the
+/// `tower::Service` trait's associated `Response` can resolve to
+/// [`ModelStream`] for the streaming spine while [`ModelInvocation`]
+/// keeps resolving to [`ModelResponse`] for the one-shot spine.
+///
+/// Rust's `Service<Request>` carries `Response` as an associated
+/// type — one trait impl per `(Self, Request)` pair. The wrapper
+/// here is the cleanest way to expose two response types from one
+/// leaf service: the same `InnerChatModel<C, T>` implements
+/// `Service<ModelInvocation, Response = ModelResponse>` and
+/// `Service<StreamingModelInvocation, Response = ModelStream>`,
+/// and layers stack onto each independently.
+///
+/// `#[non_exhaustive]` to keep room for streaming-only knobs
+/// (chunk size hints, partial-output buffers) post-1.0 without
+/// breaking callers.
+#[derive(Clone, Debug)]
+#[non_exhaustive]
+pub struct StreamingModelInvocation {
+    /// The wrapped one-shot invocation. Streaming layers read
+    /// `request` and `ctx` through this — same fields, same
+    /// semantics, different `Service` shape.
+    pub inner: ModelInvocation,
+}
+
+impl StreamingModelInvocation {
+    /// Wrap a [`ModelInvocation`].
+    #[must_use]
+    pub const fn new(inner: ModelInvocation) -> Self {
+        Self { inner }
+    }
+
+    /// Borrow the request — read-side shortcut so layers don't
+    /// have to write `invocation.inner.request`.
+    #[must_use]
+    pub const fn request(&self) -> &ModelRequest {
+        &self.inner.request
+    }
+
+    /// Borrow the context — read-side shortcut.
+    #[must_use]
+    pub const fn ctx(&self) -> &ExecutionContext {
+        &self.inner.ctx
+    }
+}
+
+impl From<ModelInvocation> for StreamingModelInvocation {
+    fn from(inner: ModelInvocation) -> Self {
+        Self::new(inner)
     }
 }
 
@@ -122,6 +177,70 @@ pub type BoxedModelService = BoxCloneService<ModelInvocation, ModelResponse, Err
 /// dispatch funnels through this; `ToolRegistry` builds it on
 /// demand from a registered `Tool` + the registry's layer stack.
 pub type BoxedToolService = BoxCloneService<ToolInvocation, Value, Error>;
+
+/// Streaming dispatch result returned by
+/// `Service<ModelInvocation, Response = ModelStream>` — the
+/// caller-visible delta stream paired with a future that resolves
+/// to the aggregated terminal response.
+///
+/// The [`Self::stream`] field carries the raw `StreamDelta` flow
+/// (text chunks, tool-use boundaries, usage, rate-limit, warnings,
+/// terminal `Stop`). The [`Self::completion`] future resolves to
+/// `Ok(ModelResponse)` after the stream has been fully consumed
+/// AND a `StreamAggregator` has reconstructed the final response;
+/// it resolves to `Err(...)` if the stream errored mid-flight, was
+/// dropped before terminal `Stop`, or violated the aggregator's
+/// protocol invariants.
+///
+/// Layers (`OtelLayer`, `PolicyLayer`) wrap `completion` to emit
+/// observability / cost events on the **`Ok` branch only** —
+/// invariant 12. A stream that errors mid-flight surfaces the
+/// error through the consumer's stream-side `Err` *and* through
+/// `completion` resolving to `Err`; either way, no cost charge
+/// fires.
+///
+/// `completion` is internally driven by the same stream
+/// `stream` carries — consumers do not need to poll it
+/// separately. The aggregator runs as the consumer drains the
+/// stream; `completion` resolves naturally when the consumer
+/// reads the terminal `Stop` (or drops the stream early, in which
+/// case `completion` resolves `Err`).
+pub struct ModelStream {
+    /// Raw delta stream surfaced to the caller. The wrapper
+    /// produced by `entelix_core::stream::tap_aggregator` taps
+    /// each delta into a `StreamAggregator` as it flows past, so
+    /// the caller sees an unmodified stream while
+    /// [`Self::completion`] receives the aggregated final response
+    /// without a second pass.
+    pub stream: BoxDeltaStream<'static>,
+    /// Future resolving to the aggregated `ModelResponse` after
+    /// the stream has been consumed to its terminal `Stop`. Layers
+    /// wrap this future to gate observability emission on success
+    /// (invariant 12). Consumers that ignore the streaming-side
+    /// completion (e.g. wire it into a fire-and-forget OTel layer)
+    /// do not need to await it directly — dropping the
+    /// `ModelStream` is the canonical "I'm done" signal that lets
+    /// any wrapping layer observe stream-completion regardless of
+    /// whether the consumer polled `completion` itself.
+    pub completion: BoxFuture<'static, Result<ModelResponse, Error>>,
+}
+
+impl std::fmt::Debug for ModelStream {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ModelStream")
+            .field("stream", &"<BoxDeltaStream>")
+            .field("completion", &"<BoxFuture<Result<ModelResponse>>>")
+            .finish()
+    }
+}
+
+/// Type-erased, cloneable `Service<StreamingModelInvocation,
+/// Response = ModelStream>` handle. Parallel to
+/// [`BoxedModelService`] for the streaming dispatch path.
+/// `ChatModel::streaming_service()` produces this; `OtelLayer` /
+/// `PolicyLayer` wrap it the same way they wrap
+/// [`BoxedModelService`] for the one-shot path.
+pub type BoxedStreamingService = BoxCloneService<StreamingModelInvocation, ModelStream, Error>;
 
 /// Convenience: an always-ready `Service` whose `poll_ready` returns
 /// `Poll::Ready(Ok(()))` unconditionally. Most leaf services have

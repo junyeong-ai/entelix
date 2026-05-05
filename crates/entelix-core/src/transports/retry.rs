@@ -334,6 +334,15 @@ impl Retryable for crate::service::ToolInvocation {
     }
 }
 
+impl Retryable for crate::service::StreamingModelInvocation {
+    fn ctx(&self) -> &crate::context::ExecutionContext {
+        &self.inner.ctx
+    }
+    fn ctx_mut(&mut self) -> &mut crate::context::ExecutionContext {
+        &mut self.inner.ctx
+    }
+}
+
 async fn run_with_retry<S, Req, Resp>(
     mut inner: S,
     mut request: Req,

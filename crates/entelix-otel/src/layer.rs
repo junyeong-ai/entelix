@@ -24,7 +24,9 @@ use entelix_core::TenantId;
 use entelix_core::cost::{CostCalculator, ToolCostCalculator};
 use entelix_core::error::{Error, Result};
 use entelix_core::ir::{ModelResponse, StopReason};
-use entelix_core::service::{ModelInvocation, ToolInvocation};
+use entelix_core::service::{
+    ModelInvocation, ModelStream, StreamingModelInvocation, ToolInvocation,
+};
 
 use crate::metrics::{GenAiMetrics, OperationKind};
 
@@ -324,6 +326,177 @@ where
                 }
             }
             result
+        })
+    }
+}
+
+impl<S> Service<StreamingModelInvocation> for OtelService<S>
+where
+    S: Service<StreamingModelInvocation, Response = ModelStream, Error = Error>
+        + Clone
+        + Send
+        + 'static,
+    S::Future: Send + 'static,
+{
+    type Response = ModelStream;
+    type Error = Error;
+    type Future = BoxFuture<'static, Result<ModelStream>>;
+
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<()>> {
+        self.inner.poll_ready(cx)
+    }
+
+    fn call(&mut self, invocation: StreamingModelInvocation) -> Self::Future {
+        let inner = self.inner.clone();
+        let system = Arc::clone(&self.system);
+        let metrics = self.metrics.clone();
+        let cost_calculator = self.cost_calculator.clone();
+        Box::pin(async move {
+            let request_model = invocation.request().model.clone();
+            let max_tokens = invocation.request().max_tokens;
+            let temperature = invocation.request().temperature;
+            let top_p = invocation.request().top_p;
+            let tenant = invocation.ctx().tenant_id().to_owned();
+            let thread = invocation.ctx().thread_id().map(str::to_owned);
+            let run = invocation.ctx().run_id().map(str::to_owned);
+            let cancel_token = invocation.ctx().cancellation().clone();
+            let ctx_for_cost = invocation.ctx().clone();
+            let started_at = Instant::now();
+            tracing::event!(
+                target: "gen_ai",
+                tracing::Level::INFO,
+                gen_ai.system = %system,
+                gen_ai.operation.name = OperationKind::Chat.as_str(),
+                gen_ai.request.model = %request_model,
+                gen_ai.request.max_tokens = max_tokens,
+                gen_ai.request.temperature = temperature,
+                gen_ai.request.top_p = top_p,
+                entelix.streaming = true,
+                entelix.tenant_id = %tenant,
+                entelix.thread_id = thread,
+                entelix.run_id = run,
+                "gen_ai.request"
+            );
+
+            // Open the stream first so initial-connection failures
+            // surface as a typed `gen_ai.error` event before we
+            // hand a `ModelStream` to the caller.
+            let model_stream = match inner.oneshot(invocation).await {
+                Ok(s) => s,
+                Err(err) => {
+                    let duration_ms =
+                        u64::try_from(started_at.elapsed().as_millis()).unwrap_or(u64::MAX);
+                    tracing::event!(
+                        target: "gen_ai",
+                        tracing::Level::ERROR,
+                        gen_ai.system = %system,
+                        gen_ai.operation.name = OperationKind::Chat.as_str(),
+                        gen_ai.request.model = %request_model,
+                        entelix.streaming = true,
+                        error.message = %err,
+                        duration_ms,
+                        entelix.cancelled = cancel_token.is_cancelled(),
+                        entelix.tenant_id = %tenant,
+                        entelix.thread_id = thread,
+                        entelix.run_id = run,
+                        "gen_ai.error"
+                    );
+                    return Err(err);
+                }
+            };
+            let ModelStream { stream, completion } = model_stream;
+
+            // Wrap the completion future so cost / response events
+            // emit on the `Ok` branch only. The contract: callers
+            // that consume the stream to its terminal `Stop` MUST
+            // await `completion` to receive both the aggregated
+            // `ModelResponse` and the observability emission tied
+            // to it. Layers do not spawn background tasks — that
+            // would couple `OtelLayer` to a specific runtime
+            // (tokio vs others) and silently produce events whose
+            // ordering relative to caller drain is unstable.
+            //
+            // Callers that drop the stream without awaiting
+            // `completion` lose the post-stream cost emission —
+            // mirroring what `complete_full` would do if its
+            // `oneshot(invocation)` future were dropped before
+            // resolving. The transactional guarantee (invariant 12
+            // — "no charge on the error branch") still holds: the
+            // wrapped future never emits cost on `Err`, and
+            // dropping the future before it resolves emits
+            // nothing.
+            let user_facing = async move {
+                let result = completion.await;
+                let duration_ms =
+                    u64::try_from(started_at.elapsed().as_millis()).unwrap_or(u64::MAX);
+                let cancelled = cancel_token.is_cancelled();
+                match &result {
+                    Ok(response) => {
+                        let finish_reason = stop_reason_label(&response.stop_reason);
+                        let cost = if let Some(calc) = &cost_calculator {
+                            calc.compute_cost(&response.model, &response.usage, &ctx_for_cost)
+                                .await
+                        } else {
+                            None
+                        };
+                        tracing::event!(
+                            target: "gen_ai",
+                            tracing::Level::INFO,
+                            gen_ai.system = %system,
+                            gen_ai.operation.name = OperationKind::Chat.as_str(),
+                            gen_ai.response.id = %response.id,
+                            gen_ai.response.model = %response.model,
+                            gen_ai.response.finish_reasons = finish_reason,
+                            gen_ai.usage.input_tokens = response.usage.input_tokens,
+                            gen_ai.usage.output_tokens = response.usage.output_tokens,
+                            gen_ai.usage.cached_input_tokens = response.usage.cached_input_tokens,
+                            gen_ai.usage.cache_creation_input_tokens =
+                                response.usage.cache_creation_input_tokens,
+                            gen_ai.usage.reasoning_tokens = response.usage.reasoning_tokens,
+                            gen_ai.usage.cost = cost,
+                            entelix.streaming = true,
+                            duration_ms,
+                            entelix.cancelled = cancelled,
+                            entelix.tenant_id = %tenant,
+                            entelix.thread_id = thread,
+                            entelix.run_id = run,
+                            "gen_ai.response"
+                        );
+                        if let Some(metrics) = &metrics {
+                            metrics.record_call(
+                                &system,
+                                OperationKind::Chat,
+                                &request_model,
+                                &response.model,
+                                &response.usage,
+                                started_at.elapsed(),
+                            );
+                        }
+                    }
+                    Err(err) => {
+                        tracing::event!(
+                            target: "gen_ai",
+                            tracing::Level::ERROR,
+                            gen_ai.system = %system,
+                            gen_ai.operation.name = OperationKind::Chat.as_str(),
+                            gen_ai.request.model = %request_model,
+                            entelix.streaming = true,
+                            error.message = %err,
+                            duration_ms,
+                            entelix.cancelled = cancelled,
+                            entelix.tenant_id = %tenant,
+                            entelix.thread_id = thread,
+                            entelix.run_id = run,
+                            "gen_ai.error"
+                        );
+                    }
+                }
+                result
+            };
+            Ok(ModelStream {
+                stream,
+                completion: Box::pin(user_facing),
+            })
         })
     }
 }

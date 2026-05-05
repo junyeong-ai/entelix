@@ -20,9 +20,19 @@
 //! vendor's terminology and force a churn whenever they renumber an
 //! event type.
 
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+use futures::Stream;
+use futures::StreamExt;
+use futures::future::BoxFuture;
+use tokio::sync::oneshot;
+
+use crate::codecs::BoxDeltaStream;
 use crate::error::{Error, Result};
 use crate::ir::{ContentPart, ModelResponse, ModelWarning, StopReason, Usage};
 use crate::rate_limit::RateLimitSnapshot;
+use crate::service::ModelStream;
 
 /// One chunk from a streaming model response.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -328,6 +338,185 @@ impl StreamAggregator {
 /// large under provider misbehavior; including the full buffer
 /// inflates structured logs and pollutes traces. 256 bytes is enough
 /// for an operator to see the rough shape and cheap to keep.
+/// Wrap a raw `BoxDeltaStream` in a [`ModelStream`] whose
+/// [`ModelStream::completion`] future resolves to the aggregated
+/// [`ModelResponse`] after the consumer drains the stream.
+///
+/// The aggregator runs as a stateful side-effect inside the
+/// returned stream — each delta the consumer reads is also pushed
+/// into a local `StreamAggregator`. When the consumer reads the
+/// terminal `Stop` (or the inner stream ends without one), the
+/// aggregator finalises and the `completion` future resolves. If
+/// the consumer drops the stream early, the aggregator is dropped
+/// without finalising and `completion` resolves to
+/// `Err(Error::Cancelled)` so observability layers gating on
+/// `completion.await.is_ok()` (cost emission) do not fire on
+/// abandoned streams (invariant 12).
+///
+/// Mid-stream `Err` propagates twofold: the consumer sees the
+/// `Err` on the next `next().await`, and `completion` resolves to
+/// the same error so wrapping layers see the failure path on the
+/// post-stream branch.
+pub fn tap_aggregator(inner: BoxDeltaStream<'static>) -> ModelStream {
+    let (tx, rx) = oneshot::channel::<Result<ModelResponse>>();
+    let tap = AggregatorTap {
+        inner,
+        agg: StreamAggregator::new(),
+        completion: Some(tx),
+        terminated: false,
+    };
+    ModelStream {
+        stream: Box::pin(tap),
+        completion: Box::pin(async move {
+            match rx.await {
+                Ok(result) => result,
+                // Sender dropped before sending — the wrapping
+                // stream was abandoned without reaching terminal
+                // Stop. Surface as Cancelled so layers gate on Ok.
+                Err(_) => Err(Error::Cancelled),
+            }
+        }) as BoxFuture<'static, Result<ModelResponse>>,
+    }
+}
+
+/// `Stream<Item = Result<StreamDelta>>` wrapper that taps each
+/// delta into a `StreamAggregator`. On terminal `Stop` (or stream
+/// EOF, or mid-stream `Err`), it sends the aggregator's final
+/// state through a `oneshot::Sender` so the paired
+/// [`ModelStream::completion`] future resolves with the
+/// aggregated response or the propagated error.
+struct AggregatorTap {
+    inner: BoxDeltaStream<'static>,
+    agg: StreamAggregator,
+    completion: Option<oneshot::Sender<Result<ModelResponse>>>,
+    terminated: bool,
+}
+
+impl AggregatorTap {
+    /// Send the aggregator's terminal state through the completion
+    /// channel. Idempotent — subsequent calls are no-ops, so a
+    /// stream that finalises on `Stop` and is then dropped does
+    /// not double-send.
+    fn finalize(&mut self, outcome: Result<ModelResponse>) {
+        if let Some(tx) = self.completion.take() {
+            // Receiver may have been dropped (operator abandoned
+            // `completion` future before consuming the stream); the
+            // send error is not actionable on this side.
+            let _ = tx.send(outcome);
+        }
+    }
+}
+
+impl Stream for AggregatorTap {
+    type Item = Result<StreamDelta>;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        if self.terminated {
+            return Poll::Ready(None);
+        }
+        match self.inner.poll_next_unpin(cx) {
+            Poll::Pending => Poll::Pending,
+            Poll::Ready(None) => {
+                // Inner stream ended without terminal Stop —
+                // finalise produces `Err` (the aggregator's own
+                // protocol-violation message). `completion`
+                // resolves Err so wrapping layers see failure.
+                let agg = std::mem::take(&mut self.agg);
+                let outcome = agg.finalize();
+                self.finalize(outcome);
+                self.terminated = true;
+                Poll::Ready(None)
+            }
+            Poll::Ready(Some(Err(e))) => {
+                // Mid-stream error — clone the error for the
+                // completion channel (consumer sees the original
+                // Err on this branch).
+                let cloned = clone_error(&e);
+                self.finalize(Err(cloned));
+                self.terminated = true;
+                Poll::Ready(Some(Err(e)))
+            }
+            Poll::Ready(Some(Ok(delta))) => {
+                let is_stop = matches!(delta, StreamDelta::Stop { .. });
+                if let Err(e) = self.agg.push(delta.clone()) {
+                    // Aggregator rejected a protocol violation —
+                    // surface to the consumer (so they see why)
+                    // *and* through completion (so layers see
+                    // the failure path).
+                    let cloned = clone_error(&e);
+                    self.finalize(Err(cloned));
+                    self.terminated = true;
+                    return Poll::Ready(Some(Err(e)));
+                }
+                if is_stop {
+                    // Terminal Stop — finalise immediately so the
+                    // completion future resolves before the
+                    // consumer's next `.next()` call. Any further
+                    // poll returns `None`.
+                    let agg = std::mem::take(&mut self.agg);
+                    let outcome = agg.finalize();
+                    self.finalize(outcome);
+                    self.terminated = true;
+                }
+                Poll::Ready(Some(Ok(delta)))
+            }
+        }
+    }
+}
+
+impl Drop for AggregatorTap {
+    fn drop(&mut self) {
+        // Stream dropped without terminal Stop — completion
+        // resolves Err(Cancelled) so cost-emit layers gating on
+        // Ok branch do not fire on abandoned streams.
+        if self.completion.is_some() {
+            self.finalize(Err(Error::Cancelled));
+        }
+    }
+}
+
+/// Best-effort clone of an `Error` for the `completion` channel.
+/// `Error` is not `Clone` because `serde_json::Error` and the
+/// `Auth` variant carry non-Clone payloads, but the streaming-tap
+/// path needs to forward both the consumer-side `Err` and the
+/// completion-future `Err`. The reconstruction preserves the
+/// variant + message for observability purposes; the source
+/// chain on the consumer side stays intact (the original `Err` is
+/// what the consumer receives).
+fn clone_error(e: &Error) -> Error {
+    use crate::error::ProviderErrorKind;
+    match e {
+        Error::InvalidRequest(msg) => Error::invalid_request(msg.clone()),
+        Error::Config(msg) => Error::config(msg.clone()),
+        Error::Provider {
+            kind,
+            message,
+            retry_after,
+            ..
+        } => {
+            let cloned = match kind {
+                ProviderErrorKind::Network => Error::provider_network(message.clone()),
+                ProviderErrorKind::Tls => Error::provider_tls(message.clone()),
+                ProviderErrorKind::Dns => Error::provider_dns(message.clone()),
+                ProviderErrorKind::Http(status) => Error::provider_http(*status, message.clone()),
+            };
+            match retry_after {
+                Some(after) => cloned.with_retry_after(*after),
+                None => cloned,
+            }
+        }
+        Error::Auth(_) => Error::config("authentication failed (cloned for stream completion)"),
+        Error::Cancelled => Error::Cancelled,
+        Error::DeadlineExceeded => Error::DeadlineExceeded,
+        Error::Interrupted { payload } => Error::Interrupted {
+            payload: payload.clone(),
+        },
+        Error::Serde(_) => {
+            Error::invalid_request("output serialisation failed (cloned for stream completion)")
+        }
+    }
+}
+
 fn truncate_for_diagnostic(s: &str) -> String {
     const BUDGET: usize = 256;
     if s.len() <= BUDGET {

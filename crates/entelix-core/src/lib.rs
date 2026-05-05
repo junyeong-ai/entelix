@@ -71,10 +71,14 @@ pub use error::{Error, ProviderErrorKind, Result};
 pub use extensions::Extensions;
 pub use llm_facing::{LlmFacingSchema, LlmRenderable, RenderedForLlm};
 pub use overrides::RunOverrides;
-pub use service::{BoxedModelService, BoxedToolService, ModelInvocation, ToolInvocation};
+pub use service::{
+    BoxedModelService, BoxedStreamingService, BoxedToolService, ModelInvocation, ModelStream,
+    StreamingModelInvocation, ToolInvocation,
+};
 pub use skills::{
     LoadedSkill, Skill, SkillRegistry, SkillResource, SkillResourceContent, SkillSummary,
 };
+pub use stream::tap_aggregator;
 pub use tenant_id::{DEFAULT_TENANT_ID, TenantId};
 pub use thread_key::ThreadKey;
 pub use tools::{Tool, ToolRegistry};

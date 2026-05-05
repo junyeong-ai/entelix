@@ -32,8 +32,11 @@ use crate::context::ExecutionContext;
 use crate::error::{Error, Result};
 use crate::ir::{Message, ModelRequest, ModelResponse, Role, SystemPrompt, ToolChoice, ToolSpec};
 use crate::overrides::RunOverrides;
-use crate::service::{BoxedModelService, ModelInvocation};
-use crate::stream::StreamDelta;
+use crate::service::{
+    BoxedModelService, BoxedStreamingService, ModelInvocation, ModelStream,
+    StreamingModelInvocation,
+};
+use crate::stream::{StreamDelta, tap_aggregator};
 use crate::transports::Transport;
 
 /// Patch `request` with any [`RunOverrides`] attached to `ctx`. Both
@@ -229,12 +232,95 @@ impl<C: Codec + 'static, T: Transport + 'static> Service<ModelInvocation> for In
     }
 }
 
+impl<C: Codec + 'static, T: Transport + 'static> Service<StreamingModelInvocation>
+    for InnerChatModel<C, T>
+{
+    type Response = ModelStream;
+    type Error = Error;
+    type Future = BoxFuture<'static, Result<ModelStream>>;
+
+    #[inline]
+    fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<()>> {
+        Poll::Ready(Ok(()))
+    }
+
+    fn call(&mut self, invocation: StreamingModelInvocation) -> Self::Future {
+        let codec = Arc::clone(&self.codec);
+        let transport = Arc::clone(&self.transport);
+        Box::pin(async move {
+            let StreamingModelInvocation {
+                inner: ModelInvocation { request, ctx },
+            } = invocation;
+            let encoded = codec.encode_streaming(&request)?;
+            let warnings = encoded.warnings.clone();
+            let stream = transport.send_streaming(encoded, &ctx).await?;
+            if !(200..300).contains(&stream.status) {
+                let mut buf = Vec::new();
+                let mut body = stream.body;
+                while let Some(chunk) = body.next().await {
+                    if let Ok(b) = chunk {
+                        buf.extend_from_slice(&b);
+                    }
+                }
+                let body_text = String::from_utf8_lossy(&buf).into_owned();
+                let mut err = Error::provider_http(stream.status, body_text);
+                if let Some(after) =
+                    crate::transports::parse_retry_after(stream.headers.get("retry-after"))
+                {
+                    err = err.with_retry_after(after);
+                }
+                return Err(err);
+            }
+            let rate_limit = codec.extract_rate_limit(&stream.headers);
+            // The codec's `decode_stream` signature borrows
+            // `&'a self`, so we tie the borrow's lifetime to the
+            // owned `Arc<C>` by capturing it inside an
+            // `async_stream::stream!` generator — the generator
+            // becomes a `'static` future state that owns the Arc
+            // for as long as the resulting stream lives. Without
+            // this re-anchoring, the returned `BoxDeltaStream<'a>`
+            // would borrow from a stack-local `codec` binding
+            // that drops at the end of `call`.
+            let codec_for_stream = Arc::clone(&codec);
+            let codec_stream: BoxDeltaStream<'static> = Box::pin(async_stream::stream! {
+                let inner = codec_for_stream.decode_stream(stream.body, warnings);
+                futures::pin_mut!(inner);
+                while let Some(delta) = inner.next().await {
+                    yield delta;
+                }
+            });
+            // Prepend a synthetic `RateLimit` delta when the codec
+            // could parse one from the response headers — the
+            // aggregator captures it the same way it would a
+            // mid-stream `Usage` delta, so the final
+            // `ModelResponse` carries the snapshot operators
+            // expect on `ModelResponse::rate_limit`.
+            let prefixed: BoxDeltaStream<'static> = match rate_limit {
+                Some(snapshot) => {
+                    let prepend = futures::stream::iter(vec![Ok(StreamDelta::RateLimit(snapshot))]);
+                    Box::pin(prepend.chain(codec_stream))
+                }
+                None => codec_stream,
+            };
+            Ok(tap_aggregator(prefixed))
+        })
+    }
+}
+
 /// Boxed factory: `InnerChatModel` → layered [`BoxedModelService`].
 /// Stored on `ChatModel` so the type of the (potentially deeply
 /// nested) layer stack stays opaque to users; one concrete
 /// `ChatModel<C, T>` shape regardless of how many layers are
 /// attached.
 type LayerFactory<C, T> = Arc<dyn Fn(InnerChatModel<C, T>) -> BoxedModelService + Send + Sync>;
+
+/// Boxed factory for the streaming-side spine. Parallel to
+/// [`LayerFactory`]; layers attached via [`ChatModel::layer`] are
+/// stacked onto this factory the same way they're stacked onto
+/// the one-shot factory, so a single `.layer(OtelLayer::new(...))`
+/// call wraps both spines with one observability stack.
+type StreamingLayerFactory<C, T> =
+    Arc<dyn Fn(InnerChatModel<C, T>) -> BoxedStreamingService + Send + Sync>;
 
 /// Configurable chat model — codec + transport + layer stack.
 ///
@@ -245,6 +331,7 @@ pub struct ChatModel<C: Codec + 'static, T: Transport + 'static> {
     inner: InnerChatModel<C, T>,
     config: ChatModelConfig,
     factory: Option<LayerFactory<C, T>>,
+    streaming_factory: Option<StreamingLayerFactory<C, T>>,
 }
 
 impl<C: Codec + 'static, T: Transport + 'static> Clone for ChatModel<C, T> {
@@ -253,6 +340,7 @@ impl<C: Codec + 'static, T: Transport + 'static> Clone for ChatModel<C, T> {
             inner: self.inner.clone(),
             config: self.config.clone(),
             factory: self.factory.clone(),
+            streaming_factory: self.streaming_factory.clone(),
         }
     }
 }
@@ -270,6 +358,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
             inner: InnerChatModel::from_arc(codec, transport),
             config: ChatModelConfig::new(model),
             factory: None,
+            streaming_factory: None,
         }
     }
 
@@ -347,37 +436,78 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         self
     }
 
-    /// Append a `tower::Layer` to the dispatch stack. Layers run in
-    /// registration order around the internal leaf service — the
-    /// first-registered layer is *outermost* (sees the request
-    /// first, the response last).
+    /// Append a `tower::Layer` to **both** dispatch spines — the
+    /// one-shot path (`Service<ModelInvocation, Response =
+    /// ModelResponse>`) and the streaming path
+    /// (`Service<StreamingModelInvocation, Response =
+    /// ModelStream>`). Layers run in registration order around
+    /// each leaf — the first-registered layer is *outermost*
+    /// (sees the request first, the response last).
     ///
-    /// The layer must produce a service that handles
-    /// `ModelInvocation → ModelResponse`. `PolicyLayer` and
-    /// `OtelLayer` from the policy / otel crates satisfy this for
-    /// both `ModelInvocation` and `ToolInvocation` shapes — the
-    /// same struct stacks on both `ChatModel::layer` and
-    /// [`crate::tools::ToolRegistry::layer`].
+    /// `PolicyLayer` and `OtelLayer` from the policy / otel
+    /// crates satisfy both spines, so a single `.layer(...)` call
+    /// wraps the agent's complete dispatch fan-out:
+    ///
+    /// - one-shot: `Service<ModelInvocation, Response = ModelResponse>`
+    /// - streaming: `Service<StreamingModelInvocation, Response = ModelStream>`
+    /// - tool dispatch (separate, on `ToolRegistry::layer`):
+    ///   `Service<ToolInvocation, Response = Value>`
+    ///
+    /// The streaming-side layer wraps the [`ModelStream`]'s
+    /// `completion` future so observability events (cost,
+    /// latency, span close) fire only on the `Ok` branch — a
+    /// stream that errors mid-flight surfaces the error and
+    /// emits no charge (invariant 12).
+    ///
+    /// Layers that legitimately apply only to the one-shot spine
+    /// (e.g. `RetryLayer` — retrying a partially-streamed
+    /// response is meaningless) implement a pass-through
+    /// `Layer<BoxedStreamingService>` so they satisfy the
+    /// constraint without affecting streaming dispatch.
     #[must_use]
     pub fn layer<L>(mut self, layer: L) -> Self
     where
-        L: Layer<BoxedModelService> + Clone + Send + Sync + 'static,
-        L::Service: Service<ModelInvocation, Response = ModelResponse, Error = Error>
+        L: Layer<BoxedModelService> + Layer<BoxedStreamingService> + Clone + Send + Sync + 'static,
+        <L as Layer<BoxedModelService>>::Service: Service<ModelInvocation, Response = ModelResponse, Error = Error>
             + Clone
             + Send
             + 'static,
-        <L::Service as Service<ModelInvocation>>::Future: Send + 'static,
+        <<L as Layer<BoxedModelService>>::Service as Service<ModelInvocation>>::Future:
+            Send + 'static,
+        <L as Layer<BoxedStreamingService>>::Service: Service<StreamingModelInvocation, Response = ModelStream, Error = Error>
+            + Clone
+            + Send
+            + 'static,
+        <<L as Layer<BoxedStreamingService>>::Service as Service<StreamingModelInvocation>>::Future:
+            Send + 'static,
     {
         let prev = self.factory.take();
-        let layer = layer;
+        let prev_streaming = self.streaming_factory.take();
+        let layer_one_shot = layer.clone();
+        let layer_streaming = layer;
         let new_factory: LayerFactory<C, T> = Arc::new(move |inner: InnerChatModel<C, T>| {
             let stacked: BoxedModelService = match &prev {
                 Some(prev_factory) => prev_factory(inner),
                 None => BoxCloneService::new(inner),
             };
-            BoxCloneService::new(layer.clone().layer(stacked))
+            BoxCloneService::new(<L as Layer<BoxedModelService>>::layer(
+                &layer_one_shot,
+                stacked,
+            ))
         });
+        let new_streaming: StreamingLayerFactory<C, T> =
+            Arc::new(move |inner: InnerChatModel<C, T>| {
+                let stacked: BoxedStreamingService = match &prev_streaming {
+                    Some(prev_factory) => prev_factory(inner),
+                    None => BoxCloneService::new(inner),
+                };
+                BoxCloneService::new(<L as Layer<BoxedStreamingService>>::layer(
+                    &layer_streaming,
+                    stacked,
+                ))
+            });
         self.factory = Some(new_factory);
+        self.streaming_factory = Some(new_streaming);
         self
     }
 
@@ -406,6 +536,20 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
     #[must_use]
     pub fn service(&self) -> BoxedModelService {
         match &self.factory {
+            Some(factory) => factory(self.inner.clone()),
+            None => BoxCloneService::new(self.inner.clone()),
+        }
+    }
+
+    /// Build the layered [`BoxedStreamingService`] — the streaming
+    /// counterpart to [`Self::service`]. Layers attached via
+    /// [`Self::layer`] wrap this spine the same way they wrap the
+    /// one-shot service; consumers driving the service directly
+    /// (rather than through [`Self::stream_deltas`]) drive
+    /// `Service<StreamingModelInvocation, Response = ModelStream>`.
+    #[must_use]
+    pub fn streaming_service(&self) -> BoxedStreamingService {
+        match &self.streaming_factory {
             Some(factory) => factory(self.inner.clone()),
             None => BoxCloneService::new(self.inner.clone()),
         }
@@ -443,49 +587,35 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
     /// stream.
     ///
     /// Pipeline: `codec.encode_streaming` → `transport.send_streaming`
-    /// → `codec.decode_stream` (which owns the wire-format parser
-    /// state machine). Codecs without true streaming support fall
-    /// back to a single-shot pseudo-stream.
+    /// → `codec.decode_stream` → `tap_aggregator`, all driven
+    /// through the same `tower::Service` spine as
+    /// [`Self::complete_full`]. Layers attached via
+    /// [`Self::layer`] (e.g. `OtelLayer`, `PolicyLayer`) wrap
+    /// the streaming dispatch the same way they wrap the one-shot
+    /// dispatch; observability events (cost, span close) fire on
+    /// the streaming-side completion future's `Ok` branch only —
+    /// invariant 12.
     ///
-    /// This surface bypasses the layer stack — middleware that
-    /// observes streaming should hook the underlying transport
-    /// or wrap the returned stream directly.
-    pub async fn stream_deltas<'a>(
-        &'a self,
+    /// The returned [`ModelStream`] carries both the delta stream
+    /// (consumer-visible) and a `completion` future that resolves
+    /// to the aggregated [`ModelResponse`] after the consumer
+    /// drains the stream. Layers wrap `completion` to gate
+    /// observability emission on the `Ok` branch — a stream that
+    /// errors mid-flight surfaces the error on both the consumer
+    /// side and the completion future, and no charge fires.
+    ///
+    /// Codecs without true streaming support fall back to a
+    /// single-shot pseudo-stream the same way they did before
+    /// the spine refactor.
+    pub async fn stream_deltas(
+        &self,
         messages: Vec<Message>,
         ctx: &ExecutionContext,
-    ) -> Result<BoxDeltaStream<'a>> {
+    ) -> Result<ModelStream> {
         let mut request = self.config.build_request(messages);
         apply_run_overrides(&mut request, ctx);
-        let encoded = self.inner.codec().encode_streaming(&request)?;
-        let warnings = encoded.warnings.clone();
-        let stream = self.inner.transport().send_streaming(encoded, ctx).await?;
-        if !(200..300).contains(&stream.status) {
-            let mut buf = Vec::new();
-            let mut body = stream.body;
-            while let Some(chunk) = body.next().await {
-                if let Ok(b) = chunk {
-                    buf.extend_from_slice(&b);
-                }
-            }
-            let body_text = String::from_utf8_lossy(&buf).into_owned();
-            let mut err = Error::provider_http(stream.status, body_text);
-            if let Some(after) =
-                crate::transports::parse_retry_after(stream.headers.get("retry-after"))
-            {
-                err = err.with_retry_after(after);
-            }
-            return Err(err);
-        }
-        let rate_limit = self.inner.codec().extract_rate_limit(&stream.headers);
-        let codec_stream = self.inner.codec().decode_stream(stream.body, warnings);
-        match rate_limit {
-            Some(snapshot) => {
-                let prepend = futures::stream::iter(vec![Ok(StreamDelta::RateLimit(snapshot))]);
-                Ok(Box::pin(prepend.chain(codec_stream)))
-            }
-            None => Ok(codec_stream),
-        }
+        let invocation = StreamingModelInvocation::new(ModelInvocation::new(request, ctx.clone()));
+        self.streaming_service().oneshot(invocation).await
     }
 }
 

@@ -36,7 +36,9 @@ use tower::{Layer, Service, ServiceExt};
 
 use entelix_core::error::{Error, Result};
 use entelix_core::ir::ModelResponse;
-use entelix_core::service::{ModelInvocation, ToolInvocation};
+use entelix_core::service::{
+    ModelInvocation, ModelStream, StreamingModelInvocation, ToolInvocation,
+};
 
 use crate::error::PolicyError;
 use crate::tenant::PolicyRegistry;
@@ -160,6 +162,87 @@ where
                 }
             }
             Ok(response)
+        })
+    }
+}
+
+impl<S> Service<StreamingModelInvocation> for PolicyService<S>
+where
+    S: Service<StreamingModelInvocation, Response = ModelStream, Error = Error>
+        + Clone
+        + Send
+        + 'static,
+    S::Future: Send + 'static,
+{
+    type Response = ModelStream;
+    type Error = Error;
+    type Future = BoxFuture<'static, Result<ModelStream>>;
+
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<()>> {
+        self.inner.poll_ready(cx)
+    }
+
+    fn call(&mut self, mut invocation: StreamingModelInvocation) -> Self::Future {
+        let manager = Arc::clone(&self.manager);
+        let inner = self.inner.clone();
+        let tokens = self.rate_tokens_per_request;
+        Box::pin(async move {
+            let policy = manager.policy_for(invocation.ctx().tenant_id());
+
+            // Pre — request-side redactor + quota gate. Streaming
+            // PII redaction on individual deltas is intentionally
+            // left out at 1.0 (chunk boundaries can split a PII
+            // pattern; streaming-aware redactors are post-1.0
+            // work). The request-side redactor still applies —
+            // operator-supplied input is fully formed before the
+            // first byte streams.
+            if let Some(redactor) = &policy.redactor {
+                redactor
+                    .redact_request(&mut invocation.inner.request)
+                    .await
+                    .map_err(Error::from)?;
+            }
+            if let Some(quota) = &policy.quota {
+                quota
+                    .check_pre_request(invocation.ctx().tenant_id(), tokens)
+                    .await
+                    .map_err(Error::from)?;
+            }
+
+            let tenant = invocation.ctx().tenant_id().clone();
+            let model_stream = inner.oneshot(invocation).await?;
+            let ModelStream { stream, completion } = model_stream;
+
+            // Wrap completion: charge cost on `Ok` branch only —
+            // mirrors the one-shot `ModelInvocation` post-call
+            // path. A stream that errors mid-flight resolves
+            // `completion` to `Err` and skips the charge entirely
+            // (invariant 12 — no phantom cost on partial streams).
+            let cost_meter = policy.cost_meter.clone();
+            let user_facing = async move {
+                let result = completion.await;
+                if let Ok(response) = &result
+                    && let Some(meter) = &cost_meter
+                {
+                    match meter.charge(&tenant, &response.model, &response.usage) {
+                        Ok(_) => {}
+                        Err(PolicyError::UnknownModel(model)) => {
+                            tracing::warn!(
+                                target: "entelix_policy::layer",
+                                tenant = %tenant,
+                                %model,
+                                "no pricing configured; skipping cost charge"
+                            );
+                        }
+                        Err(e) => return Err(Error::from(e)),
+                    }
+                }
+                result
+            };
+            Ok(ModelStream {
+                stream,
+                completion: Box::pin(user_facing),
+            })
         })
     }
 }

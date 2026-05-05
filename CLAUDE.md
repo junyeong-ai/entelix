@@ -33,7 +33,7 @@ A PR contradicting any invariant is invalid regardless of how clean the code loo
 
 ### Cost & Operations
 
-12. **Cost is computed transactionally** — `gen_ai.usage.cost`, `gen_ai.tool.cost`, `gen_ai.embedding.cost` are emitted only inside the `Ok` branch of the corresponding service / wrapper. A failed call never produces a phantom charge.
+12. **Cost is computed transactionally** — `gen_ai.usage.cost`, `gen_ai.tool.cost`, `gen_ai.embedding.cost` are emitted only inside the `Ok` branch of the corresponding service / wrapper. A failed call never produces a phantom charge. Streaming dispatch (`ChatModel::stream_deltas`) flows through the same `tower::Service` spine as one-shot (`ChatModel::complete_full`); cost emits on the terminal `StreamDelta::Stop` after a `StreamAggregator` reconstructs the final `ModelResponse` (ADR-0075). A stream that errors mid-flight surfaces the error and never charges.
 13. **Backend isolation is row-level** — every `Store<V>`, `VectorStore`, `Checkpointer`, `SessionLog` impl includes namespace-collision tests at the persistence layer (testcontainers or equivalent), not only at the in-memory layer. Trusting the rendered namespace key alone is insufficient.
 
 ### Engineering

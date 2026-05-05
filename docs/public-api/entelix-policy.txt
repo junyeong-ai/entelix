@@ -188,6 +188,12 @@ pub type entelix_policy::PolicyService<S>::Future = core::pin::Pin<alloc::boxed:
 pub type entelix_policy::PolicyService<S>::Response = entelix_core::ir::response::ModelResponse
 pub fn entelix_policy::PolicyService<S>::call(&mut self, invocation: entelix_core::service::ModelInvocation) -> Self::Future
 pub fn entelix_policy::PolicyService<S>::poll_ready(&mut self, cx: &mut core::task::wake::Context<'_>) -> core::task::poll::Poll<entelix_core::error::Result<()>>
+impl<S> tower_service::Service<entelix_core::service::StreamingModelInvocation> for entelix_policy::PolicyService<S> where S: tower_service::Service<entelix_core::service::StreamingModelInvocation, Response = entelix_core::service::ModelStream, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <S as tower_service::Service>::Future: core::marker::Send + 'static
+pub type entelix_policy::PolicyService<S>::Error = entelix_core::error::Error
+pub type entelix_policy::PolicyService<S>::Future = core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<entelix_core::service::ModelStream, entelix_core::error::Error>> + core::marker::Send)>>
+pub type entelix_policy::PolicyService<S>::Response = entelix_core::service::ModelStream
+pub fn entelix_policy::PolicyService<S>::call(&mut self, invocation: entelix_core::service::StreamingModelInvocation) -> Self::Future
+pub fn entelix_policy::PolicyService<S>::poll_ready(&mut self, cx: &mut core::task::wake::Context<'_>) -> core::task::poll::Poll<entelix_core::error::Result<()>>
 impl<S> tower_service::Service<entelix_core::service::ToolInvocation> for entelix_policy::PolicyService<S> where S: tower_service::Service<entelix_core::service::ToolInvocation, Response = serde_json::value::Value, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <S as tower_service::Service>::Future: core::marker::Send + 'static
 pub type entelix_policy::PolicyService<S>::Error = entelix_core::error::Error
 pub type entelix_policy::PolicyService<S>::Future = core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<serde_json::value::Value, entelix_core::error::Error>> + core::marker::Send)>>

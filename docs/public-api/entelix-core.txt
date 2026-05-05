@@ -218,10 +218,11 @@ pub async fn entelix_core::chat::ChatModel<C, T>::complete(&self, messages: allo
 pub async fn entelix_core::chat::ChatModel<C, T>::complete_full(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub const fn entelix_core::chat::ChatModel<C, T>::config(&self) -> &entelix_core::chat::ChatModelConfig
 pub fn entelix_core::chat::ChatModel<C, T>::from_arc(codec: alloc::sync::Arc<C>, transport: alloc::sync::Arc<T>, model: impl core::convert::Into<alloc::string::String>) -> Self
-pub fn entelix_core::chat::ChatModel<C, T>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedModelService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer>::Service: tower_service::Service<entelix_core::service::ModelInvocation, Response = entelix_core::ir::ModelResponse, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer>::Service as tower_service::Service<entelix_core::service::ModelInvocation>>::Future: core::marker::Send + 'static
+pub fn entelix_core::chat::ChatModel<C, T>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedModelService> + tower_layer::Layer<entelix_core::service::BoxedStreamingService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service: tower_service::Service<entelix_core::service::ModelInvocation, Response = entelix_core::ir::ModelResponse, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service as tower_service::Service<entelix_core::service::ModelInvocation>>::Future: core::marker::Send + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service: tower_service::Service<entelix_core::service::StreamingModelInvocation, Response = entelix_core::service::ModelStream, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service as tower_service::Service<entelix_core::service::StreamingModelInvocation>>::Future: core::marker::Send + 'static
 pub fn entelix_core::chat::ChatModel<C, T>::new(codec: C, transport: T, model: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::service(&self) -> entelix_core::service::BoxedModelService
-pub async fn entelix_core::chat::ChatModel<C, T>::stream_deltas<'a>(&'a self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::codecs::BoxDeltaStream<'a>>
+pub async fn entelix_core::chat::ChatModel<C, T>::stream_deltas(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::service::ModelStream>
+pub fn entelix_core::chat::ChatModel<C, T>::streaming_service(&self) -> entelix_core::service::BoxedStreamingService
 pub fn entelix_core::chat::ChatModel<C, T>::transport(&self) -> &T
 pub const fn entelix_core::chat::ChatModel<C, T>::with_max_tokens(self, n: u32) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_stop_sequence(self, s: impl core::convert::Into<alloc::string::String>) -> Self
@@ -2034,6 +2035,8 @@ impl entelix_core::service::ModelInvocation
 pub const fn entelix_core::service::ModelInvocation::new(request: entelix_core::ir::ModelRequest, ctx: entelix_core::context::ExecutionContext) -> Self
 impl core::clone::Clone for entelix_core::service::ModelInvocation
 pub fn entelix_core::service::ModelInvocation::clone(&self) -> entelix_core::service::ModelInvocation
+impl core::convert::From<entelix_core::service::ModelInvocation> for entelix_core::service::StreamingModelInvocation
+pub fn entelix_core::service::StreamingModelInvocation::from(inner: entelix_core::service::ModelInvocation) -> Self
 impl core::fmt::Debug for entelix_core::service::ModelInvocation
 pub fn entelix_core::service::ModelInvocation::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl entelix_core::transports::Retryable for entelix_core::service::ModelInvocation
@@ -2046,6 +2049,40 @@ impl core::marker::Unpin for entelix_core::service::ModelInvocation
 impl core::marker::UnsafeUnpin for entelix_core::service::ModelInvocation
 impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::service::ModelInvocation
 impl !core::panic::unwind_safe::UnwindSafe for entelix_core::service::ModelInvocation
+pub struct entelix_core::service::ModelStream
+pub entelix_core::service::ModelStream::completion: futures_core::future::BoxFuture<'static, core::result::Result<entelix_core::ir::ModelResponse, entelix_core::error::Error>>
+pub entelix_core::service::ModelStream::stream: entelix_core::codecs::BoxDeltaStream<'static>
+impl core::fmt::Debug for entelix_core::service::ModelStream
+pub fn entelix_core::service::ModelStream::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_core::service::ModelStream
+impl core::marker::Send for entelix_core::service::ModelStream
+impl !core::marker::Sync for entelix_core::service::ModelStream
+impl core::marker::Unpin for entelix_core::service::ModelStream
+impl core::marker::UnsafeUnpin for entelix_core::service::ModelStream
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::service::ModelStream
+impl !core::panic::unwind_safe::UnwindSafe for entelix_core::service::ModelStream
+#[non_exhaustive] pub struct entelix_core::service::StreamingModelInvocation
+pub entelix_core::service::StreamingModelInvocation::inner: entelix_core::service::ModelInvocation
+impl entelix_core::service::StreamingModelInvocation
+pub const fn entelix_core::service::StreamingModelInvocation::ctx(&self) -> &entelix_core::context::ExecutionContext
+pub const fn entelix_core::service::StreamingModelInvocation::new(inner: entelix_core::service::ModelInvocation) -> Self
+pub const fn entelix_core::service::StreamingModelInvocation::request(&self) -> &entelix_core::ir::ModelRequest
+impl core::clone::Clone for entelix_core::service::StreamingModelInvocation
+pub fn entelix_core::service::StreamingModelInvocation::clone(&self) -> entelix_core::service::StreamingModelInvocation
+impl core::convert::From<entelix_core::service::ModelInvocation> for entelix_core::service::StreamingModelInvocation
+pub fn entelix_core::service::StreamingModelInvocation::from(inner: entelix_core::service::ModelInvocation) -> Self
+impl core::fmt::Debug for entelix_core::service::StreamingModelInvocation
+pub fn entelix_core::service::StreamingModelInvocation::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::transports::Retryable for entelix_core::service::StreamingModelInvocation
+pub fn entelix_core::service::StreamingModelInvocation::ctx(&self) -> &entelix_core::context::ExecutionContext
+pub fn entelix_core::service::StreamingModelInvocation::ctx_mut(&mut self) -> &mut entelix_core::context::ExecutionContext
+impl core::marker::Freeze for entelix_core::service::StreamingModelInvocation
+impl core::marker::Send for entelix_core::service::StreamingModelInvocation
+impl core::marker::Sync for entelix_core::service::StreamingModelInvocation
+impl core::marker::Unpin for entelix_core::service::StreamingModelInvocation
+impl core::marker::UnsafeUnpin for entelix_core::service::StreamingModelInvocation
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::service::StreamingModelInvocation
+impl !core::panic::unwind_safe::UnwindSafe for entelix_core::service::StreamingModelInvocation
 pub struct entelix_core::service::ToolInvocation
 pub entelix_core::service::ToolInvocation::ctx: entelix_core::context::ExecutionContext
 pub entelix_core::service::ToolInvocation::input: serde_json::value::Value
@@ -2080,6 +2117,7 @@ pub fn entelix_core::service::AlwaysReady::poll_ready_always(_cx: &mut core::tas
 impl<S, Request> entelix_core::service::AlwaysReady<Request> for S where S: tower_service::Service<Request>
 pub fn S::poll_ready_always(_cx: &mut core::task::wake::Context<'_>) -> core::task::poll::Poll<core::result::Result<(), Self::Error>>
 pub type entelix_core::service::BoxedModelService = tower::util::boxed_clone::BoxCloneService<entelix_core::service::ModelInvocation, entelix_core::ir::ModelResponse, entelix_core::error::Error>
+pub type entelix_core::service::BoxedStreamingService = tower::util::boxed_clone::BoxCloneService<entelix_core::service::StreamingModelInvocation, entelix_core::service::ModelStream, entelix_core::error::Error>
 pub type entelix_core::service::BoxedToolService = tower::util::boxed_clone::BoxCloneService<entelix_core::service::ToolInvocation, serde_json::value::Value, entelix_core::error::Error>
 pub mod entelix_core::skills
 #[non_exhaustive] pub enum entelix_core::skills::SkillResourceContent
@@ -2219,6 +2257,7 @@ impl core::marker::Unpin for entelix_core::stream::StreamAggregator
 impl core::marker::UnsafeUnpin for entelix_core::stream::StreamAggregator
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::stream::StreamAggregator
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::stream::StreamAggregator
+pub fn entelix_core::stream::tap_aggregator(inner: entelix_core::codecs::BoxDeltaStream<'static>) -> entelix_core::service::ModelStream
 pub mod entelix_core::tenant_id
 pub struct entelix_core::tenant_id::TenantId(_)
 impl entelix_core::tenant_id::TenantId
@@ -2604,6 +2643,9 @@ pub fn entelix_core::transports::Retryable::ctx_mut(&mut self) -> &mut entelix_c
 impl entelix_core::transports::Retryable for entelix_core::service::ModelInvocation
 pub fn entelix_core::service::ModelInvocation::ctx(&self) -> &entelix_core::context::ExecutionContext
 pub fn entelix_core::service::ModelInvocation::ctx_mut(&mut self) -> &mut entelix_core::context::ExecutionContext
+impl entelix_core::transports::Retryable for entelix_core::service::StreamingModelInvocation
+pub fn entelix_core::service::StreamingModelInvocation::ctx(&self) -> &entelix_core::context::ExecutionContext
+pub fn entelix_core::service::StreamingModelInvocation::ctx_mut(&mut self) -> &mut entelix_core::context::ExecutionContext
 impl entelix_core::transports::Retryable for entelix_core::service::ToolInvocation
 pub fn entelix_core::service::ToolInvocation::ctx(&self) -> &entelix_core::context::ExecutionContext
 pub fn entelix_core::service::ToolInvocation::ctx_mut(&mut self) -> &mut entelix_core::context::ExecutionContext
@@ -2846,10 +2888,11 @@ pub async fn entelix_core::chat::ChatModel<C, T>::complete(&self, messages: allo
 pub async fn entelix_core::chat::ChatModel<C, T>::complete_full(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub const fn entelix_core::chat::ChatModel<C, T>::config(&self) -> &entelix_core::chat::ChatModelConfig
 pub fn entelix_core::chat::ChatModel<C, T>::from_arc(codec: alloc::sync::Arc<C>, transport: alloc::sync::Arc<T>, model: impl core::convert::Into<alloc::string::String>) -> Self
-pub fn entelix_core::chat::ChatModel<C, T>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedModelService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer>::Service: tower_service::Service<entelix_core::service::ModelInvocation, Response = entelix_core::ir::ModelResponse, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer>::Service as tower_service::Service<entelix_core::service::ModelInvocation>>::Future: core::marker::Send + 'static
+pub fn entelix_core::chat::ChatModel<C, T>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedModelService> + tower_layer::Layer<entelix_core::service::BoxedStreamingService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service: tower_service::Service<entelix_core::service::ModelInvocation, Response = entelix_core::ir::ModelResponse, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service as tower_service::Service<entelix_core::service::ModelInvocation>>::Future: core::marker::Send + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service: tower_service::Service<entelix_core::service::StreamingModelInvocation, Response = entelix_core::service::ModelStream, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service as tower_service::Service<entelix_core::service::StreamingModelInvocation>>::Future: core::marker::Send + 'static
 pub fn entelix_core::chat::ChatModel<C, T>::new(codec: C, transport: T, model: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::service(&self) -> entelix_core::service::BoxedModelService
-pub async fn entelix_core::chat::ChatModel<C, T>::stream_deltas<'a>(&'a self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::codecs::BoxDeltaStream<'a>>
+pub async fn entelix_core::chat::ChatModel<C, T>::stream_deltas(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::service::ModelStream>
+pub fn entelix_core::chat::ChatModel<C, T>::streaming_service(&self) -> entelix_core::service::BoxedStreamingService
 pub fn entelix_core::chat::ChatModel<C, T>::transport(&self) -> &T
 pub const fn entelix_core::chat::ChatModel<C, T>::with_max_tokens(self, n: u32) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_stop_sequence(self, s: impl core::convert::Into<alloc::string::String>) -> Self
@@ -2998,6 +3041,8 @@ impl entelix_core::service::ModelInvocation
 pub const fn entelix_core::service::ModelInvocation::new(request: entelix_core::ir::ModelRequest, ctx: entelix_core::context::ExecutionContext) -> Self
 impl core::clone::Clone for entelix_core::service::ModelInvocation
 pub fn entelix_core::service::ModelInvocation::clone(&self) -> entelix_core::service::ModelInvocation
+impl core::convert::From<entelix_core::service::ModelInvocation> for entelix_core::service::StreamingModelInvocation
+pub fn entelix_core::service::StreamingModelInvocation::from(inner: entelix_core::service::ModelInvocation) -> Self
 impl core::fmt::Debug for entelix_core::service::ModelInvocation
 pub fn entelix_core::service::ModelInvocation::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl entelix_core::transports::Retryable for entelix_core::service::ModelInvocation
@@ -3010,6 +3055,18 @@ impl core::marker::Unpin for entelix_core::service::ModelInvocation
 impl core::marker::UnsafeUnpin for entelix_core::service::ModelInvocation
 impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::service::ModelInvocation
 impl !core::panic::unwind_safe::UnwindSafe for entelix_core::service::ModelInvocation
+pub struct entelix_core::ModelStream
+pub entelix_core::ModelStream::completion: futures_core::future::BoxFuture<'static, core::result::Result<entelix_core::ir::ModelResponse, entelix_core::error::Error>>
+pub entelix_core::ModelStream::stream: entelix_core::codecs::BoxDeltaStream<'static>
+impl core::fmt::Debug for entelix_core::service::ModelStream
+pub fn entelix_core::service::ModelStream::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_core::service::ModelStream
+impl core::marker::Send for entelix_core::service::ModelStream
+impl !core::marker::Sync for entelix_core::service::ModelStream
+impl core::marker::Unpin for entelix_core::service::ModelStream
+impl core::marker::UnsafeUnpin for entelix_core::service::ModelStream
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::service::ModelStream
+impl !core::panic::unwind_safe::UnwindSafe for entelix_core::service::ModelStream
 pub struct entelix_core::PendingApprovalDecisions
 impl entelix_core::approval::PendingApprovalDecisions
 pub fn entelix_core::approval::PendingApprovalDecisions::get(&self, tool_use_id: &str) -> core::option::Option<&entelix_core::approval::ApprovalDecision>
@@ -3122,6 +3179,28 @@ impl<'a> core::marker::Unpin for entelix_core::SkillSummary<'a>
 impl<'a> core::marker::UnsafeUnpin for entelix_core::SkillSummary<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for entelix_core::SkillSummary<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for entelix_core::SkillSummary<'a>
+#[non_exhaustive] pub struct entelix_core::StreamingModelInvocation
+pub entelix_core::StreamingModelInvocation::inner: entelix_core::service::ModelInvocation
+impl entelix_core::service::StreamingModelInvocation
+pub const fn entelix_core::service::StreamingModelInvocation::ctx(&self) -> &entelix_core::context::ExecutionContext
+pub const fn entelix_core::service::StreamingModelInvocation::new(inner: entelix_core::service::ModelInvocation) -> Self
+pub const fn entelix_core::service::StreamingModelInvocation::request(&self) -> &entelix_core::ir::ModelRequest
+impl core::clone::Clone for entelix_core::service::StreamingModelInvocation
+pub fn entelix_core::service::StreamingModelInvocation::clone(&self) -> entelix_core::service::StreamingModelInvocation
+impl core::convert::From<entelix_core::service::ModelInvocation> for entelix_core::service::StreamingModelInvocation
+pub fn entelix_core::service::StreamingModelInvocation::from(inner: entelix_core::service::ModelInvocation) -> Self
+impl core::fmt::Debug for entelix_core::service::StreamingModelInvocation
+pub fn entelix_core::service::StreamingModelInvocation::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::transports::Retryable for entelix_core::service::StreamingModelInvocation
+pub fn entelix_core::service::StreamingModelInvocation::ctx(&self) -> &entelix_core::context::ExecutionContext
+pub fn entelix_core::service::StreamingModelInvocation::ctx_mut(&mut self) -> &mut entelix_core::context::ExecutionContext
+impl core::marker::Freeze for entelix_core::service::StreamingModelInvocation
+impl core::marker::Send for entelix_core::service::StreamingModelInvocation
+impl core::marker::Sync for entelix_core::service::StreamingModelInvocation
+impl core::marker::Unpin for entelix_core::service::StreamingModelInvocation
+impl core::marker::UnsafeUnpin for entelix_core::service::StreamingModelInvocation
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::service::StreamingModelInvocation
+impl !core::panic::unwind_safe::UnwindSafe for entelix_core::service::StreamingModelInvocation
 pub struct entelix_core::TenantId(_)
 impl entelix_core::tenant_id::TenantId
 pub fn entelix_core::tenant_id::TenantId::as_str(&self) -> &str
@@ -3288,6 +3367,8 @@ pub fn entelix_core::Tool::execute<'life0, 'life1, 'async_trait>(&'life0 self, i
 pub fn entelix_core::Tool::metadata(&self) -> &entelix_core::tools::ToolMetadata
 pub trait entelix_core::ToolCostCalculator: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::ToolCostCalculator::compute_cost<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, tool_name: &'life1 str, output: &'life2 serde_json::value::Value, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<f64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_core::tap_aggregator(inner: entelix_core::codecs::BoxDeltaStream<'static>) -> entelix_core::service::ModelStream
 pub type entelix_core::BoxedModelService = tower::util::boxed_clone::BoxCloneService<entelix_core::service::ModelInvocation, entelix_core::ir::ModelResponse, entelix_core::error::Error>
+pub type entelix_core::BoxedStreamingService = tower::util::boxed_clone::BoxCloneService<entelix_core::service::StreamingModelInvocation, entelix_core::service::ModelStream, entelix_core::error::Error>
 pub type entelix_core::BoxedToolService = tower::util::boxed_clone::BoxCloneService<entelix_core::service::ToolInvocation, serde_json::value::Value, entelix_core::error::Error>
 pub type entelix_core::Result<T> = core::result::Result<T, entelix_core::error::Error>

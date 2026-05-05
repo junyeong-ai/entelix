@@ -36,14 +36,24 @@ where
         ctx: &ExecutionContext,
     ) -> Result<BoxStream<'_, Result<StreamChunk<Message>>>> {
         let codec_name = self.codec().name().to_owned();
-        let delta_stream = self.stream_deltas(input, ctx).await?;
+        let model_stream = self.stream_deltas(input, ctx).await?;
+        // The `ModelStream` carries both a delta-side stream and a
+        // completion future already wired through `tap_aggregator`
+        // — but this `Runnable::stream` impl needs per-mode delta
+        // forwarding (`Messages` mode yields each delta, `Events`
+        // wraps the lifecycle, `Values` only yields the terminal
+        // aggregated `Message`). Drain the delta stream directly
+        // and let our own `StreamAggregator` reconstitute the
+        // final `ModelResponse` for `Values` mode; the underlying
+        // `completion` future resolves transparently as the same
+        // deltas flow through both taps.
+        let mut delta_stream = model_stream.stream;
         Ok(Box::pin(async_stream::stream! {
             if matches!(mode, StreamMode::Events) {
                 yield Ok(StreamChunk::Event(RunnableEvent::Started {
                     name: codec_name.clone(),
                 }));
             }
-            let mut delta_stream = delta_stream;
             let mut aggregator = StreamAggregator::new();
             while let Some(item) = delta_stream.next().await {
                 match item {

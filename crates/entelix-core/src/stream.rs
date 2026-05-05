@@ -514,6 +514,15 @@ fn clone_error(e: &Error) -> Error {
         Error::Serde(_) => {
             Error::invalid_request("output serialisation failed (cloned for stream completion)")
         }
+        Error::UsageLimitExceeded {
+            axis,
+            limit,
+            observed,
+        } => Error::UsageLimitExceeded {
+            axis: *axis,
+            limit: *limit,
+            observed: *observed,
+        },
     }
 }
 

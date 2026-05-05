@@ -323,6 +323,12 @@ impl ToolRegistry {
         input: Value,
         ctx: &ExecutionContext,
     ) -> Result<Value> {
+        if let Some(budget) = ctx.run_budget() {
+            // Pre-call axes — tool-call cap. The check increments
+            // the counter on success so two concurrent dispatches
+            // racing on the same `n+1` slot do not both pass.
+            budget.check_pre_tool_call()?;
+        }
         let tool = self
             .by_name
             .get(name)

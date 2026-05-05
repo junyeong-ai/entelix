@@ -605,10 +605,24 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         messages: Vec<Message>,
         ctx: &ExecutionContext,
     ) -> Result<ModelResponse> {
+        let budget = ctx.run_budget();
+        if let Some(budget) = &budget {
+            // Pre-call axes — request count cap. Token caps fire
+            // post-decode below.
+            budget.check_pre_request()?;
+        }
         let mut request = self.config.build_request(messages);
         apply_run_overrides(&mut request, ctx);
         let invocation = ModelInvocation::new(request, ctx.clone());
-        self.service().oneshot(invocation).await
+        let response = self.service().oneshot(invocation).await?;
+        if let Some(budget) = &budget {
+            // Post-call accumulation — invariant 12 transactional
+            // semantics: only on the `Ok` branch does the budget
+            // see usage. The `?` above ensures the error branch
+            // never reaches this line.
+            budget.observe_usage(&response.usage)?;
+        }
+        Ok(response)
     }
 
     /// Send a conversation and return a typed `O` parsed from the
@@ -660,12 +674,19 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         let spec = JsonSchemaSpec::new(short_name, schema_value)?;
         let format = ResponseFormat::strict(spec);
 
+        let budget = ctx.run_budget();
+        if let Some(budget) = &budget {
+            budget.check_pre_request()?;
+        }
         let mut request = self.config.build_request(messages);
         apply_run_overrides(&mut request, ctx);
         request.response_format = Some(format);
 
         let invocation = ModelInvocation::new(request, ctx.clone());
         let response = self.service().oneshot(invocation).await?;
+        if let Some(budget) = &budget {
+            budget.observe_usage(&response.usage)?;
+        }
         parse_typed_response(response)
     }
 
@@ -698,10 +719,32 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         messages: Vec<Message>,
         ctx: &ExecutionContext,
     ) -> Result<ModelStream> {
+        let budget = ctx.run_budget();
+        if let Some(budget) = &budget {
+            budget.check_pre_request()?;
+        }
         let mut request = self.config.build_request(messages);
         apply_run_overrides(&mut request, ctx);
         let invocation = StreamingModelInvocation::new(ModelInvocation::new(request, ctx.clone()));
-        self.streaming_service().oneshot(invocation).await
+        let model_stream = self.streaming_service().oneshot(invocation).await?;
+        let ModelStream { stream, completion } = model_stream;
+        // Wrap completion to observe usage on the streaming-side
+        // `Ok` branch — invariant 12 transactional semantics: a
+        // stream that errors mid-flight resolves `completion` to
+        // `Err` and never reaches the budget. Mirrors the
+        // OtelLayer / PolicyLayer streaming wrap from G-1.
+        let budget_for_completion = budget.clone();
+        let user_facing = async move {
+            let result = completion.await;
+            if let (Ok(response), Some(budget)) = (&result, budget_for_completion.as_ref()) {
+                budget.observe_usage(&response.usage)?;
+            }
+            result
+        };
+        Ok(ModelStream {
+            stream,
+            completion: Box::pin(user_facing),
+        })
     }
 }
 

@@ -188,6 +188,10 @@ impl LlmRenderable<String> for Error {
             Self::DeadlineExceeded => "timed out".to_owned(),
             Self::Interrupted { .. } => "awaiting human review".to_owned(),
             Self::Serde(_) => "output could not be serialised".to_owned(),
+            // Usage-limit breaches are operational signals — the
+            // model does not need budget visibility (and exposing
+            // it would invite the model to plan around limits).
+            Self::UsageLimitExceeded { .. } => "request quota reached".to_owned(),
         }
     }
 }

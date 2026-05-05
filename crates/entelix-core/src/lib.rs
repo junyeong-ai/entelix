@@ -49,6 +49,7 @@ pub mod ir;
 pub mod llm_facing;
 pub mod overrides;
 pub mod rate_limit;
+pub mod run_budget;
 pub mod sandbox;
 pub mod service;
 pub mod skills;
@@ -71,6 +72,7 @@ pub use error::{Error, ProviderErrorKind, Result};
 pub use extensions::Extensions;
 pub use llm_facing::{LlmFacingSchema, LlmRenderable, RenderedForLlm};
 pub use overrides::RunOverrides;
+pub use run_budget::{RunBudget, UsageLimitAxis, UsageSnapshot};
 pub use service::{
     BoxedModelService, BoxedStreamingService, BoxedToolService, ModelInvocation, ModelStream,
     StreamingModelInvocation, ToolInvocation,

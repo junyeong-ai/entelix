@@ -90,6 +90,25 @@ pub enum Error {
     /// pattern-matching on error messages.
     #[error(transparent)]
     Auth(AuthError),
+
+    /// A `RunBudget` axis was exceeded — request count, token
+    /// totals, or tool calls hit the configured limit. The
+    /// `axis` field identifies which axis fired; `limit` is the
+    /// configured cap; `observed` is the value that breached it.
+    /// Distinct from [`Self::Provider`] so retry classifiers can
+    /// short-circuit (a budget breach does not retry) and from
+    /// [`Self::InvalidRequest`] so dashboards see the budget
+    /// signal as a first-class category. ADR-0080.
+    #[error("run budget exceeded on {axis} axis: observed {observed}, limit {limit}")]
+    UsageLimitExceeded {
+        /// Which budget axis breached its cap.
+        axis: crate::run_budget::UsageLimitAxis,
+        /// Configured limit (in the axis's native unit — count for
+        /// requests / tool calls, tokens for the token axes).
+        limit: u64,
+        /// Observed value that breached the limit.
+        observed: u64,
+    },
 }
 
 impl Error {

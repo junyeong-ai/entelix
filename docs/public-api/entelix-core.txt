@@ -494,6 +494,7 @@ pub const fn entelix_core::context::ExecutionContext::extensions(&self) -> &ente
 pub fn entelix_core::context::ExecutionContext::idempotency_key(&self) -> core::option::Option<&str>
 pub fn entelix_core::context::ExecutionContext::is_cancelled(&self) -> bool
 pub fn entelix_core::context::ExecutionContext::new() -> Self
+pub fn entelix_core::context::ExecutionContext::run_budget(&self) -> core::option::Option<alloc::sync::Arc<entelix_core::run_budget::RunBudget>>
 pub fn entelix_core::context::ExecutionContext::run_id(&self) -> core::option::Option<&str>
 pub const fn entelix_core::context::ExecutionContext::tenant_id(&self) -> &entelix_core::tenant_id::TenantId
 pub fn entelix_core::context::ExecutionContext::thread_id(&self) -> core::option::Option<&str>
@@ -501,6 +502,7 @@ pub fn entelix_core::context::ExecutionContext::with_audit_sink(self, handle: en
 pub fn entelix_core::context::ExecutionContext::with_cancellation(cancellation: tokio_util::sync::cancellation_token::CancellationToken) -> Self
 pub const fn entelix_core::context::ExecutionContext::with_deadline(self, deadline: tokio::time::instant::Instant) -> Self
 pub fn entelix_core::context::ExecutionContext::with_idempotency_key(self, key: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_core::context::ExecutionContext::with_run_budget(self, budget: entelix_core::run_budget::RunBudget) -> Self
 pub fn entelix_core::context::ExecutionContext::with_run_id(self, run_id: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::context::ExecutionContext::with_tenant_id(self, tenant_id: entelix_core::tenant_id::TenantId) -> Self
 pub fn entelix_core::context::ExecutionContext::with_thread_id(self, thread_id: impl core::convert::Into<alloc::string::String>) -> Self
@@ -537,6 +539,10 @@ pub entelix_core::error::Error::Provider::message: alloc::string::String
 pub entelix_core::error::Error::Provider::retry_after: core::option::Option<core::time::Duration>
 pub entelix_core::error::Error::Provider::source: core::option::Option<alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>>
 pub entelix_core::error::Error::Serde(serde_json::error::Error)
+pub entelix_core::error::Error::UsageLimitExceeded
+pub entelix_core::error::Error::UsageLimitExceeded::axis: entelix_core::run_budget::UsageLimitAxis
+pub entelix_core::error::Error::UsageLimitExceeded::limit: u64
+pub entelix_core::error::Error::UsageLimitExceeded::observed: u64
 impl entelix_core::error::Error
 pub fn entelix_core::error::Error::config(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
 pub fn entelix_core::error::Error::invalid_request(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
@@ -1885,6 +1891,89 @@ impl core::marker::UnsafeUnpin for entelix_core::rate_limit::RateLimitSnapshot
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::rate_limit::RateLimitSnapshot
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::rate_limit::RateLimitSnapshot
 pub const entelix_core::rate_limit::LOW_REMAINING_FLOOR: u64
+pub mod entelix_core::run_budget
+#[non_exhaustive] pub enum entelix_core::run_budget::UsageLimitAxis
+pub entelix_core::run_budget::UsageLimitAxis::InputTokens
+pub entelix_core::run_budget::UsageLimitAxis::OutputTokens
+pub entelix_core::run_budget::UsageLimitAxis::Requests
+pub entelix_core::run_budget::UsageLimitAxis::ToolCalls
+pub entelix_core::run_budget::UsageLimitAxis::TotalTokens
+impl core::clone::Clone for entelix_core::run_budget::UsageLimitAxis
+pub fn entelix_core::run_budget::UsageLimitAxis::clone(&self) -> entelix_core::run_budget::UsageLimitAxis
+impl core::cmp::Eq for entelix_core::run_budget::UsageLimitAxis
+impl core::cmp::PartialEq for entelix_core::run_budget::UsageLimitAxis
+pub fn entelix_core::run_budget::UsageLimitAxis::eq(&self, other: &entelix_core::run_budget::UsageLimitAxis) -> bool
+impl core::fmt::Debug for entelix_core::run_budget::UsageLimitAxis
+pub fn entelix_core::run_budget::UsageLimitAxis::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_core::run_budget::UsageLimitAxis
+pub fn entelix_core::run_budget::UsageLimitAxis::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_core::run_budget::UsageLimitAxis
+impl core::marker::StructuralPartialEq for entelix_core::run_budget::UsageLimitAxis
+impl serde_core::ser::Serialize for entelix_core::run_budget::UsageLimitAxis
+pub fn entelix_core::run_budget::UsageLimitAxis::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::run_budget::UsageLimitAxis
+pub fn entelix_core::run_budget::UsageLimitAxis::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::run_budget::UsageLimitAxis
+impl core::marker::Send for entelix_core::run_budget::UsageLimitAxis
+impl core::marker::Sync for entelix_core::run_budget::UsageLimitAxis
+impl core::marker::Unpin for entelix_core::run_budget::UsageLimitAxis
+impl core::marker::UnsafeUnpin for entelix_core::run_budget::UsageLimitAxis
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::UsageLimitAxis
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::UsageLimitAxis
+pub struct entelix_core::run_budget::RunBudget
+impl entelix_core::run_budget::RunBudget
+pub fn entelix_core::run_budget::RunBudget::check_pre_request(&self) -> entelix_core::error::Result<()>
+pub fn entelix_core::run_budget::RunBudget::check_pre_tool_call(&self) -> entelix_core::error::Result<()>
+pub fn entelix_core::run_budget::RunBudget::observe_usage(&self, usage: &entelix_core::ir::Usage) -> entelix_core::error::Result<()>
+pub fn entelix_core::run_budget::RunBudget::snapshot(&self) -> entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::RunBudget::unlimited() -> Self
+pub const fn entelix_core::run_budget::RunBudget::with_input_tokens_limit(self, n: u64) -> Self
+pub const fn entelix_core::run_budget::RunBudget::with_output_tokens_limit(self, n: u64) -> Self
+pub const fn entelix_core::run_budget::RunBudget::with_request_limit(self, n: u32) -> Self
+pub const fn entelix_core::run_budget::RunBudget::with_tool_calls_limit(self, n: u32) -> Self
+pub const fn entelix_core::run_budget::RunBudget::with_total_tokens_limit(self, n: u64) -> Self
+impl core::clone::Clone for entelix_core::run_budget::RunBudget
+pub fn entelix_core::run_budget::RunBudget::clone(&self) -> entelix_core::run_budget::RunBudget
+impl core::default::Default for entelix_core::run_budget::RunBudget
+pub fn entelix_core::run_budget::RunBudget::default() -> entelix_core::run_budget::RunBudget
+impl core::fmt::Debug for entelix_core::run_budget::RunBudget
+pub fn entelix_core::run_budget::RunBudget::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_core::run_budget::RunBudget
+impl core::marker::Send for entelix_core::run_budget::RunBudget
+impl core::marker::Sync for entelix_core::run_budget::RunBudget
+impl core::marker::Unpin for entelix_core::run_budget::RunBudget
+impl core::marker::UnsafeUnpin for entelix_core::run_budget::RunBudget
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::RunBudget
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::RunBudget
+#[non_exhaustive] pub struct entelix_core::run_budget::UsageSnapshot
+pub entelix_core::run_budget::UsageSnapshot::input_tokens: u64
+pub entelix_core::run_budget::UsageSnapshot::output_tokens: u64
+pub entelix_core::run_budget::UsageSnapshot::requests: u32
+pub entelix_core::run_budget::UsageSnapshot::tool_calls: u32
+impl entelix_core::run_budget::UsageSnapshot
+pub const fn entelix_core::run_budget::UsageSnapshot::total_tokens(&self) -> u64
+impl core::clone::Clone for entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::UsageSnapshot::clone(&self) -> entelix_core::run_budget::UsageSnapshot
+impl core::cmp::Eq for entelix_core::run_budget::UsageSnapshot
+impl core::cmp::PartialEq for entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::UsageSnapshot::eq(&self, other: &entelix_core::run_budget::UsageSnapshot) -> bool
+impl core::default::Default for entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::UsageSnapshot::default() -> entelix_core::run_budget::UsageSnapshot
+impl core::fmt::Debug for entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::UsageSnapshot::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_core::run_budget::UsageSnapshot
+impl core::marker::StructuralPartialEq for entelix_core::run_budget::UsageSnapshot
+impl serde_core::ser::Serialize for entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::UsageSnapshot::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::UsageSnapshot::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::run_budget::UsageSnapshot
+impl core::marker::Send for entelix_core::run_budget::UsageSnapshot
+impl core::marker::Sync for entelix_core::run_budget::UsageSnapshot
+impl core::marker::Unpin for entelix_core::run_budget::UsageSnapshot
+impl core::marker::UnsafeUnpin for entelix_core::run_budget::UsageSnapshot
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::UsageSnapshot
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::UsageSnapshot
 pub mod entelix_core::sandbox
 #[non_exhaustive] pub enum entelix_core::sandbox::SandboxLanguage
 pub entelix_core::sandbox::SandboxLanguage::Bash
@@ -2722,6 +2811,10 @@ pub entelix_core::Error::Provider::message: alloc::string::String
 pub entelix_core::Error::Provider::retry_after: core::option::Option<core::time::Duration>
 pub entelix_core::Error::Provider::source: core::option::Option<alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>>
 pub entelix_core::Error::Serde(serde_json::error::Error)
+pub entelix_core::Error::UsageLimitExceeded
+pub entelix_core::Error::UsageLimitExceeded::axis: entelix_core::run_budget::UsageLimitAxis
+pub entelix_core::Error::UsageLimitExceeded::limit: u64
+pub entelix_core::Error::UsageLimitExceeded::observed: u64
 impl entelix_core::error::Error
 pub fn entelix_core::error::Error::config(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
 pub fn entelix_core::error::Error::invalid_request(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
@@ -2800,6 +2893,34 @@ impl core::marker::Unpin for entelix_core::SkillResourceContent
 impl core::marker::UnsafeUnpin for entelix_core::SkillResourceContent
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::SkillResourceContent
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::SkillResourceContent
+#[non_exhaustive] pub enum entelix_core::UsageLimitAxis
+pub entelix_core::UsageLimitAxis::InputTokens
+pub entelix_core::UsageLimitAxis::OutputTokens
+pub entelix_core::UsageLimitAxis::Requests
+pub entelix_core::UsageLimitAxis::ToolCalls
+pub entelix_core::UsageLimitAxis::TotalTokens
+impl core::clone::Clone for entelix_core::run_budget::UsageLimitAxis
+pub fn entelix_core::run_budget::UsageLimitAxis::clone(&self) -> entelix_core::run_budget::UsageLimitAxis
+impl core::cmp::Eq for entelix_core::run_budget::UsageLimitAxis
+impl core::cmp::PartialEq for entelix_core::run_budget::UsageLimitAxis
+pub fn entelix_core::run_budget::UsageLimitAxis::eq(&self, other: &entelix_core::run_budget::UsageLimitAxis) -> bool
+impl core::fmt::Debug for entelix_core::run_budget::UsageLimitAxis
+pub fn entelix_core::run_budget::UsageLimitAxis::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_core::run_budget::UsageLimitAxis
+pub fn entelix_core::run_budget::UsageLimitAxis::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_core::run_budget::UsageLimitAxis
+impl core::marker::StructuralPartialEq for entelix_core::run_budget::UsageLimitAxis
+impl serde_core::ser::Serialize for entelix_core::run_budget::UsageLimitAxis
+pub fn entelix_core::run_budget::UsageLimitAxis::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::run_budget::UsageLimitAxis
+pub fn entelix_core::run_budget::UsageLimitAxis::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::run_budget::UsageLimitAxis
+impl core::marker::Send for entelix_core::run_budget::UsageLimitAxis
+impl core::marker::Sync for entelix_core::run_budget::UsageLimitAxis
+impl core::marker::Unpin for entelix_core::run_budget::UsageLimitAxis
+impl core::marker::UnsafeUnpin for entelix_core::run_budget::UsageLimitAxis
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::UsageLimitAxis
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::UsageLimitAxis
 pub struct entelix_core::ApiKeyProvider
 impl entelix_core::auth::ApiKeyProvider
 pub fn entelix_core::auth::ApiKeyProvider::anthropic(api_key: impl core::convert::Into<secrecy::SecretString>) -> Self
@@ -2966,6 +3087,7 @@ pub const fn entelix_core::context::ExecutionContext::extensions(&self) -> &ente
 pub fn entelix_core::context::ExecutionContext::idempotency_key(&self) -> core::option::Option<&str>
 pub fn entelix_core::context::ExecutionContext::is_cancelled(&self) -> bool
 pub fn entelix_core::context::ExecutionContext::new() -> Self
+pub fn entelix_core::context::ExecutionContext::run_budget(&self) -> core::option::Option<alloc::sync::Arc<entelix_core::run_budget::RunBudget>>
 pub fn entelix_core::context::ExecutionContext::run_id(&self) -> core::option::Option<&str>
 pub const fn entelix_core::context::ExecutionContext::tenant_id(&self) -> &entelix_core::tenant_id::TenantId
 pub fn entelix_core::context::ExecutionContext::thread_id(&self) -> core::option::Option<&str>
@@ -2973,6 +3095,7 @@ pub fn entelix_core::context::ExecutionContext::with_audit_sink(self, handle: en
 pub fn entelix_core::context::ExecutionContext::with_cancellation(cancellation: tokio_util::sync::cancellation_token::CancellationToken) -> Self
 pub const fn entelix_core::context::ExecutionContext::with_deadline(self, deadline: tokio::time::instant::Instant) -> Self
 pub fn entelix_core::context::ExecutionContext::with_idempotency_key(self, key: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_core::context::ExecutionContext::with_run_budget(self, budget: entelix_core::run_budget::RunBudget) -> Self
 pub fn entelix_core::context::ExecutionContext::with_run_id(self, run_id: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::context::ExecutionContext::with_tenant_id(self, tenant_id: entelix_core::tenant_id::TenantId) -> Self
 pub fn entelix_core::context::ExecutionContext::with_thread_id(self, thread_id: impl core::convert::Into<alloc::string::String>) -> Self
@@ -3115,6 +3238,31 @@ impl<T> core::marker::Unpin for entelix_core::llm_facing::RenderedForLlm<T> wher
 impl<T> core::marker::UnsafeUnpin for entelix_core::llm_facing::RenderedForLlm<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for entelix_core::llm_facing::RenderedForLlm<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for entelix_core::llm_facing::RenderedForLlm<T> where T: core::panic::unwind_safe::UnwindSafe
+pub struct entelix_core::RunBudget
+impl entelix_core::run_budget::RunBudget
+pub fn entelix_core::run_budget::RunBudget::check_pre_request(&self) -> entelix_core::error::Result<()>
+pub fn entelix_core::run_budget::RunBudget::check_pre_tool_call(&self) -> entelix_core::error::Result<()>
+pub fn entelix_core::run_budget::RunBudget::observe_usage(&self, usage: &entelix_core::ir::Usage) -> entelix_core::error::Result<()>
+pub fn entelix_core::run_budget::RunBudget::snapshot(&self) -> entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::RunBudget::unlimited() -> Self
+pub const fn entelix_core::run_budget::RunBudget::with_input_tokens_limit(self, n: u64) -> Self
+pub const fn entelix_core::run_budget::RunBudget::with_output_tokens_limit(self, n: u64) -> Self
+pub const fn entelix_core::run_budget::RunBudget::with_request_limit(self, n: u32) -> Self
+pub const fn entelix_core::run_budget::RunBudget::with_tool_calls_limit(self, n: u32) -> Self
+pub const fn entelix_core::run_budget::RunBudget::with_total_tokens_limit(self, n: u64) -> Self
+impl core::clone::Clone for entelix_core::run_budget::RunBudget
+pub fn entelix_core::run_budget::RunBudget::clone(&self) -> entelix_core::run_budget::RunBudget
+impl core::default::Default for entelix_core::run_budget::RunBudget
+pub fn entelix_core::run_budget::RunBudget::default() -> entelix_core::run_budget::RunBudget
+impl core::fmt::Debug for entelix_core::run_budget::RunBudget
+pub fn entelix_core::run_budget::RunBudget::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_core::run_budget::RunBudget
+impl core::marker::Send for entelix_core::run_budget::RunBudget
+impl core::marker::Sync for entelix_core::run_budget::RunBudget
+impl core::marker::Unpin for entelix_core::run_budget::RunBudget
+impl core::marker::UnsafeUnpin for entelix_core::run_budget::RunBudget
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::RunBudget
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::RunBudget
 #[non_exhaustive] pub struct entelix_core::RunOverrides
 impl entelix_core::overrides::RunOverrides
 pub const fn entelix_core::overrides::RunOverrides::max_iterations(&self) -> core::option::Option<usize>
@@ -3331,6 +3479,35 @@ impl core::marker::Unpin for entelix_core::ToolRegistry
 impl core::marker::UnsafeUnpin for entelix_core::ToolRegistry
 impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::ToolRegistry
 impl !core::panic::unwind_safe::UnwindSafe for entelix_core::ToolRegistry
+#[non_exhaustive] pub struct entelix_core::UsageSnapshot
+pub entelix_core::UsageSnapshot::input_tokens: u64
+pub entelix_core::UsageSnapshot::output_tokens: u64
+pub entelix_core::UsageSnapshot::requests: u32
+pub entelix_core::UsageSnapshot::tool_calls: u32
+impl entelix_core::run_budget::UsageSnapshot
+pub const fn entelix_core::run_budget::UsageSnapshot::total_tokens(&self) -> u64
+impl core::clone::Clone for entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::UsageSnapshot::clone(&self) -> entelix_core::run_budget::UsageSnapshot
+impl core::cmp::Eq for entelix_core::run_budget::UsageSnapshot
+impl core::cmp::PartialEq for entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::UsageSnapshot::eq(&self, other: &entelix_core::run_budget::UsageSnapshot) -> bool
+impl core::default::Default for entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::UsageSnapshot::default() -> entelix_core::run_budget::UsageSnapshot
+impl core::fmt::Debug for entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::UsageSnapshot::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_core::run_budget::UsageSnapshot
+impl core::marker::StructuralPartialEq for entelix_core::run_budget::UsageSnapshot
+impl serde_core::ser::Serialize for entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::UsageSnapshot::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::run_budget::UsageSnapshot
+pub fn entelix_core::run_budget::UsageSnapshot::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::run_budget::UsageSnapshot
+impl core::marker::Send for entelix_core::run_budget::UsageSnapshot
+impl core::marker::Sync for entelix_core::run_budget::UsageSnapshot
+impl core::marker::Unpin for entelix_core::run_budget::UsageSnapshot
+impl core::marker::UnsafeUnpin for entelix_core::run_budget::UsageSnapshot
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::UsageSnapshot
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::UsageSnapshot
 pub const entelix_core::DEFAULT_TENANT_ID: &str
 pub const entelix_core::INTERRUPT_KIND_APPROVAL_PENDING: &str
 pub trait entelix_core::AuditSink: core::marker::Send + core::marker::Sync + 'static

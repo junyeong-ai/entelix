@@ -50,7 +50,8 @@ pub use entelix_core::{
     ApprovalDecision, AuditSink, AuditSinkHandle, ChatModel, ChatModelConfig, CostCalculator,
     DEFAULT_TENANT_ID, Error, ExecutionContext, Extensions, INTERRUPT_KIND_APPROVAL_PENDING,
     LlmFacingSchema, LlmRenderable, PendingApprovalDecisions, ProviderErrorKind, RenderedForLlm,
-    Result, RunOverrides, TenantId, ThreadKey, ToolCostCalculator,
+    Result, RunBudget, RunOverrides, TenantId, ThreadKey, ToolCostCalculator, UsageLimitAxis,
+    UsageSnapshot,
 };
 
 // ── Sub-crate re-exports — the 90% surface for crates that don't

@@ -129,6 +129,32 @@ impl ExecutionContext {
         self
     }
 
+    /// Attach a [`crate::RunBudget`] — five-axis usage cap shared
+    /// across the run (parent agent + every sub-agent it
+    /// dispatches). Cloning the context bumps the budget's
+    /// internal `Arc` refcount so sub-agent dispatches accumulate
+    /// into the same counters.
+    ///
+    /// Stored in [`Extensions`] under `RunBudget`'s `TypeId`, so
+    /// a second call replaces the prior budget. Read sites
+    /// reach for it via [`Self::run_budget`]; absent budget
+    /// makes every dispatch site's check / observe a no-op.
+    #[must_use]
+    pub fn with_run_budget(self, budget: crate::RunBudget) -> Self {
+        self.add_extension(budget)
+    }
+
+    /// Borrow the [`crate::RunBudget`] attached via
+    /// [`Self::with_run_budget`], if any. Dispatch sites
+    /// (`ChatModel::complete_full` / `complete_typed` /
+    /// `stream_deltas`, `ToolRegistry::dispatch_*`) gate budget
+    /// checks on `Some(_)` so a context without a budget incurs
+    /// zero overhead beyond the `TypeId` lookup.
+    #[must_use]
+    pub fn run_budget(&self) -> Option<std::sync::Arc<crate::RunBudget>> {
+        self.extension::<crate::RunBudget>()
+    }
+
     /// Attach an idempotency key — the vendor-side dedupe identifier
     /// shared across every retry attempt of one logical call.
     /// Operators that pre-allocate the key (e.g. for cross-process

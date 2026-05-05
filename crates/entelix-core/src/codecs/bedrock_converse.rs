@@ -33,8 +33,8 @@ use crate::codecs::codec::{Codec, EncodedRequest};
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, ContentPart, MediaSource, ModelRequest, ModelResponse, ModelWarning,
-    ReasoningEffort, RefusalReason, Role, StopReason, ToolChoice, ToolKind, ToolResultContent,
-    Usage,
+    OutputStrategy, ReasoningEffort, RefusalReason, ResponseFormat, Role, StopReason, ToolChoice,
+    ToolKind, ToolResultContent, Usage,
 };
 use crate::rate_limit::RateLimitSnapshot;
 
@@ -72,6 +72,20 @@ impl Codec for BedrockConverseCodec {
             web_search: true,
             computer_use: true,
             max_context_tokens: DEFAULT_MAX_CONTEXT_TOKENS,
+        }
+    }
+
+    fn auto_output_strategy(&self, model: &str) -> OutputStrategy {
+        // Bedrock-Anthropic mirrors direct Anthropic — prefer the
+        // forced-tool surface (more mature, parity across
+        // Anthropic versions on Bedrock). Non-Anthropic Bedrock
+        // models default to `Native` but encode emits `LossyEncode`
+        // on `response_format` since Nova / Mistral / Llama on
+        // Converse have no canonical json_schema channel today.
+        if is_bedrock_anthropic(model) {
+            OutputStrategy::Tool
+        } else {
+            OutputStrategy::Native
         }
     }
 
@@ -184,40 +198,7 @@ fn build_body(request: &ModelRequest) -> Result<(Value, Vec<ModelWarning>)> {
         body.insert("toolConfig".into(), Value::Object(tool_config));
     }
     if let Some(format) = &request.response_format {
-        // Anthropic-on-Bedrock: structured output rides through
-        // `additionalModelRequestFields`, which Bedrock passes
-        // straight through to the underlying Anthropic Messages API.
-        // The wire shape inside `additionalModelRequestFields`
-        // matches direct Anthropic — `output_config.format` with raw
-        // JSON Schema.
-        let mut additional = body
-            .remove("additionalModelRequestFields")
-            .and_then(|v| match v {
-                Value::Object(o) => Some(o),
-                _ => None,
-            })
-            .unwrap_or_default(); // silent-fallback-ok: caller-initiated additionalModelRequestFields nesting — fresh empty Map when absent or non-object
-        additional.insert(
-            "output_config".into(),
-            json!({
-                "format": {
-                    "type": "json_schema",
-                    "schema": format.json_schema.schema.clone(),
-                }
-            }),
-        );
-        body.insert(
-            "additionalModelRequestFields".into(),
-            Value::Object(additional),
-        );
-        if !format.strict {
-            warnings.push(ModelWarning::LossyEncode {
-                field: "response_format.strict".into(),
-                detail: "Anthropic-on-Bedrock always strict-validates structured output; \
-                         the strict=false request was approximated"
-                    .into(),
-            });
-        }
+        encode_bedrock_structured_output(format, &request.model, &mut body, &mut warnings)?;
     }
     if request.cache_key.is_some() {
         warnings.push(ModelWarning::LossyEncode {
@@ -240,6 +221,126 @@ fn build_body(request: &ModelRequest) -> Result<(Value, Vec<ModelWarning>)> {
     }
     apply_provider_extensions(request, &mut body, &mut warnings);
     Ok((Value::Object(body), warnings))
+}
+
+/// Resolve [`OutputStrategy`] and emit either the Anthropic-on-
+/// Bedrock native (`additionalModelRequestFields.output_config`),
+/// the Bedrock-Anthropic forced-tool surface
+/// (`additionalModelRequestFields.tool_choice`), or the
+/// non-Anthropic Bedrock native fallback (currently `LossyEncode`
+/// since Nova / Mistral / Llama on Converse have no canonical
+/// json_schema channel today). `Auto` resolves to `Tool` for
+/// Anthropic-family models (parity with the direct Anthropic
+/// codec) and `Native` otherwise.
+fn encode_bedrock_structured_output(
+    format: &ResponseFormat,
+    model: &str,
+    body: &mut Map<String, Value>,
+    warnings: &mut Vec<ModelWarning>,
+) -> Result<()> {
+    let is_anthropic = is_bedrock_anthropic(model);
+    let strategy = match format.strategy {
+        OutputStrategy::Auto => {
+            if is_anthropic {
+                OutputStrategy::Tool
+            } else {
+                OutputStrategy::Native
+            }
+        }
+        explicit => explicit,
+    };
+    if !is_anthropic {
+        // Bedrock Nova / Mistral / Llama have no canonical
+        // structured-output channel on Converse today. Future
+        // codec updates can extend per-family encode here; for
+        // 1.0 the typed loss surface gives operators a clear
+        // signal.
+        warnings.push(ModelWarning::LossyEncode {
+            field: "response_format".into(),
+            detail: format!(
+                "Bedrock model {model:?} is not in the Anthropic family — Bedrock has no \
+                 structured-output channel for non-Anthropic models on Converse; field dropped"
+            ),
+        });
+        return Ok(());
+    }
+    let mut additional = body
+        .remove("additionalModelRequestFields")
+        .and_then(|v| match v {
+            Value::Object(o) => Some(o),
+            _ => None,
+        })
+        .unwrap_or_default(); // silent-fallback-ok: caller-initiated additionalModelRequestFields nesting — fresh empty Map when absent or non-object
+    match strategy {
+        OutputStrategy::Native => {
+            additional.insert(
+                "output_config".into(),
+                json!({
+                    "format": {
+                        "type": "json_schema",
+                        "schema": format.json_schema.schema.clone(),
+                    }
+                }),
+            );
+            if !format.strict {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "response_format.strict".into(),
+                    detail: "Anthropic-on-Bedrock always strict-validates structured output; \
+                         the strict=false request was approximated"
+                        .into(),
+                });
+            }
+        }
+        OutputStrategy::Tool => {
+            // Forced-tool dispatch on Bedrock-Anthropic. The tool
+            // and tool_choice ride through `additionalModelRequestFields`
+            // since the Converse top-level `toolConfig` is the
+            // wire's own tool surface for Bedrock; mixing
+            // structured-output forced calls there would conflict
+            // with operator-supplied tools. Anthropic Messages API
+            // semantics live inside the passthrough.
+            let tool_name = format.json_schema.name.clone();
+            additional.insert(
+                "tools".into(),
+                json!([{
+                    "type": "custom",
+                    "name": tool_name,
+                    "description": format!(
+                        "Emit the response as a JSON object matching the {tool_name} schema."
+                    ),
+                    "input_schema": format.json_schema.schema.clone(),
+                }]),
+            );
+            additional.insert(
+                "tool_choice".into(),
+                json!({
+                    "type": "tool",
+                    "name": format.json_schema.name,
+                    "disable_parallel_tool_use": true,
+                }),
+            );
+            if !format.strict {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "response_format.strict".into(),
+                    detail: "Bedrock-Anthropic Tool-strategy structured output is always \
+                         schema-validated; strict=false was approximated"
+                        .into(),
+                });
+            }
+        }
+        OutputStrategy::Prompted => {
+            return Err(Error::invalid_request(
+                "OutputStrategy::Prompted is deferred to entelix 1.1; use \
+                 OutputStrategy::Native or OutputStrategy::Tool",
+            ));
+        }
+        OutputStrategy::Auto => unreachable!("Auto resolved above"),
+    }
+    body.insert(
+        "additionalModelRequestFields".into(),
+        Value::Object(additional),
+    );
+    Ok(())
 }
 
 /// Bedrock-on-Anthropic family detection — Claude models routed

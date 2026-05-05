@@ -58,11 +58,61 @@ impl JsonSchemaSpec {
     }
 }
 
+/// How the codec should ask the model to honour the schema.
+///
+/// Industry consensus (LangChain 1.0 `ProviderStrategy`/
+/// `ToolStrategy`, pydantic-ai 1.90 `NativeOutput`/`ToolOutput`/
+/// `PromptedOutput`/`TextOutput`, BAML SAP, Vercel AI SDK 5
+/// `generateObject`, Instructor's mode flag) converges on three
+/// dispatch shapes plus an automatic picker:
+///
+/// - `Native` — vendor-native structured output channel (OpenAI
+///   `text.format = json_schema`, Gemini `responseJsonSchema`,
+///   Anthropic `output_config.format = json_schema`). Strictest;
+///   the vendor itself rejects malformed responses.
+/// - `Tool` — single forced tool call whose input schema is the
+///   target schema. Mature on every vendor (the tool-call
+///   surface predates native structured output by a year+);
+///   slightly less efficient because the model emits a tool_use
+///   block instead of plain assistant text.
+/// - `Prompted` — schema injected into the system prompt; the
+///   reply is parsed best-effort. Last resort for vendors with
+///   neither native nor tool support, and for "I want a typed
+///   answer but the model is non-reasoning" flows. Deferred to
+///   1.1 — `complete_typed` rejects this strategy at runtime
+///   today.
+/// - `Auto` — codec picks per-vendor at codec-construction time
+///   (NOT per request — per-request resolution would let the same
+///   logical request resolve differently across replays, breaking
+///   the SessionGraph event log's deterministic-replay guarantee
+///   per ADR-0001 §"events SSoT"). The picked strategy is what
+///   `Codec::auto_output_strategy(model)` returns.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[non_exhaustive]
+pub enum OutputStrategy {
+    /// Codec picks per-vendor at codec-construction time. Default.
+    #[default]
+    Auto,
+    /// Vendor-native structured output channel.
+    Native,
+    /// Forced single tool call carrying the target schema.
+    Tool,
+    /// Schema injected into the system prompt (1.1 — currently
+    /// rejected at encode time).
+    Prompted,
+}
+
 /// Structured-output directive attached to a [`ModelRequest`](crate::ir::ModelRequest).
 ///
 /// `strict` requests the vendor's strict-mode interpretation when
 /// available (OpenAI). Codecs that cannot enforce strict mode
 /// natively emit a `LossyEncode` warning.
+///
+/// `strategy` selects the dispatch shape (vendor-native channel /
+/// forced tool call / prompted). `Auto` (the default) lets each
+/// codec pick its preferred shape per `auto_output_strategy(model)`
+/// at codec-construction time — see [`OutputStrategy`].
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ResponseFormat {
     /// Schema the response must conform to.
@@ -72,24 +122,42 @@ pub struct ResponseFormat {
     /// best-effort schema adherence (some Anthropic shim flows).
     #[serde(default = "ResponseFormat::default_strict")]
     pub strict: bool,
+    /// Dispatch shape — vendor-native, forced-tool, or prompted.
+    /// Defaults to [`OutputStrategy::Auto`] which lets the codec
+    /// pick per-vendor at construction time.
+    #[serde(default)]
+    pub strategy: OutputStrategy,
 }
 
 impl ResponseFormat {
     /// Build a strict response format from the supplied schema.
+    /// `strategy` defaults to `Auto`; chain
+    /// [`Self::with_strategy`] to override.
     pub fn strict(schema: JsonSchemaSpec) -> Self {
         Self {
             json_schema: schema,
             strict: true,
+            strategy: OutputStrategy::Auto,
         }
     }
 
     /// Build a best-effort response format (no strict-mode
-    /// validation requested).
+    /// validation requested). `strategy` defaults to `Auto`.
     pub fn best_effort(schema: JsonSchemaSpec) -> Self {
         Self {
             json_schema: schema,
             strict: false,
+            strategy: OutputStrategy::Auto,
         }
+    }
+
+    /// Override the dispatch [`OutputStrategy`]. `Auto` means
+    /// "codec picks at construction time"; explicit `Native` /
+    /// `Tool` / `Prompted` overrides per-codec defaulting.
+    #[must_use]
+    pub const fn with_strategy(mut self, strategy: OutputStrategy) -> Self {
+        self.strategy = strategy;
+        self
     }
 
     /// Validate the schema against the strict-mode constraints

@@ -13,7 +13,7 @@ use bytes::Bytes;
 use futures::Stream;
 
 use crate::error::Result;
-use crate::ir::{Capabilities, ModelRequest, ModelResponse, ModelWarning};
+use crate::ir::{Capabilities, ModelRequest, ModelResponse, ModelWarning, OutputStrategy};
 use crate::rate_limit::RateLimitSnapshot;
 use crate::stream::StreamDelta;
 
@@ -92,6 +92,23 @@ pub trait Codec: Send + Sync + 'static {
     /// Capability surface the codec advertises for the given model. Codecs
     /// vary by model (small models lacking vision, etc.).
     fn capabilities(&self, model: &str) -> Capabilities;
+
+    /// Resolve [`OutputStrategy::Auto`] to the codec's preferred
+    /// dispatch shape for `model`. Called once at codec-construction
+    /// time per request — never per-delta or per-retry, so the
+    /// resolved strategy is part of the SessionGraph event log's
+    /// deterministic-replay surface (ADR-0001 §"events SSoT").
+    ///
+    /// Default returns [`OutputStrategy::Native`] — most codecs ship
+    /// vendor-native structured output (OpenAI Responses
+    /// `text.format=json_schema`, Gemini `responseJsonSchema`,
+    /// Bedrock Anthropic-passthrough). Codecs whose native channel
+    /// is newer / less mature than the tool-call surface
+    /// (Anthropic Messages today — `output_config` ships without
+    /// a strict toggle) override to [`OutputStrategy::Tool`].
+    fn auto_output_strategy(&self, _model: &str) -> OutputStrategy {
+        OutputStrategy::Native
+    }
 
     /// Encode IR → wire body for a one-shot (non-streaming) call.
     /// Implementors push warnings onto the returned

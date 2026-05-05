@@ -31,8 +31,8 @@ use crate::codecs::codec::{BoxByteStream, BoxDeltaStream, Codec, EncodedRequest}
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
-    ModelWarning, ReasoningEffort, RefusalReason, Role, StopReason, ToolChoice, ToolKind,
-    ToolResultContent, Usage,
+    ModelWarning, OutputStrategy, ReasoningEffort, RefusalReason, ResponseFormat, Role, StopReason,
+    ToolChoice, ToolKind, ToolResultContent, Usage,
 };
 use crate::rate_limit::RateLimitSnapshot;
 use crate::stream::StreamDelta;
@@ -78,6 +78,18 @@ impl Codec for AnthropicMessagesCodec {
             computer_use: true,
             max_context_tokens: 200_000,
         }
+    }
+
+    fn auto_output_strategy(&self, _model: &str) -> crate::ir::OutputStrategy {
+        // Anthropic's native `output_config.format = json_schema`
+        // is newer than the tool-call surface and ships without a
+        // `strict` toggle — every `strict=true` request emits
+        // `LossyEncode { field: "response_format.strict" }`. The
+        // forced-tool surface is more mature, more consistent with
+        // every Anthropic version, and accepts arbitrary JSON
+        // schemas without strict-mode constraints. Pick Tool until
+        // Anthropic ships a native channel with parity.
+        crate::ir::OutputStrategy::Tool
     }
 
     fn encode(&self, request: &ModelRequest) -> Result<EncodedRequest> {
@@ -224,35 +236,7 @@ fn build_body(request: &ModelRequest, streaming: bool) -> Result<(Value, Vec<Mod
         body.insert("stream".into(), Value::Bool(true));
     }
     if let Some(format) = &request.response_format {
-        // Anthropic native structured outputs (ADR-0031 §"Anthropic
-        // structured output"). The `output_config.format` field lives
-        // at the request root; the schema is raw JSON Schema (no
-        // wrapper, no `name`, no `strict` flag — Anthropic always
-        // strict-validates when the field is set). The IR's
-        // `JsonSchemaSpec.name` is operator-facing only; Anthropic
-        // ignores it, so it round-trips through OTel attributes but
-        // never lands on the wire.
-        body.insert(
-            "output_config".into(),
-            json!({
-                "format": {
-                    "type": "json_schema",
-                    "schema": format.json_schema.schema.clone(),
-                }
-            }),
-        );
-        if !format.strict {
-            // Anthropic always strict-validates when output_config is
-            // set — there is no `strict: false` switch. Operators
-            // requesting non-strict are surfaced as a capability
-            // mismatch (Anthropic will validate anyway).
-            warnings.push(ModelWarning::LossyEncode {
-                field: "response_format.strict".into(),
-                detail: "Anthropic always strict-validates structured output; \
-                         the strict=false request was approximated"
-                    .into(),
-            });
-        }
+        encode_anthropic_structured_output(format, &request.model, &mut body, &mut warnings)?;
     }
     if request.cache_key.is_some() {
         warnings.push(ModelWarning::LossyEncode {
@@ -321,6 +305,120 @@ fn apply_provider_extensions(
         warnings.push(ModelWarning::ProviderExtensionIgnored {
             vendor: "bedrock".into(),
         });
+    }
+}
+
+/// Resolve [`OutputStrategy::Auto`] against the codec's preferred
+/// dispatch shape, then emit either the native `output_config`
+/// shape or the forced-tool shape into `body`. `Prompted` is
+/// rejected (1.1 — currently unsupported on every codec).
+fn encode_anthropic_structured_output(
+    format: &ResponseFormat,
+    model: &str,
+    body: &mut Map<String, Value>,
+    warnings: &mut Vec<ModelWarning>,
+) -> Result<()> {
+    let strategy = resolve_output_strategy(format.strategy, model);
+    match strategy {
+        OutputStrategy::Native => {
+            // Anthropic native structured outputs — `output_config`
+            // at the request root, raw JSON Schema (no wrapper, no
+            // strict toggle). Anthropic always strict-validates
+            // when the field is set.
+            body.insert(
+                "output_config".into(),
+                json!({
+                    "format": {
+                        "type": "json_schema",
+                        "schema": format.json_schema.schema.clone(),
+                    }
+                }),
+            );
+            if !format.strict {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "response_format.strict".into(),
+                    detail: "Anthropic always strict-validates structured output; \
+                         the strict=false request was approximated"
+                        .into(),
+                });
+            }
+        }
+        OutputStrategy::Tool => {
+            // Forced single tool call carrying the target schema.
+            // Mature surface, parity with every Anthropic version,
+            // accepts arbitrary JSON schemas without strict-mode
+            // constraints. The codec injects the synthetic tool
+            // and a `tool_choice` of `{type: "tool", name: ...}`
+            // ahead of any operator-supplied tools so the model
+            // emits exactly one `tool_use` block whose input
+            // matches the target schema.
+            let tool_name = format.json_schema.name.clone();
+            let synthetic_tool = json!({
+                "type": "custom",
+                "name": tool_name,
+                "description": format!(
+                    "Emit the response as a JSON object matching the {tool_name} schema."
+                ),
+                "input_schema": format.json_schema.schema.clone(),
+            });
+            // Prepend the structured-output tool so the model sees
+            // it first. Operator tools survive; the new
+            // `tool_choice` overrides any prior selection because
+            // structured-output dispatch demands a forced single
+            // tool call.
+            let tools = body.entry("tools").or_insert_with(|| Value::Array(vec![]));
+            if let Value::Array(arr) = tools {
+                arr.insert(0, synthetic_tool);
+            }
+            body.insert(
+                "tool_choice".into(),
+                json!({
+                    "type": "tool",
+                    "name": format.json_schema.name,
+                    // Disable parallel tool use so the model cannot
+                    // emit multiple tool_use blocks alongside the
+                    // structured-output call.
+                    "disable_parallel_tool_use": true,
+                }),
+            );
+            if !format.strict {
+                // Tool-input-schema validation is enforced at
+                // construction time by Anthropic regardless of the
+                // strict flag — surface the loss.
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "response_format.strict".into(),
+                    detail: "Anthropic Tool-strategy structured output is always \
+                         schema-validated; strict=false was approximated"
+                        .into(),
+                });
+            }
+        }
+        OutputStrategy::Prompted => {
+            return Err(Error::invalid_request(
+                "OutputStrategy::Prompted is deferred to entelix 1.1; use \
+                 OutputStrategy::Native or OutputStrategy::Tool",
+            ));
+        }
+        OutputStrategy::Auto => {
+            // Resolved above — unreachable. Defensive arm.
+            return Err(Error::invalid_request(
+                "OutputStrategy::Auto did not resolve — codec invariant violation",
+            ));
+        }
+    }
+    Ok(())
+}
+
+/// Resolve [`OutputStrategy::Auto`] to Anthropic's preferred
+/// dispatch shape — currently `Tool` (the native `output_config`
+/// channel ships without a strict toggle and is less mature than
+/// the tool-call surface).
+const fn resolve_output_strategy(strategy: OutputStrategy, _model: &str) -> OutputStrategy {
+    match strategy {
+        OutputStrategy::Auto => OutputStrategy::Tool,
+        OutputStrategy::Native => OutputStrategy::Native,
+        OutputStrategy::Tool => OutputStrategy::Tool,
+        OutputStrategy::Prompted => OutputStrategy::Prompted,
     }
 }
 

@@ -33,8 +33,8 @@ use crate::codecs::codec::{
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
-    ModelWarning, ReasoningEffort, ReasoningSummary, RefusalReason, Role, StopReason, ToolChoice,
-    ToolKind, ToolResultContent, Usage,
+    ModelWarning, OutputStrategy, ReasoningEffort, ReasoningSummary, RefusalReason, ResponseFormat,
+    Role, StopReason, ToolChoice, ToolKind, ToolResultContent, Usage,
 };
 use crate::rate_limit::RateLimitSnapshot;
 use crate::stream::StreamDelta;
@@ -159,27 +159,7 @@ fn build_body(request: &ModelRequest, streaming: bool) -> Result<(Value, Vec<Mod
         );
     }
     if let Some(format) = &request.response_format {
-        // OpenAI Responses native: structured output goes under
-        // `text.format` (not `response_format` — that's the Chat
-        // Completions field). The Responses API rejects the Chat
-        // Completions shape with a 400.
-        if let Err(err) = format.strict_preflight() {
-            warnings.push(ModelWarning::LossyEncode {
-                field: "text.format".into(),
-                detail: err.to_string(),
-            });
-        }
-        body.insert(
-            "text".into(),
-            json!({
-                "format": {
-                    "type": "json_schema",
-                    "name": format.json_schema.name,
-                    "schema": format.json_schema.schema,
-                    "strict": format.strict,
-                }
-            }),
-        );
+        encode_openai_responses_structured_output(format, &mut body, &mut warnings)?;
     }
     if let Some(key) = &request.cache_key {
         body.insert("prompt_cache_key".into(), Value::String(key.clone()));
@@ -257,6 +237,78 @@ fn apply_provider_extensions(
             vendor: "bedrock".into(),
         });
     }
+}
+
+/// Resolve [`OutputStrategy`] and emit either the native
+/// `text.format` shape or a forced-tool surface (parity with the
+/// other codecs). `Auto` resolves to `Native` — OpenAI's native
+/// json_schema strict-mode is the most mature surface and the
+/// industry baseline.
+fn encode_openai_responses_structured_output(
+    format: &ResponseFormat,
+    body: &mut Map<String, Value>,
+    warnings: &mut Vec<ModelWarning>,
+) -> Result<()> {
+    let strategy = match format.strategy {
+        OutputStrategy::Auto | OutputStrategy::Native => OutputStrategy::Native,
+        explicit => explicit,
+    };
+    match strategy {
+        OutputStrategy::Native => {
+            if let Err(err) = format.strict_preflight() {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "text.format".into(),
+                    detail: err.to_string(),
+                });
+            }
+            body.insert(
+                "text".into(),
+                json!({
+                    "format": {
+                        "type": "json_schema",
+                        "name": format.json_schema.name,
+                        "schema": format.json_schema.schema,
+                        "strict": format.strict,
+                    }
+                }),
+            );
+        }
+        OutputStrategy::Tool => {
+            // Forced single tool call carrying the target schema —
+            // parity with Anthropic's Tool dispatch. OpenAI
+            // Responses tools live under `tools` with `tool_choice`
+            // narrowing the selection.
+            let tool_name = format.json_schema.name.clone();
+            let synthetic_tool = json!({
+                "type": "function",
+                "name": tool_name,
+                "description": format!(
+                    "Emit the response as a JSON object matching the {tool_name} schema."
+                ),
+                "parameters": format.json_schema.schema.clone(),
+                "strict": format.strict,
+            });
+            let tools = body.entry("tools").or_insert_with(|| Value::Array(vec![]));
+            if let Value::Array(arr) = tools {
+                arr.insert(0, synthetic_tool);
+            }
+            body.insert(
+                "tool_choice".into(),
+                json!({
+                    "type": "function",
+                    "name": format.json_schema.name,
+                }),
+            );
+        }
+        OutputStrategy::Prompted => {
+            return Err(Error::invalid_request(
+                "OutputStrategy::Prompted is deferred to entelix 1.1; use \
+                 OutputStrategy::Native or OutputStrategy::Tool",
+            ));
+        }
+        OutputStrategy::Auto => unreachable!("Auto resolved above"),
+    }
+    Ok(())
 }
 
 /// Translate the cross-vendor [`ReasoningEffort`] knob onto OpenAI

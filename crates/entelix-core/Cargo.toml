@@ -28,6 +28,7 @@ http = { workspace = true }
 jsonschema = { workspace = true }
 rand = { workspace = true }
 reqwest = { workspace = true }
+schemars = { workspace = true }
 secrecy = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

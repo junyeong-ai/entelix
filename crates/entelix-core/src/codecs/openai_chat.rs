@@ -33,7 +33,8 @@ use crate::codecs::codec::{
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
-    ModelWarning, RefusalReason, Role, StopReason, ToolChoice, ToolKind, ToolResultContent, Usage,
+    ModelWarning, OutputStrategy, RefusalReason, ResponseFormat, Role, StopReason, ToolChoice,
+    ToolKind, ToolResultContent, Usage,
 };
 use crate::rate_limit::RateLimitSnapshot;
 use crate::stream::StreamDelta;
@@ -157,28 +158,7 @@ fn build_body(request: &ModelRequest, streaming: bool) -> Result<(Value, Vec<Mod
         );
     }
     if let Some(format) = &request.response_format {
-        // OpenAI Chat native: response_format with json_schema.
-        // Strict-mode preflight surfaces vendor-shared schema constraints
-        // (additionalProperties: false at every object, required lists
-        // every property) as `LossyEncode` so callers learn at encode
-        // time that the wire request will be rejected.
-        if let Err(err) = format.strict_preflight() {
-            warnings.push(ModelWarning::LossyEncode {
-                field: "response_format.json_schema".into(),
-                detail: err.to_string(),
-            });
-        }
-        body.insert(
-            "response_format".into(),
-            json!({
-                "type": "json_schema",
-                "json_schema": {
-                    "name": format.json_schema.name,
-                    "schema": format.json_schema.schema,
-                    "strict": format.strict,
-                }
-            }),
-        );
+        encode_openai_chat_structured_output(format, &mut body, &mut warnings)?;
     }
     if let Some(key) = &request.cache_key {
         // OpenAI Chat Completions native prompt-cache routing key.
@@ -252,6 +232,75 @@ fn apply_provider_extensions(
             vendor: "bedrock".into(),
         });
     }
+}
+
+/// Resolve [`OutputStrategy`] and emit the OpenAI Chat
+/// `response_format` (Native) or a forced-tool surface (Tool).
+/// `Auto` resolves to `Native` — Chat Completions' json_schema
+/// strict mode is the most mature surface.
+fn encode_openai_chat_structured_output(
+    format: &ResponseFormat,
+    body: &mut Map<String, Value>,
+    warnings: &mut Vec<ModelWarning>,
+) -> Result<()> {
+    let strategy = match format.strategy {
+        OutputStrategy::Auto | OutputStrategy::Native => OutputStrategy::Native,
+        explicit => explicit,
+    };
+    match strategy {
+        OutputStrategy::Native => {
+            if let Err(err) = format.strict_preflight() {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "response_format.json_schema".into(),
+                    detail: err.to_string(),
+                });
+            }
+            body.insert(
+                "response_format".into(),
+                json!({
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": format.json_schema.name,
+                        "schema": format.json_schema.schema,
+                        "strict": format.strict,
+                    }
+                }),
+            );
+        }
+        OutputStrategy::Tool => {
+            let tool_name = format.json_schema.name.clone();
+            let synthetic_tool = json!({
+                "type": "function",
+                "function": {
+                    "name": tool_name,
+                    "description": format!(
+                        "Emit the response as a JSON object matching the {tool_name} schema."
+                    ),
+                    "parameters": format.json_schema.schema.clone(),
+                    "strict": format.strict,
+                }
+            });
+            let tools = body.entry("tools").or_insert_with(|| Value::Array(vec![]));
+            if let Value::Array(arr) = tools {
+                arr.insert(0, synthetic_tool);
+            }
+            body.insert(
+                "tool_choice".into(),
+                json!({
+                    "type": "function",
+                    "function": { "name": format.json_schema.name },
+                }),
+            );
+        }
+        OutputStrategy::Prompted => {
+            return Err(Error::invalid_request(
+                "OutputStrategy::Prompted is deferred to entelix 1.1; use \
+                 OutputStrategy::Native or OutputStrategy::Tool",
+            ));
+        }
+        OutputStrategy::Auto => unreachable!("Auto resolved above"),
+    }
+    Ok(())
 }
 
 fn finalize_request(body: &Value, warnings: Vec<ModelWarning>) -> Result<EncodedRequest> {

@@ -31,7 +31,8 @@ use crate::codecs::{BoxDeltaStream, Codec};
 use crate::context::ExecutionContext;
 use crate::error::{Error, Result};
 use crate::ir::{
-    Message, ModelRequest, ModelResponse, ReasoningEffort, Role, SystemPrompt, ToolChoice, ToolSpec,
+    ContentPart, JsonSchemaSpec, Message, ModelRequest, ModelResponse, ReasoningEffort,
+    ResponseFormat, Role, SystemPrompt, ToolChoice, ToolSpec,
 };
 use crate::overrides::RunOverrides;
 use crate::service::{
@@ -610,6 +611,64 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         self.service().oneshot(invocation).await
     }
 
+    /// Send a conversation and return a typed `O` parsed from the
+    /// model's structured-output channel.
+    ///
+    /// The codec emits a `response_format` directive carrying the
+    /// schemars-derived schema for `O`; the dispatch shape (native
+    /// JSON-Schema vs forced tool call) is the codec's
+    /// [`Codec::auto_output_strategy`] for the configured model
+    /// when [`OutputStrategy::Auto`] is selected — see
+    /// [`OutputStrategy`] and ADR-0079 for the cross-vendor mapping.
+    /// Operators that need to override the strategy build their
+    /// own [`ResponseFormat`] via
+    /// [`ResponseFormat::with_strategy`] and attach it to the
+    /// request through a custom flow.
+    ///
+    /// On `Native` dispatch, the codec produces a single text
+    /// `ContentPart` whose body parses as `O`. On `Tool` dispatch,
+    /// the codec emits one forced `ContentPart::ToolUse` whose
+    /// `input` is the JSON object the model produced; this method
+    /// extracts the input and parses it as `O`.
+    ///
+    /// `O: JsonSchema + DeserializeOwned + Send + 'static` —
+    /// schemars derives the JSON Schema at call time (zero-cost
+    /// after the first call thanks to schemars' static schema
+    /// caching). Production operators that cache the schema across
+    /// many calls build the [`JsonSchemaSpec`] once and attach it
+    /// to the request directly (no `O` type parameter on the
+    /// caller side).
+    pub async fn complete_typed<O>(
+        &self,
+        messages: Vec<Message>,
+        ctx: &ExecutionContext,
+    ) -> Result<O>
+    where
+        O: schemars::JsonSchema + serde::de::DeserializeOwned + Send + 'static,
+    {
+        // Derive the JSON Schema once per call. schemars handles
+        // memoisation at the type-level via its `for_value` cache;
+        // operators sensitive to per-call overhead pre-build the
+        // `JsonSchemaSpec` and route through `complete_full`.
+        let schema_value = serde_json::to_value(schemars::schema_for!(O)).map_err(Error::Serde)?;
+        let type_name = std::any::type_name::<O>();
+        // Strip the module path so the wire-side `name` is short
+        // and stable (`entelix_core::ir::request::ModelRequest` →
+        // `ModelRequest`); vendors that surface the name in
+        // observability ship a readable string.
+        let short_name = type_name.rsplit("::").next().unwrap_or(type_name);
+        let spec = JsonSchemaSpec::new(short_name, schema_value)?;
+        let format = ResponseFormat::strict(spec);
+
+        let mut request = self.config.build_request(messages);
+        apply_run_overrides(&mut request, ctx);
+        request.response_format = Some(format);
+
+        let invocation = ModelInvocation::new(request, ctx.clone());
+        let response = self.service().oneshot(invocation).await?;
+        parse_typed_response(response)
+    }
+
     /// Open a streaming model call and return an IR `StreamDelta`
     /// stream.
     ///
@@ -655,6 +714,35 @@ impl<C: Codec + 'static, T: Transport + 'static> std::fmt::Debug for ChatModel<C
             .field("layers_attached", &self.factory.is_some())
             .finish()
     }
+}
+
+/// Parse a [`ModelResponse`] produced by a `complete_typed`
+/// dispatch into the operator's typed `O`. The two dispatch
+/// shapes both surface the JSON object the model produced —
+/// `Native` strategy lands as a single text content part whose
+/// body is the JSON document; `Tool` strategy lands as a single
+/// `ContentPart::ToolUse` whose `input` is the JSON object. The
+/// helper tries the tool path first (Anthropic / Bedrock-Anthropic
+/// default), then falls through to the text path (OpenAI /
+/// Gemini default).
+fn parse_typed_response<O>(response: ModelResponse) -> Result<O>
+where
+    O: serde::de::DeserializeOwned,
+{
+    for part in &response.content {
+        if let ContentPart::ToolUse { input, .. } = part {
+            return serde_json::from_value(input.clone()).map_err(Error::Serde);
+        }
+    }
+    for part in &response.content {
+        if let ContentPart::Text { text, .. } = part {
+            return serde_json::from_str(text).map_err(Error::Serde);
+        }
+    }
+    Err(Error::invalid_request(
+        "complete_typed: model response carried neither a `tool_use` block nor a text \
+         block — the configured `OutputStrategy` did not produce typed output",
+    ))
 }
 
 // ── Provider shortcuts ────────────────────────────────────────────

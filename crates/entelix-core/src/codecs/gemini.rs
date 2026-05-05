@@ -30,8 +30,9 @@ use crate::codecs::codec::{BoxByteStream, BoxDeltaStream, Codec, EncodedRequest}
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
-    ModelWarning, ReasoningEffort, RefusalReason, Role, SafetyCategory, SafetyLevel, SafetyRating,
-    StopReason, ToolChoice, ToolKind, ToolResultContent, Usage,
+    ModelWarning, OutputStrategy, ReasoningEffort, RefusalReason, ResponseFormat, Role,
+    SafetyCategory, SafetyLevel, SafetyRating, StopReason, ToolChoice, ToolKind, ToolResultContent,
+    Usage,
 };
 use crate::stream::StreamDelta;
 
@@ -157,27 +158,7 @@ fn build_body(request: &ModelRequest) -> Result<(Value, Vec<ModelWarning>)> {
         generation_config.insert("stopSequences".into(), json!(request.stop_sequences));
     }
     if let Some(format) = &request.response_format {
-        // Gemini native: `generationConfig.responseMimeType` +
-        // `generationConfig.responseJsonSchema`. The
-        // `responseJsonSchema` field accepts raw JSON Schema (Gemini
-        // 2.5+ supports the standard dialect; older Gemini 2.0
-        // models took an OpenAPI-3.0 subset via the legacy
-        // `responseSchema` field). Strict-mode is implicit (Gemini
-        // always validates); a `strict: false` request emits
-        // LossyEncode.
-        generation_config.insert("responseMimeType".into(), json!("application/json"));
-        generation_config.insert(
-            "responseJsonSchema".into(),
-            format.json_schema.schema.clone(),
-        );
-        if !format.strict {
-            warnings.push(ModelWarning::LossyEncode {
-                field: "response_format.strict".into(),
-                detail: "Gemini always strict-validates structured output; \
-                         the strict=false request was approximated"
-                    .into(),
-            });
-        }
+        encode_gemini_structured_output(format, &mut generation_config, &mut body, &mut warnings)?;
     }
     if let Some(effort) = &request.reasoning_effort {
         encode_gemini_thinking(
@@ -269,6 +250,85 @@ fn apply_provider_extensions(
             vendor: "bedrock".into(),
         });
     }
+}
+
+/// Resolve [`OutputStrategy`] and emit the Gemini native
+/// `responseJsonSchema` (Native) or a forced-tool surface (Tool).
+/// `Auto` resolves to `Native` — Gemini's `responseJsonSchema` is
+/// the most direct surface and Gemini 2.5+ always strict-validates.
+fn encode_gemini_structured_output(
+    format: &ResponseFormat,
+    generation_config: &mut Map<String, Value>,
+    body: &mut Map<String, Value>,
+    warnings: &mut Vec<ModelWarning>,
+) -> Result<()> {
+    let strategy = match format.strategy {
+        OutputStrategy::Auto | OutputStrategy::Native => OutputStrategy::Native,
+        explicit => explicit,
+    };
+    match strategy {
+        OutputStrategy::Native => {
+            generation_config.insert("responseMimeType".into(), json!("application/json"));
+            generation_config.insert(
+                "responseJsonSchema".into(),
+                format.json_schema.schema.clone(),
+            );
+            if !format.strict {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "response_format.strict".into(),
+                    detail: "Gemini always strict-validates structured output; \
+                         the strict=false request was approximated"
+                        .into(),
+                });
+            }
+        }
+        OutputStrategy::Tool => {
+            // Forced single function call. Gemini wraps tools as
+            // `tools[0].functionDeclarations[0]` and `toolConfig`
+            // narrows the selection; `mode: "ANY"` +
+            // `allowedFunctionNames: [name]` is the canonical
+            // forced-call shape.
+            let tool_name = format.json_schema.name.clone();
+            let synthetic_decl = json!({
+                "name": tool_name,
+                "description": format!(
+                    "Emit the response as a JSON object matching the {tool_name} schema."
+                ),
+                "parameters": format.json_schema.schema.clone(),
+            });
+            body.insert(
+                "tools".into(),
+                json!([{
+                    "functionDeclarations": [synthetic_decl],
+                }]),
+            );
+            body.insert(
+                "toolConfig".into(),
+                json!({
+                    "functionCallingConfig": {
+                        "mode": "ANY",
+                        "allowedFunctionNames": [format.json_schema.name],
+                    }
+                }),
+            );
+            if !format.strict {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "response_format.strict".into(),
+                    detail: "Gemini Tool-strategy structured output is always \
+                         schema-validated; strict=false was approximated"
+                        .into(),
+                });
+            }
+        }
+        OutputStrategy::Prompted => {
+            return Err(Error::invalid_request(
+                "OutputStrategy::Prompted is deferred to entelix 1.1; use \
+                 OutputStrategy::Native or OutputStrategy::Tool",
+            ));
+        }
+        OutputStrategy::Auto => unreachable!("Auto resolved above"),
+    }
+    Ok(())
 }
 
 /// Gemini model family detection — 3.x uses `thinkingLevel`

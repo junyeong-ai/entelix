@@ -216,6 +216,7 @@ impl<C: entelix_core::codecs::Codec + 'static, T: entelix_core::transports::Tran
 pub fn entelix_core::chat::ChatModel<C, T>::codec(&self) -> &C
 pub async fn entelix_core::chat::ChatModel<C, T>::complete(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::ir::Message>
 pub async fn entelix_core::chat::ChatModel<C, T>::complete_full(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
+pub async fn entelix_core::chat::ChatModel<C, T>::complete_typed<O>(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<O> where O: schemars::JsonSchema + serde_core::de::DeserializeOwned + core::marker::Send + 'static
 pub const fn entelix_core::chat::ChatModel<C, T>::config(&self) -> &entelix_core::chat::ChatModelConfig
 pub fn entelix_core::chat::ChatModel<C, T>::from_arc(codec: alloc::sync::Arc<C>, transport: alloc::sync::Arc<T>, model: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedModelService> + tower_layer::Layer<entelix_core::service::BoxedStreamingService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service: tower_service::Service<entelix_core::service::ModelInvocation, Response = entelix_core::ir::ModelResponse, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service as tower_service::Service<entelix_core::service::ModelInvocation>>::Future: core::marker::Send + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service: tower_service::Service<entelix_core::service::StreamingModelInvocation, Response = entelix_core::service::ModelStream, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service as tower_service::Service<entelix_core::service::StreamingModelInvocation>>::Future: core::marker::Send + 'static
@@ -282,6 +283,7 @@ impl core::fmt::Debug for entelix_core::codecs::AnthropicMessagesCodec
 pub fn entelix_core::codecs::AnthropicMessagesCodec::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for entelix_core::codecs::AnthropicMessagesCodec
 impl entelix_core::codecs::Codec for entelix_core::codecs::AnthropicMessagesCodec
+pub fn entelix_core::codecs::AnthropicMessagesCodec::auto_output_strategy(&self, _model: &str) -> entelix_core::ir::OutputStrategy
 pub fn entelix_core::codecs::AnthropicMessagesCodec::capabilities(&self, _model: &str) -> entelix_core::ir::Capabilities
 pub fn entelix_core::codecs::AnthropicMessagesCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub fn entelix_core::codecs::AnthropicMessagesCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
@@ -307,6 +309,7 @@ impl core::fmt::Debug for entelix_core::codecs::BedrockConverseCodec
 pub fn entelix_core::codecs::BedrockConverseCodec::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for entelix_core::codecs::BedrockConverseCodec
 impl entelix_core::codecs::Codec for entelix_core::codecs::BedrockConverseCodec
+pub fn entelix_core::codecs::BedrockConverseCodec::auto_output_strategy(&self, model: &str) -> entelix_core::ir::OutputStrategy
 pub fn entelix_core::codecs::BedrockConverseCodec::capabilities(&self, _model: &str) -> entelix_core::ir::Capabilities
 pub fn entelix_core::codecs::BedrockConverseCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub fn entelix_core::codecs::BedrockConverseCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
@@ -353,6 +356,7 @@ impl core::fmt::Debug for entelix_core::codecs::GeminiCodec
 pub fn entelix_core::codecs::GeminiCodec::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for entelix_core::codecs::GeminiCodec
 impl entelix_core::codecs::Codec for entelix_core::codecs::GeminiCodec
+pub fn entelix_core::codecs::GeminiCodec::auto_output_strategy(&self, _model: &str) -> entelix_core::ir::OutputStrategy
 pub fn entelix_core::codecs::GeminiCodec::capabilities(&self, _model: &str) -> entelix_core::ir::Capabilities
 pub fn entelix_core::codecs::GeminiCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub fn entelix_core::codecs::GeminiCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
@@ -378,6 +382,7 @@ impl core::fmt::Debug for entelix_core::codecs::OpenAiChatCodec
 pub fn entelix_core::codecs::OpenAiChatCodec::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for entelix_core::codecs::OpenAiChatCodec
 impl entelix_core::codecs::Codec for entelix_core::codecs::OpenAiChatCodec
+pub fn entelix_core::codecs::OpenAiChatCodec::auto_output_strategy(&self, _model: &str) -> entelix_core::ir::OutputStrategy
 pub fn entelix_core::codecs::OpenAiChatCodec::capabilities(&self, _model: &str) -> entelix_core::ir::Capabilities
 pub fn entelix_core::codecs::OpenAiChatCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub fn entelix_core::codecs::OpenAiChatCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
@@ -403,6 +408,7 @@ impl core::fmt::Debug for entelix_core::codecs::OpenAiResponsesCodec
 pub fn entelix_core::codecs::OpenAiResponsesCodec::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for entelix_core::codecs::OpenAiResponsesCodec
 impl entelix_core::codecs::Codec for entelix_core::codecs::OpenAiResponsesCodec
+pub fn entelix_core::codecs::OpenAiResponsesCodec::auto_output_strategy(&self, _model: &str) -> entelix_core::ir::OutputStrategy
 pub fn entelix_core::codecs::OpenAiResponsesCodec::capabilities(&self, _model: &str) -> entelix_core::ir::Capabilities
 pub fn entelix_core::codecs::OpenAiResponsesCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub fn entelix_core::codecs::OpenAiResponsesCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
@@ -418,6 +424,7 @@ impl core::marker::UnsafeUnpin for entelix_core::codecs::OpenAiResponsesCodec
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::codecs::OpenAiResponsesCodec
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::codecs::OpenAiResponsesCodec
 pub trait entelix_core::codecs::Codec: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::codecs::Codec::auto_output_strategy(&self, _model: &str) -> entelix_core::ir::OutputStrategy
 pub fn entelix_core::codecs::Codec::capabilities(&self, model: &str) -> entelix_core::ir::Capabilities
 pub fn entelix_core::codecs::Codec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub fn entelix_core::codecs::Codec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
@@ -426,6 +433,7 @@ pub fn entelix_core::codecs::Codec::encode_streaming(&self, request: &entelix_co
 pub fn entelix_core::codecs::Codec::extract_rate_limit(&self, _headers: &http::header::map::HeaderMap) -> core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
 pub fn entelix_core::codecs::Codec::name(&self) -> &'static str
 impl entelix_core::codecs::Codec for entelix_core::codecs::AnthropicMessagesCodec
+pub fn entelix_core::codecs::AnthropicMessagesCodec::auto_output_strategy(&self, _model: &str) -> entelix_core::ir::OutputStrategy
 pub fn entelix_core::codecs::AnthropicMessagesCodec::capabilities(&self, _model: &str) -> entelix_core::ir::Capabilities
 pub fn entelix_core::codecs::AnthropicMessagesCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub fn entelix_core::codecs::AnthropicMessagesCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
@@ -434,6 +442,7 @@ pub fn entelix_core::codecs::AnthropicMessagesCodec::encode_streaming(&self, req
 pub fn entelix_core::codecs::AnthropicMessagesCodec::extract_rate_limit(&self, headers: &http::header::map::HeaderMap) -> core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
 pub fn entelix_core::codecs::AnthropicMessagesCodec::name(&self) -> &'static str
 impl entelix_core::codecs::Codec for entelix_core::codecs::BedrockConverseCodec
+pub fn entelix_core::codecs::BedrockConverseCodec::auto_output_strategy(&self, model: &str) -> entelix_core::ir::OutputStrategy
 pub fn entelix_core::codecs::BedrockConverseCodec::capabilities(&self, _model: &str) -> entelix_core::ir::Capabilities
 pub fn entelix_core::codecs::BedrockConverseCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub fn entelix_core::codecs::BedrockConverseCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
@@ -442,6 +451,7 @@ pub fn entelix_core::codecs::BedrockConverseCodec::encode_streaming(&self, reque
 pub fn entelix_core::codecs::BedrockConverseCodec::extract_rate_limit(&self, headers: &http::header::map::HeaderMap) -> core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
 pub fn entelix_core::codecs::BedrockConverseCodec::name(&self) -> &'static str
 impl entelix_core::codecs::Codec for entelix_core::codecs::GeminiCodec
+pub fn entelix_core::codecs::GeminiCodec::auto_output_strategy(&self, _model: &str) -> entelix_core::ir::OutputStrategy
 pub fn entelix_core::codecs::GeminiCodec::capabilities(&self, _model: &str) -> entelix_core::ir::Capabilities
 pub fn entelix_core::codecs::GeminiCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub fn entelix_core::codecs::GeminiCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
@@ -450,6 +460,7 @@ pub fn entelix_core::codecs::GeminiCodec::encode_streaming(&self, request: &ente
 pub fn entelix_core::codecs::GeminiCodec::extract_rate_limit(&self, _headers: &http::header::map::HeaderMap) -> core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
 pub fn entelix_core::codecs::GeminiCodec::name(&self) -> &'static str
 impl entelix_core::codecs::Codec for entelix_core::codecs::OpenAiChatCodec
+pub fn entelix_core::codecs::OpenAiChatCodec::auto_output_strategy(&self, _model: &str) -> entelix_core::ir::OutputStrategy
 pub fn entelix_core::codecs::OpenAiChatCodec::capabilities(&self, _model: &str) -> entelix_core::ir::Capabilities
 pub fn entelix_core::codecs::OpenAiChatCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub fn entelix_core::codecs::OpenAiChatCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
@@ -458,6 +469,7 @@ pub fn entelix_core::codecs::OpenAiChatCodec::encode_streaming(&self, request: &
 pub fn entelix_core::codecs::OpenAiChatCodec::extract_rate_limit(&self, headers: &http::header::map::HeaderMap) -> core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
 pub fn entelix_core::codecs::OpenAiChatCodec::name(&self) -> &'static str
 impl entelix_core::codecs::Codec for entelix_core::codecs::OpenAiResponsesCodec
+pub fn entelix_core::codecs::OpenAiResponsesCodec::auto_output_strategy(&self, _model: &str) -> entelix_core::ir::OutputStrategy
 pub fn entelix_core::codecs::OpenAiResponsesCodec::capabilities(&self, _model: &str) -> entelix_core::ir::Capabilities
 pub fn entelix_core::codecs::OpenAiResponsesCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub fn entelix_core::codecs::OpenAiResponsesCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
@@ -846,6 +858,33 @@ impl core::marker::Unpin for entelix_core::ir::ModelWarning
 impl core::marker::UnsafeUnpin for entelix_core::ir::ModelWarning
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ModelWarning
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ModelWarning
+#[non_exhaustive] pub enum entelix_core::ir::OutputStrategy
+pub entelix_core::ir::OutputStrategy::Auto
+pub entelix_core::ir::OutputStrategy::Native
+pub entelix_core::ir::OutputStrategy::Prompted
+pub entelix_core::ir::OutputStrategy::Tool
+impl core::clone::Clone for entelix_core::ir::OutputStrategy
+pub fn entelix_core::ir::OutputStrategy::clone(&self) -> entelix_core::ir::OutputStrategy
+impl core::cmp::Eq for entelix_core::ir::OutputStrategy
+impl core::cmp::PartialEq for entelix_core::ir::OutputStrategy
+pub fn entelix_core::ir::OutputStrategy::eq(&self, other: &entelix_core::ir::OutputStrategy) -> bool
+impl core::default::Default for entelix_core::ir::OutputStrategy
+pub fn entelix_core::ir::OutputStrategy::default() -> entelix_core::ir::OutputStrategy
+impl core::fmt::Debug for entelix_core::ir::OutputStrategy
+pub fn entelix_core::ir::OutputStrategy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_core::ir::OutputStrategy
+impl core::marker::StructuralPartialEq for entelix_core::ir::OutputStrategy
+impl serde_core::ser::Serialize for entelix_core::ir::OutputStrategy
+pub fn entelix_core::ir::OutputStrategy::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::ir::OutputStrategy
+pub fn entelix_core::ir::OutputStrategy::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::ir::OutputStrategy
+impl core::marker::Send for entelix_core::ir::OutputStrategy
+impl core::marker::Sync for entelix_core::ir::OutputStrategy
+impl core::marker::Unpin for entelix_core::ir::OutputStrategy
+impl core::marker::UnsafeUnpin for entelix_core::ir::OutputStrategy
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::OutputStrategy
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::OutputStrategy
 #[non_exhaustive] pub enum entelix_core::ir::ReasoningEffort
 pub entelix_core::ir::ReasoningEffort::Auto
 pub entelix_core::ir::ReasoningEffort::High
@@ -1546,11 +1585,13 @@ impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ProviderExten
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ProviderExtensions
 pub struct entelix_core::ir::ResponseFormat
 pub entelix_core::ir::ResponseFormat::json_schema: entelix_core::ir::JsonSchemaSpec
+pub entelix_core::ir::ResponseFormat::strategy: entelix_core::ir::OutputStrategy
 pub entelix_core::ir::ResponseFormat::strict: bool
 impl entelix_core::ir::ResponseFormat
 pub fn entelix_core::ir::ResponseFormat::best_effort(schema: entelix_core::ir::JsonSchemaSpec) -> Self
 pub fn entelix_core::ir::ResponseFormat::strict(schema: entelix_core::ir::JsonSchemaSpec) -> Self
 pub fn entelix_core::ir::ResponseFormat::strict_preflight(&self) -> core::result::Result<(), entelix_core::ir::StrictSchemaError>
+pub const fn entelix_core::ir::ResponseFormat::with_strategy(self, strategy: entelix_core::ir::OutputStrategy) -> Self
 impl core::clone::Clone for entelix_core::ir::ResponseFormat
 pub fn entelix_core::ir::ResponseFormat::clone(&self) -> entelix_core::ir::ResponseFormat
 impl core::cmp::Eq for entelix_core::ir::ResponseFormat
@@ -2843,6 +2884,7 @@ impl<C: entelix_core::codecs::Codec + 'static, T: entelix_core::transports::Tran
 pub fn entelix_core::chat::ChatModel<C, T>::codec(&self) -> &C
 pub async fn entelix_core::chat::ChatModel<C, T>::complete(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::ir::Message>
 pub async fn entelix_core::chat::ChatModel<C, T>::complete_full(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
+pub async fn entelix_core::chat::ChatModel<C, T>::complete_typed<O>(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<O> where O: schemars::JsonSchema + serde_core::de::DeserializeOwned + core::marker::Send + 'static
 pub const fn entelix_core::chat::ChatModel<C, T>::config(&self) -> &entelix_core::chat::ChatModelConfig
 pub fn entelix_core::chat::ChatModel<C, T>::from_arc(codec: alloc::sync::Arc<C>, transport: alloc::sync::Arc<T>, model: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedModelService> + tower_layer::Layer<entelix_core::service::BoxedStreamingService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service: tower_service::Service<entelix_core::service::ModelInvocation, Response = entelix_core::ir::ModelResponse, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service as tower_service::Service<entelix_core::service::ModelInvocation>>::Future: core::marker::Send + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service: tower_service::Service<entelix_core::service::StreamingModelInvocation, Response = entelix_core::service::ModelStream, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service as tower_service::Service<entelix_core::service::StreamingModelInvocation>>::Future: core::marker::Send + 'static

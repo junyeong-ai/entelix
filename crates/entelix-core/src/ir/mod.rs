@@ -37,7 +37,7 @@ pub use request::ModelRequest;
 pub use response::{ModelResponse, RefusalReason, StopReason, ToolUseRef};
 pub use safety::{SafetyCategory, SafetyLevel, SafetyRating};
 pub use source::{CitationSource, MediaSource};
-pub use structured::{JsonSchemaSpec, ResponseFormat, StrictSchemaError};
+pub use structured::{JsonSchemaSpec, OutputStrategy, ResponseFormat, StrictSchemaError};
 pub use system::{SystemBlock, SystemPrompt};
 pub use tool_spec::{ToolChoice, ToolKind, ToolSpec};
 pub use usage::Usage;

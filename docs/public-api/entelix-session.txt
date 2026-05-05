@@ -56,6 +56,11 @@ pub entelix_session::GraphEvent::ToolResult::is_error: bool
 pub entelix_session::GraphEvent::ToolResult::name: alloc::string::String
 pub entelix_session::GraphEvent::ToolResult::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
 pub entelix_session::GraphEvent::ToolResult::tool_use_id: alloc::string::String
+pub entelix_session::GraphEvent::UsageLimitExceeded
+pub entelix_session::GraphEvent::UsageLimitExceeded::axis: alloc::string::String
+pub entelix_session::GraphEvent::UsageLimitExceeded::limit: u64
+pub entelix_session::GraphEvent::UsageLimitExceeded::observed: u64
+pub entelix_session::GraphEvent::UsageLimitExceeded::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
 pub entelix_session::GraphEvent::UserMessage
 pub entelix_session::GraphEvent::UserMessage::content: alloc::vec::Vec<entelix_core::ir::content::ContentPart>
 pub entelix_session::GraphEvent::UserMessage::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
@@ -110,6 +115,7 @@ pub fn entelix_session::SessionAuditSink::record_agent_handoff(&self, from: core
 pub fn entelix_session::SessionAuditSink::record_memory_recall(&self, tier: &str, namespace_key: &str, hits: usize)
 pub fn entelix_session::SessionAuditSink::record_resumed(&self, from_checkpoint: &str)
 pub fn entelix_session::SessionAuditSink::record_sub_agent_invoked(&self, agent_id: &str, sub_thread_id: &str)
+pub fn entelix_session::SessionAuditSink::record_usage_limit_exceeded(&self, axis: &str, limit: u64, observed: u64)
 impl core::marker::Freeze for entelix_session::SessionAuditSink
 impl core::marker::Send for entelix_session::SessionAuditSink
 impl core::marker::Sync for entelix_session::SessionAuditSink

@@ -51,6 +51,18 @@ pub trait AuditSink: Send + Sync + 'static {
     /// `AssistantMessage` / `ToolResult`, and storing the full
     /// retrieved corpus inline would balloon the audit trail.
     fn record_memory_recall(&self, tier: &str, namespace_key: &str, hits: usize);
+
+    /// Record that a [`crate::RunBudget`] axis hit its cap and
+    /// short-circuited the run with `Error::UsageLimitExceeded`.
+    /// `axis` is the lower-snake-case rendering of
+    /// [`crate::run_budget::UsageLimitAxis`] (`"requests"`,
+    /// `"input_tokens"`, `"output_tokens"`, `"total_tokens"`,
+    /// `"tool_calls"`) — strings rather than the typed enum so
+    /// `entelix-tools` / `entelix-graph` emit sites stay free of
+    /// the `UsageLimitAxis` import. `limit` and `observed` carry
+    /// the raw counter values for compliance / billing audits that
+    /// need to attribute breaches per-tenant per-run (ADR-0083).
+    fn record_usage_limit_exceeded(&self, axis: &str, limit: u64, observed: u64);
 }
 
 /// `Arc`-shaped handle the [`crate::context::ExecutionContext`]

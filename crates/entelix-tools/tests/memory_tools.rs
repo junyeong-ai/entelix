@@ -192,6 +192,7 @@ impl AuditSink for RecordingAuditSink {
             .lock()
             .push((tier.to_owned(), namespace_key.to_owned(), hits));
     }
+    fn record_usage_limit_exceeded(&self, _axis: &str, _limit: u64, _observed: u64) {}
 }
 
 #[tokio::test]

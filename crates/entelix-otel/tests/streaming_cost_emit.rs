@@ -16,11 +16,7 @@
 // readability — the branches build distinct delta sequences and
 // belong as readable per-arm code, not as closures. Opted out by
 // intent.
-#![allow(
-    clippy::unwrap_used,
-    clippy::expect_used,
-    clippy::option_if_let_else
-)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::option_if_let_else)]
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};

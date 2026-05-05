@@ -206,6 +206,29 @@ pub enum GraphEvent {
         /// Wall-clock time the event was appended.
         timestamp: DateTime<Utc>,
     },
+    /// An [`entelix_core::RunBudget`] axis hit its cap and
+    /// short-circuited the run with
+    /// `entelix_core::Error::UsageLimitExceeded`. Compliance and
+    /// billing audits replay this to attribute breaches per-tenant
+    /// per-run; the operator-facing `Error` continues to flow
+    /// through the typed dispatch return as well, so the audit
+    /// channel's role here is the durable record, not the only
+    /// breach signal (ADR-0083).
+    UsageLimitExceeded {
+        /// Axis that breached — `"requests"`, `"input_tokens"`,
+        /// `"output_tokens"`, `"total_tokens"`, or `"tool_calls"`.
+        /// Stable wire string matching
+        /// `entelix_core::run_budget::UsageLimitAxis`'s `Display`
+        /// rendering; dashboards key off these without depending
+        /// on the typed enum.
+        axis: String,
+        /// Cap that was set on the breached axis.
+        limit: u64,
+        /// Counter value at the moment the cap was hit.
+        observed: u64,
+        /// Wall-clock time the event was appended.
+        timestamp: DateTime<Utc>,
+    },
     /// A failure surfaced from the model / tool / graph runtime.
     /// Errors that the agent recovers from internally are still
     /// recorded so post-mortems see the full picture.
@@ -242,6 +265,7 @@ impl GraphEvent {
             | Self::AgentHandoff { timestamp, .. }
             | Self::Resumed { timestamp, .. }
             | Self::MemoryRecall { timestamp, .. }
+            | Self::UsageLimitExceeded { timestamp, .. }
             | Self::Error { timestamp, .. } => timestamp,
         }
     }

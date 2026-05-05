@@ -8,7 +8,7 @@
 //! - an optional `thread_id` — the durable conversation identifier used
 //!   by `Checkpointer` and `SessionGraph` to scope persistence.
 //! - a mandatory `tenant_id` — multi-tenant scope (invariant 11). Defaults
-//!   to [`DEFAULT_TENANT_ID`] when not specified explicitly.
+//!   to [`crate::DEFAULT_TENANT_ID`] when not specified explicitly.
 //!
 //! It deliberately does **not** embed a `CredentialProvider` (invariant 10 —
 //! tokens never reach Tool input). Future fields will be added as the layers

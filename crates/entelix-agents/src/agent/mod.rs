@@ -205,6 +205,19 @@ where
                 Ok(result)
             }
             Err(err) => {
+                if let entelix_core::Error::UsageLimitExceeded {
+                    axis,
+                    limit,
+                    observed,
+                } = &err
+                    && let Some(handle) = ctx.audit_sink()
+                {
+                    handle.as_sink().record_usage_limit_exceeded(
+                        &axis.to_string(),
+                        *limit,
+                        *observed,
+                    );
+                }
                 // Best-effort `Failed` emission — if the sink itself
                 // errors (dropped receiver), swallow the secondary
                 // error so the original surfaces unchanged.
@@ -260,10 +273,8 @@ where
     /// `runnable.invoke` returning and `on_complete` firing —
     /// observer dispatches may themselves consume budget through
     /// downstream `ChatModel` calls (memory consolidation, summary
-    /// writes), and we want the envelope to reflect the agent run
-    /// only. Freezing the snapshot here is the core invariant that
-    /// gives B-5 + B-4 their "frozen artifact at terminal"
-    /// semantics (ADR-0080 + ADR-0081).
+    /// writes), and the envelope must reflect the agent run only
+    /// (ADR-0081 frozen-pre-observer attribution).
     async fn run_inner(
         &self,
         input: S,

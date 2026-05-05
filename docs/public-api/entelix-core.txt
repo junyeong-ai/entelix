@@ -61,6 +61,7 @@ pub fn entelix_core::audit::AuditSink::record_agent_handoff(&self, from: core::o
 pub fn entelix_core::audit::AuditSink::record_memory_recall(&self, tier: &str, namespace_key: &str, hits: usize)
 pub fn entelix_core::audit::AuditSink::record_resumed(&self, from_checkpoint: &str)
 pub fn entelix_core::audit::AuditSink::record_sub_agent_invoked(&self, agent_id: &str, sub_thread_id: &str)
+pub fn entelix_core::audit::AuditSink::record_usage_limit_exceeded(&self, axis: &str, limit: u64, observed: u64)
 pub mod entelix_core::auth
 #[non_exhaustive] pub enum entelix_core::auth::AuthError
 pub entelix_core::auth::AuthError::Expired
@@ -3515,6 +3516,7 @@ pub fn entelix_core::AuditSink::record_agent_handoff(&self, from: core::option::
 pub fn entelix_core::AuditSink::record_memory_recall(&self, tier: &str, namespace_key: &str, hits: usize)
 pub fn entelix_core::AuditSink::record_resumed(&self, from_checkpoint: &str)
 pub fn entelix_core::AuditSink::record_sub_agent_invoked(&self, agent_id: &str, sub_thread_id: &str)
+pub fn entelix_core::AuditSink::record_usage_limit_exceeded(&self, axis: &str, limit: u64, observed: u64)
 pub trait entelix_core::CostCalculator: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::CostCalculator::compute_cost<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, model: &'life1 str, usage: &'life2 entelix_core::ir::Usage, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<f64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
 pub trait entelix_core::CredentialProvider: core::marker::Send + core::marker::Sync + 'static

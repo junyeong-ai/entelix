@@ -41,6 +41,7 @@ impl AuditSink for RecordingAuditSink {
         self.resumes.lock().push(from_checkpoint.to_owned());
     }
     fn record_memory_recall(&self, _tier: &str, _namespace_key: &str, _hits: usize) {}
+    fn record_usage_limit_exceeded(&self, _axis: &str, _limit: u64, _observed: u64) {}
 }
 
 fn assistant_text(text: &str) -> Message {

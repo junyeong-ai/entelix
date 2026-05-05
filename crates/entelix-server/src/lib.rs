@@ -34,7 +34,7 @@
 //! ## Tenant mode
 //!
 //! - **Single-tenant** (default — omit `with_tenant_header`): every
-//!   request runs under [`entelix_core::context::DEFAULT_TENANT_ID`].
+//!   request runs under [`entelix_core::DEFAULT_TENANT_ID`].
 //! - **Multi-tenant strict** (call `with_tenant_header(name)`): every
 //!   request MUST carry the named header; missing-header requests
 //!   reject with `400 Bad Request` and a typed

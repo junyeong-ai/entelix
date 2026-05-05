@@ -51,7 +51,7 @@
 //!
 //! Every primitive looks up state by `ExecutionContext::tenant_id()`
 //! (ADR-0017). A request without an explicit tenant uses the
-//! [`entelix_core::context::DEFAULT_TENANT_ID`] scope; the default
+//! [`entelix_core::DEFAULT_TENANT_ID`] scope; the default
 //! tenant gets the [`PolicyRegistry`]'s default policy (typically
 //! "no policy" — pass-through).
 

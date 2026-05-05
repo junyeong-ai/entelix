@@ -153,7 +153,7 @@ pub trait LlmRenderable<T> {
 
     /// Sealed carrier wrapping [`Self::render_for_llm`]'s output.
     /// External crates that implement this trait cannot override
-    /// this method without access to [`RenderedForLlm::new`], which
+    /// this method without access to `RenderedForLlm::new`, which
     /// is `pub(crate)` to `entelix-core`. The boundary therefore
     /// holds across crate boundaries: only `entelix-core`'s default
     /// impl can produce a `RenderedForLlm<T>`.

@@ -125,4 +125,17 @@ impl AuditSink for SessionAuditSink {
             },
         );
     }
+
+    fn record_usage_limit_exceeded(&self, axis: &str, limit: u64, observed: u64) {
+        spawn_append(
+            Arc::clone(&self.log),
+            self.key.clone(),
+            GraphEvent::UsageLimitExceeded {
+                axis: axis.to_owned(),
+                limit,
+                observed,
+                timestamp: Utc::now(),
+            },
+        );
+    }
 }

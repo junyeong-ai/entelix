@@ -641,8 +641,8 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
     /// schemars-derived schema for `O`; the dispatch shape (native
     /// JSON-Schema vs forced tool call) is the codec's
     /// [`Codec::auto_output_strategy`] for the configured model
-    /// when [`OutputStrategy::Auto`] is selected — see
-    /// [`OutputStrategy`] and ADR-0079 for the cross-vendor mapping.
+    /// when [`crate::ir::OutputStrategy::Auto`] is selected — see
+    /// [`crate::ir::OutputStrategy`] and ADR-0079 for the cross-vendor mapping.
     /// Operators that need to override the strategy build their
     /// own [`ResponseFormat`] via
     /// [`ResponseFormat::with_strategy`] and attach it to the

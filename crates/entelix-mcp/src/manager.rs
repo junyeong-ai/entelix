@@ -440,6 +440,7 @@ mod tests {
 
     use serde_json::json;
 
+    use entelix_core::TenantId;
     use entelix_core::context::ExecutionContext;
 
     use super::*;

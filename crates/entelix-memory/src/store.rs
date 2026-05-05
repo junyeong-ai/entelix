@@ -19,6 +19,7 @@
 //!   override when they own a TTL sweeper. Operators run it on a
 //!   timer to bound store growth.
 
+use entelix_core::TenantId;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};

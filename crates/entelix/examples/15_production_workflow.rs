@@ -46,12 +46,12 @@ use entelix::ir::Message;
 use entelix::{
     BufferMemory, ConsolidatingBufferMemory, CostMeter, EntityMemory, EntityRecord,
     ExecutionContext, InMemoryStore, ModelPricing, Namespace, OnMessageCount, PricingTable, Result,
-    Runnable, RunnableToSummarizerAdapter, Store, SummaryMemory,
+    Runnable, RunnableToSummarizerAdapter, Store, SummaryMemory, TenantId,
 };
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let tenant_id = "acme";
+    let tenant_id = TenantId::new("acme");
     let agent_scope = "concierge";
     let conversation_id = "conv-2026-04-28-001";
 
@@ -60,11 +60,11 @@ async fn main() -> Result<()> {
     // Every namespace combines tenant + agent + conversation so
     // distinct users, distinct agents, and distinct threads never
     // alias. This is the F2 mitigation in code form.
-    let buffer_ns = Namespace::new(tenant_id)
+    let buffer_ns = Namespace::new(tenant_id.clone())
         .with_scope(agent_scope)
         .with_scope(conversation_id);
     let summary_ns = buffer_ns.clone();
-    let entity_ns = Namespace::new(tenant_id).with_scope(agent_scope);
+    let entity_ns = Namespace::new(tenant_id.clone()).with_scope(agent_scope);
 
     let buffer_store: Arc<dyn Store<Vec<Message>>> = Arc::new(InMemoryStore::<Vec<Message>>::new());
     let summary_store: Arc<dyn Store<String>> = Arc::new(InMemoryStore::<String>::new());

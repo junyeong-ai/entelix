@@ -12,7 +12,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use entelix_core::{AuditSink, AuditSinkHandle, ExecutionContext, Result, ToolRegistry};
+use entelix_core::{AuditSink, AuditSinkHandle, ExecutionContext, Result, TenantId, ToolRegistry};
 use entelix_memory::{
     Document, EntityMemory, IdentityReranker, InMemoryStore, Namespace, RerankedDocument, Reranker,
     SemanticMemoryBackend, VectorFilter,

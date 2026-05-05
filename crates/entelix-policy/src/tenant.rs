@@ -9,6 +9,7 @@
 //! single-tenant operator who never registers any policy still gets
 //! a working SDK with zero policy enforcement.
 
+use entelix_core::TenantId;
 use std::sync::Arc;
 
 use dashmap::DashMap;
@@ -213,7 +214,7 @@ mod tests {
     #[test]
     fn empty_manager_returns_empty_fallback() {
         let mgr = PolicyRegistry::new();
-        let p = mgr.policy_for("any-tenant");
+        let p = mgr.policy_for(&TenantId::new("any-tenant"));
         assert!(p.is_empty());
         assert_eq!(mgr.tenant_count(), 0);
     }
@@ -226,10 +227,10 @@ mod tests {
             .build()
             .unwrap();
         mgr.register("acme", policy);
-        let p = mgr.policy_for("acme");
+        let p = mgr.policy_for(&TenantId::new("acme"));
         assert!(p.redactor.is_some());
         // Unregistered still gets fallback.
-        let other = mgr.policy_for("other");
+        let other = mgr.policy_for(&TenantId::new("other"));
         assert!(other.is_empty());
     }
 
@@ -240,7 +241,7 @@ mod tests {
             .build()
             .unwrap();
         let mgr = PolicyRegistry::new().with_fallback(fb);
-        let p = mgr.policy_for("never-registered");
+        let p = mgr.policy_for(&TenantId::new("never-registered"));
         assert!(p.cost_meter.is_some());
     }
 
@@ -264,7 +265,7 @@ mod tests {
                 .build()
                 .unwrap(),
         );
-        assert!(mgr.policy_for("acme").redactor.is_some());
+        assert!(mgr.policy_for(&TenantId::new("acme")).redactor.is_some());
         assert_eq!(mgr.tenant_count(), 1);
     }
 }

@@ -32,6 +32,7 @@
 //! call [`EpisodicMemory::append_record`] with a pre-built
 //! [`Episode`] instead.
 
+use entelix_core::TenantId;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use std::time::Duration;

@@ -29,7 +29,7 @@ pub entelix_agents::AgentEvent::ToolComplete::tool_version: core::option::Option
 pub entelix_agents::AgentEvent::ToolError
 pub entelix_agents::AgentEvent::ToolError::duration_ms: u64
 pub entelix_agents::AgentEvent::ToolError::error: alloc::string::String
-pub entelix_agents::AgentEvent::ToolError::error_for_llm: alloc::string::String
+pub entelix_agents::AgentEvent::ToolError::error_for_llm: entelix_core::llm_facing::RenderedForLlm<alloc::string::String>
 pub entelix_agents::AgentEvent::ToolError::run_id: alloc::string::String
 pub entelix_agents::AgentEvent::ToolError::tool: alloc::string::String
 pub entelix_agents::AgentEvent::ToolError::tool_use_id: alloc::string::String

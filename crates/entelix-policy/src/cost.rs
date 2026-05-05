@@ -15,6 +15,7 @@
 // the block scope already drops correctly.
 #![allow(clippy::significant_drop_tightening)]
 
+use entelix_core::TenantId;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -548,42 +549,56 @@ mod tests {
     fn charge_sums_per_tenant_atomically() {
         let meter = CostMeter::new(pricing());
         let u = usage(1000, 1000);
-        meter.charge("alpha", "claude-opus-4-7", &u).unwrap();
-        meter.charge("alpha", "claude-opus-4-7", &u).unwrap();
-        meter.charge("bravo", "claude-opus-4-7", &u).unwrap();
-        assert_eq!(meter.spent_by("alpha"), d("180"));
-        assert_eq!(meter.spent_by("bravo"), d("90"));
-        assert_eq!(meter.spent_by("never-seen"), Decimal::ZERO);
+        meter
+            .charge(&TenantId::new("alpha"), "claude-opus-4-7", &u)
+            .unwrap();
+        meter
+            .charge(&TenantId::new("alpha"), "claude-opus-4-7", &u)
+            .unwrap();
+        meter
+            .charge(&TenantId::new("bravo"), "claude-opus-4-7", &u)
+            .unwrap();
+        assert_eq!(meter.spent_by(&TenantId::new("alpha")), d("180"));
+        assert_eq!(meter.spent_by(&TenantId::new("bravo")), d("90"));
+        assert_eq!(meter.spent_by(&TenantId::new("never-seen")), Decimal::ZERO);
     }
 
     #[test]
     fn unknown_model_does_not_charge() {
         let meter = CostMeter::new(pricing());
         let err = meter
-            .charge("alpha", "unknown-model", &usage(1000, 1000))
+            .charge(&TenantId::new("alpha"), "unknown-model", &usage(1000, 1000))
             .unwrap_err();
         assert!(matches!(err, PolicyError::UnknownModel(_)));
-        assert_eq!(meter.spent_by("alpha"), Decimal::ZERO);
+        assert_eq!(meter.spent_by(&TenantId::new("alpha")), Decimal::ZERO);
     }
 
     #[test]
     fn zero_usage_is_a_zero_charge_no_ledger_entry() {
         let meter = CostMeter::new(pricing());
         let cost = meter
-            .charge("alpha", "claude-opus-4-7", &Usage::default())
+            .charge(
+                &TenantId::new("alpha"),
+                "claude-opus-4-7",
+                &Usage::default(),
+            )
             .unwrap();
         assert_eq!(cost, Decimal::ZERO);
-        assert_eq!(meter.spent_by("alpha"), Decimal::ZERO);
+        assert_eq!(meter.spent_by(&TenantId::new("alpha")), Decimal::ZERO);
     }
 
     #[test]
     fn drain_resets_tenant_ledger() {
         let meter = CostMeter::new(pricing());
         meter
-            .charge("alpha", "claude-opus-4-7", &usage(1000, 1000))
+            .charge(
+                &TenantId::new("alpha"),
+                "claude-opus-4-7",
+                &usage(1000, 1000),
+            )
             .unwrap();
-        assert_eq!(meter.drain("alpha"), d("90"));
-        assert_eq!(meter.spent_by("alpha"), Decimal::ZERO);
+        assert_eq!(meter.drain(&TenantId::new("alpha")), d("90"));
+        assert_eq!(meter.spent_by(&TenantId::new("alpha")), Decimal::ZERO);
     }
 
     #[test]
@@ -591,18 +606,26 @@ mod tests {
         let meter =
             CostMeter::new(pricing()).with_unknown_model_policy(UnknownModelPolicy::WarnOnce);
         let cost = meter
-            .charge("alpha", "vendor-preview-x", &usage(1000, 1000))
+            .charge(
+                &TenantId::new("alpha"),
+                "vendor-preview-x",
+                &usage(1000, 1000),
+            )
             .unwrap();
         assert_eq!(cost, Decimal::ZERO);
-        assert_eq!(meter.spent_by("alpha"), Decimal::ZERO);
+        assert_eq!(meter.spent_by(&TenantId::new("alpha")), Decimal::ZERO);
         // Same model again — must not re-warn (state inspected via len).
         meter
-            .charge("alpha", "vendor-preview-x", &usage(2000, 2000))
+            .charge(
+                &TenantId::new("alpha"),
+                "vendor-preview-x",
+                &usage(2000, 2000),
+            )
             .unwrap();
         assert_eq!(meter.warned_models.len(), 1);
         // Distinct unknown model — separate warn entry.
         meter
-            .charge("alpha", "vendor-preview-y", &usage(1000, 0))
+            .charge(&TenantId::new("alpha"), "vendor-preview-y", &usage(1000, 0))
             .unwrap();
         assert_eq!(meter.warned_models.len(), 2);
     }
@@ -615,7 +638,11 @@ mod tests {
         // First 8 distinct tenants land in the ledger and accumulate.
         for i in 0..8 {
             let charge = meter
-                .charge(&format!("tenant-{i}"), "claude-opus-4-7", &usage(100, 100))
+                .charge(
+                    &TenantId::new(format!("tenant-{i}")),
+                    "claude-opus-4-7",
+                    &usage(100, 100),
+                )
                 .unwrap();
             assert!(!charge.is_zero(), "tenant {i} should be charged");
         }
@@ -624,7 +651,11 @@ mod tests {
         // join the ledger — saturation flag fires once.
         for i in 8..200 {
             let charge = meter
-                .charge(&format!("tenant-{i}"), "claude-opus-4-7", &usage(100, 100))
+                .charge(
+                    &TenantId::new(format!("tenant-{i}")),
+                    "claude-opus-4-7",
+                    &usage(100, 100),
+                )
                 .unwrap();
             assert_eq!(
                 charge,
@@ -639,11 +670,15 @@ mod tests {
         );
         // Already-tracked tenants continue to accumulate normally —
         // the cap is on distinct entries, not on charging rate.
-        let prior = meter.spent_by("tenant-0");
+        let prior = meter.spent_by(&TenantId::new("tenant-0"));
         let _ = meter
-            .charge("tenant-0", "claude-opus-4-7", &usage(100, 100))
+            .charge(
+                &TenantId::new("tenant-0"),
+                "claude-opus-4-7",
+                &usage(100, 100),
+            )
             .unwrap();
-        assert!(meter.spent_by("tenant-0") > prior);
+        assert!(meter.spent_by(&TenantId::new("tenant-0")) > prior);
     }
 
     #[test]
@@ -652,7 +687,7 @@ mod tests {
             CostMeter::new(pricing()).with_unknown_model_policy(UnknownModelPolicy::WarnOnce);
         // Spam well past the cap with distinct names.
         for i in 0..(MAX_WARNED_MODELS * 2) {
-            let _ = meter.charge("alpha", &format!("model-{i}"), &usage(1, 1));
+            let _ = meter.charge(&TenantId::new("alpha"), &format!("model-{i}"), &usage(1, 1));
         }
         assert!(
             meter.warned_models.len() <= MAX_WARNED_MODELS,
@@ -660,7 +695,7 @@ mod tests {
             meter.warned_models.len()
         );
         // Ledger remains untouched (zero charges).
-        assert_eq!(meter.spent_by("alpha"), Decimal::ZERO);
+        assert_eq!(meter.spent_by(&TenantId::new("alpha")), Decimal::ZERO);
     }
 
     #[test]
@@ -668,10 +703,14 @@ mod tests {
         let meter =
             CostMeter::new(pricing()).with_unknown_model_policy(UnknownModelPolicy::WarnOnce);
         let cost = meter
-            .charge("alpha", "claude-opus-4-7", &usage(1000, 1000))
+            .charge(
+                &TenantId::new("alpha"),
+                "claude-opus-4-7",
+                &usage(1000, 1000),
+            )
             .unwrap();
         assert_eq!(cost, d("90"));
-        assert_eq!(meter.spent_by("alpha"), d("90"));
+        assert_eq!(meter.spent_by(&TenantId::new("alpha")), d("90"));
         assert_eq!(meter.warned_models.len(), 0);
     }
 
@@ -684,7 +723,9 @@ mod tests {
             ModelPricing::new(d("20"), d("80"), Decimal::ZERO, Decimal::ZERO),
         );
         meter.set_pricing(new_pricing);
-        let cost = meter.charge("alpha", "gpt-4.1", &usage(1000, 0)).unwrap();
+        let cost = meter
+            .charge(&TenantId::new("alpha"), "gpt-4.1", &usage(1000, 0))
+            .unwrap();
         assert_eq!(cost, d("20"));
     }
 }

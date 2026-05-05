@@ -29,6 +29,7 @@
 //! transient summariser outage from silently dropping conversation
 //! history.
 
+use entelix_core::TenantId;
 use std::sync::Arc;
 
 use async_trait::async_trait;

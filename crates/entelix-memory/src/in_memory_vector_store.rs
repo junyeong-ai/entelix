@@ -24,6 +24,7 @@
 //! linear scan evaluates the predicate per row before the dot
 //! product, so filter selectivity directly reduces work.
 
+use entelix_core::TenantId;
 use std::collections::HashMap;
 use std::sync::Arc;
 

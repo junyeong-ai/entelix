@@ -9,6 +9,7 @@
 
 #![allow(clippy::unwrap_used)]
 
+use entelix_core::TenantId;
 use std::sync::Arc;
 
 use entelix_core::ExecutionContext;

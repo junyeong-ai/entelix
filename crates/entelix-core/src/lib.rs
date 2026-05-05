@@ -69,7 +69,7 @@ pub use context::ExecutionContext;
 pub use cost::{CostCalculator, ToolCostCalculator};
 pub use error::{Error, ProviderErrorKind, Result};
 pub use extensions::Extensions;
-pub use llm_facing::{LlmFacingError, LlmFacingSchema};
+pub use llm_facing::{LlmFacingSchema, LlmRenderable, RenderedForLlm};
 pub use overrides::RunOverrides;
 pub use service::{BoxedModelService, BoxedToolService, ModelInvocation, ToolInvocation};
 pub use skills::{

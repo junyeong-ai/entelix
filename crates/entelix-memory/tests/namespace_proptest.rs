@@ -14,6 +14,7 @@
 
 #![allow(clippy::unwrap_used)]
 
+use entelix_core::TenantId;
 use entelix_memory::Namespace;
 use proptest::prelude::*;
 
@@ -46,7 +47,7 @@ proptest! {
         tenant in tenant_strategy(),
         scope in proptest::collection::vec(scope_segment_strategy(), 0..6),
     ) {
-        let mut ns = Namespace::new(&tenant);
+        let mut ns = Namespace::new(TenantId::new(&tenant));
         for seg in &scope {
             ns = ns.with_scope(seg);
         }
@@ -72,7 +73,7 @@ proptest! {
         scope_b in proptest::collection::vec(scope_segment_strategy(), 0..3),
     ) {
         let build = |tenant: &str, scope: &[String]| {
-            let mut ns = Namespace::new(tenant);
+            let mut ns = Namespace::new(TenantId::new(tenant));
             for seg in scope {
                 ns = ns.with_scope(seg);
             }

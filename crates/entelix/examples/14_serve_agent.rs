@@ -53,7 +53,7 @@ struct AgentState {
 fn build_agent() -> Result<entelix::CompiledGraph<AgentState>> {
     // Node 1 — planner: records the tenant scope and emits two steps.
     let planner = RunnableLambda::new(|mut s: AgentState, ctx: ExecutionContext| async move {
-        s.tenant_id = ctx.tenant_id().to_owned();
+        s.tenant_id = ctx.tenant_id().as_str().to_owned();
         s.steps.push(format!("plan@{}", s.tenant_id));
         s.steps.push("execute".to_owned());
         Ok::<_, _>(s)

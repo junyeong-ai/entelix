@@ -1,7 +1,7 @@
 //! `ExecutionContext::tenant_id` defaults + override (invariant 11
 //! strengthening per ADR-0017).
 
-use entelix_core::{DEFAULT_TENANT_ID, ExecutionContext};
+use entelix_core::{DEFAULT_TENANT_ID, ExecutionContext, TenantId};
 
 #[test]
 fn new_context_has_default_tenant() {

@@ -10,7 +10,7 @@
 use std::sync::Arc;
 
 use entelix_core::ir::{ContentPart, Message, Role, ToolResultContent};
-use entelix_core::{Error, ExecutionContext, LlmFacingError, Result, ToolRegistry};
+use entelix_core::{Error, ExecutionContext, LlmRenderable, Result, ToolRegistry};
 use entelix_graph::{CompiledGraph, StateGraph};
 use entelix_runnable::{Runnable, RunnableLambda};
 

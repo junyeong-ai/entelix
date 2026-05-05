@@ -3,6 +3,7 @@
 
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 
+use entelix_core::TenantId;
 use std::sync::Arc;
 
 use entelix_core::ThreadKey;

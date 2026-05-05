@@ -20,6 +20,7 @@ use futures::future::BoxFuture;
 use serde_json::Value;
 use tower::{Layer, Service, ServiceExt};
 
+use entelix_core::TenantId;
 use entelix_core::cost::{CostCalculator, ToolCostCalculator};
 use entelix_core::error::{Error, Result};
 use entelix_core::ir::{ModelResponse, StopReason};

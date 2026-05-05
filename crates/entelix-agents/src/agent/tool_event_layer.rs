@@ -28,7 +28,7 @@ use futures::future::BoxFuture;
 use serde_json::Value;
 use tower::{Layer, Service, ServiceExt};
 
-use entelix_core::LlmFacingError;
+use entelix_core::LlmRenderable;
 use entelix_core::error::{Error, Result};
 use entelix_core::service::ToolInvocation;
 
@@ -177,7 +177,7 @@ where
                             tool,
                             tool_version,
                             error: err.to_string(),
-                            error_for_llm: err.render_for_llm(),
+                            error_for_llm: err.for_llm(),
                             duration_ms,
                         })
                         .await;

@@ -21,6 +21,7 @@
 
 use std::collections::BTreeMap;
 
+use entelix_core::TenantId;
 use entelix_core::context::ExecutionContext;
 use entelix_mcp::{
     HttpMcpClient, McpClient, McpClientState, McpCompletionArgument, McpCompletionReference,

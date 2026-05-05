@@ -3,13 +3,13 @@
 //!
 //! Two surfaces, both narrowly defined:
 //!
-//! - [`LlmFacingError`] — `render_for_llm()` returns a short,
-//!   actionable string the model can act on. Vendor status codes,
-//!   type-system identifiers, and source-error chains are
-//!   deliberately omitted; they would burn the model's attention
-//!   budget while supplying no information the model can use. The
-//!   full error continues to flow through `Display` / `Error::source`
-//!   to the operator channels (OTel, event sinks, log sinks).
+//! - [`LlmRenderable`] — `render_for_llm()` returns the raw model-facing
+//!   value; `for_llm()` wraps it in a sealed [`RenderedForLlm`] carrier
+//!   so emit sites cannot fabricate model-facing content without
+//!   passing through a registered impl. Implementors keep prose brief,
+//!   omit operator-only context (status codes, type-system
+//!   identifiers, source chains), and never echo input payloads —
+//!   those are prompt-injection vectors.
 //! - [`LlmFacingSchema`] — `strip(&Value) -> Value` reduces a JSON
 //!   Schema to the keys vendor APIs actually consume (`type`,
 //!   `properties`, `required`, `items`, `enum`, `description`,
@@ -17,17 +17,33 @@
 //!   `$defs`, `$ref`, format specifiers like `int64`) ride out.
 //!   Saves 30–120 tokens per tool per request × every turn.
 //!
+//! ## Why the sealed carrier
+//!
+//! Errors, future sub-agent results, approval decisions, and
+//! memory-recall summaries all flow through the same funnel toward
+//! the model's context window. Without a sealed carrier any
+//! `String`-typed field can be fabricated by external code — a
+//! reviewer reading an emit site cannot distinguish "this string
+//! went through the LLM-facing rendering" from "this string was
+//! built directly from operator content". Wrapping the value in
+//! `RenderedForLlm<T>` whose constructor is private to this
+//! module makes the boundary structural: the only path from value
+//! to carrier is the trait's default `for_llm` impl, which wraps
+//! the implementer's `render_for_llm` output. A subtype that
+//! tries to override `for_llm` cannot reach `RenderedForLlm::new`,
+//! so the sealing holds across crate boundaries.
+//!
 //! ## Why a separate trait rather than a method on `Error`
 //!
 //! The split lets non-`Error` types (custom tool error wrappers, MCP
-//! server errors lifted into IR) opt into the same contract without
-//! coupling to `entelix_core::Error`. Default impls on `Error` and
-//! `String`/`&str` cover the common cases; bespoke implementors
-//! override.
+//! server errors lifted into IR, future sub-agent result types) opt
+//! into the same contract without coupling to `entelix_core::Error`.
+//! Default impls on `Error` and `String`/`&str` cover the common
+//! cases; bespoke implementors override `render_for_llm` only.
 //!
 //! ## Enforcement
 //!
-//! `tests/llm_context_economy.rs` (entelix-core) regression-checks
+//! `crates/entelix-tools/tests/llm_context_economy.rs` regression-checks
 //! that built-in tool outputs and tool-spec schemas never leak the
 //! forbidden patterns. CI rejects new sites silently re-introducing
 //! operator-channel content into the model's view.
@@ -38,20 +54,115 @@ use serde_json::{Map, Value};
 
 use crate::error::Error;
 
-/// Render a value (typically an error) into the short, actionable
-/// string the model is allowed to see. Implementors keep prose
-/// brief, omit operator-only context (status codes, type-system
-/// identifiers, source chains), and never echo input payloads —
-/// those are prompt-injection vectors.
-pub trait LlmFacingError {
-    /// The model-facing rendering. Must not include vendor status
-    /// codes, `provider returned …` framing, source chains,
-    /// RFC3339 timestamps, or internal type names — operator
-    /// channels carry those.
-    fn render_for_llm(&self) -> String;
+/// Sealed carrier for a model-facing value of type `T`. Constructed
+/// only by [`LlmRenderable::for_llm`]'s default impl — the
+/// constructor is `pub(crate)`, so an external crate that
+/// implements [`LlmRenderable<T>`] for its own type can override
+/// `render_for_llm` (the raw producer) but cannot override
+/// `for_llm` (the carrier-producing wrapper) because it has no way
+/// to reach `RenderedForLlm::new`. Emit sites that accept
+/// `RenderedForLlm<T>` therefore receive a value that
+/// structurally must have come through the trait funnel.
+///
+/// `RenderedForLlm` is intentionally minimal — it exposes
+/// [`Self::into_inner`] for consumers that need to forward the
+/// underlying value (the audit-log projection of
+/// `AgentEvent::ToolError` does exactly this when emitting the
+/// model-safe rendering as `GraphEvent::ToolResult` content). The
+/// carrier carries no metadata because the boundary it enforces is
+/// authorship, not provenance.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct RenderedForLlm<T>(T);
+
+impl<T> RenderedForLlm<T> {
+    /// Sealed constructor — only [`LlmRenderable::for_llm`]'s
+    /// default impl reaches this. `pub(crate)` is the entire seal.
+    pub(crate) const fn new(inner: T) -> Self {
+        Self(inner)
+    }
+
+    /// Borrow the inner model-facing value.
+    #[must_use]
+    pub const fn as_inner(&self) -> &T {
+        &self.0
+    }
+
+    /// Consume the carrier and return the inner value.
+    #[must_use]
+    pub fn into_inner(self) -> T {
+        self.0
+    }
 }
 
-impl LlmFacingError for Error {
+impl<T: AsRef<str>> AsRef<str> for RenderedForLlm<T> {
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
+    }
+}
+
+impl<T: std::fmt::Display> std::fmt::Display for RenderedForLlm<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl<T> serde::Serialize for RenderedForLlm<T>
+where
+    T: serde::Serialize,
+{
+    fn serialize<S: serde::Serializer>(&self, ser: S) -> std::result::Result<S::Ok, S::Error> {
+        self.0.serialize(ser)
+    }
+}
+
+impl<'de, T> serde::Deserialize<'de> for RenderedForLlm<T>
+where
+    T: serde::Deserialize<'de>,
+{
+    fn deserialize<D: serde::Deserializer<'de>>(de: D) -> std::result::Result<Self, D::Error> {
+        // Audit-log replay paths (re-load `AgentEvent::ToolError`
+        // events from a `SessionLog`) must reconstruct the carrier
+        // around its persisted inner value. The persisted value
+        // already passed `for_llm` on first emit (invariant 18 —
+        // events are the SSoT), so deserialising into the carrier
+        // is the inverse, not a fresh fabrication.
+        T::deserialize(de).map(Self::new)
+    }
+}
+
+/// Render a value (typically an error, sub-agent result, or
+/// memory-recall summary) into the short, actionable form the
+/// model is allowed to see. Implementors define
+/// [`Self::render_for_llm`] (the raw producer); the default
+/// [`Self::for_llm`] wraps the result in a sealed
+/// [`RenderedForLlm`] carrier whose constructor is private to this
+/// crate, so emit sites that accept the carrier receive a value
+/// that structurally went through the trait.
+///
+/// Implementations keep prose brief, omit operator-only context
+/// (status codes, type-system identifiers, source chains), and
+/// never echo input payloads — those are prompt-injection vectors.
+/// The full operator-facing form continues to flow through
+/// `Display` / `Error::source` / event sinks / OTel.
+pub trait LlmRenderable<T> {
+    /// The raw model-facing rendering. Must not include vendor
+    /// status codes, `provider returned …` framing, source chains,
+    /// RFC3339 timestamps, or internal type names — operator
+    /// channels carry those.
+    fn render_for_llm(&self) -> T;
+
+    /// Sealed carrier wrapping [`Self::render_for_llm`]'s output.
+    /// External crates that implement this trait cannot override
+    /// this method without access to [`RenderedForLlm::new`], which
+    /// is `pub(crate)` to `entelix-core`. The boundary therefore
+    /// holds across crate boundaries: only `entelix-core`'s default
+    /// impl can produce a `RenderedForLlm<T>`.
+    fn for_llm(&self) -> RenderedForLlm<T> {
+        RenderedForLlm::new(self.render_for_llm())
+    }
+}
+
+impl LlmRenderable<String> for Error {
     /// Short, model-actionable rendering. Mapping:
     ///
     /// - `InvalidRequest(msg)` → `"invalid input: {msg}"` — the

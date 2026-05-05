@@ -54,7 +54,7 @@ pub enum Error {
         /// Underlying error (transport / parser / signer) preserved
         /// for operator diagnostics. Walk it via [`std::error::Error::source`]
         /// or `{:?}`; the LLM-facing channel never sees it
-        /// (invariant 16 — `LlmFacingError::render_for_llm` strips
+        /// (invariant 16 — `LlmRenderable::render_for_llm` strips
         /// source chains).
         #[source]
         source: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
@@ -251,7 +251,7 @@ impl Error {
     /// unchanged for non-`Provider` variants.
     ///
     /// Channel-separation guarantee (invariant 16): the source chain
-    /// is operator-only. [`crate::LlmFacingError::render_for_llm`]
+    /// is operator-only. [`crate::LlmRenderable::render_for_llm`]
     /// strips it for LLM-facing renderings; sinks / OTel / logs keep
     /// the full diagnostic.
     #[must_use]

@@ -29,6 +29,7 @@
 //! - `temporal_filter(time_range)` — edges whose timestamp falls in
 //!   `[from, to)`. Returns `(EdgeId, NodeId, NodeId, E)` tuples.
 
+use entelix_core::TenantId;
 use std::collections::{BTreeMap, HashSet, VecDeque};
 use std::sync::Arc;
 
@@ -1358,7 +1359,7 @@ mod tests {
             let g = g.clone();
             handles.push(tokio::spawn(async move {
                 let ctx = ExecutionContext::new();
-                let ns = Namespace::new(format!("tenant-{tenant}"));
+                let ns = Namespace::new(TenantId::new(format!("tenant-{tenant}")));
                 let mut ids = Vec::new();
                 for i in 0..50 {
                     let id = g

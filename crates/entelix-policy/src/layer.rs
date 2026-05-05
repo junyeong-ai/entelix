@@ -26,6 +26,7 @@
 //! - **after inner.call**: PII `redact_tool_output` on the JSON
 //!   response.
 
+use entelix_core::TenantId;
 use std::sync::Arc;
 use std::task::{Context, Poll};
 
@@ -308,7 +309,7 @@ mod tests {
             .unwrap();
         assert_eq!(calls.load(Ordering::SeqCst), 1);
         // 1000*15/1000 + 1000*75/1000 = 90
-        assert_eq!(meter.spent_by("acme"), d("90"));
+        assert_eq!(meter.spent_by(&TenantId::new("acme")), d("90"));
         assert_eq!(resp.id, "r1");
     }
 

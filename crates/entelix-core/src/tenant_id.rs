@@ -94,6 +94,36 @@ impl Borrow<str> for TenantId {
     }
 }
 
+// Cross-type equality with `str` — mirrors the `PartialEq<str>`
+// impls on `String`, `Path`, `OsStr`, and `Url` from the standard
+// library so call sites read `ctx.tenant_id() == "acme"` without
+// an `.as_str()` dance. The implementation is value-equality on
+// the underlying `Arc<str>`'s contents; identity (Arc pointer
+// equality) is irrelevant here.
+impl PartialEq<str> for TenantId {
+    fn eq(&self, other: &str) -> bool {
+        &*self.0 == other
+    }
+}
+
+impl PartialEq<&str> for TenantId {
+    fn eq(&self, other: &&str) -> bool {
+        &*self.0 == *other
+    }
+}
+
+impl PartialEq<TenantId> for str {
+    fn eq(&self, other: &TenantId) -> bool {
+        self == &*other.0
+    }
+}
+
+impl PartialEq<TenantId> for &str {
+    fn eq(&self, other: &TenantId) -> bool {
+        *self == &*other.0
+    }
+}
+
 impl fmt::Display for TenantId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(&self.0)

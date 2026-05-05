@@ -8,6 +8,7 @@
     clippy::missing_const_for_fn
 )]
 
+use entelix_core::TenantId;
 use std::collections::HashMap;
 use std::sync::Arc;
 

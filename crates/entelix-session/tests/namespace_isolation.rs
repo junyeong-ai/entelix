@@ -20,6 +20,7 @@
 )]
 
 use chrono::Utc;
+use entelix_core::TenantId;
 use entelix_core::ThreadKey;
 use entelix_core::ir::ContentPart;
 use entelix_session::{GraphEvent, InMemorySessionLog, SessionLog};

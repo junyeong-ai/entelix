@@ -10,7 +10,7 @@ use std::time::Duration;
 use async_trait::async_trait;
 use entelix_core::error::Error;
 use entelix_core::transports::RetryPolicy;
-use entelix_core::{ExecutionContext, Result};
+use entelix_core::{ExecutionContext, Result, TenantId};
 use entelix_runnable::{Runnable, RunnableExt, RunnableLambda};
 
 // `ExponentialBackoff` lives in entelix_core::backoff; the marker

@@ -7,6 +7,7 @@
 )]
 
 use chrono::Utc;
+use entelix_core::TenantId;
 use entelix_core::ir::{ContentPart, ModelWarning, Role, ToolResultContent, Usage};
 use entelix_session::{GraphEvent, SessionGraph};
 

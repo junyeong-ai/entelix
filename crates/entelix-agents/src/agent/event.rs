@@ -44,6 +44,7 @@
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 
+use entelix_core::RenderedForLlm;
 use entelix_core::ir::ToolResultContent;
 use entelix_session::GraphEvent;
 
@@ -119,13 +120,17 @@ pub enum AgentEvent<S> {
         /// vendor status, source chain). Sinks, OTel, and log
         /// destinations consume this.
         error: String,
-        /// LLM-facing error message
-        /// ([`entelix_core::LlmFacingError::render_for_llm`]). Carried
-        /// alongside `error` so the audit-log projection
-        /// ([`Self::to_graph_event`]) routes the model-safe
-        /// rendering into `GraphEvent::ToolResult` while sinks keep
-        /// the full operator message — invariant #16.
-        error_for_llm: String,
+        /// LLM-facing error message wrapped in a sealed
+        /// [`RenderedForLlm`] carrier. The carrier's constructor is
+        /// `pub(crate)` to `entelix-core`, so the only path from a
+        /// raw `String` to this field is
+        /// [`entelix_core::LlmRenderable::for_llm`] — emit sites
+        /// cannot fabricate model-facing content. The audit-log
+        /// projection ([`Self::to_graph_event`]) extracts the inner
+        /// rendering into `GraphEvent::ToolResult` so replay
+        /// reconstructs the model's view without re-leaking
+        /// operator content (invariant #16).
+        error_for_llm: RenderedForLlm<String>,
         /// Wall-clock duration measured by the layer.
         duration_ms: u64,
     },
@@ -251,7 +256,7 @@ impl<S> AgentEvent<S> {
                 // becomes the model's view (invariant #16). The full
                 // operator-facing `error` continues to flow through
                 // the event sink and OTel.
-                content: ToolResultContent::Text(error_for_llm.clone()),
+                content: ToolResultContent::Text(error_for_llm.as_inner().clone()),
                 is_error: true,
                 timestamp,
             }),
@@ -350,6 +355,17 @@ mod tests {
 
     #[test]
     fn tool_error_projects_to_error_flagged_tool_result_using_llm_facing_text() {
+        use entelix_core::{Error, LlmRenderable};
+        // The carrier `RenderedForLlm<String>` is sealed to
+        // `entelix-core` — there is no way to fabricate one from a
+        // raw `String` here. The only path to populate
+        // `error_for_llm` is `LlmRenderable::for_llm` on a value
+        // that implements the trait. `Error::provider_http(503,
+        // ...).for_llm()` produces the canonical "upstream model
+        // error" rendering through the same code path the
+        // production tool-event layer uses, so the test exercises
+        // the real boundary instead of stubbing past it.
+        let llm_facing = Error::provider_http(503, "vendor down").for_llm();
         let event: AgentEvent<u32> = AgentEvent::ToolError {
             run_id: "r1".into(),
             tool_use_id: "tu-1".into(),
@@ -361,7 +377,7 @@ mod tests {
             error: "provider returned 503: vendor down".into(),
             // LLM-facing rendering — short, actionable, no vendor
             // identifiers. The audit projection picks this.
-            error_for_llm: "upstream model error".into(),
+            error_for_llm: llm_facing,
             duration_ms: 7,
         };
         let projected = event.to_graph_event(ts()).unwrap();

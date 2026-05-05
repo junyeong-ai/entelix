@@ -15,6 +15,7 @@
 //! ends up overshooting marginally. Hard caps live above this layer
 //! (e.g. payment-system pre-authorization).
 
+use entelix_core::TenantId;
 use std::sync::Arc;
 
 use rust_decimal::Decimal;
@@ -147,15 +148,18 @@ mod tests {
     #[tokio::test]
     async fn empty_quota_is_pass_through() {
         let q = QuotaLimiter::new(None, None, Budget::unlimited());
-        q.check_pre_request("t", 1).await.unwrap();
+        q.check_pre_request(&TenantId::new("t"), 1).await.unwrap();
     }
 
     #[tokio::test]
     async fn rate_limit_refusal_propagates() {
         let limiter: Arc<dyn RateLimiter> = Arc::new(TokenBucketLimiter::new(1, 1.0).unwrap());
         let q = QuotaLimiter::new(Some(limiter), None, Budget::unlimited());
-        q.check_pre_request("t", 1).await.unwrap();
-        let err = q.check_pre_request("t", 1).await.unwrap_err();
+        q.check_pre_request(&TenantId::new("t"), 1).await.unwrap();
+        let err = q
+            .check_pre_request(&TenantId::new("t"), 1)
+            .await
+            .unwrap_err();
         assert!(matches!(err, PolicyError::RateLimited { .. }));
     }
 
@@ -163,11 +167,15 @@ mod tests {
     async fn budget_refusal_when_spent_meets_ceiling() {
         let cm = meter();
         // Push spend up to the ceiling.
-        cm.charge("t", "x", &Usage::new(1000, 1000)).unwrap();
+        cm.charge(&TenantId::new("t"), "x", &Usage::new(1000, 1000))
+            .unwrap();
         // 1000*10/1000 + 1000*10/1000 = 20
-        assert_eq!(cm.spent_by("t"), d("20"));
+        assert_eq!(cm.spent_by(&TenantId::new("t")), d("20"));
         let q = QuotaLimiter::new(None, Some(cm), Budget::capped(d("20")));
-        let err = q.check_pre_request("t", 1).await.unwrap_err();
+        let err = q
+            .check_pre_request(&TenantId::new("t"), 1)
+            .await
+            .unwrap_err();
         match err {
             PolicyError::BudgetExhausted { spent, ceiling, .. } => {
                 assert_eq!(spent, d("20"));
@@ -181,17 +189,21 @@ mod tests {
     async fn budget_admit_below_ceiling() {
         let cm = meter();
         let q = QuotaLimiter::new(None, Some(cm), Budget::capped(d("100")));
-        q.check_pre_request("t", 1).await.unwrap();
+        q.check_pre_request(&TenantId::new("t"), 1).await.unwrap();
     }
 
     #[tokio::test]
     async fn budget_check_runs_before_rate_check() {
         let cm = meter();
-        cm.charge("t", "x", &Usage::new(1000, 1000)).unwrap();
+        cm.charge(&TenantId::new("t"), "x", &Usage::new(1000, 1000))
+            .unwrap();
         let limiter: Arc<dyn RateLimiter> = Arc::new(TokenBucketLimiter::new(1, 1.0).unwrap());
         let q = QuotaLimiter::new(Some(limiter.clone()), Some(cm), Budget::capped(d("20")));
         // Budget exhausted; we should not consume a rate-limit token.
-        let err = q.check_pre_request("t", 1).await.unwrap_err();
+        let err = q
+            .check_pre_request(&TenantId::new("t"), 1)
+            .await
+            .unwrap_err();
         assert!(matches!(err, PolicyError::BudgetExhausted { .. }));
         // Token is still available — verify by acquiring directly.
         limiter.try_acquire("t", 1).await.unwrap();

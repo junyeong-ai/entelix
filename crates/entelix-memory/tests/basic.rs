@@ -6,6 +6,7 @@
     clippy::needless_borrows_for_generic_args
 )]
 
+use entelix_core::TenantId;
 use std::sync::Arc;
 
 use entelix_core::ExecutionContext;

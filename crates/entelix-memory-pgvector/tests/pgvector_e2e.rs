@@ -16,6 +16,7 @@
     clippy::doc_markdown
 )]
 
+use entelix_core::TenantId;
 use entelix_core::context::ExecutionContext;
 use entelix_memory::{Document, Namespace, VectorFilter, VectorStore};
 use entelix_memory_pgvector::{DistanceMetric, IndexKind, PgVectorStore};

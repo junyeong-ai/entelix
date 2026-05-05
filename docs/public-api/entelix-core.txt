@@ -545,7 +545,8 @@ impl core::fmt::Debug for entelix_core::error::Error
 pub fn entelix_core::error::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for entelix_core::error::Error
 pub fn entelix_core::error::Error::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl entelix_core::llm_facing::LlmFacingError for entelix_core::error::Error
+impl entelix_core::llm_facing::LlmRenderable<alloc::string::String> for entelix_core::error::Error
+pub fn entelix_core::error::Error::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
 pub fn entelix_core::error::Error::render_for_llm(&self) -> alloc::string::String
 impl core::marker::Freeze for entelix_core::error::Error
 impl core::marker::Send for entelix_core::error::Error
@@ -1795,9 +1796,40 @@ impl core::marker::Unpin for entelix_core::llm_facing::LlmFacingSchema
 impl core::marker::UnsafeUnpin for entelix_core::llm_facing::LlmFacingSchema
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::llm_facing::LlmFacingSchema
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::llm_facing::LlmFacingSchema
-pub trait entelix_core::llm_facing::LlmFacingError
-pub fn entelix_core::llm_facing::LlmFacingError::render_for_llm(&self) -> alloc::string::String
-impl entelix_core::llm_facing::LlmFacingError for entelix_core::error::Error
+pub struct entelix_core::llm_facing::RenderedForLlm<T>(_)
+impl<T> entelix_core::llm_facing::RenderedForLlm<T>
+pub const fn entelix_core::llm_facing::RenderedForLlm<T>::as_inner(&self) -> &T
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::into_inner(self) -> T
+impl<'de, T> serde_core::de::Deserialize<'de> for entelix_core::llm_facing::RenderedForLlm<T> where T: serde_core::de::Deserialize<'de>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::deserialize<D: serde_core::de::Deserializer<'de>>(de: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error>
+impl<T: core::clone::Clone> core::clone::Clone for entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::clone(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
+impl<T: core::cmp::Eq> core::cmp::Eq for entelix_core::llm_facing::RenderedForLlm<T>
+impl<T: core::cmp::PartialEq> core::cmp::PartialEq for entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::eq(&self, other: &entelix_core::llm_facing::RenderedForLlm<T>) -> bool
+impl<T: core::convert::AsRef<str>> core::convert::AsRef<str> for entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::as_ref(&self) -> &str
+impl<T: core::fmt::Debug> core::fmt::Debug for entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T: core::fmt::Display> core::fmt::Display for entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T: core::hash::Hash> core::hash::Hash for entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl<T> core::marker::StructuralPartialEq for entelix_core::llm_facing::RenderedForLlm<T>
+impl<T> serde_core::ser::Serialize for entelix_core::llm_facing::RenderedForLlm<T> where T: serde_core::ser::Serialize
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::serialize<S: serde_core::ser::Serializer>(&self, ser: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<T> core::marker::Freeze for entelix_core::llm_facing::RenderedForLlm<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for entelix_core::llm_facing::RenderedForLlm<T> where T: core::marker::Send
+impl<T> core::marker::Sync for entelix_core::llm_facing::RenderedForLlm<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for entelix_core::llm_facing::RenderedForLlm<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for entelix_core::llm_facing::RenderedForLlm<T> where T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for entelix_core::llm_facing::RenderedForLlm<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for entelix_core::llm_facing::RenderedForLlm<T> where T: core::panic::unwind_safe::UnwindSafe
+pub trait entelix_core::llm_facing::LlmRenderable<T>
+pub fn entelix_core::llm_facing::LlmRenderable::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::llm_facing::LlmRenderable::render_for_llm(&self) -> T
+impl entelix_core::llm_facing::LlmRenderable<alloc::string::String> for entelix_core::error::Error
+pub fn entelix_core::error::Error::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
 pub fn entelix_core::error::Error::render_for_llm(&self) -> alloc::string::String
 pub mod entelix_core::overrides
 #[non_exhaustive] pub struct entelix_core::overrides::RunOverrides
@@ -2199,6 +2231,14 @@ pub fn entelix_core::tenant_id::TenantId::clone(&self) -> entelix_core::tenant_i
 impl core::cmp::Eq for entelix_core::tenant_id::TenantId
 impl core::cmp::PartialEq for entelix_core::tenant_id::TenantId
 pub fn entelix_core::tenant_id::TenantId::eq(&self, other: &entelix_core::tenant_id::TenantId) -> bool
+impl core::cmp::PartialEq<&str> for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::eq(&self, other: &&str) -> bool
+impl core::cmp::PartialEq<entelix_core::tenant_id::TenantId> for &str
+pub fn &str::eq(&self, other: &entelix_core::tenant_id::TenantId) -> bool
+impl core::cmp::PartialEq<entelix_core::tenant_id::TenantId> for str
+pub fn str::eq(&self, other: &entelix_core::tenant_id::TenantId) -> bool
+impl core::cmp::PartialEq<str> for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::eq(&self, other: &str) -> bool
 impl core::convert::AsRef<str> for entelix_core::tenant_id::TenantId
 pub fn entelix_core::tenant_id::TenantId::as_ref(&self) -> &str
 impl core::convert::TryFrom<&str> for entelix_core::tenant_id::TenantId
@@ -2665,7 +2705,8 @@ impl core::fmt::Debug for entelix_core::error::Error
 pub fn entelix_core::error::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for entelix_core::error::Error
 pub fn entelix_core::error::Error::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl entelix_core::llm_facing::LlmFacingError for entelix_core::error::Error
+impl entelix_core::llm_facing::LlmRenderable<alloc::string::String> for entelix_core::error::Error
+pub fn entelix_core::error::Error::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
 pub fn entelix_core::error::Error::render_for_llm(&self) -> alloc::string::String
 impl core::marker::Freeze for entelix_core::error::Error
 impl core::marker::Send for entelix_core::error::Error
@@ -2987,6 +3028,35 @@ impl core::marker::Unpin for entelix_core::approval::PendingApprovalDecisions
 impl core::marker::UnsafeUnpin for entelix_core::approval::PendingApprovalDecisions
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::approval::PendingApprovalDecisions
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::approval::PendingApprovalDecisions
+pub struct entelix_core::RenderedForLlm<T>(_)
+impl<T> entelix_core::llm_facing::RenderedForLlm<T>
+pub const fn entelix_core::llm_facing::RenderedForLlm<T>::as_inner(&self) -> &T
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::into_inner(self) -> T
+impl<'de, T> serde_core::de::Deserialize<'de> for entelix_core::llm_facing::RenderedForLlm<T> where T: serde_core::de::Deserialize<'de>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::deserialize<D: serde_core::de::Deserializer<'de>>(de: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error>
+impl<T: core::clone::Clone> core::clone::Clone for entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::clone(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
+impl<T: core::cmp::Eq> core::cmp::Eq for entelix_core::llm_facing::RenderedForLlm<T>
+impl<T: core::cmp::PartialEq> core::cmp::PartialEq for entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::eq(&self, other: &entelix_core::llm_facing::RenderedForLlm<T>) -> bool
+impl<T: core::convert::AsRef<str>> core::convert::AsRef<str> for entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::as_ref(&self) -> &str
+impl<T: core::fmt::Debug> core::fmt::Debug for entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T: core::fmt::Display> core::fmt::Display for entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T: core::hash::Hash> core::hash::Hash for entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl<T> core::marker::StructuralPartialEq for entelix_core::llm_facing::RenderedForLlm<T>
+impl<T> serde_core::ser::Serialize for entelix_core::llm_facing::RenderedForLlm<T> where T: serde_core::ser::Serialize
+pub fn entelix_core::llm_facing::RenderedForLlm<T>::serialize<S: serde_core::ser::Serializer>(&self, ser: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<T> core::marker::Freeze for entelix_core::llm_facing::RenderedForLlm<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for entelix_core::llm_facing::RenderedForLlm<T> where T: core::marker::Send
+impl<T> core::marker::Sync for entelix_core::llm_facing::RenderedForLlm<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for entelix_core::llm_facing::RenderedForLlm<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for entelix_core::llm_facing::RenderedForLlm<T> where T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for entelix_core::llm_facing::RenderedForLlm<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for entelix_core::llm_facing::RenderedForLlm<T> where T: core::panic::unwind_safe::UnwindSafe
 #[non_exhaustive] pub struct entelix_core::RunOverrides
 impl entelix_core::overrides::RunOverrides
 pub const fn entelix_core::overrides::RunOverrides::max_iterations(&self) -> core::option::Option<usize>
@@ -3063,6 +3133,14 @@ pub fn entelix_core::tenant_id::TenantId::clone(&self) -> entelix_core::tenant_i
 impl core::cmp::Eq for entelix_core::tenant_id::TenantId
 impl core::cmp::PartialEq for entelix_core::tenant_id::TenantId
 pub fn entelix_core::tenant_id::TenantId::eq(&self, other: &entelix_core::tenant_id::TenantId) -> bool
+impl core::cmp::PartialEq<&str> for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::eq(&self, other: &&str) -> bool
+impl core::cmp::PartialEq<entelix_core::tenant_id::TenantId> for &str
+pub fn &str::eq(&self, other: &entelix_core::tenant_id::TenantId) -> bool
+impl core::cmp::PartialEq<entelix_core::tenant_id::TenantId> for str
+pub fn str::eq(&self, other: &entelix_core::tenant_id::TenantId) -> bool
+impl core::cmp::PartialEq<str> for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::eq(&self, other: &str) -> bool
 impl core::convert::AsRef<str> for entelix_core::tenant_id::TenantId
 pub fn entelix_core::tenant_id::TenantId::as_ref(&self) -> &str
 impl core::convert::TryFrom<&str> for entelix_core::tenant_id::TenantId
@@ -3192,9 +3270,11 @@ impl entelix_core::auth::CredentialProvider for entelix_core::auth::ChainedCrede
 pub fn entelix_core::auth::ChainedCredentialProvider::resolve<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::auth::Credentials>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 impl<P> entelix_core::auth::CredentialProvider for entelix_core::auth::CachedCredentialProvider<P> where P: entelix_core::auth::CredentialProvider
 pub fn entelix_core::auth::CachedCredentialProvider<P>::resolve<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::auth::Credentials>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
-pub trait entelix_core::LlmFacingError
-pub fn entelix_core::LlmFacingError::render_for_llm(&self) -> alloc::string::String
-impl entelix_core::llm_facing::LlmFacingError for entelix_core::error::Error
+pub trait entelix_core::LlmRenderable<T>
+pub fn entelix_core::LlmRenderable::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
+pub fn entelix_core::LlmRenderable::render_for_llm(&self) -> T
+impl entelix_core::llm_facing::LlmRenderable<alloc::string::String> for entelix_core::error::Error
+pub fn entelix_core::error::Error::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
 pub fn entelix_core::error::Error::render_for_llm(&self) -> alloc::string::String
 pub trait entelix_core::Skill: core::marker::Send + core::marker::Sync + core::fmt::Debug
 pub fn entelix_core::Skill::description(&self) -> &str

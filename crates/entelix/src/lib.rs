@@ -42,15 +42,15 @@ pub use entelix_core::transports;
 // module home. Every user touches Error / Result / ExecutionContext
 // on every call; ChatModel is the 5-line agent path; ThreadKey is
 // the persistence addressing primitive. AuditSink + Extensions +
-// LlmFacingError + ProviderErrorKind sit alongside because every
+// LlmRenderable + ProviderErrorKind sit alongside because every
 // consumer lifecycle (audit emission, scoped task-locals, error
 // matching, LLM-facing error rendering) reaches them. Keep them at
 // the top so callers don't need to memorise an internal module name.
 pub use entelix_core::{
     ApprovalDecision, AuditSink, AuditSinkHandle, ChatModel, ChatModelConfig, CostCalculator,
     DEFAULT_TENANT_ID, Error, ExecutionContext, Extensions, INTERRUPT_KIND_APPROVAL_PENDING,
-    LlmFacingError, LlmFacingSchema, PendingApprovalDecisions, ProviderErrorKind, Result,
-    RunOverrides, TenantId, ThreadKey, ToolCostCalculator,
+    LlmFacingSchema, LlmRenderable, PendingApprovalDecisions, ProviderErrorKind, RenderedForLlm,
+    Result, RunOverrides, TenantId, ThreadKey, ToolCostCalculator,
 };
 
 // ── Sub-crate re-exports — the 90% surface for crates that don't

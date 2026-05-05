@@ -22,13 +22,14 @@
 
 #![allow(clippy::unwrap_used, clippy::indexing_slicing)]
 
+use entelix_core::TenantId;
 use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use entelix_core::ir::Usage;
 use entelix_core::skills::SkillRegistry;
-use entelix_core::{ExecutionContext, LlmFacingError, LlmFacingSchema, Result, ToolRegistry};
+use entelix_core::{ExecutionContext, LlmFacingSchema, LlmRenderable, Result, ToolRegistry};
 use entelix_memory::{
     Document, EntityMemory, InMemoryStore, Namespace, RerankedDocument, Reranker,
     SemanticMemoryBackend, VectorFilter,
@@ -61,6 +62,31 @@ fn error_render_for_llm_invalid_request_keeps_caller_message() {
         rendered.contains("missing 'task' field"),
         "caller-supplied message must survive (it is already model-safe): {rendered}"
     );
+}
+
+/// Carrier sealing — `RenderedForLlm<T>::new` is `pub(crate)` to
+/// `entelix-core`, so this crate (`entelix-tools`) cannot fabricate
+/// a carrier from a raw string. The only path to one is
+/// `LlmRenderable::for_llm` on a value that implements the trait,
+/// which is the structural guarantee invariant 16 / ADR-0076 codify.
+///
+/// This test does not invoke any forbidden API — it documents the
+/// boundary by exercising the only legal construction path. A
+/// regression that re-exports `RenderedForLlm::new` as `pub` would
+/// not break this test (the legal path still works) but would be
+/// caught by `cargo xtask public-api` baselines, by the
+/// `pub(crate)` visibility check at compile time in any external
+/// consumer that tries to call `RenderedForLlm::new`, and by the
+/// reviewer reading ADR-0076 §"Sealing".
+#[test]
+fn rendered_for_llm_only_constructible_via_for_llm_trait_default() {
+    use entelix_core::{Error, LlmRenderable, RenderedForLlm};
+    let err = Error::provider_http(503, "vendor down".to_owned());
+    let carrier: RenderedForLlm<String> = err.for_llm();
+    // The only operations on the carrier from outside `entelix-core`
+    // are the read accessors. Inner value matches the raw producer.
+    assert_eq!(carrier.as_inner(), "upstream model error");
+    assert_eq!(carrier.into_inner(), "upstream model error");
 }
 
 // ── Schema strip: every built-in tool spec must be free of

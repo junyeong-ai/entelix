@@ -19,8 +19,8 @@ use std::sync::Arc;
 
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
-use entelix_core::ThreadKey;
 use entelix_core::context::ExecutionContext;
+use entelix_core::{TenantId, ThreadKey};
 use entelix_graph::{Checkpoint, Checkpointer, InMemoryCheckpointer};
 use entelix_runnable::RunnableLambda;
 use entelix_server::AgentRouterBuilder;
@@ -36,7 +36,7 @@ struct EchoState {
 
 fn build_runnable() -> RunnableLambda<EchoState, EchoState> {
     RunnableLambda::new(|mut s: EchoState, ctx: ExecutionContext| {
-        let tenant = ctx.tenant_id().to_owned();
+        let tenant = ctx.tenant_id().as_str().to_owned();
         async move {
             s.seen_tenant = tenant;
             s.counter = s.counter.saturating_add(1);

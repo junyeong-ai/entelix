@@ -30,8 +30,8 @@ use crate::codecs::codec::{BoxByteStream, BoxDeltaStream, Codec, EncodedRequest}
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
-    ModelWarning, RefusalReason, Role, SafetyCategory, SafetyLevel, SafetyRating, StopReason,
-    ToolChoice, ToolKind, ToolResultContent, Usage,
+    ModelWarning, ReasoningEffort, RefusalReason, Role, SafetyCategory, SafetyLevel, SafetyRating,
+    StopReason, ToolChoice, ToolKind, ToolResultContent, Usage,
 };
 use crate::stream::StreamDelta;
 
@@ -179,6 +179,14 @@ fn build_body(request: &ModelRequest) -> Result<(Value, Vec<ModelWarning>)> {
             });
         }
     }
+    if let Some(effort) = &request.reasoning_effort {
+        encode_gemini_thinking(
+            &request.model,
+            effort,
+            &mut generation_config,
+            &mut warnings,
+        );
+    }
     if !generation_config.is_empty() {
         body.insert("generationConfig".into(), Value::Object(generation_config));
     }
@@ -261,6 +269,116 @@ fn apply_provider_extensions(
             vendor: "bedrock".into(),
         });
     }
+}
+
+/// Gemini model family detection — 3.x uses `thinkingLevel`
+/// (discrete bucket), 2.5 uses `thinkingBudget` (integer token
+/// count, with `-1` = auto and `0` = disable on Flash only).
+/// Detection by model-string prefix because Gemini's API does not
+/// expose a wire signal for "this model accepts which thinking
+/// shape".
+fn is_gemini_3(model: &str) -> bool {
+    model.starts_with("gemini-3")
+}
+
+/// Gemini 2.5 Flash accepts `thinkingBudget: 0` to disable thinking;
+/// Pro cannot disable. Detection by model-string prefix.
+fn is_gemini_25_flash(model: &str) -> bool {
+    model.starts_with("gemini-2.5-flash") || model.starts_with("gemini-2.5-flash-lite")
+}
+
+/// Translate the cross-vendor [`ReasoningEffort`] knob onto
+/// Gemini's `generationConfig.thinkingConfig`. Per ADR-0078:
+///
+/// 2.5 (`thinkingBudget` integer):
+/// - `Off` → `0` (Flash only — Pro emits LossyEncode → `512`)
+/// - `Minimal` → `512`
+/// - `Low` → `1024`
+/// - `Medium` → `8192`
+/// - `High` → `24576`
+/// - `Auto` → `-1`
+/// - `VendorSpecific(s)` — `s` parses as decimal `thinkingBudget`;
+///   non-numeric emits LossyEncode → `Medium`.
+///
+/// 3.x (`thinkingLevel` enum):
+/// - `Off` → LossyEncode → `"minimal"` (Gemini 3 cannot disable)
+/// - `Minimal/Low/Medium/High` → `"minimal"/"low"/"medium"/"high"`
+/// - `Auto` → LossyEncode → `"high"` (no auto bucket)
+/// - `VendorSpecific(s)` — literal `thinkingLevel`.
+fn encode_gemini_thinking(
+    model: &str,
+    effort: &ReasoningEffort,
+    generation_config: &mut Map<String, Value>,
+    warnings: &mut Vec<ModelWarning>,
+) {
+    let mut thinking_config = Map::new();
+    if is_gemini_3(model) {
+        let level = match effort {
+            ReasoningEffort::Off => {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "reasoning_effort".into(),
+                    detail: "Gemini 3 cannot disable thinking — snapped to `\"minimal\"`".into(),
+                });
+                "minimal"
+            }
+            ReasoningEffort::Minimal => "minimal",
+            ReasoningEffort::Low => "low",
+            ReasoningEffort::Medium => "medium",
+            ReasoningEffort::High => "high",
+            ReasoningEffort::Auto => {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "reasoning_effort".into(),
+                    detail: "Gemini 3 has no `Auto` bucket — snapped to `\"high\"`".into(),
+                });
+                "high"
+            }
+            ReasoningEffort::VendorSpecific(literal) => {
+                thinking_config.insert("thinkingLevel".into(), Value::String(literal.clone()));
+                generation_config.insert("thinkingConfig".into(), Value::Object(thinking_config));
+                return;
+            }
+        };
+        thinking_config.insert("thinkingLevel".into(), Value::String(level.into()));
+    } else {
+        // Gemini 2.5 (default for any non-3.x prefix — falls
+        // through cleanly for 2.5 Pro / Flash / Flash-Lite).
+        let budget: i32 = match effort {
+            ReasoningEffort::Off => {
+                if is_gemini_25_flash(model) {
+                    0
+                } else {
+                    warnings.push(ModelWarning::LossyEncode {
+                        field: "reasoning_effort".into(),
+                        detail: format!(
+                            "Gemini 2.5 Pro ({model}) cannot disable thinking — snapped to `512`"
+                        ),
+                    });
+                    512
+                }
+            }
+            ReasoningEffort::Minimal => 512,
+            ReasoningEffort::Low => 1024,
+            ReasoningEffort::Medium => 8192,
+            ReasoningEffort::High => 24576,
+            ReasoningEffort::Auto => -1,
+            ReasoningEffort::VendorSpecific(literal) => {
+                if let Ok(parsed) = literal.parse::<i32>() {
+                    parsed
+                } else {
+                    warnings.push(ModelWarning::LossyEncode {
+                        field: "reasoning_effort".into(),
+                        detail: format!(
+                            "Gemini 2.5 vendor-specific reasoning_effort {literal:?} is not \
+                             a numeric thinkingBudget — falling through to `Medium`"
+                        ),
+                    });
+                    8192
+                }
+            }
+        };
+        thinking_config.insert("thinkingBudget".into(), json!(budget));
+    }
+    generation_config.insert("thinkingConfig".into(), Value::Object(thinking_config));
 }
 
 fn finalize_request(

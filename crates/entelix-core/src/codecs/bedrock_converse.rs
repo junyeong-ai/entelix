@@ -33,7 +33,8 @@ use crate::codecs::codec::{Codec, EncodedRequest};
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, ContentPart, MediaSource, ModelRequest, ModelResponse, ModelWarning,
-    RefusalReason, Role, StopReason, ToolChoice, ToolKind, ToolResultContent, Usage,
+    ReasoningEffort, RefusalReason, Role, StopReason, ToolChoice, ToolKind, ToolResultContent,
+    Usage,
 };
 use crate::rate_limit::RateLimitSnapshot;
 
@@ -234,8 +235,121 @@ fn build_body(request: &ModelRequest) -> Result<(Value, Vec<ModelWarning>)> {
                 .into(),
         });
     }
+    if let Some(effort) = &request.reasoning_effort {
+        encode_bedrock_thinking(&request.model, effort, &mut body, &mut warnings);
+    }
     apply_provider_extensions(request, &mut body, &mut warnings);
     Ok((Value::Object(body), warnings))
+}
+
+/// Bedrock-on-Anthropic family detection — Claude models routed
+/// through Converse accept Anthropic's `thinking` shape via
+/// `additionalModelRequestFields`. Other Bedrock model families
+/// (Nova, Mistral, Llama) have no thinking surface today; the
+/// codec emits `LossyEncode` and drops the knob.
+fn is_bedrock_anthropic(model: &str) -> bool {
+    // Bedrock Anthropic model IDs include the cross-region inference
+    // prefixes (e.g. `us.anthropic.claude-…`, `eu.anthropic.claude-…`)
+    // alongside the bare `anthropic.claude-…` form.
+    model.contains("anthropic.claude-")
+}
+
+/// Anthropic-on-Bedrock adaptive-only detection — Opus 4.7 hosted
+/// on Bedrock inherits the same constraint (manual budget rejected).
+fn is_bedrock_anthropic_adaptive_only(model: &str) -> bool {
+    is_bedrock_anthropic(model) && model.contains("claude-opus-4-7")
+}
+
+/// Translate the cross-vendor [`ReasoningEffort`] knob onto the
+/// Bedrock Converse `additionalModelRequestFields.thinking`
+/// passthrough. Reuses the Anthropic mapping (per ADR-0078) for
+/// Anthropic-family models on Bedrock; non-Anthropic models emit
+/// `LossyEncode` and drop the knob.
+fn encode_bedrock_thinking(
+    model: &str,
+    effort: &ReasoningEffort,
+    body: &mut Map<String, Value>,
+    warnings: &mut Vec<ModelWarning>,
+) {
+    if !is_bedrock_anthropic(model) {
+        warnings.push(ModelWarning::LossyEncode {
+            field: "reasoning_effort".into(),
+            detail: format!(
+                "Bedrock model {model:?} is not in the Anthropic family — Bedrock has no \
+                 thinking knob for non-Anthropic models; field dropped"
+            ),
+        });
+        return;
+    }
+    let adaptive_only = is_bedrock_anthropic_adaptive_only(model);
+    let thinking = match effort {
+        ReasoningEffort::Off => json!({"type": "disabled"}),
+        ReasoningEffort::Minimal => {
+            warnings.push(ModelWarning::LossyEncode {
+                field: "reasoning_effort".into(),
+                detail: "Anthropic on Bedrock has no `Minimal` bucket — snapped to adaptive `low`"
+                    .into(),
+            });
+            json!({"type": "adaptive", "effort": "low"})
+        }
+        ReasoningEffort::Low => {
+            if adaptive_only {
+                json!({"type": "adaptive", "effort": "low"})
+            } else {
+                json!({"type": "enabled", "budget_tokens": 1024})
+            }
+        }
+        ReasoningEffort::Medium => {
+            if adaptive_only {
+                json!({"type": "adaptive", "effort": "medium"})
+            } else {
+                json!({"type": "enabled", "budget_tokens": 4096})
+            }
+        }
+        ReasoningEffort::High => {
+            if adaptive_only {
+                json!({"type": "adaptive", "effort": "high"})
+            } else {
+                json!({"type": "enabled", "budget_tokens": 16384})
+            }
+        }
+        ReasoningEffort::Auto => json!({"type": "adaptive"}),
+        ReasoningEffort::VendorSpecific(literal) => {
+            if adaptive_only {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "reasoning_effort".into(),
+                    detail: format!(
+                        "Bedrock-Anthropic {model} is adaptive-only — manual budget \
+                         {literal:?} dropped; emitting `{{type:\"adaptive\"}}` instead"
+                    ),
+                });
+                json!({"type": "adaptive"})
+            } else if let Ok(budget) = literal.parse::<u32>() {
+                json!({"type": "enabled", "budget_tokens": budget})
+            } else {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "reasoning_effort".into(),
+                    detail: format!(
+                        "Bedrock-Anthropic vendor-specific reasoning_effort {literal:?} is not \
+                         a numeric budget_tokens — falling through to `Medium`"
+                    ),
+                });
+                json!({"type": "enabled", "budget_tokens": 4096})
+            }
+        }
+    };
+    let mut additional = body
+        .remove("additionalModelRequestFields")
+        .and_then(|v| match v {
+            Value::Object(o) => Some(o),
+            _ => None,
+        })
+        .unwrap_or_default(); // silent-fallback-ok: caller-initiated additionalModelRequestFields nesting — fresh empty Map when absent or non-object
+    additional.insert("thinking".into(), thinking);
+    body.insert(
+        "additionalModelRequestFields".into(),
+        Value::Object(additional),
+    );
 }
 
 /// Read [`crate::ir::BedrockExt`] and merge each set field into the
@@ -268,26 +382,6 @@ fn apply_provider_extensions(
     // `LossyEncode` warnings so the operator sees exactly which
     // setting was honoured and which was dropped.
     if let Some(anthropic) = &ext.anthropic {
-        if let Some(thinking) = &anthropic.thinking {
-            let mut additional = body
-                .remove("additionalModelRequestFields")
-                .and_then(|v| match v {
-                    Value::Object(o) => Some(o),
-                    _ => None,
-                })
-                .unwrap_or_default(); // silent-fallback-ok: caller-initiated additionalModelRequestFields nesting — fresh empty Map when absent or non-object
-            additional.insert(
-                "thinking".into(),
-                json!({
-                    "type": "enabled",
-                    "budget_tokens": thinking.budget_tokens,
-                }),
-            );
-            body.insert(
-                "additionalModelRequestFields".into(),
-                Value::Object(additional),
-            );
-        }
         if anthropic.disable_parallel_tool_use.is_some() {
             warnings.push(ModelWarning::LossyEncode {
                 field: "provider_extensions.anthropic.disable_parallel_tool_use".into(),

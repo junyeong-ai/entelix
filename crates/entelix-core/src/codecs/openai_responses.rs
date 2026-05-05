@@ -33,7 +33,8 @@ use crate::codecs::codec::{
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
-    ModelWarning, RefusalReason, Role, StopReason, ToolChoice, ToolKind, ToolResultContent, Usage,
+    ModelWarning, ReasoningEffort, ReasoningSummary, RefusalReason, Role, StopReason, ToolChoice,
+    ToolKind, ToolResultContent, Usage,
 };
 use crate::rate_limit::RateLimitSnapshot;
 use crate::stream::StreamDelta;
@@ -208,6 +209,10 @@ fn apply_provider_extensions(
     warnings: &mut Vec<ModelWarning>,
 ) {
     let ext = &request.provider_extensions;
+    let openai_summary = ext
+        .openai_responses
+        .as_ref()
+        .and_then(|e| e.reasoning_summary);
     if let Some(openai_responses) = &ext.openai_responses {
         if let Some(seed) = openai_responses.seed {
             body.insert("seed".into(), json!(seed));
@@ -215,33 +220,22 @@ fn apply_provider_extensions(
         if let Some(user) = &openai_responses.user {
             body.insert("user".into(), Value::String(user.clone()));
         }
-        if let Some(reasoning) = &openai_responses.reasoning {
-            // Wire shape: `reasoning: {effort: "<level>", summary?: "<mode>"}`
-            // at the Responses API root. Emit serde-canonical
-            // snake_case strings — matches OpenAI's documented shape.
-            let mut obj = Map::new();
-            obj.insert(
-                "effort".into(),
-                Value::String(
-                    serde_json::to_value(reasoning.effort)
-                        .ok()
-                        .and_then(|v| v.as_str().map(str::to_owned))
-                        .unwrap_or_else(|| "medium".to_owned()), // silent-fallback-ok: defense-in-depth — enum→string serialize is total for ReasoningEffort, "medium" is the OpenAI documented default
-                ),
-            );
-            if let Some(summary) = reasoning.summary {
-                obj.insert(
-                    "summary".into(),
-                    Value::String(
-                        serde_json::to_value(summary)
-                            .ok()
-                            .and_then(|v| v.as_str().map(str::to_owned))
-                            .unwrap_or_else(|| "auto".to_owned()), // silent-fallback-ok: defense-in-depth — enum→string serialize is total for ReasoningSummary, "auto" is the OpenAI documented default
-                    ),
-                );
-            }
-            body.insert("reasoning".into(), Value::Object(obj));
-        }
+    }
+    if let Some(effort) = &request.reasoning_effort {
+        encode_openai_responses_reasoning(effort, openai_summary, body, warnings);
+    } else if openai_summary.is_some() {
+        // Operator set summary verbosity but did not set the
+        // cross-vendor effort — OpenAI Responses requires
+        // `reasoning.effort` whenever any `reasoning.summary`
+        // value is set, so fall through to the vendor default
+        // (medium) and surface the lossy snap.
+        warnings.push(ModelWarning::LossyEncode {
+            field: "reasoning_effort".into(),
+            detail: "openai_responses_ext.reasoning_summary set without reasoning_effort — \
+                 defaulting effort to `medium`"
+                .into(),
+        });
+        encode_openai_responses_reasoning(&ReasoningEffort::Medium, openai_summary, body, warnings);
     }
     if ext.anthropic.is_some() {
         warnings.push(ModelWarning::ProviderExtensionIgnored {
@@ -263,6 +257,51 @@ fn apply_provider_extensions(
             vendor: "bedrock".into(),
         });
     }
+}
+
+/// Translate the cross-vendor [`ReasoningEffort`] knob onto OpenAI
+/// Responses' `reasoning: { effort, summary? }`. Mapping:
+///
+/// - `Off` → `effort:"none"`
+/// - `Minimal` → `effort:"minimal"`
+/// - `Low` → `effort:"low"`
+/// - `Medium` → `effort:"medium"`
+/// - `High` → `effort:"high"`
+/// - `Auto` → LossyEncode → `effort:"medium"` (Responses has no
+///   auto bucket)
+/// - `VendorSpecific(s)` → literal `effort` value (e.g. `"xhigh"`)
+fn encode_openai_responses_reasoning(
+    effort: &ReasoningEffort,
+    summary: Option<ReasoningSummary>,
+    body: &mut Map<String, Value>,
+    warnings: &mut Vec<ModelWarning>,
+) {
+    let effort_str: String = match effort {
+        ReasoningEffort::Off => "none".to_owned(),
+        ReasoningEffort::Minimal => "minimal".to_owned(),
+        ReasoningEffort::Low => "low".to_owned(),
+        ReasoningEffort::Medium => "medium".to_owned(),
+        ReasoningEffort::High => "high".to_owned(),
+        ReasoningEffort::Auto => {
+            warnings.push(ModelWarning::LossyEncode {
+                field: "reasoning_effort".into(),
+                detail: "OpenAI Responses has no `Auto` bucket — snapped to `medium`".into(),
+            });
+            "medium".to_owned()
+        }
+        ReasoningEffort::VendorSpecific(literal) => literal.clone(),
+    };
+    let mut obj = Map::new();
+    obj.insert("effort".into(), Value::String(effort_str));
+    if let Some(summary) = summary {
+        let summary_str = match summary {
+            ReasoningSummary::Auto => "auto",
+            ReasoningSummary::Concise => "concise",
+            ReasoningSummary::Detailed => "detailed",
+        };
+        obj.insert("summary".into(), Value::String(summary_str.into()));
+    }
+    body.insert("reasoning".into(), Value::Object(obj));
 }
 
 fn finalize_request(body: &Value, warnings: Vec<ModelWarning>) -> Result<EncodedRequest> {

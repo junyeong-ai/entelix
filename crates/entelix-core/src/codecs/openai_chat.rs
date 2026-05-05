@@ -218,6 +218,20 @@ fn apply_provider_extensions(
             body.insert("user".into(), Value::String(user.clone()));
         }
     }
+    if request.reasoning_effort.is_some() {
+        // The OpenAI Chat Completions API does not accept a
+        // reasoning / thinking knob — that surface lives on the
+        // Responses API only. Emit the typed loss so operators
+        // routing the same request across both endpoints see the
+        // miss instead of debugging a silently-ignored field
+        // (invariant 6, ADR-0078).
+        warnings.push(ModelWarning::LossyEncode {
+            field: "reasoning_effort".into(),
+            detail: "OpenAI Chat Completions has no reasoning / thinking knob — drop the field; \
+                 use OpenAiResponsesCodec for o-series reasoning models"
+                .into(),
+        });
+    }
     if ext.anthropic.is_some() {
         warnings.push(ModelWarning::ProviderExtensionIgnored {
             vendor: "anthropic".into(),

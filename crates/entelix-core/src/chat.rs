@@ -30,7 +30,9 @@ use tower::{Layer, Service, ServiceExt};
 use crate::codecs::{BoxDeltaStream, Codec};
 use crate::context::ExecutionContext;
 use crate::error::{Error, Result};
-use crate::ir::{Message, ModelRequest, ModelResponse, Role, SystemPrompt, ToolChoice, ToolSpec};
+use crate::ir::{
+    Message, ModelRequest, ModelResponse, ReasoningEffort, Role, SystemPrompt, ToolChoice, ToolSpec,
+};
 use crate::overrides::RunOverrides;
 use crate::service::{
     BoxedModelService, BoxedStreamingService, ModelInvocation, ModelStream,
@@ -75,6 +77,7 @@ pub struct ChatModelConfig {
     stop_sequences: Vec<String>,
     tools: Vec<ToolSpec>,
     tool_choice: ToolChoice,
+    reasoning_effort: Option<ReasoningEffort>,
 }
 
 impl ChatModelConfig {
@@ -91,6 +94,7 @@ impl ChatModelConfig {
             stop_sequences: Vec::new(),
             tools: Vec::new(),
             tool_choice: ToolChoice::default(),
+            reasoning_effort: None,
         }
     }
 
@@ -135,6 +139,15 @@ impl ChatModelConfig {
         &self.tool_choice
     }
 
+    /// Cross-vendor reasoning-effort knob (`None` ⇒ vendor default).
+    /// Codecs translate onto their native wire shape per the
+    /// per-vendor mapping documented on
+    /// [`crate::ir::ReasoningEffort`]; lossy approximations emit
+    /// `ModelWarning::LossyEncode`.
+    pub const fn reasoning_effort(&self) -> Option<&ReasoningEffort> {
+        self.reasoning_effort.as_ref()
+    }
+
     /// Combine config with caller-supplied messages into a full
     /// [`ModelRequest`].
     #[must_use]
@@ -152,6 +165,7 @@ impl ChatModelConfig {
             response_format: None,
             cache_key: None,
             cached_content: None,
+            reasoning_effort: self.reasoning_effort.clone(),
             provider_extensions: crate::ir::ProviderExtensions::default(),
         }
     }
@@ -433,6 +447,19 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
     #[must_use]
     pub fn with_tool_choice(mut self, c: ToolChoice) -> Self {
         self.config.tool_choice = c;
+        self
+    }
+
+    /// Set the cross-vendor reasoning-effort knob. Codecs translate
+    /// onto their native wire shape per the table on
+    /// [`crate::ir::ReasoningEffort`] — `Off` / `Minimal` / `Low`
+    /// / `Medium` / `High` / `Auto` snap to vendor buckets, lossy
+    /// approximations emit `ModelWarning::LossyEncode`, and
+    /// `VendorSpecific(s)` passes the literal vendor wire value
+    /// through.
+    #[must_use]
+    pub fn with_reasoning_effort(mut self, effort: ReasoningEffort) -> Self {
+        self.config.reasoning_effort = Some(effort);
         self
     }
 

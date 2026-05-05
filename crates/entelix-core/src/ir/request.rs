@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::ir::message::Message;
 use crate::ir::provider_extensions::ProviderExtensions;
+use crate::ir::reasoning::ReasoningEffort;
 use crate::ir::structured::ResponseFormat;
 use crate::ir::system::SystemPrompt;
 use crate::ir::tool_spec::{ToolChoice, ToolSpec};
@@ -65,6 +66,16 @@ pub struct ModelRequest {
     /// `cachedContents` API call. Other codecs emit `LossyEncode`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cached_content: Option<String>,
+    /// Cross-vendor reasoning-effort knob. When `Some`, codecs
+    /// translate onto their native wire shape per the mapping in
+    /// [`ReasoningEffort`]'s module doc — `Off`/`Minimal`/`Low`/
+    /// `Medium`/`High`/`Auto` snap to vendor buckets, lossy
+    /// approximations emit `ModelWarning::LossyEncode`, and
+    /// `VendorSpecific(s)` passes through the literal vendor wire
+    /// value. `None` ⇒ vendor default (codec emits no thinking /
+    /// reasoning field).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reasoning_effort: Option<ReasoningEffort>,
     /// Per-vendor typed knobs that don't generalise to a
     /// cross-provider IR field — e.g. Anthropic
     /// `disable_parallel_tool_use`, Gemini `safetySettings`,

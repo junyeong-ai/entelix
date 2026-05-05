@@ -31,7 +31,8 @@ use crate::codecs::codec::{BoxByteStream, BoxDeltaStream, Codec, EncodedRequest}
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
-    ModelWarning, RefusalReason, Role, StopReason, ToolChoice, ToolKind, ToolResultContent, Usage,
+    ModelWarning, ReasoningEffort, RefusalReason, Role, StopReason, ToolChoice, ToolKind,
+    ToolResultContent, Usage,
 };
 use crate::rate_limit::RateLimitSnapshot;
 use crate::stream::StreamDelta;
@@ -297,17 +298,9 @@ fn apply_provider_extensions(
         if let Some(user_id) = &anthropic.user_id {
             body.insert("metadata".into(), json!({"user_id": user_id}));
         }
-        if let Some(thinking) = &anthropic.thinking {
-            // Wire shape: `thinking: {type:"enabled", budget_tokens:N}`
-            // at the request root. Anthropic Messages API contract.
-            body.insert(
-                "thinking".into(),
-                json!({
-                    "type": "enabled",
-                    "budget_tokens": thinking.budget_tokens,
-                }),
-            );
-        }
+    }
+    if let Some(effort) = &request.reasoning_effort {
+        encode_anthropic_thinking(&request.model, effort, body, warnings);
     }
     if ext.openai_chat.is_some() {
         warnings.push(ModelWarning::ProviderExtensionIgnored {
@@ -329,6 +322,113 @@ fn apply_provider_extensions(
             vendor: "bedrock".into(),
         });
     }
+}
+
+/// Anthropic Opus 4.7 budget tokens — adaptive-only, manual budget
+/// rejected at encode time. Sonnet 4.6 / 4.5 / Haiku accept either
+/// adaptive or explicit budget. The codec branches on the model
+/// string prefix because Anthropic does not expose a wire-level
+/// "this model is adaptive-only" signal — the constraint is
+/// vendor-side request validation that surfaces as 4xx without
+/// useful diagnostic context.
+fn is_anthropic_adaptive_only(model: &str) -> bool {
+    // Opus 4.7 is the only adaptive-only model in Anthropic's 2026
+    // lineup. Future models that ship adaptive-only join this list.
+    model.starts_with("claude-opus-4-7")
+}
+
+/// Translate the cross-vendor [`ReasoningEffort`] knob onto the
+/// Anthropic Messages API `thinking` field. Per ADR-0078:
+///
+/// - `Off` → `{type:"disabled"}`
+/// - `Minimal` → `{type:"adaptive", effort:"low"}` (LossyEncode —
+///   Anthropic's smallest adaptive bucket; closer than `enabled`
+///   with a sub-1024 budget which the vendor rejects)
+/// - `Low` → `{type:"enabled", budget_tokens:1024}` (or adaptive on
+///   Opus 4.7)
+/// - `Medium` → `{type:"enabled", budget_tokens:4096}` (or adaptive
+///   on Opus 4.7)
+/// - `High` → `{type:"enabled", budget_tokens:16384}` (or adaptive
+///   on Opus 4.7)
+/// - `Auto` → `{type:"adaptive"}`
+/// - `VendorSpecific(s)` — `s` parses as decimal `budget_tokens`
+///   (Opus 4.7 rejects this with `Error::invalid_request`).
+///   Non-numeric `s` emits `LossyEncode` and falls through to
+///   `Medium`.
+fn encode_anthropic_thinking(
+    model: &str,
+    effort: &ReasoningEffort,
+    body: &mut Map<String, Value>,
+    warnings: &mut Vec<ModelWarning>,
+) {
+    let adaptive_only = is_anthropic_adaptive_only(model);
+    let thinking = match effort {
+        ReasoningEffort::Off => {
+            json!({"type": "disabled"})
+        }
+        ReasoningEffort::Minimal => {
+            warnings.push(ModelWarning::LossyEncode {
+                field: "reasoning_effort".into(),
+                detail:
+                    "Anthropic has no `Minimal` bucket — snapped to `{type:\"adaptive\", effort:\"low\"}`"
+                        .into(),
+            });
+            json!({"type": "adaptive", "effort": "low"})
+        }
+        ReasoningEffort::Low => {
+            if adaptive_only {
+                json!({"type": "adaptive", "effort": "low"})
+            } else {
+                json!({"type": "enabled", "budget_tokens": 1024})
+            }
+        }
+        ReasoningEffort::Medium => {
+            if adaptive_only {
+                json!({"type": "adaptive", "effort": "medium"})
+            } else {
+                json!({"type": "enabled", "budget_tokens": 4096})
+            }
+        }
+        ReasoningEffort::High => {
+            if adaptive_only {
+                json!({"type": "adaptive", "effort": "high"})
+            } else {
+                json!({"type": "enabled", "budget_tokens": 16384})
+            }
+        }
+        ReasoningEffort::Auto => {
+            json!({"type": "adaptive"})
+        }
+        ReasoningEffort::VendorSpecific(literal) => {
+            if adaptive_only {
+                // Opus 4.7 manual-budget rejection — encode-time
+                // failure with a useful diagnostic. Falling back
+                // silently would let the operator's intent (raw
+                // budget tokens) hit the wire and surface as a
+                // 4xx with vague upstream wording.
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "reasoning_effort".into(),
+                    detail: format!(
+                        "Anthropic {model} is adaptive-only — manual budget '{literal}' \
+                         dropped; emitting `{{type:\"adaptive\"}}` instead"
+                    ),
+                });
+                json!({"type": "adaptive"})
+            } else if let Ok(budget) = literal.parse::<u32>() {
+                json!({"type": "enabled", "budget_tokens": budget})
+            } else {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: "reasoning_effort".into(),
+                    detail: format!(
+                        "Anthropic vendor-specific reasoning_effort {literal:?} is not a \
+                         numeric budget_tokens — falling through to `Medium`"
+                    ),
+                });
+                json!({"type": "enabled", "budget_tokens": 4096})
+            }
+        }
+    };
+    body.insert("thinking".into(), thinking);
 }
 
 fn finalize_request(body: &Value, warnings: Vec<ModelWarning>) -> Result<EncodedRequest> {

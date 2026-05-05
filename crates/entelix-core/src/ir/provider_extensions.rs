@@ -121,14 +121,6 @@ pub struct AnthropicExt {
     /// Operator pseudonymous id, not a PII identifier.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub user_id: Option<String>,
-    /// Extended-thinking budget — when set, Anthropic runs its
-    /// chain-of-thought before the user-facing reply and the
-    /// response carries `Thinking` content blocks alongside `Text`.
-    /// Anthropic-on-Bedrock honours the same shape via Bedrock's
-    /// `additionalModelRequestFields` passthrough; other vendors
-    /// emit `LossyEncode`.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub thinking: Option<ThinkingConfig>,
 }
 
 impl AnthropicExt {
@@ -145,32 +137,6 @@ impl AnthropicExt {
         self.user_id = Some(user_id.into());
         self
     }
-
-    /// Enable extended thinking with the supplied token budget.
-    /// Anthropic recommends `budget_tokens >= 1024` for meaningful
-    /// reasoning; the codec leaves the value untouched and lets the
-    /// vendor reject obviously-invalid sizes (≤0 / > model cap).
-    #[must_use]
-    pub const fn with_thinking_budget(mut self, budget_tokens: u32) -> Self {
-        self.thinking = Some(ThinkingConfig { budget_tokens });
-        self
-    }
-}
-
-/// Extended-thinking configuration for Anthropic-family models.
-///
-/// Wire shape: `thinking: { type: "enabled", budget_tokens: N }`
-/// at the Messages API request root. The `type` field is constant
-/// today; if Anthropic ever ships a `type: "disabled"` toggle the
-/// IR adopts an enum variant rather than overloading this struct.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[non_exhaustive]
-pub struct ThinkingConfig {
-    /// Maximum tokens Anthropic may spend reasoning before the
-    /// user-facing reply. Counted against the response's
-    /// `output_tokens` budget, so callers size `max_tokens`
-    /// accordingly.
-    pub budget_tokens: u32,
 }
 
 /// OpenAI Chat Completions API knobs.
@@ -214,14 +180,15 @@ pub struct OpenAiResponsesExt {
     /// `user` — abuse-monitoring identifier.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub user: Option<String>,
-    /// Reasoning configuration for o-series models. When set, the
-    /// codec emits `reasoning: { effort, summary? }` at the
-    /// Responses API request root. Non-o-series models silently
-    /// ignore the field server-side; the IR carries it so operators
-    /// can route the same request across model tiers without
-    /// branching.
+    /// Reasoning summary verbosity for o-series models. When set,
+    /// the codec emits `reasoning.summary: "<mode>"` at the
+    /// Responses API request root, paired with the cross-vendor
+    /// [`crate::ir::ModelRequest::reasoning_effort`] field. The
+    /// summary knob is OpenAI-specific (Anthropic / Gemini /
+    /// Bedrock have no equivalent) so it stays on this extension
+    /// rather than the IR root.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub reasoning: Option<ReasoningConfig>,
+    pub reasoning_summary: Option<ReasoningSummary>,
 }
 
 impl OpenAiResponsesExt {
@@ -237,64 +204,21 @@ impl OpenAiResponsesExt {
         self.user = Some(user.into());
         self
     }
-    /// Configure reasoning effort (and optional summary verbosity).
+    /// Set the reasoning summary verbosity. Pair with
+    /// [`crate::ir::ModelRequest::reasoning_effort`] (the
+    /// cross-vendor effort knob) — OpenAI Responses emits both as
+    /// `reasoning: { effort, summary }`.
     #[must_use]
-    pub const fn with_reasoning(mut self, reasoning: ReasoningConfig) -> Self {
-        self.reasoning = Some(reasoning);
+    pub const fn with_reasoning_summary(mut self, summary: ReasoningSummary) -> Self {
+        self.reasoning_summary = Some(summary);
         self
     }
 }
 
-/// Reasoning-effort knob for OpenAI o-series models.
-///
-/// Wire shape: `reasoning: {effort: "<level>", summary?: "<mode>"}`
-/// at the Responses API request root.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[non_exhaustive]
-pub struct ReasoningConfig {
-    /// How hard the model should reason before replying.
-    pub effort: ReasoningEffort,
-    /// Whether (and how verbosely) to surface a reasoning summary
-    /// alongside the reply. `None` = vendor default (omit field).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub summary: Option<ReasoningSummary>,
-}
-
-impl ReasoningConfig {
-    /// Build with just an effort level (no summary).
-    #[must_use]
-    pub const fn new(effort: ReasoningEffort) -> Self {
-        Self {
-            effort,
-            summary: None,
-        }
-    }
-    /// Attach a summary verbosity preference.
-    #[must_use]
-    pub const fn with_summary(mut self, summary: ReasoningSummary) -> Self {
-        self.summary = Some(summary);
-        self
-    }
-}
-
-/// Reasoning-effort levels OpenAI o-series accept on the Responses API.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-#[non_exhaustive]
-pub enum ReasoningEffort {
-    /// Minimal — fastest, least tokens, suitable for routing /
-    /// classification.
-    Minimal,
-    /// Low — light reasoning.
-    Low,
-    /// Medium — vendor default for most o-series models.
-    #[default]
-    Medium,
-    /// High — deepest reasoning, highest cost / latency.
-    High,
-}
-
-/// Verbosity of the reasoning summary surfaced alongside the reply.
+/// Verbosity of the reasoning summary surfaced alongside the reply
+/// — OpenAI Responses-only (Anthropic / Gemini / Bedrock have no
+/// equivalent knob). Cross-vendor effort levels live on
+/// [`crate::ir::ReasoningEffort`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
@@ -449,8 +373,7 @@ mod tests {
             .with_anthropic(
                 AnthropicExt::default()
                     .with_disable_parallel_tool_use(true)
-                    .with_user_id("op-9")
-                    .with_thinking_budget(2048),
+                    .with_user_id("op-9"),
             )
             .with_gemini(GeminiExt {
                 safety_settings: vec![GeminiSafetyOverride {

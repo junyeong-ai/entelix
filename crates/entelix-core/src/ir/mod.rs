@@ -13,6 +13,7 @@ mod capabilities;
 mod content;
 mod message;
 mod provider_extensions;
+mod reasoning;
 mod request;
 mod response;
 mod safety;
@@ -29,9 +30,9 @@ pub use content::{ContentPart, ToolResultContent};
 pub use message::{Message, Role};
 pub use provider_extensions::{
     AnthropicExt, BedrockExt, BedrockGuardrail, GeminiExt, GeminiSafetyOverride, OpenAiChatExt,
-    OpenAiResponsesExt, ProviderExtensions, ReasoningConfig, ReasoningEffort, ReasoningSummary,
-    ThinkingConfig,
+    OpenAiResponsesExt, ProviderExtensions, ReasoningSummary,
 };
+pub use reasoning::ReasoningEffort;
 pub use request::ModelRequest;
 pub use response::{ModelResponse, RefusalReason, StopReason, ToolUseRef};
 pub use safety::{SafetyCategory, SafetyLevel, SafetyRating};

@@ -225,6 +225,7 @@ pub async fn entelix_core::chat::ChatModel<C, T>::stream_deltas(&self, messages:
 pub fn entelix_core::chat::ChatModel<C, T>::streaming_service(&self) -> entelix_core::service::BoxedStreamingService
 pub fn entelix_core::chat::ChatModel<C, T>::transport(&self) -> &T
 pub const fn entelix_core::chat::ChatModel<C, T>::with_max_tokens(self, n: u32) -> Self
+pub fn entelix_core::chat::ChatModel<C, T>::with_reasoning_effort(self, effort: entelix_core::ir::ReasoningEffort) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_stop_sequence(self, s: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_stop_sequences(self, seqs: alloc::vec::Vec<alloc::string::String>) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_system(self, s: impl core::convert::Into<alloc::string::String>) -> Self
@@ -251,6 +252,7 @@ pub fn entelix_core::chat::ChatModelConfig::build_request(&self, messages: alloc
 pub const fn entelix_core::chat::ChatModelConfig::max_tokens(&self) -> core::option::Option<u32>
 pub fn entelix_core::chat::ChatModelConfig::model(&self) -> &str
 pub fn entelix_core::chat::ChatModelConfig::new(model: impl core::convert::Into<alloc::string::String>) -> Self
+pub const fn entelix_core::chat::ChatModelConfig::reasoning_effort(&self) -> core::option::Option<&entelix_core::ir::ReasoningEffort>
 pub fn entelix_core::chat::ChatModelConfig::stop_sequences(&self) -> &[alloc::string::String]
 pub const fn entelix_core::chat::ChatModelConfig::system(&self) -> &entelix_core::ir::SystemPrompt
 pub const fn entelix_core::chat::ChatModelConfig::temperature(&self) -> core::option::Option<f32>
@@ -845,10 +847,15 @@ impl core::marker::UnsafeUnpin for entelix_core::ir::ModelWarning
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ModelWarning
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ModelWarning
 #[non_exhaustive] pub enum entelix_core::ir::ReasoningEffort
+pub entelix_core::ir::ReasoningEffort::Auto
 pub entelix_core::ir::ReasoningEffort::High
 pub entelix_core::ir::ReasoningEffort::Low
 pub entelix_core::ir::ReasoningEffort::Medium
 pub entelix_core::ir::ReasoningEffort::Minimal
+pub entelix_core::ir::ReasoningEffort::Off
+pub entelix_core::ir::ReasoningEffort::VendorSpecific(alloc::string::String)
+impl entelix_core::ir::ReasoningEffort
+pub const fn entelix_core::ir::ReasoningEffort::is_canonical(&self) -> bool
 impl core::clone::Clone for entelix_core::ir::ReasoningEffort
 pub fn entelix_core::ir::ReasoningEffort::clone(&self) -> entelix_core::ir::ReasoningEffort
 impl core::cmp::Eq for entelix_core::ir::ReasoningEffort
@@ -858,7 +865,6 @@ impl core::default::Default for entelix_core::ir::ReasoningEffort
 pub fn entelix_core::ir::ReasoningEffort::default() -> entelix_core::ir::ReasoningEffort
 impl core::fmt::Debug for entelix_core::ir::ReasoningEffort
 pub fn entelix_core::ir::ReasoningEffort::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for entelix_core::ir::ReasoningEffort
 impl core::marker::StructuralPartialEq for entelix_core::ir::ReasoningEffort
 impl serde_core::ser::Serialize for entelix_core::ir::ReasoningEffort
 pub fn entelix_core::ir::ReasoningEffort::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
@@ -1142,11 +1148,9 @@ impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ToolResultCon
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ToolResultContent
 #[non_exhaustive] pub struct entelix_core::ir::AnthropicExt
 pub entelix_core::ir::AnthropicExt::disable_parallel_tool_use: core::option::Option<bool>
-pub entelix_core::ir::AnthropicExt::thinking: core::option::Option<entelix_core::ir::ThinkingConfig>
 pub entelix_core::ir::AnthropicExt::user_id: core::option::Option<alloc::string::String>
 impl entelix_core::ir::AnthropicExt
 pub const fn entelix_core::ir::AnthropicExt::with_disable_parallel_tool_use(self, disable: bool) -> Self
-pub const fn entelix_core::ir::AnthropicExt::with_thinking_budget(self, budget_tokens: u32) -> Self
 pub fn entelix_core::ir::AnthropicExt::with_user_id(self, user_id: impl core::convert::Into<alloc::string::String>) -> Self
 impl core::clone::Clone for entelix_core::ir::AnthropicExt
 pub fn entelix_core::ir::AnthropicExt::clone(&self) -> entelix_core::ir::AnthropicExt
@@ -1390,6 +1394,7 @@ pub entelix_core::ir::ModelRequest::max_tokens: core::option::Option<u32>
 pub entelix_core::ir::ModelRequest::messages: alloc::vec::Vec<entelix_core::ir::Message>
 pub entelix_core::ir::ModelRequest::model: alloc::string::String
 pub entelix_core::ir::ModelRequest::provider_extensions: entelix_core::ir::ProviderExtensions
+pub entelix_core::ir::ModelRequest::reasoning_effort: core::option::Option<entelix_core::ir::ReasoningEffort>
 pub entelix_core::ir::ModelRequest::response_format: core::option::Option<entelix_core::ir::ResponseFormat>
 pub entelix_core::ir::ModelRequest::stop_sequences: alloc::vec::Vec<alloc::string::String>
 pub entelix_core::ir::ModelRequest::system: entelix_core::ir::SystemPrompt
@@ -1477,11 +1482,11 @@ impl core::marker::UnsafeUnpin for entelix_core::ir::OpenAiChatExt
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::OpenAiChatExt
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::OpenAiChatExt
 #[non_exhaustive] pub struct entelix_core::ir::OpenAiResponsesExt
-pub entelix_core::ir::OpenAiResponsesExt::reasoning: core::option::Option<entelix_core::ir::ReasoningConfig>
+pub entelix_core::ir::OpenAiResponsesExt::reasoning_summary: core::option::Option<entelix_core::ir::ReasoningSummary>
 pub entelix_core::ir::OpenAiResponsesExt::seed: core::option::Option<i64>
 pub entelix_core::ir::OpenAiResponsesExt::user: core::option::Option<alloc::string::String>
 impl entelix_core::ir::OpenAiResponsesExt
-pub const fn entelix_core::ir::OpenAiResponsesExt::with_reasoning(self, reasoning: entelix_core::ir::ReasoningConfig) -> Self
+pub const fn entelix_core::ir::OpenAiResponsesExt::with_reasoning_summary(self, summary: entelix_core::ir::ReasoningSummary) -> Self
 pub const fn entelix_core::ir::OpenAiResponsesExt::with_seed(self, seed: i64) -> Self
 pub fn entelix_core::ir::OpenAiResponsesExt::with_user(self, user: impl core::convert::Into<alloc::string::String>) -> Self
 impl core::clone::Clone for entelix_core::ir::OpenAiResponsesExt
@@ -1539,32 +1544,6 @@ impl core::marker::Unpin for entelix_core::ir::ProviderExtensions
 impl core::marker::UnsafeUnpin for entelix_core::ir::ProviderExtensions
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ProviderExtensions
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ProviderExtensions
-#[non_exhaustive] pub struct entelix_core::ir::ReasoningConfig
-pub entelix_core::ir::ReasoningConfig::effort: entelix_core::ir::ReasoningEffort
-pub entelix_core::ir::ReasoningConfig::summary: core::option::Option<entelix_core::ir::ReasoningSummary>
-impl entelix_core::ir::ReasoningConfig
-pub const fn entelix_core::ir::ReasoningConfig::new(effort: entelix_core::ir::ReasoningEffort) -> Self
-pub const fn entelix_core::ir::ReasoningConfig::with_summary(self, summary: entelix_core::ir::ReasoningSummary) -> Self
-impl core::clone::Clone for entelix_core::ir::ReasoningConfig
-pub fn entelix_core::ir::ReasoningConfig::clone(&self) -> entelix_core::ir::ReasoningConfig
-impl core::cmp::Eq for entelix_core::ir::ReasoningConfig
-impl core::cmp::PartialEq for entelix_core::ir::ReasoningConfig
-pub fn entelix_core::ir::ReasoningConfig::eq(&self, other: &entelix_core::ir::ReasoningConfig) -> bool
-impl core::fmt::Debug for entelix_core::ir::ReasoningConfig
-pub fn entelix_core::ir::ReasoningConfig::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for entelix_core::ir::ReasoningConfig
-impl core::marker::StructuralPartialEq for entelix_core::ir::ReasoningConfig
-impl serde_core::ser::Serialize for entelix_core::ir::ReasoningConfig
-pub fn entelix_core::ir::ReasoningConfig::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
-impl<'de> serde_core::de::Deserialize<'de> for entelix_core::ir::ReasoningConfig
-pub fn entelix_core::ir::ReasoningConfig::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
-impl core::marker::Freeze for entelix_core::ir::ReasoningConfig
-impl core::marker::Send for entelix_core::ir::ReasoningConfig
-impl core::marker::Sync for entelix_core::ir::ReasoningConfig
-impl core::marker::Unpin for entelix_core::ir::ReasoningConfig
-impl core::marker::UnsafeUnpin for entelix_core::ir::ReasoningConfig
-impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ReasoningConfig
-impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ReasoningConfig
 pub struct entelix_core::ir::ResponseFormat
 pub entelix_core::ir::ResponseFormat::json_schema: entelix_core::ir::JsonSchemaSpec
 pub entelix_core::ir::ResponseFormat::strict: bool
@@ -1685,28 +1664,6 @@ impl core::marker::Unpin for entelix_core::ir::SystemPrompt
 impl core::marker::UnsafeUnpin for entelix_core::ir::SystemPrompt
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::SystemPrompt
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::SystemPrompt
-#[non_exhaustive] pub struct entelix_core::ir::ThinkingConfig
-pub entelix_core::ir::ThinkingConfig::budget_tokens: u32
-impl core::clone::Clone for entelix_core::ir::ThinkingConfig
-pub fn entelix_core::ir::ThinkingConfig::clone(&self) -> entelix_core::ir::ThinkingConfig
-impl core::cmp::Eq for entelix_core::ir::ThinkingConfig
-impl core::cmp::PartialEq for entelix_core::ir::ThinkingConfig
-pub fn entelix_core::ir::ThinkingConfig::eq(&self, other: &entelix_core::ir::ThinkingConfig) -> bool
-impl core::fmt::Debug for entelix_core::ir::ThinkingConfig
-pub fn entelix_core::ir::ThinkingConfig::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for entelix_core::ir::ThinkingConfig
-impl core::marker::StructuralPartialEq for entelix_core::ir::ThinkingConfig
-impl serde_core::ser::Serialize for entelix_core::ir::ThinkingConfig
-pub fn entelix_core::ir::ThinkingConfig::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
-impl<'de> serde_core::de::Deserialize<'de> for entelix_core::ir::ThinkingConfig
-pub fn entelix_core::ir::ThinkingConfig::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
-impl core::marker::Freeze for entelix_core::ir::ThinkingConfig
-impl core::marker::Send for entelix_core::ir::ThinkingConfig
-impl core::marker::Sync for entelix_core::ir::ThinkingConfig
-impl core::marker::Unpin for entelix_core::ir::ThinkingConfig
-impl core::marker::UnsafeUnpin for entelix_core::ir::ThinkingConfig
-impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ThinkingConfig
-impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ThinkingConfig
 pub struct entelix_core::ir::ToolSpec
 pub entelix_core::ir::ToolSpec::cache_control: core::option::Option<entelix_core::ir::CacheControl>
 pub entelix_core::ir::ToolSpec::description: alloc::string::String
@@ -2895,6 +2852,7 @@ pub async fn entelix_core::chat::ChatModel<C, T>::stream_deltas(&self, messages:
 pub fn entelix_core::chat::ChatModel<C, T>::streaming_service(&self) -> entelix_core::service::BoxedStreamingService
 pub fn entelix_core::chat::ChatModel<C, T>::transport(&self) -> &T
 pub const fn entelix_core::chat::ChatModel<C, T>::with_max_tokens(self, n: u32) -> Self
+pub fn entelix_core::chat::ChatModel<C, T>::with_reasoning_effort(self, effort: entelix_core::ir::ReasoningEffort) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_stop_sequence(self, s: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_stop_sequences(self, seqs: alloc::vec::Vec<alloc::string::String>) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_system(self, s: impl core::convert::Into<alloc::string::String>) -> Self
@@ -2921,6 +2879,7 @@ pub fn entelix_core::chat::ChatModelConfig::build_request(&self, messages: alloc
 pub const fn entelix_core::chat::ChatModelConfig::max_tokens(&self) -> core::option::Option<u32>
 pub fn entelix_core::chat::ChatModelConfig::model(&self) -> &str
 pub fn entelix_core::chat::ChatModelConfig::new(model: impl core::convert::Into<alloc::string::String>) -> Self
+pub const fn entelix_core::chat::ChatModelConfig::reasoning_effort(&self) -> core::option::Option<&entelix_core::ir::ReasoningEffort>
 pub fn entelix_core::chat::ChatModelConfig::stop_sequences(&self) -> &[alloc::string::String]
 pub const fn entelix_core::chat::ChatModelConfig::system(&self) -> &entelix_core::ir::SystemPrompt
 pub const fn entelix_core::chat::ChatModelConfig::temperature(&self) -> core::option::Option<f32>

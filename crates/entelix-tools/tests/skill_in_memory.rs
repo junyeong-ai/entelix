@@ -15,7 +15,7 @@ async fn in_memory_skill_load_returns_instructions_and_resource_keys() {
         .with_text_resource("examples/basic.md", "User: hi\nAssistant: hi")
         .with_text_resource("reference/api.md", "echo(text) -> text")
         .build()
-            .unwrap();
+        .unwrap();
 
     assert_eq!(skill.name(), "echo");
     assert_eq!(
@@ -38,7 +38,7 @@ async fn in_memory_skill_resources_resolve_to_text() {
         .with_instructions("Greet warmly.")
         .with_text_resource("hello.txt", "Hello, world!")
         .build()
-            .unwrap();
+        .unwrap();
     let loaded = skill.load(&ExecutionContext::new()).await.unwrap();
     let res = loaded.resources.get("hello.txt").unwrap();
     let content = res.read(&ExecutionContext::new()).await.unwrap();
@@ -51,7 +51,7 @@ async fn in_memory_skill_with_no_resources_returns_empty_map() {
         .with_description("plain")
         .with_instructions("Just instructions, no resources.")
         .build()
-            .unwrap();
+        .unwrap();
     let loaded = skill.load(&ExecutionContext::new()).await.unwrap();
     assert!(loaded.resources.is_empty());
     assert!(loaded.resource_keys().is_empty());

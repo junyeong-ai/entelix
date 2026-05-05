@@ -57,7 +57,7 @@ CLAUDE.md and enforce it through three SDK-wide pieces:
    and discards integer width hints (`format: "int64"`). Only
    vendor-honored keys (`type`, `properties`, `required`, `items`,
    `enum`, …) survive.
-3. **Built-in tool exposure knobs** — `HttpFetchToolBuilder::expose_response_headers`,
+3. **Built-in tool exposure knobs** — `HttpFetchToolBuilder::with_exposed_response_headers`,
    `MemoryToolConfig::expose_metadata_fields` /
    `with_entity_temporal_signals`. All default to "off"; operators
    opt specific fields in.
@@ -79,7 +79,7 @@ CLAUDE.md and enforce it through three SDK-wide pieces:
 | `AgentEvent::ToolError` audit projection | `error: String` field used for both audit and replay | two fields: `error` (operator) + `error_for_llm` (audit-replay → model). Projection picks `error_for_llm` |
 | `SchemaToolAdapter::new` schema | schemars output verbatim | `LlmFacingSchema::strip(schema)` |
 | `SchemaToolAdapter::execute` deserialize error | `"input failed to deserialize as `entelix_tools::…::FooInput`: {e}"` | `"tool '{name}': input did not match schema: {e}"` |
-| `HttpFetchTool` response headers | every header in output | empty map by default; `expose_response_headers([...])` opts in |
+| `HttpFetchTool` response headers | every header in output | empty map by default; `with_exposed_response_headers([...])` opts in |
 | `QuerySemanticMemoryTool` results | `{content, metadata, score}` | `{rank, content}`; `metadata` only when `expose_metadata_fields` allowlists keys |
 | `ListEntityFactsTool` results | `{entity, fact, created_at, last_seen}` (RFC3339) | `{entity, fact}`; integer day-counts when `with_entity_temporal_signals(true)` |
 
@@ -120,7 +120,7 @@ metadata fields the model previously read. One-line change at the
 `MemoryToolConfig::new()` site.
 ❌ The default response headers vanish from `HttpFetchTool` output;
 operators that branched on `content-type` add
-`expose_response_headers(["content-type"])`.
+`with_exposed_response_headers(["content-type"])`.
 
 ## Alternatives considered
 

@@ -40,17 +40,17 @@ fn parent_skills() -> SkillRegistry {
         .with_description("echo")
         .with_instructions("echo body")
         .build()
-            .unwrap();
+        .unwrap();
     let sql = InMemorySkill::builder("sql-expert")
         .with_description("sql")
         .with_instructions("sql body")
         .build()
-            .unwrap();
+        .unwrap();
     let pii = InMemorySkill::builder("pii-redaction")
         .with_description("pii")
         .with_instructions("pii body")
         .build()
-            .unwrap();
+        .unwrap();
     SkillRegistry::new()
         .register(Arc::new(echo))
         .unwrap()

@@ -450,7 +450,7 @@ fn seed_from_time() -> u64 {
                 n as u64
             }
         })
-        .unwrap_or(0);
+        .unwrap_or(0); // silent-fallback-ok: jitter seed only — `now() < UNIX_EPOCH` cannot happen on a sane clock, and the per-process atomic counter XORed below already breaks ties so a 0 nanos contribution still yields uncorrelated low-order bits.
     let bump = COUNTER.fetch_add(1, Ordering::Relaxed);
     nanos ^ bump
 }
@@ -510,8 +510,8 @@ mod tests {
     #[test]
     fn default_classifier_propagates_vendor_retry_after_hint() {
         let c = DefaultRetryClassifier;
-        let err = Error::provider_http(429, "rate limited")
-            .with_retry_after(Duration::from_secs(7));
+        let err =
+            Error::provider_http(429, "rate limited").with_retry_after(Duration::from_secs(7));
         let decision = c.should_retry(&err, 0);
         assert!(decision.retry);
         assert_eq!(decision.after, Some(Duration::from_secs(7)));

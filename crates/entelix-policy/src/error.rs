@@ -46,10 +46,8 @@ pub enum PolicyError {
 impl From<PolicyError> for Error {
     fn from(err: PolicyError) -> Self {
         match err {
-            PolicyError::RateLimited { retry_after_ms, .. } => {
-                Self::provider_http_from(429, err)
-                    .with_retry_after(std::time::Duration::from_millis(retry_after_ms))
-            }
+            PolicyError::RateLimited { retry_after_ms, .. } => Self::provider_http_from(429, err)
+                .with_retry_after(std::time::Duration::from_millis(retry_after_ms)),
             PolicyError::BudgetExhausted { .. } => Self::provider_http_from(402, err),
             PolicyError::UnknownModel(_) | PolicyError::Config(_) => Self::config(err.to_string()),
         }

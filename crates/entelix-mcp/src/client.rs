@@ -104,7 +104,7 @@ pub trait McpClient: Send + Sync {
     }
 
     /// Bind a prompt's arguments and fetch the resulting transcript.
-    async fn get_prompt(
+    async fn prompt(
         &self,
         _name: &str,
         _arguments: BTreeMap<String, String>,
@@ -512,7 +512,7 @@ impl McpClient for HttpMcpClient {
         Ok(result.prompts)
     }
 
-    async fn get_prompt(
+    async fn prompt(
         &self,
         name: &str,
         arguments: BTreeMap<String, String>,

@@ -112,10 +112,7 @@ async fn debug_mode_emits_start_end_per_node_plus_final() -> Result<()> {
         chunks[1],
         StreamChunk::Debug(DebugEvent::NodeEnd { step: 1, .. })
     ));
-    assert!(matches!(
-        chunks[6],
-        StreamChunk::Debug(DebugEvent::Final)
-    ));
+    assert!(matches!(chunks[6], StreamChunk::Debug(DebugEvent::Final)));
     Ok(())
 }
 

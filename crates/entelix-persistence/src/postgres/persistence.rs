@@ -107,19 +107,19 @@ impl PostgresPersistenceBuilder {
     }
 
     /// Override the pool size cap.
-    pub const fn max_connections(mut self, n: u32) -> Self {
+    pub const fn with_max_connections(mut self, n: u32) -> Self {
         self.max_connections = n;
         self
     }
 
     /// Override the per-acquire timeout.
-    pub const fn acquire_timeout(mut self, timeout: Duration) -> Self {
+    pub const fn with_acquire_timeout(mut self, timeout: Duration) -> Self {
         self.acquire_timeout = timeout;
         self
     }
 
     /// Override the idle-connection eviction timeout.
-    pub const fn idle_timeout(mut self, timeout: Duration) -> Self {
+    pub const fn with_idle_timeout(mut self, timeout: Duration) -> Self {
         self.idle_timeout = timeout;
         self
     }
@@ -127,7 +127,7 @@ impl PostgresPersistenceBuilder {
     /// Toggle pre-acquire health check (`SELECT 1`). On by default;
     /// disable if your network is reliable enough to amortise the
     /// extra round-trip.
-    pub const fn test_before_acquire(mut self, on: bool) -> Self {
+    pub const fn with_test_before_acquire(mut self, on: bool) -> Self {
         self.test_before_acquire = on;
         self
     }

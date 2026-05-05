@@ -64,7 +64,7 @@ async fn body_cap_truncates_and_marks_truncated() {
 
     let tool = HttpFetchTool::builder()
         .with_allowlist(allowlist_for(&server))
-        .max_response_bytes(512)
+        .with_max_response_bytes(512)
         .build()
         .unwrap();
     let out = tool

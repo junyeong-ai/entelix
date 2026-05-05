@@ -1,0 +1,65 @@
+# `xtask/` is its own workspace, distinct from the main entelix workspace.
+#
+# Why split: xtask is a CI-only invariant runner — clap + syn + walkdir +
+# regex + toml_edit. Folding it into the main workspace would (a) drag
+# those dependencies into every `cargo metadata` resolution path the
+# production crates trigger, (b) force xtask to inherit the production
+# workspace's pedantic clippy regime that doesn't fit a CLI, and (c)
+# bloat `cargo build --workspace --all-features` with a binary nothing
+# else depends on. Keeping it split mirrors the Tokio + many other
+# Rust workspaces' xtask convention.
+#
+# CI caches the xtask target dir separately (`Swatinem/rust-cache@v2`
+# with `workspaces: xtask`) so the production cache stays narrow.
+[workspace]
+
+[package]
+name = "xtask"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+# `cargo xtask <invariant>` — workspace invariant enforcement.
+# Single binary that loads every Rust source / Cargo manifest into
+# typed AST (syn / toml_edit) and runs deterministic visitors. See
+# ADR-0073 for the per-visitor scope and rationale.
+
+# xtask is a CLI tool, not a published library. The workspace's
+# pedantic/nursery clippy regime targets production crates; this binary
+# is allowed to print, return early, and otherwise behave like the CLI
+# it is. Each per-invariant module still benefits from the regular
+# correctness lints (`-D warnings` would flip a real bug into an error)
+# but the production-grade pedantic ones don't apply.
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+# Default clippy levels (correctness + suspicious + style) — deny.
+# Pedantic + nursery are intentionally not enabled: this binary is a CLI
+# tool, not a public library, and the pedantic regime would flag
+# `println!` / `eprintln!` / function-pointer dispatch tables that are
+# the right shape for what xtask does.
+correctness = { level = "deny", priority = -1 }
+suspicious = { level = "deny", priority = -1 }
+style = { level = "deny", priority = -1 }
+complexity = { level = "deny", priority = -1 }
+perf = { level = "deny", priority = -1 }
+# `if let X = … { if cond { … } }` is more readable than the collapsed
+# `if let X = … && cond { … }` chain when each branch carries its own
+# semantic meaning — visitors push violations on a successful match
+# **and** a separate predicate. Allowing the lint keeps each visit
+# method readable as one sentence per arm.
+collapsible_if = "allow"
+collapsible_match = "allow"
+
+[dependencies]
+syn = { version = "2", features = ["full", "visit", "extra-traits", "parsing"] }
+walkdir = "2"
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"
+toml_edit = "0.22"
+# `span-locations` exposes `Span::start()` / `end()` so visitors can resolve
+# `path:line:col` for the violation report. Without it the method is gone
+# (`proc_macro2::Span` is opaque outside the proc-macro context).
+proc-macro2 = { version = "1", features = ["span-locations"] }
+regex = "1"

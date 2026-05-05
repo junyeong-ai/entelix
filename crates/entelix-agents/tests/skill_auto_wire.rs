@@ -35,7 +35,7 @@ fn one_skill_registry() -> SkillRegistry {
         .with_description("repeat back")
         .with_instructions("body")
         .build()
-            .unwrap();
+        .unwrap();
     SkillRegistry::new().register(Arc::new(echo)).unwrap()
 }
 

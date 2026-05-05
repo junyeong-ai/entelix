@@ -60,8 +60,8 @@ pub use entelix_agents::{
     Agent, AgentBuilder, AgentEntry, AgentEvent, AgentEventSink, AgentObserver, AlwaysApprove,
     ApprovalLayer, ApprovalRequest, ApprovalService, Approver, BroadcastSink, CaptureSink,
     ChannelApprover, ChannelApproverConfig, ChannelSink, ChatState, DroppingSink, DynObserver,
-    ExecutionMode, PendingApproval, ReActAgentBuilder, ReActState, RunnableToSummarizerAdapter, Subagent,
-    SubagentTool, SupervisorDecision, SupervisorState, ToolApprovalEventSink,
+    ExecutionMode, PendingApproval, ReActAgentBuilder, ReActState, RunnableToSummarizerAdapter,
+    Subagent, SubagentTool, SupervisorDecision, SupervisorState, ToolApprovalEventSink,
     ToolApprovalEventSinkHandle, ToolEventLayer, ToolEventService, build_chat_graph,
     build_react_graph, build_supervisor_graph, create_chat_agent, create_hierarchical_agent,
     create_react_agent, create_supervisor_agent, team_from_supervisor,
@@ -191,8 +191,7 @@ pub use entelix_runnable::{
     AnyRunnable, AnyRunnableHandle, BoxStream, Configured, DEFAULT_PARSER_RETRIES, DebugEvent,
     Fallback, FixingOutputParser, JsonOutputParser, Mapping, RetryParser, Retrying, Runnable,
     RunnableEvent, RunnableExt, RunnableLambda, RunnableParallel, RunnablePassthrough,
-    RunnableRouter, RunnableSequence, StreamChunk, StreamMode, Timed,
-    ToolToRunnableAdapter, erase,
+    RunnableRouter, RunnableSequence, StreamChunk, StreamMode, Timed, ToolToRunnableAdapter, erase,
 };
 #[cfg(feature = "server")]
 #[cfg_attr(docsrs, doc(cfg(feature = "server")))]

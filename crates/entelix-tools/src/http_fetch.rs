@@ -252,21 +252,21 @@ impl HttpFetchToolBuilder {
 
     /// Cap redirect chain length. `0` disables redirects entirely.
     #[must_use]
-    pub const fn max_redirects(mut self, n: usize) -> Self {
+    pub const fn with_max_redirects(mut self, n: usize) -> Self {
         self.max_redirects = n;
         self
     }
 
     /// Cap the response body in bytes.
     #[must_use]
-    pub const fn max_response_bytes(mut self, n: usize) -> Self {
+    pub const fn with_max_response_bytes(mut self, n: usize) -> Self {
         self.max_response_bytes = n;
         self
     }
 
     /// Per-call timeout.
     #[must_use]
-    pub const fn timeout(mut self, t: Duration) -> Self {
+    pub const fn with_timeout(mut self, t: Duration) -> Self {
         self.timeout = t;
         self
     }
@@ -275,7 +275,7 @@ impl HttpFetchToolBuilder {
     /// HTTP method on the input — anything not in this set is
     /// rejected.
     #[must_use]
-    pub fn allowed_methods<I: IntoIterator<Item = Method>>(mut self, methods: I) -> Self {
+    pub fn with_allowed_methods<I: IntoIterator<Item = Method>>(mut self, methods: I) -> Self {
         self.allowed_methods = methods.into_iter().collect();
         self
     }
@@ -297,7 +297,7 @@ impl HttpFetchToolBuilder {
     /// (e.g. `content-type` for the model to branch on payload
     /// shape) opt it in explicitly.
     #[must_use]
-    pub fn expose_response_headers<I, S>(mut self, headers: I) -> Self
+    pub fn with_exposed_response_headers<I, S>(mut self, headers: I) -> Self
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
@@ -541,7 +541,7 @@ impl Tool for HttpFetchTool {
         let status = response.status().as_u16();
         let final_url = response.url().to_string();
         // Default-deny: only headers the operator explicitly opted
-        // in via `expose_response_headers` flow to the LLM. Vendor
+        // in via `with_exposed_response_headers` flow to the LLM. Vendor
         // chrome (`set-cookie`, `cf-ray`, `x-amz-*`, `via`,
         // `content-encoding`, …) costs the model tokens without
         // informing reasoning (invariant #16).

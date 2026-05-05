@@ -1,0 +1,6 @@
+# `cargo xtask <subcommand>` runs the invariant binary that lives in its
+# own workspace under `xtask/` (ADR-0073 §"Separate workspace for xtask").
+# `--manifest-path` points cargo at that workspace; without it, cargo
+# would search this workspace for a package named `xtask` and miss.
+[alias]
+xtask = "run --quiet --release --manifest-path xtask/Cargo.toml --"

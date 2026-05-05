@@ -9,7 +9,7 @@
 //!   (`$schema`, `title`, `$defs`, `$ref`, integer width hints).
 //! - `HttpFetchTool` ships zero response headers to the model unless
 //!   the operator opts specific names in via
-//!   `expose_response_headers`.
+//!   `with_exposed_response_headers`.
 //! - `query_semantic_memory` surfaces `rank` (1..=N) — never raw
 //!   `score: f32`. Document metadata reaches the model only when
 //!   `MemoryToolConfig::expose_metadata_fields` allowlists the key.

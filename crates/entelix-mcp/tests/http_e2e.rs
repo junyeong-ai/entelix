@@ -489,7 +489,7 @@ async fn manager_list_prompts_round_trips() {
 }
 
 #[tokio::test]
-async fn manager_get_prompt_round_trips() {
+async fn manager_prompt_round_trips() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
         .respond_with(responder())
@@ -504,10 +504,7 @@ async fn manager_get_prompt_round_trips() {
 
     let mut args = BTreeMap::new();
     args.insert("who".into(), "alice".into());
-    let invocation = manager
-        .get_prompt(&ctx, "mock", "greet", args)
-        .await
-        .unwrap();
+    let invocation = manager.prompt(&ctx, "mock", "greet", args).await.unwrap();
     assert_eq!(
         invocation.description.as_deref(),
         Some("greeting transcript")

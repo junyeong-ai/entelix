@@ -131,14 +131,14 @@ impl Transport for DirectTransport {
             }
         };
 
-        let response =
-            response.map_err(Error::provider_network_from)?;
+        let response = response.map_err(Error::provider_network_from)?;
 
         let status = response.status().as_u16();
         let headers = response.headers().clone();
-        let body = response.bytes().await.map_err(|e| {
-            Error::provider_http(status, format!("response body read failed: {e}"))
-        })?;
+        let body = response
+            .bytes()
+            .await
+            .map_err(|e| Error::provider_http(status, format!("response body read failed: {e}")))?;
 
         Ok(TransportResponse {
             status,
@@ -194,15 +194,14 @@ impl Transport for DirectTransport {
             }
         };
 
-        let response =
-            response.map_err(Error::provider_network_from)?;
+        let response = response.map_err(Error::provider_network_from)?;
         let status = response.status().as_u16();
         let headers = response.headers().clone();
 
         // Non-2xx: drain the buffered body so callers see the error
         // text rather than a cryptic stream of bytes.
         if !(200..300).contains(&status) {
-            let body = response.bytes().await.unwrap_or_else(|_| Bytes::new());
+            let body = response.bytes().await.unwrap_or_else(|_| Bytes::new()); // silent-fallback-ok: non-2xx body-drain glitch — caller surfaces the HTTP error via `status`; an empty Bytes is friendlier than re-raising a body-read I/O error that says nothing about the upstream failure.
             let body_stream = futures::stream::once(async move { Ok::<_, Error>(body) });
             return Ok(TransportStream {
                 status,

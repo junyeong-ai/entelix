@@ -131,7 +131,6 @@ impl ServerError {
             },
         }
     }
-
 }
 
 #[derive(Debug, Serialize)]

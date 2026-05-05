@@ -120,9 +120,10 @@ impl Transport for VertexTransport {
         .map_err(Error::provider_network_from)?;
         let status = response.status().as_u16();
         let headers = response.headers().clone();
-        let body = response.bytes().await.map_err(|e| {
-            Error::provider_http(status, format!("response body read failed: {e}"))
-        })?;
+        let body = response
+            .bytes()
+            .await
+            .map_err(|e| Error::provider_http(status, format!("response body read failed: {e}")))?;
         // 401: token may have rotated mid-flight — invalidate cache so
         // the next call refreshes.
         if status == 401 {
@@ -266,7 +267,8 @@ impl VertexTransportBuilder {
         let refresher = self
             .refresher
             .ok_or_else(|| Error::config("VertexTransport: token_refresher is required"))?;
-        let base_url = self.base_url.unwrap_or_else(|| { // silent-fallback-ok: builder default — regional Vertex AI endpoint when base_url is not overridden
+        let base_url = self.base_url.unwrap_or_else(|| {
+            // silent-fallback-ok: builder default — regional Vertex AI endpoint when base_url is not overridden
             if location == "global" {
                 "https://aiplatform.googleapis.com".to_owned()
             } else {

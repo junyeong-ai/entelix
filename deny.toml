@@ -58,7 +58,7 @@ wildcards = "deny"
 deny = [
     # Hard-rejects per invariant 9 — first-party crates do not import
     # filesystem, shell, or sandbox primitives. CI-enforced by
-    # scripts/check-no-fs.sh; cargo-deny adds the dependency-graph
+    # `cargo xtask no-fs`; cargo-deny adds the dependency-graph
     # layer (a transitive that pulls landlock / seatbelt / tree-sitter
     # surfaces it here even when no first-party `use` statement does).
     { name = "landlock" },

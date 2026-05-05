@@ -29,7 +29,7 @@ Sticky session: when the server returns an `Mcp-Session-Id` header on `initializ
 
 **Surface**:
 
-- `McpClient` trait — `initialize` + `call_tool` + `list_resources` + `read_resource` + `list_prompts` + `get_prompt` + `complete` + `notify_roots_changed` + `state`
+- `McpClient` trait — `initialize` + `call_tool` + `list_resources` + `read_resource` + `list_prompts` + `prompt` + `complete` + `notify_roots_changed` + `state`
 - `HttpMcpClient` — production impl over `reqwest` (streamable-http with SSE response support, bearer auth, optional `RequestDecorator`, sticky `Mcp-Session-Id`, background SSE listener with cancellation-token-driven shutdown on drop)
 - `McpManager` + `McpManagerBuilder` — per-`(tenant_id, server_name)` connection pool (F9 mitigation)
 - `McpClientState` — 11-state forward-only FSM

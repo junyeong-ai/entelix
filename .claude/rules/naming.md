@@ -154,7 +154,7 @@ Canonical: ADR-0010 §"Parameter ordering — `ctx` placement".
 - Workspace: `entelix-{role}` (kebab-case, single role word)
 - External companions (1.1+): `entelix-{role}-{detail}` — e.g. `entelix-embedder-openai`
 
-## Self-check before commit (`scripts/check-naming.sh` runs this in CI)
+## Self-check before commit (`cargo xtask naming` runs this in CI)
 
 ```bash
 # forbidden suffixes

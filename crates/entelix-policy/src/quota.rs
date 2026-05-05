@@ -159,12 +159,7 @@ mod tests {
     async fn budget_refusal_when_spent_meets_ceiling() {
         let cm = meter();
         // Push spend up to the ceiling.
-        cm.charge(
-            "t",
-            "x",
-            &Usage::new(1000, 1000),
-        )
-        .unwrap();
+        cm.charge("t", "x", &Usage::new(1000, 1000)).unwrap();
         // 1000*10/1000 + 1000*10/1000 = 20
         assert_eq!(cm.spent_by("t"), d("20"));
         let q = QuotaLimiter::new(None, Some(cm), Budget::capped(d("20")));
@@ -188,12 +183,7 @@ mod tests {
     #[tokio::test]
     async fn budget_check_runs_before_rate_check() {
         let cm = meter();
-        cm.charge(
-            "t",
-            "x",
-            &Usage::new(1000, 1000),
-        )
-        .unwrap();
+        cm.charge("t", "x", &Usage::new(1000, 1000)).unwrap();
         let limiter: Arc<dyn RateLimiter> = Arc::new(TokenBucketLimiter::new(1, 1.0).unwrap());
         let q = QuotaLimiter::new(Some(limiter.clone()), Some(cm), Budget::capped(d("20")));
         // Budget exhausted; we should not consume a rate-limit token.

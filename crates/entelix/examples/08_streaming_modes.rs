@@ -15,7 +15,7 @@
 
 use entelix::{
     CompiledGraph, DebugEvent, ExecutionContext, Result, Runnable, RunnableEvent, RunnableLambda,
-    StreamChunk, StateGraph, StreamMode,
+    StateGraph, StreamChunk, StreamMode,
 };
 use futures::StreamExt;
 

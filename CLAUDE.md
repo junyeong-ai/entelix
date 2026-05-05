@@ -27,7 +27,7 @@ A PR contradicting any invariant is invalid regardless of how clean the code loo
 
 ### Security
 
-9. **No filesystem, no shell** — first-party crates do NOT import `std::fs`, `std::path::Path`/`PathBuf` (except as opaque IDs), `std::process`, `std::os::unix::process`, `tokio::fs`, `tokio::process`, `landlock`, `seatbelt`, `tree-sitter*`, `nix`. Enforced by `scripts/check-no-fs.sh`.
+9. **No filesystem, no shell** — first-party crates do NOT import `std::fs`, `std::path::Path`/`PathBuf` (except as opaque IDs), `std::process`, `std::os::unix::process`, `tokio::fs`, `tokio::process`, `landlock`, `seatbelt`, `tree-sitter*`, `nix`. Enforced by `cargo xtask no-fs`.
 10. **Tokens never reach Tool input** — credentials live exclusively in `entelix_core::auth::CredentialProvider`. Headers are added in transport. `ExecutionContext` does NOT embed `CredentialProvider`. Type-checked.
 11. **Multi-tenant Namespace is mandatory** — `entelix_memory::Namespace` requires a `tenant_id`. Cross-tenant data leak is structurally impossible by API design.
 
@@ -38,10 +38,10 @@ A PR contradicting any invariant is invalid regardless of how clean the code loo
 
 ### Engineering
 
-14. **No backwards-compatibility shims** — when a name, type, or signature changes, delete the old in the same PR. No `// deprecated`, no `pub use OldName as NewName`, no fallback constructors. Enforced by `scripts/check-no-shims.sh` (forbids `#[deprecated]`, `// deprecated`, `// formerly …`, `// removed for backcompat`, `pub use X as YOld`).
-15. **No silent fallback** — codecs, transports, and the cost meter never substitute a plausible-looking default for a missing or unknown vendor signal. Information loss surfaces through one of two channels: `ModelWarning::LossyEncode { field, detail }` for coerced values, or `StopReason::Other { raw }` for unknown vendor reasons. Vendor-mandatory IR fields (`Anthropic` `max_tokens`, …) are rejected at encode time with `Error::invalid_request`. Missing decode signals surface as `Other{raw:"missing"}` plus a `LossyEncode` warning. Default-injecting a value (e.g. `max_tokens.unwrap_or(4096)`, `cache_rate.unwrap_or(input/10)`, `stopReason.unwrap_or(EndTurn)`) is a bug regardless of how reasonable the default looks. Enforced by `scripts/check-silent-fallback.sh` plus the `tests/codec_consistency_matrix.rs` regression suite. ADR-0032.
-16. **LLM / operator channel separation** — `Display` text, source-error chains, vendor status codes, internal type identifiers, raw distance scores, and ISO-8601 timestamps never reach the model. Tool errors flow to the LLM through `entelix_core::LlmFacingError::render_for_llm`; tool input schemas through `LlmFacingSchema::strip` (drops `$schema` / `title` / `$defs` / `$ref` / integer width hints); tool outputs through default-deny exposure knobs (`HttpFetchToolBuilder::expose_response_headers`, `MemoryToolConfig::expose_metadata_fields`, `MemoryToolConfig::with_entity_temporal_signals`). `AgentEvent::ToolError` carries two fields — `error` (operator-facing) + `error_for_llm` (model-facing), and the audit projection routes the model-facing rendering into `GraphEvent::ToolResult` so replay does not re-leak operator content. Operator channels (sinks, OTel, logs) keep the full diagnostic. Enforced by `crates/entelix-tools/tests/llm_context_economy.rs` regression suite. ADR-0033.
-17. **Heuristic policy externalisation** — embedded heuristics (retry / fallback / routing / recursion / probability literals) live on typed `*Policy` / `*Decision` surfaces operators override, not in dispatch hot paths. Vendor-authoritative signals beat self-jitter: `RetryClassifier::should_retry → RetryDecision { retry, after }` honours `Error::Provider::retry_after` populated from the vendor's `Retry-After` header; `RetryService` propagates that cooldown ahead of its own backoff. `Error::Provider::kind: ProviderErrorKind { Network, Tls, Dns, Http(u16) }` replaces the `status: 0` sentinel so retry classifiers branch on a typed signal. `RetryService` stamps an idempotency key on the request's `ExecutionContext` on first entry — every retry attempt forwards it on the `Idempotency-Key` header, so vendor dedupe collapses N attempts into one logical call. `SupervisorDecision { Agent(String), Finish }` replaces the prior `Runnable<…, String>` + `SUPERVISOR_FINISH` sentinel; recipe routers cannot hallucinate enum variants. `ReActAgentBuilder::with_recursion_limit` exposes the graph cap on the recipe surface. Probability literals (`0.X`) in codec / transport / agent / cost paths are forbidden by `scripts/check-magic-constants.sh`; new sites move onto an existing `*Policy` or carry a `// magic-ok:` marker. ADR-0034.
+14. **No backwards-compatibility shims** — when a name, type, or signature changes, delete the old in the same PR. No `// deprecated`, no `pub use OldName as NewName`, no fallback constructors. Enforced by `cargo xtask no-shims` (forbids `#[deprecated]`, `// deprecated`, `// formerly …`, `// removed for backcompat`, `pub use X as YOld`).
+15. **No silent fallback** — codecs, transports, and the cost meter never substitute a plausible-looking default for a missing or unknown vendor signal. Information loss surfaces through one of two channels: `ModelWarning::LossyEncode { field, detail }` for coerced values, or `StopReason::Other { raw }` for unknown vendor reasons. Vendor-mandatory IR fields (`Anthropic` `max_tokens`, …) are rejected at encode time with `Error::invalid_request`. Missing decode signals surface as `Other{raw:"missing"}` plus a `LossyEncode` warning. Default-injecting a value (e.g. `max_tokens.unwrap_or(4096)`, `cache_rate.unwrap_or(input/10)`, `stopReason.unwrap_or(EndTurn)`) is a bug regardless of how reasonable the default looks. Enforced by `cargo xtask silent-fallback` plus the `tests/codec_consistency_matrix.rs` regression suite. ADR-0032.
+16. **LLM / operator channel separation** — `Display` text, source-error chains, vendor status codes, internal type identifiers, raw distance scores, and ISO-8601 timestamps never reach the model. Tool errors flow to the LLM through `entelix_core::LlmFacingError::render_for_llm`; tool input schemas through `LlmFacingSchema::strip` (drops `$schema` / `title` / `$defs` / `$ref` / integer width hints); tool outputs through default-deny exposure knobs (`HttpFetchToolBuilder::with_exposed_response_headers`, `MemoryToolConfig::expose_metadata_fields`, `MemoryToolConfig::with_entity_temporal_signals`). `AgentEvent::ToolError` carries two fields — `error` (operator-facing) + `error_for_llm` (model-facing), and the audit projection routes the model-facing rendering into `GraphEvent::ToolResult` so replay does not re-leak operator content. Operator channels (sinks, OTel, logs) keep the full diagnostic. Enforced by `crates/entelix-tools/tests/llm_context_economy.rs` regression suite. ADR-0033.
+17. **Heuristic policy externalisation** — embedded heuristics (retry / fallback / routing / recursion / probability literals) live on typed `*Policy` / `*Decision` surfaces operators override, not in dispatch hot paths. Vendor-authoritative signals beat self-jitter: `RetryClassifier::should_retry → RetryDecision { retry, after }` honours `Error::Provider::retry_after` populated from the vendor's `Retry-After` header; `RetryService` propagates that cooldown ahead of its own backoff. `Error::Provider::kind: ProviderErrorKind { Network, Tls, Dns, Http(u16) }` replaces the `status: 0` sentinel so retry classifiers branch on a typed signal. `RetryService` stamps an idempotency key on the request's `ExecutionContext` on first entry — every retry attempt forwards it on the `Idempotency-Key` header, so vendor dedupe collapses N attempts into one logical call. `SupervisorDecision { Agent(String), Finish }` replaces the prior `Runnable<…, String>` + `SUPERVISOR_FINISH` sentinel; recipe routers cannot hallucinate enum variants. `ReActAgentBuilder::with_recursion_limit` exposes the graph cap on the recipe surface. Probability literals (`0.X`) in codec / transport / agent / cost paths are forbidden by `cargo xtask magic-constants`; new sites move onto an existing `*Policy` or carry a `// magic-ok:` marker. ADR-0034.
 18. **Managed-agent lifecycle is auditable** — sub-agent dispatch, supervisor handoff, resume-from-checkpoint, and long-term memory recall emit through the typed `entelix_core::AuditSink` channel that operators wire onto `ExecutionContext::with_audit_sink`. `entelix-session` ships `SessionAuditSink` — a fire-and-forget adapter that maps each `record_*` call onto `SessionLog::append` of the corresponding `GraphEvent` variant (`SubAgentInvoked`, `AgentHandoff`, `Resumed`, `MemoryRecall`). The trait surface is typed `record_*` verbs (not `emit(GraphEvent)`) so `entelix-tools` / `entelix-graph` emit sites do not depend on `entelix-session`; the methods are sync `&self` so emit sites avoid `.await` ceremony in hot dispatch loops. Audit-sink failures land in `tracing::warn!` and never propagate back — the audit channel is one-way by contract. `MemoryRecall` captures the *retrieval act* (`tier`, `namespace_key`, `hits`) but never the corpus; the model-facing content already lands in the conversation transcript. Recipes that do not wire a sink incur zero overhead — `ctx.audit_sink()` returning `None` makes every emit site a no-op. ADR-0037.
 
 ## Lock ordering
@@ -75,7 +75,7 @@ Every async API that may run > 100ms accepts `tokio_util::sync::CancellationToke
 
 ## Naming
 
-Reference: `.claude/rules/naming.md` (mirrors `docs/adr/0010-naming-taxonomy.md`). Type-suffix table (`*Codec`, `*Transport`, `*Provider`, …), the `Runnable<Verb>` composition prefix, builder verb-prefix exception (`with_*` / `add_*` / `set_*` / `register`), and the ctx-first / ctx-last parameter-ordering split all live there. Forbidden suffixes (`*Engine`, `*Wrapper`, `*Handler`, `*Helper`, `*Util`) and `get_xxx` accessors are reviewer-rejected; `scripts/check-naming.sh` enforces a subset.
+Reference: `.claude/rules/naming.md` (mirrors `docs/adr/0010-naming-taxonomy.md`). Type-suffix table (`*Codec`, `*Transport`, `*Provider`, …), the `Runnable<Verb>` composition prefix, builder verb-prefix exception (`with_*` / `add_*` / `set_*` / `register`), and the ctx-first / ctx-last parameter-ordering split all live there. Forbidden suffixes (`*Engine`, `*Wrapper`, `*Handler`, `*Helper`, `*Util`) and `get_xxx` accessors are reviewer-rejected; `cargo xtask naming` enforces a subset.
 
 ## Anthropic managed-agent shape — non-negotiable
 
@@ -84,7 +84,7 @@ This SDK mirrors [Anthropic's managed-agents pattern](https://www.anthropic.com/
 - **Session** = `SessionGraph` (event log, externally stored)
 - **Harness** = `Agent` + codecs (stateless brain, replaceable)
 - **Hand** = `Tool` trait (sandbox-agnostic, single `execute` interface)
-- **Brain passes hand** — `Subagent::from_whitelist(model, &parent_registry, &[...])` narrows the parent `ToolRegistry` through `restricted_to` / `filter`. The narrowed view shares the parent's layer factory by `Arc` — `PolicyLayer`, `OtelLayer`, retry middleware all apply transparently to sub-agent dispatches. `Subagent` *never* constructs a fresh `ToolRegistry::new()`; the raw `Vec<Arc<dyn Tool>>` surface does not exist on this path. Enforced by `scripts/check-managed-shape.sh` plus `tests/subagent_layer_inheritance.rs`. ADR-0035.
+- **Brain passes hand** — `Subagent::from_whitelist(model, &parent_registry, &[...])` narrows the parent `ToolRegistry` through `restricted_to` / `filter`. The narrowed view shares the parent's layer factory by `Arc` — `PolicyLayer`, `OtelLayer`, retry middleware all apply transparently to sub-agent dispatches. `Subagent` *never* constructs a fresh `ToolRegistry::new()`; the raw `Vec<Arc<dyn Tool>>` surface does not exist on this path. Enforced by `cargo xtask managed-shape` plus `tests/subagent_layer_inheritance.rs`. ADR-0035.
 - **Lazy provisioning** — MCP / cloud connections opened on tool call
 - **Wake / resume** — first-class
 
@@ -111,49 +111,31 @@ cargo clippy --workspace --all-features --all-targets -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
 cargo test --workspace --all-features
 
-# Invariant 9 — no fs / shell
-./scripts/check-no-fs.sh
+# Run every static-analysable invariant in canonical CI order
+cargo xtask invariants
 
-# Managed-agent shape
-./scripts/check-managed-shape.sh
+# Or per-invariant — each subcommand maps to one CLAUDE.md invariant or
+# ADR. Implementations live in xtask/src/invariants/<name>.rs as typed-AST
+# visitors over `syn::File` and `toml_edit::DocumentMut` (ADR-0073).
+cargo xtask no-fs                    # invariant 9
+cargo xtask managed-shape            # invariants 1, 2, 4, 10 + ADR-0035
+cargo xtask naming                   # ADR-0010 taxonomy + ctx-position
+cargo xtask surface-hygiene          # #[non_exhaustive] + #[source] / #[from]
+cargo xtask silent-fallback          # invariant 15 + ADR-0032
+cargo xtask magic-constants          # invariant 17 + ADR-0034
+cargo xtask no-shims                 # invariant 14
+cargo xtask lock-ordering            # await_holding_lock pinned at deny
+cargo xtask dead-deps                # workspace.dependencies hygiene
+cargo xtask facade-completeness      # every pub item reachable via `entelix::*`
+cargo xtask doc-canonical-paths      # live docs use facade canonical paths
 
-# Naming taxonomy
-./scripts/check-naming.sh
+# Network-bound / cargo-subprocess gates — heavier, separate CI jobs
+cargo xtask supply-chain             # cargo audit (RustSec) + cargo deny
+cargo xtask feature-matrix           # each facade feature compiles alone
+cargo xtask public-api               # per-crate public-API drift baseline
 
-# Surface hygiene (#[non_exhaustive], struct-variant errors with #[source])
-./scripts/check-surface-hygiene.sh
-
-# Invariant 15 — no silent fallback in codecs / transports / cost meter
-./scripts/check-silent-fallback.sh
-
-# Invariant 17 — no probability-shaped magic constants in heuristic paths
-./scripts/check-magic-constants.sh
-
-# Invariant 14 — no backwards-compatibility shims (#[deprecated], // deprecated, pub use X as YOld, // formerly, // removed for backcompat)
-./scripts/check-no-shims.sh
-
-# Lock ordering — clippy await-holding-* lints pinned at deny level
-./scripts/check-lock-ordering.sh
-
-# Facade feature-isolation matrix (each `entelix` feature must compile alone)
-./scripts/check-feature-matrix.sh
-
-# Workspace.dependencies dead-entry detection (every entry must be inherited)
-./scripts/check-dead-deps.sh
-
-# Facade completeness — every sub-crate `pub use` item is reachable through `entelix::*`
-./scripts/check-facade-completeness.sh
-
-# Live-doc canonical paths — README + architecture + migrations use facade path
-./scripts/check-doc-canonical-paths.sh
-
-# Supply-chain — cargo audit (RustSec CVE) + cargo deny (license + bans + transitive)
-./scripts/check-supply-chain.sh
-
-# Per-crate public-API drift
-./scripts/check-public-api.sh
-# Refreeze deliberately after approved API change:
-./scripts/freeze-public-api.sh <crate>...
+# Refreeze public-API baselines after a deliberate, ADR-documented change
+cargo xtask freeze-public-api [<crate>...]
 
 # Live integration (requires API keys, opt-in)
 cargo test --workspace --all-features -- --ignored

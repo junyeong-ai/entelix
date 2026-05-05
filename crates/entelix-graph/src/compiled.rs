@@ -9,9 +9,7 @@ use std::sync::Arc;
 
 use entelix_core::{Error, ExecutionContext, Result, ThreadKey};
 use entelix_runnable::Runnable;
-use entelix_runnable::stream::{
-    BoxStream, DebugEvent, RunnableEvent, StreamChunk, StreamMode,
-};
+use entelix_runnable::stream::{BoxStream, DebugEvent, RunnableEvent, StreamChunk, StreamMode};
 
 use crate::checkpoint::{Checkpoint, CheckpointId, Checkpointer};
 use crate::command::Command;

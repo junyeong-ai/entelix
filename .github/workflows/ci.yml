@@ -17,7 +17,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ── Fast pre-flight: format + invariant scripts ────────────────────────────
+  # ── Fast pre-flight: fmt + every static-analysable invariant ───────────────
+  # `cargo xtask invariants` runs every gate that doesn't require network or
+  # heavy cargo subprocesses. Each gate is a typed-AST visitor — see ADR-0073
+  # and `xtask/src/invariants/` for the per-invariant predicates.
   preflight:
     name: preflight (fmt + invariants)
     runs-on: ubuntu-latest
@@ -29,41 +32,16 @@ jobs:
         with:
           components: rustfmt
 
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: xtask
+          workspaces: xtask
+
       - name: cargo fmt --all -- --check
         run: cargo fmt --all -- --check
 
-      - name: scripts/check-no-fs.sh (invariant 9)
-        run: bash scripts/check-no-fs.sh
-
-      - name: scripts/check-managed-shape.sh (invariants 1-4, 10)
-        run: bash scripts/check-managed-shape.sh
-
-      - name: scripts/check-naming.sh (ADR-0010)
-        run: bash scripts/check-naming.sh
-
-      - name: scripts/check-surface-hygiene.sh (#[non_exhaustive] + source chains)
-        run: bash scripts/check-surface-hygiene.sh
-
-      - name: scripts/check-silent-fallback.sh (invariant 15)
-        run: bash scripts/check-silent-fallback.sh
-
-      - name: scripts/check-magic-constants.sh (invariant 17)
-        run: bash scripts/check-magic-constants.sh
-
-      - name: scripts/check-no-shims.sh (invariant 14)
-        run: bash scripts/check-no-shims.sh
-
-      - name: scripts/check-lock-ordering.sh (CLAUDE.md §"Lock ordering")
-        run: bash scripts/check-lock-ordering.sh
-
-      - name: scripts/check-dead-deps.sh (workspace.dependencies hygiene)
-        run: bash scripts/check-dead-deps.sh
-
-      - name: scripts/check-facade-completeness.sh (every pub item reachable via facade)
-        run: bash scripts/check-facade-completeness.sh
-
-      - name: scripts/check-doc-canonical-paths.sh (live docs use facade canonical)
-        run: bash scripts/check-doc-canonical-paths.sh
+      - name: cargo xtask invariants
+        run: cargo xtask invariants
 
   # ── Supply-chain — cargo audit + cargo deny ────────────────────────────────
   supply-chain:
@@ -78,8 +56,8 @@ jobs:
           shared-key: ubuntu-latest
       - name: Install cargo-audit + cargo-deny
         run: cargo install cargo-audit cargo-deny --locked --quiet
-      - name: scripts/check-supply-chain.sh
-        run: bash scripts/check-supply-chain.sh
+      - name: cargo xtask supply-chain
+        run: cargo xtask supply-chain
 
   # ── Build + clippy + test matrix ───────────────────────────────────────────
   build:
@@ -139,8 +117,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ubuntu-latest
-      - name: scripts/check-feature-matrix.sh
-        run: bash scripts/check-feature-matrix.sh
+      - name: cargo xtask feature-matrix
+        run: cargo xtask feature-matrix
 
   # ── Public-API drift gate (requires cargo-public-api) ──────────────────────
   public-api:
@@ -155,8 +133,8 @@ jobs:
           shared-key: ubuntu-latest
       - name: Install cargo-public-api
         run: cargo install cargo-public-api --locked --quiet
-      - name: scripts/check-public-api.sh
-        run: bash scripts/check-public-api.sh
+      - name: cargo xtask public-api
+        run: cargo xtask public-api
 
   # ── Live integration tests (opt-in; requires API keys) ─────────────────────
   # Triggered only on workflow_dispatch or when the commit message contains

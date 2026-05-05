@@ -72,10 +72,7 @@ async fn default_debug_emits_lifecycle_markers() {
         chunks[2],
         StreamChunk::Debug(DebugEvent::NodeEnd { step: 1, .. })
     ));
-    assert!(matches!(
-        chunks[3],
-        StreamChunk::Debug(DebugEvent::Final)
-    ));
+    assert!(matches!(chunks[3], StreamChunk::Debug(DebugEvent::Final)));
 }
 
 #[tokio::test]

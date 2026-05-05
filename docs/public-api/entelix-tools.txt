@@ -553,14 +553,14 @@ impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools::HttpFetchTool
 impl !core::panic::unwind_safe::UnwindSafe for entelix_tools::HttpFetchTool
 pub struct entelix_tools::HttpFetchToolBuilder
 impl entelix_tools::HttpFetchToolBuilder
-pub fn entelix_tools::HttpFetchToolBuilder::allowed_methods<I: core::iter::traits::collect::IntoIterator<Item = http::method::Method>>(self, methods: I) -> Self
 pub fn entelix_tools::HttpFetchToolBuilder::build(self) -> entelix_tools::ToolResult<entelix_tools::HttpFetchTool>
-pub fn entelix_tools::HttpFetchToolBuilder::expose_response_headers<I, S>(self, headers: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::AsRef<str>
-pub const fn entelix_tools::HttpFetchToolBuilder::max_redirects(self, n: usize) -> Self
-pub const fn entelix_tools::HttpFetchToolBuilder::max_response_bytes(self, n: usize) -> Self
 pub fn entelix_tools::HttpFetchToolBuilder::new() -> Self
-pub const fn entelix_tools::HttpFetchToolBuilder::timeout(self, t: core::time::Duration) -> Self
+pub fn entelix_tools::HttpFetchToolBuilder::with_allowed_methods<I: core::iter::traits::collect::IntoIterator<Item = http::method::Method>>(self, methods: I) -> Self
 pub fn entelix_tools::HttpFetchToolBuilder::with_allowlist(self, allowlist: entelix_tools::HostAllowlist) -> Self
+pub fn entelix_tools::HttpFetchToolBuilder::with_exposed_response_headers<I, S>(self, headers: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::AsRef<str>
+pub const fn entelix_tools::HttpFetchToolBuilder::with_max_redirects(self, n: usize) -> Self
+pub const fn entelix_tools::HttpFetchToolBuilder::with_max_response_bytes(self, n: usize) -> Self
+pub const fn entelix_tools::HttpFetchToolBuilder::with_timeout(self, t: core::time::Duration) -> Self
 pub fn entelix_tools::HttpFetchToolBuilder::with_user_agent(self, ua: impl core::convert::Into<alloc::string::String>) -> Self
 impl core::default::Default for entelix_tools::HttpFetchToolBuilder
 pub fn entelix_tools::HttpFetchToolBuilder::default() -> Self

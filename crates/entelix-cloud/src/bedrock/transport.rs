@@ -167,9 +167,10 @@ impl Transport for BedrockTransport {
         .map_err(Error::provider_network_from)?;
         let status = response.status().as_u16();
         let headers = response.headers().clone();
-        let body = response.bytes().await.map_err(|e| {
-            Error::provider_http(status, format!("response body read failed: {e}"))
-        })?;
+        let body = response
+            .bytes()
+            .await
+            .map_err(|e| Error::provider_http(status, format!("response body read failed: {e}")))?;
         Ok(TransportResponse {
             status,
             headers,

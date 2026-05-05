@@ -261,7 +261,7 @@ impl McpManager {
     }
 
     /// Bind `prompt` arguments and fetch the resulting transcript.
-    pub async fn get_prompt(
+    pub async fn prompt(
         &self,
         ctx: &ExecutionContext,
         server: &str,
@@ -270,7 +270,7 @@ impl McpManager {
     ) -> McpResult<McpPromptInvocation> {
         let client = self.client_for(ctx.tenant_id(), server).await?;
         client
-            .get_prompt(prompt, arguments)
+            .prompt(prompt, arguments)
             .await
             .map_err(|e| correlate(e, server, &format!("prompt '{prompt}'")))
     }

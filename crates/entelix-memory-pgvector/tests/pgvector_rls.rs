@@ -23,6 +23,7 @@
     clippy::doc_markdown
 )]
 
+use entelix_core::TenantId;
 use entelix_core::context::ExecutionContext;
 use entelix_memory::{Document, Namespace, VectorStore};
 use entelix_memory_pgvector::PgVectorStore;
@@ -123,7 +124,7 @@ async fn rls_blocks_cross_tenant_search_at_db_layer() {
     // SDK path stamps `entelix.tenant_id` per transaction → write
     // succeeds (WITH CHECK satisfied), read with same tenant
     // succeeds (USING satisfied).
-    let ns_a = Namespace::new("tenant-A").with_scope("scope");
+    let ns_a = Namespace::new(TenantId::new("tenant-A")).with_scope("scope");
     app_store
         .add(&ctx, &ns_a, doc("hello"), vec4(0.1))
         .await
@@ -176,7 +177,7 @@ async fn rls_with_check_blocks_mismatched_tenant_inserts() {
 async fn correct_tenant_session_returns_rows_wrong_tenant_does_not() {
     let (_c, app_store, app_pool) = boot_with_app_role().await;
     let ctx = ExecutionContext::new();
-    let ns = Namespace::new("tenant-X").with_scope("conv");
+    let ns = Namespace::new(TenantId::new("tenant-X")).with_scope("conv");
     app_store
         .add(&ctx, &ns, doc("alpha"), vec4(0.5))
         .await

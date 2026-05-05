@@ -54,7 +54,7 @@ async fn resume_emits_resumed_with_checkpoint_id() -> Result<()> {
         .with_checkpointer(cp.clone())
         .compile()?;
 
-    let key = ThreadKey::new("default", "thread-resume");
+    let key = ThreadKey::new(TenantId::new("default"), "thread-resume");
     let checkpoint = Checkpoint::new(&key, 1, Workflow { n: 100 }, Some("b".into()));
     let manual_id = checkpoint.id.clone();
     cp.put(checkpoint).await?;

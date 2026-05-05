@@ -629,7 +629,7 @@ mod tests {
         let inv = ModelInvocation::new(
             make_request("claude-opus-4-7"),
             ExecutionContext::new()
-                .with_tenant_id("acme")
+                .with_tenant_id(TenantId::new("acme"))
                 .with_thread_id("conv-1"),
         );
         let _ = tower::ServiceExt::oneshot(svc, inv).await.unwrap();
@@ -671,7 +671,7 @@ mod tests {
         let svc = layer.layer(leaf);
         let inv = ModelInvocation::new(
             make_request("claude-opus-4-7"),
-            ExecutionContext::new().with_tenant_id("acme"),
+            ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
         );
         let _ = tower::ServiceExt::oneshot(svc, inv).await.unwrap();
         let combined = cap.0.lock().unwrap().join("\n");
@@ -695,7 +695,7 @@ mod tests {
         let svc = layer.layer(leaf);
         let inv = ModelInvocation::new(
             make_request("claude-opus-4-7"),
-            ExecutionContext::new().with_tenant_id("acme"),
+            ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
         );
         let _ = tower::ServiceExt::oneshot(svc, inv).await.unwrap();
         let combined = cap.0.lock().unwrap().join("\n");
@@ -742,7 +742,7 @@ mod tests {
         let inv = lookup_invocation(
             "tool_use_1",
             json!({"id": "x"}),
-            ExecutionContext::new().with_tenant_id("acme"),
+            ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
         );
         let _ = tower::ServiceExt::oneshot(svc, inv).await.unwrap();
         let combined = cap.0.lock().unwrap().join("\n");
@@ -761,7 +761,7 @@ mod tests {
         let inv = ModelInvocation::new(
             make_request("claude-opus-4-7"),
             ExecutionContext::new()
-                .with_tenant_id("acme")
+                .with_tenant_id(TenantId::new("acme"))
                 .with_run_id("run-abc-123"),
         );
         let _ = tower::ServiceExt::oneshot(svc, inv).await.unwrap();
@@ -794,7 +794,7 @@ mod tests {
         let svc = layer.layer(FailingModelService);
         let inv = ModelInvocation::new(
             make_request("claude-opus-4-7"),
-            ExecutionContext::new().with_tenant_id("acme"),
+            ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
         );
         let _ = tower::ServiceExt::oneshot(svc, inv).await.unwrap_err();
         let combined = cap.0.lock().unwrap().join("\n");
@@ -826,7 +826,7 @@ mod tests {
         let inv = lookup_invocation(
             "tu-ok",
             json!({}),
-            ExecutionContext::new().with_tenant_id("acme"),
+            ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
         );
         let _ = tower::ServiceExt::oneshot(svc, inv).await.unwrap();
         let combined_ok = ok_cap.0.lock().unwrap().join("\n");
@@ -842,7 +842,7 @@ mod tests {
         let inv = lookup_invocation(
             "tu-err",
             json!({}),
-            ExecutionContext::new().with_tenant_id("acme"),
+            ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
         );
         let _ = tower::ServiceExt::oneshot(svc, inv).await.unwrap_err();
         let combined_err = err_cap.0.lock().unwrap().join("\n");
@@ -883,7 +883,7 @@ mod tests {
         let inv = lookup_invocation(
             "tu-cost-ok",
             json!({"x": 1}),
-            ExecutionContext::new().with_tenant_id("acme"),
+            ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
         );
         let _ = tower::ServiceExt::oneshot(svc, inv).await.unwrap();
         let combined = cap.0.lock().unwrap().join("\n");
@@ -907,7 +907,7 @@ mod tests {
         let inv = lookup_invocation(
             "tu-cost-unknown",
             json!({}),
-            ExecutionContext::new().with_tenant_id("acme"),
+            ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
         );
         let _ = tower::ServiceExt::oneshot(svc, inv).await.unwrap();
         let combined = cap.0.lock().unwrap().join("\n");
@@ -934,7 +934,7 @@ mod tests {
         let svc = layer.layer(FailingModelService);
         let inv = ModelInvocation::new(
             make_request("claude-opus-4-7"),
-            ExecutionContext::new().with_tenant_id("acme"),
+            ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
         );
         let _ = tower::ServiceExt::oneshot(svc, inv).await.unwrap_err();
         let combined = cap.0.lock().unwrap().join("\n");
@@ -960,7 +960,7 @@ mod tests {
         let inv = lookup_invocation(
             "tu-cost-err",
             json!({}),
-            ExecutionContext::new().with_tenant_id("acme"),
+            ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
         );
         let _ = tower::ServiceExt::oneshot(svc, inv).await.unwrap_err();
         let combined = cap.0.lock().unwrap().join("\n");
@@ -980,7 +980,7 @@ mod tests {
             "tu-7",
             json!({}),
             ExecutionContext::new()
-                .with_tenant_id("acme")
+                .with_tenant_id(TenantId::new("acme"))
                 .with_run_id("run-xyz"),
         );
         let _ = tower::ServiceExt::oneshot(svc, inv).await.unwrap();

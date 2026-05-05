@@ -191,7 +191,7 @@ pub const DEFAULT_MAX_TENANTS: usize = 10_000;
 #[derive(Clone)]
 pub struct CostMeter {
     pricing: Arc<RwLock<PricingTable>>,
-    ledger: Arc<DashMap<String, Decimal>>,
+    ledger: Arc<DashMap<entelix_core::TenantId, Decimal>>,
     unknown_policy: UnknownModelPolicy,
     /// Bounded set of model names already warned about under
     /// [`UnknownModelPolicy::WarnOnce`]. Capped at
@@ -342,7 +342,12 @@ impl CostMeter {
     /// successfully decoded the response. A network failure / parse
     /// error short-circuits before this point and the ledger stays
     /// untouched.
-    pub fn charge(&self, tenant_id: &str, model: &str, usage: &Usage) -> PolicyResult<Decimal> {
+    pub fn charge(
+        &self,
+        tenant_id: &entelix_core::TenantId,
+        model: &str,
+        usage: &Usage,
+    ) -> PolicyResult<Decimal> {
         let cost = {
             let pricing = self.pricing.read();
             match pricing.get(model) {
@@ -364,19 +369,21 @@ impl CostMeter {
         // Saturation check: only NEW tenants count against the cap;
         // already-tracked tenants accumulate into their existing
         // entry without growing the map. This keeps the cap a
-        // memory-bound, not a charging-rate bound.
-        let already_tracked = self.ledger.contains_key(tenant_id);
+        // memory-bound, not a charging-rate bound. `TenantId`
+        // implements `Borrow<str>`, so the lookup uses the existing
+        // `Arc<str>` without an extra allocation.
+        let already_tracked = self.ledger.contains_key(tenant_id.as_str());
         if !already_tracked && self.ledger.len() >= self.max_tenants {
             self.warn_tenants_saturated();
             return Ok(Decimal::ZERO);
         }
         self.ledger
-            .entry(tenant_id.to_owned())
+            .entry(tenant_id.clone())
             .and_modify(|v| *v += cost)
             .or_insert(cost);
         tracing::debug!(
             target: "entelix_policy::cost",
-            tenant_id,
+            tenant_id = tenant_id.as_str(),
             model,
             charge = %cost,
             "cost meter charged"
@@ -387,16 +394,18 @@ impl CostMeter {
     /// Cumulative spend for `tenant_id`. Returns `Decimal::ZERO` for
     /// an unseen tenant.
     #[must_use]
-    pub fn spent_by(&self, tenant_id: &str) -> Decimal {
-        self.ledger.get(tenant_id).map_or(Decimal::ZERO, |v| *v)
+    pub fn spent_by(&self, tenant_id: &entelix_core::TenantId) -> Decimal {
+        self.ledger
+            .get(tenant_id.as_str())
+            .map_or(Decimal::ZERO, |v| *v)
     }
 
     /// Reset (and return) the recorded spend for `tenant_id`. Used by
     /// nightly billing to drain the in-memory ledger after
     /// persisting it.
-    pub fn drain(&self, tenant_id: &str) -> Decimal {
+    pub fn drain(&self, tenant_id: &entelix_core::TenantId) -> Decimal {
         self.ledger
-            .remove(tenant_id)
+            .remove(tenant_id.as_str())
             .map_or(Decimal::ZERO, |(_, v)| v)
     }
 }

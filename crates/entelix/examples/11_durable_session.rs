@@ -38,7 +38,7 @@ use std::sync::Arc;
 
 use entelix::{
     Checkpointer, Command, CompiledGraph, Error, ExecutionContext, InMemoryCheckpointer, Result,
-    Runnable, RunnableLambda, StateGraph, ThreadKey, interrupt,
+    Runnable, RunnableLambda, StateGraph, TenantId, ThreadKey, interrupt,
 };
 
 #[derive(Clone, Debug)]
@@ -117,7 +117,7 @@ async fn main() -> Result<()> {
     // ── Pod 1: starts the work; halts at `review` ────────────────────
     println!("── pod 1 (will be killed mid-flight) ────────────");
     let pod1_ctx = ExecutionContext::new()
-        .with_tenant_id("acme")
+        .with_tenant_id(TenantId::new("acme"))
         .with_thread_id(THREAD_ID);
 
     {
@@ -144,7 +144,7 @@ async fn main() -> Result<()> {
     // ── Pod 2: cold start; reconstructs the graph; resumes ───────────
     println!("\n── pod 2 (cold start, fresh harness) ────────────");
     let pod2_ctx = ExecutionContext::new()
-        .with_tenant_id("acme")
+        .with_tenant_id(TenantId::new("acme"))
         .with_thread_id(THREAD_ID);
 
     let graph_pod2 = build_graph(checkpointer.clone())?;

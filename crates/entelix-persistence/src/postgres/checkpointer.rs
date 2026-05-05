@@ -66,7 +66,7 @@ where
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             ",
         )
-        .bind(&checkpoint.tenant_id)
+        .bind(checkpoint.tenant_id.as_str())
         .bind(&checkpoint.thread_id)
         .bind(checkpoint.id.as_uuid())
         .bind(parent)
@@ -93,7 +93,7 @@ where
             LIMIT 1
             ",
         )
-        .bind(key.tenant_id())
+        .bind(key.tenant_id().as_str())
         .bind(key.thread_id())
         .fetch_optional(&mut *tx)
         .await
@@ -114,7 +114,7 @@ where
             WHERE tenant_id = $1 AND thread_id = $2 AND id = $3
             ",
         )
-        .bind(key.tenant_id())
+        .bind(key.tenant_id().as_str())
         .bind(key.thread_id())
         .bind(id.as_uuid())
         .fetch_optional(&mut *tx)
@@ -139,7 +139,7 @@ where
             LIMIT $3
             ",
         )
-        .bind(key.tenant_id())
+        .bind(key.tenant_id().as_str())
         .bind(key.thread_id())
         .bind(limit_i64)
         .fetch_all(&mut *tx)
@@ -193,7 +193,14 @@ impl CheckpointRow {
         S: Clone + Send + Sync + DeserializeOwned + 'static,
     {
         let state = unwrap_state::<S>(&self.state)?;
-        let key = ThreadKey::new(self.tenant_id, self.thread_id);
+        // Persistence-layer row hydration runs the validating
+        // `TenantId::try_from`; an empty `tenant_id` column (which
+        // would otherwise produce a tenantless `Checkpoint` whose
+        // RLS policy comparison silently mis-routes) surfaces as
+        // `Error::InvalidRequest` rather than a constructed value.
+        let tenant = entelix_core::TenantId::try_from(self.tenant_id)
+            .map_err(|e| PersistenceError::Backend(format!("invalid persisted tenant_id: {e}")))?;
+        let key = ThreadKey::new(tenant, self.thread_id);
         Ok(Checkpoint::from_parts(
             CheckpointId::from_uuid(self.id),
             &key,
@@ -236,4 +243,39 @@ fn backend_to_core(e: sqlx::Error) -> Error {
 
 fn into_core(e: PersistenceError) -> Error {
     e.into()
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+
+    /// Persistence-layer row hydration must run the `TenantId`
+    /// validator on the persisted column. A row whose `tenant_id`
+    /// column is empty (whether from a misconfigured admin script
+    /// or a corrupted backup) cannot construct a tenantless
+    /// `Checkpoint` whose RLS-filter comparison would then run
+    /// against `''` and silently widen the result set
+    /// (invariant 11 / ADR-0074).
+    #[test]
+    fn try_into_checkpoint_rejects_empty_persisted_tenant_id() {
+        let row = CheckpointRow {
+            tenant_id: String::new(),
+            thread_id: "th-1".to_owned(),
+            id: Uuid::new_v4(),
+            parent_id: None,
+            step: 0,
+            state: serde_json::json!({
+                SCHEMA_KEY: SessionSchemaVersion::CURRENT,
+                STATE_KEY: 42,
+            }),
+            next_node: None,
+            ts: chrono::Utc::now(),
+        };
+        let err = row.try_into_checkpoint::<i32>().unwrap_err();
+        assert!(
+            matches!(err, PersistenceError::Backend(ref m) if m.contains("invalid persisted tenant_id")),
+            "expected Backend(\"invalid persisted tenant_id …\"), got {err:?}"
+        );
+    }
 }

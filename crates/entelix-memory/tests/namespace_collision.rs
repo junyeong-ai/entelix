@@ -19,14 +19,14 @@ fn distinct_segments_with_colons_render_distinctly() {
     // Without escaping, both of these would render to "t:1:a:b" and
     // collide. With escaping, the colon-bearing segments are
     // disambiguated.
-    let a = Namespace::new("t:1").with_scope("a:b");
-    let b = Namespace::new("t").with_scope("1:a:b");
+    let a = Namespace::new(TenantId::new("t:1")).with_scope("a:b");
+    let b = Namespace::new(TenantId::new("t")).with_scope("1:a:b");
     assert_ne!(a.render(), b.render());
 }
 
 #[test]
 fn segments_without_special_characters_are_unchanged() {
-    let ns = Namespace::new("acme")
+    let ns = Namespace::new(TenantId::new("acme"))
         .with_scope("agent-1")
         .with_scope("conv-42");
     assert_eq!(ns.render(), "acme:agent-1:conv-42");
@@ -36,8 +36,8 @@ fn segments_without_special_characters_are_unchanged() {
 fn backslash_in_segment_is_escaped() {
     // A literal backslash in a segment must round-trip through
     // render() without being mistaken for an escape sequence.
-    let a = Namespace::new("t").with_scope("a\\b");
-    let b = Namespace::new("t").with_scope("a\\\\b");
+    let a = Namespace::new(TenantId::new("t")).with_scope("a\\b");
+    let b = Namespace::new(TenantId::new("t")).with_scope("a\\\\b");
     assert_ne!(a.render(), b.render());
 }
 
@@ -50,8 +50,8 @@ async fn store_isolates_distinct_tenants_under_identical_scope() {
     let store: Arc<dyn Store<String>> = Arc::new(InMemoryStore::<String>::new());
     let ctx = ExecutionContext::new();
 
-    let acme = Namespace::new("acme").with_scope("session-42");
-    let beta = Namespace::new("beta").with_scope("session-42");
+    let acme = Namespace::new(TenantId::new("acme")).with_scope("session-42");
+    let beta = Namespace::new(TenantId::new("beta")).with_scope("session-42");
 
     store
         .put(&ctx, &acme, "msg", "acme private".to_owned())
@@ -104,8 +104,8 @@ async fn store_isolates_colon_bearing_segments_via_escaping() {
     // injectivity guarantee end-to-end.
     let store: Arc<dyn Store<String>> = Arc::new(InMemoryStore::<String>::new());
     let ctx = ExecutionContext::new();
-    let a = Namespace::new("t:1").with_scope("a:b");
-    let b = Namespace::new("t").with_scope("1:a:b");
+    let a = Namespace::new(TenantId::new("t:1")).with_scope("a:b");
+    let b = Namespace::new(TenantId::new("t")).with_scope("1:a:b");
     assert_ne!(a.render(), b.render());
 
     store.put(&ctx, &a, "k", "from-a".to_owned()).await.unwrap();

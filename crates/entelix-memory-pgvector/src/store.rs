@@ -286,7 +286,7 @@ impl VectorStore for PgVectorStore {
             .map_err(|e| Error::from(PgVectorStoreError::from(e)))?;
         set_tenant_session(&mut *tx, ns.tenant_id()).await?;
         sqlx::query(&stmt)
-            .bind(ns.tenant_id())
+            .bind(ns.tenant_id().as_str())
             .bind(ns_key)
             .bind(doc_id)
             .bind(document.content)
@@ -325,7 +325,7 @@ impl VectorStore for PgVectorStore {
             }
         }
         // Bulk insert via QueryBuilder::push_values — single round-trip.
-        let tenant_id = ns.tenant_id().to_owned();
+        let tenant_id = ns.tenant_id().as_str().to_owned();
         let mut qb: QueryBuilder<'_, Postgres> = QueryBuilder::new(format!(
             "INSERT INTO {table} \
              (tenant_id, namespace_key, doc_id, content, metadata, embedding) ",

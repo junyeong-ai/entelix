@@ -176,10 +176,13 @@ impl PolicyRegistry {
 
     /// Resolve a tenant's policy. Always returns *some* policy —
     /// the fallback when the tenant isn't explicitly registered.
+    /// Looks the tenant up by `&str` via [`std::borrow::Borrow`], so
+    /// callers passing the typed [`entelix_core::TenantId`] avoid an
+    /// extra allocation.
     #[must_use]
-    pub fn policy_for(&self, tenant_id: &str) -> Arc<TenantPolicy> {
+    pub fn policy_for(&self, tenant_id: &entelix_core::TenantId) -> Arc<TenantPolicy> {
         self.per_tenant
-            .get(tenant_id)
+            .get(tenant_id.as_str())
             .map_or_else(|| self.fallback.clone(), |entry| entry.clone())
     }
 

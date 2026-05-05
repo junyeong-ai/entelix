@@ -76,7 +76,14 @@ where
                     header.as_str()
                 )));
             }
-            ctx = ctx.with_tenant_id(trimmed);
+            // `TenantId::try_from` rejects empty up-front; the
+            // trimmed-empty branch above already short-circuits, so
+            // this conversion succeeds for every reachable path.
+            // Any future surface that drops the empty-trim guard
+            // still surfaces an empty header as a typed 4xx through
+            // this validator (invariant 11).
+            let tenant = entelix_core::TenantId::try_from(trimmed).map_err(ServerError::Core)?;
+            ctx = ctx.with_tenant_id(tenant);
         }
     }
     Ok((ctx, token))

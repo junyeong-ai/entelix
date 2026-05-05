@@ -32,7 +32,7 @@ impl FakeBackend {
     fn new() -> Self {
         Self {
             docs: Mutex::new(Vec::new()),
-            namespace: Namespace::new("test-tenant").with_scope("fake"),
+            namespace: Namespace::new(TenantId::new("test-tenant")).with_scope("fake"),
         }
     }
 }
@@ -236,7 +236,7 @@ async fn query_semantic_memory_emits_memory_recall() {
 #[tokio::test]
 async fn list_entity_facts_emits_memory_recall() {
     let store = Arc::new(InMemoryStore::new());
-    let namespace = Namespace::new("test-tenant").with_scope("entities");
+    let namespace = Namespace::new(TenantId::new("test-tenant")).with_scope("entities");
     let entity = Arc::new(EntityMemory::new(store, namespace));
     let registry = install(
         ToolRegistry::new(),
@@ -276,7 +276,7 @@ async fn get_entity_fact_emits_memory_recall_for_present_and_absent_keys() {
     // from present (1) so operators can read the model's lookup
     // success rate without re-correlating with the response body.
     let store = Arc::new(InMemoryStore::new());
-    let namespace = Namespace::new("test-tenant").with_scope("entities");
+    let namespace = Namespace::new(TenantId::new("test-tenant")).with_scope("entities");
     let entity = Arc::new(EntityMemory::new(store, namespace));
     let registry = install(
         ToolRegistry::new(),

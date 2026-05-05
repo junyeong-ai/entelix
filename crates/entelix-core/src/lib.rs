@@ -53,6 +53,7 @@ pub mod sandbox;
 pub mod service;
 pub mod skills;
 pub mod stream;
+pub mod tenant_id;
 pub mod thread_key;
 pub mod tools;
 pub mod transports;
@@ -64,7 +65,7 @@ pub use auth::{
     CredentialProvider, Credentials,
 };
 pub use chat::{ChatModel, ChatModelConfig};
-pub use context::{DEFAULT_TENANT_ID, ExecutionContext};
+pub use context::ExecutionContext;
 pub use cost::{CostCalculator, ToolCostCalculator};
 pub use error::{Error, ProviderErrorKind, Result};
 pub use extensions::Extensions;
@@ -74,5 +75,6 @@ pub use service::{BoxedModelService, BoxedToolService, ModelInvocation, ToolInvo
 pub use skills::{
     LoadedSkill, Skill, SkillRegistry, SkillResource, SkillResourceContent, SkillSummary,
 };
+pub use tenant_id::{DEFAULT_TENANT_ID, TenantId};
 pub use thread_key::ThreadKey;
 pub use tools::{Tool, ToolRegistry};

@@ -157,7 +157,7 @@ async fn resume_with_goto_skips_to_named_node() -> Result<()> {
     // Caller: skip review entirely, but keep approved = Some(false) so
     // finalize emits "halted".
     initial.approved = Some(false);
-    let key = entelix_core::ThreadKey::new("default", "approval-4");
+    let key = entelix_core::ThreadKey::new(TenantId::new("default"), "approval-4");
     cp.put(entelix_graph::Checkpoint::new(
         &key,
         99,
@@ -352,7 +352,7 @@ async fn approve_tool_command_attaches_pending_approval_decisions() -> Result<()
 
     let ctx = ExecutionContext::new().with_thread_id("approve-tool-test");
     // Hand-write a checkpoint so `resume_with` has something to lift.
-    let key = entelix_core::ThreadKey::new("default", "approve-tool-test");
+    let key = entelix_core::ThreadKey::new(TenantId::new("default"), "approve-tool-test");
     cp.put(entelix_graph::Checkpoint::new(
         &key,
         0,
@@ -398,7 +398,7 @@ async fn approve_tool_command_rejects_await_external_decision() {
         .unwrap();
 
     let ctx = ExecutionContext::new().with_thread_id("await-external-reject");
-    let key = entelix_core::ThreadKey::new("default", "await-external-reject");
+    let key = entelix_core::ThreadKey::new(TenantId::new("default"), "await-external-reject");
     cp.put(entelix_graph::Checkpoint::new(
         &key,
         0,

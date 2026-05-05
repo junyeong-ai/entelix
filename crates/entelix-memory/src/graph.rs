@@ -975,7 +975,7 @@ mod tests {
     use super::*;
 
     fn ns() -> Namespace {
-        Namespace::new("tenant").with_scope("graph")
+        Namespace::new(TenantId::new("tenant")).with_scope("graph")
     }
 
     #[tokio::test]
@@ -1193,8 +1193,8 @@ mod tests {
     async fn count_methods_respect_namespace_isolation() {
         let g = InMemoryGraphMemory::<&str, &str>::new();
         let ctx = ExecutionContext::new();
-        let alpha = Namespace::new("tenant").with_scope("alpha");
-        let beta = Namespace::new("tenant").with_scope("beta");
+        let alpha = Namespace::new(TenantId::new("tenant")).with_scope("alpha");
+        let beta = Namespace::new(TenantId::new("tenant")).with_scope("beta");
         let _ = g.add_node(&ctx, &alpha, "n").await.unwrap();
         assert_eq!(g.node_count(&ctx, &alpha).await.unwrap(), 1);
         assert_eq!(g.node_count(&ctx, &beta).await.unwrap(), 0);
@@ -1334,8 +1334,8 @@ mod tests {
     async fn namespaces_are_isolated() {
         let g = InMemoryGraphMemory::<&str, &str>::new();
         let ctx = ExecutionContext::new();
-        let alpha = Namespace::new("tenant").with_scope("alpha");
-        let beta = Namespace::new("tenant").with_scope("beta");
+        let alpha = Namespace::new(TenantId::new("tenant")).with_scope("alpha");
+        let beta = Namespace::new(TenantId::new("tenant")).with_scope("beta");
         let _ = g.add_node(&ctx, &alpha, "a-node").await.unwrap();
         let _ = g.add_node(&ctx, &beta, "b-node").await.unwrap();
         // Total bookkeeping shows both, but per-namespace traverse
@@ -1405,8 +1405,8 @@ mod tests {
         // `alpha` is in flight, every read returns its expected
         // value.
         let g: InMemoryGraphMemory<String, String> = InMemoryGraphMemory::new();
-        let alpha = Namespace::new("alpha");
-        let beta = Namespace::new("beta");
+        let alpha = Namespace::new(TenantId::new("alpha"));
+        let beta = Namespace::new(TenantId::new("beta"));
         let ctx = ExecutionContext::new();
         let beta_node_id = g
             .add_node(&ctx, &beta, "beta-fixture".to_owned())

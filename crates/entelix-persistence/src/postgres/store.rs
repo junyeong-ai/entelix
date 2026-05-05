@@ -69,7 +69,7 @@ where
                     expires_at = EXCLUDED.expires_at
                 ",
             )
-            .bind(ns.tenant_id())
+            .bind(ns.tenant_id().as_str())
             .bind(ns.render())
             .bind(key)
             .bind(&value_json)
@@ -95,7 +95,7 @@ where
                   AND (expires_at IS NULL OR expires_at > now())
                 ",
             )
-            .bind(ns.tenant_id())
+            .bind(ns.tenant_id().as_str())
             .bind(ns.render())
             .bind(key)
             .fetch_optional(&mut *tx)
@@ -124,7 +124,7 @@ where
                 WHERE tenant_id = $1 AND namespace = $2 AND key = $3
                 ",
             )
-            .bind(ns.tenant_id())
+            .bind(ns.tenant_id().as_str())
             .bind(ns.render())
             .bind(key)
             .execute(&mut *tx)
@@ -155,7 +155,7 @@ where
                 ORDER BY key ASC
                 ",
             )
-            .bind(ns.tenant_id())
+            .bind(ns.tenant_id().as_str())
             .bind(ns.render())
             .bind(pattern)
             .fetch_all(&mut *tx)
@@ -176,7 +176,7 @@ where
         // Render the prefix as Namespace::render does so the LIKE
         // pattern matches the stored key. Append `:%` to allow
         // strict-subscope matches plus the prefix itself.
-        let mut tmp = Namespace::new(prefix.tenant_id());
+        let mut tmp = Namespace::new(prefix.tenant_id().clone());
         for s in prefix.scope() {
             tmp = tmp.with_scope(s.clone());
         }
@@ -195,7 +195,7 @@ where
                 ORDER BY namespace ASC
                 ",
             )
-            .bind(prefix.tenant_id())
+            .bind(prefix.tenant_id().as_str())
             .bind(exact_pattern)
             .bind(nested_pattern)
             .fetch_all(&mut *tx)

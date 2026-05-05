@@ -331,7 +331,7 @@ async fn memory_session_log_load_since_honors_archival_watermark() {
     use entelix_session::{InMemorySessionLog, SessionLog};
 
     let log = InMemorySessionLog::new();
-    let key = ThreadKey::new("t", "thread-1");
+    let key = ThreadKey::new(TenantId::new("t"), "thread-1");
 
     let events: Vec<GraphEvent> = (0..7).map(|i| user(&format!("msg {i}"))).collect();
     let head = log.append(&key, &events).await.unwrap();
@@ -370,7 +370,7 @@ async fn memory_session_log_archive_before_is_monotonic() {
     use entelix_session::{InMemorySessionLog, SessionLog};
 
     let log = InMemorySessionLog::new();
-    let key = ThreadKey::new("t", "thread-2");
+    let key = ThreadKey::new(TenantId::new("t"), "thread-2");
     log.append(
         &key,
         &(0..5).map(|i| user(&format!("m{i}"))).collect::<Vec<_>>(),

@@ -24,6 +24,7 @@
 )]
 
 use entelix_core::ExecutionContext;
+use entelix_core::TenantId;
 use entelix_memory::{Namespace, Store};
 use entelix_persistence::postgres::PostgresPersistence;
 use sqlx::Executor;
@@ -98,7 +99,7 @@ async fn rls_blocks_cross_tenant_reads_at_db_layer() {
 
     // SDK path stamps `entelix.tenant_id` per transaction — the
     // policy lets the row in.
-    let ns = Namespace::new("tenant-A").with_scope("scope");
+    let ns = Namespace::new(TenantId::new("tenant-A")).with_scope("scope");
     app_store.put(&ctx, &ns, "k", "v".into()).await.unwrap();
     assert_eq!(
         app_store.get(&ctx, &ns, "k").await.unwrap().as_deref(),
@@ -165,7 +166,7 @@ async fn rls_applies_to_session_events_and_checkpoints() {
     let (_super_pers, app_pers, _container) = boot_with_app_role().await;
     let log = app_pers.session_log();
     let cp = app_pers.checkpointer::<i32>();
-    let key = ThreadKey::new("tenant-A", "thread-1");
+    let key = ThreadKey::new(TenantId::new("tenant-A"), "thread-1");
 
     log.append(
         &key,

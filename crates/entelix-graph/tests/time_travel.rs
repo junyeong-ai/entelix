@@ -129,7 +129,7 @@ async fn update_state_creates_branched_checkpoint() -> Result<()> {
 #[tokio::test]
 async fn update_state_unknown_parent_returns_invalid_request() {
     let cp = Arc::new(InMemoryCheckpointer::<Counter>::new());
-    let key = ThreadKey::new("default", "nothing");
+    let key = ThreadKey::new(TenantId::new("default"), "nothing");
     let bogus = entelix_graph::CheckpointId::new();
     let err = cp
         .update_state(

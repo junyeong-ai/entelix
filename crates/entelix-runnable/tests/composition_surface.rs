@@ -169,9 +169,9 @@ async fn with_config_does_not_mutate_caller_context() {
         Ok::<_, _>(ctx.tenant_id().to_owned())
     });
     let configured = inner.with_config(|ctx| {
-        *ctx = ctx.clone().with_tenant_id("override-tenant");
+        *ctx = ctx.clone().with_tenant_id(TenantId::new("override-tenant"));
     });
-    let parent = ExecutionContext::new().with_tenant_id("parent-tenant");
+    let parent = ExecutionContext::new().with_tenant_id(TenantId::new("parent-tenant"));
     let observed = configured.invoke((), &parent).await.unwrap();
     assert_eq!(observed, "override-tenant");
     // The parent's tenant_id is unchanged.

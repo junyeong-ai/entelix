@@ -20,7 +20,7 @@ use std::sync::Arc;
 use entelix::ir::Message;
 use entelix::{
     BufferMemory, EntityMemory, EntityRecord, ExecutionContext, InMemoryStore, Namespace, Result,
-    Store,
+    Store, TenantId,
 };
 
 #[tokio::main]
@@ -103,7 +103,7 @@ async fn main() -> Result<()> {
 }
 
 fn namespace_for(user: &str) -> Namespace {
-    Namespace::new("tenant-acme")
+    Namespace::new(TenantId::new("tenant-acme"))
         .with_scope("agent-helper")
         .with_scope(format!("user-{user}"))
 }

@@ -146,7 +146,7 @@ async fn resume_picks_up_mid_graph() -> Result<()> {
         n: 999,
         trail: vec!["first"],
     };
-    let key = entelix_core::ThreadKey::new("default", "manual");
+    let key = entelix_core::ThreadKey::new(TenantId::new("default"), "manual");
     cp.put(entelix_graph::Checkpoint::new(
         &key,
         1,
@@ -235,10 +235,10 @@ async fn checkpointer_partitions_per_tenant() -> Result<()> {
         .compile()?;
 
     let ctx_alpha = ExecutionContext::new()
-        .with_tenant_id("alpha")
+        .with_tenant_id(TenantId::new("alpha"))
         .with_thread_id("conv-1");
     let ctx_bravo = ExecutionContext::new()
-        .with_tenant_id("bravo")
+        .with_tenant_id(TenantId::new("bravo"))
         .with_thread_id("conv-1");
 
     let _ = graph
@@ -260,8 +260,8 @@ async fn checkpointer_partitions_per_tenant() -> Result<()> {
         )
         .await?;
 
-    let alpha_key = ThreadKey::new("alpha", "conv-1");
-    let bravo_key = ThreadKey::new("bravo", "conv-1");
+    let alpha_key = ThreadKey::new(TenantId::new("alpha"), "conv-1");
+    let bravo_key = ThreadKey::new(TenantId::new("bravo"), "conv-1");
 
     let alpha_hist = cp.history(&alpha_key, 10).await?;
     let bravo_hist = cp.history(&bravo_key, 10).await?;

@@ -301,7 +301,7 @@ where
 fn render_prefix(prefix: &NamespacePrefix) -> String {
     // Mirror Namespace::render layout so InMemoryStore prefix matches
     // are textually consistent with stored namespace keys.
-    let mut tmp = Namespace::new(prefix.tenant_id());
+    let mut tmp = Namespace::new(prefix.tenant_id().clone());
     for s in prefix.scope() {
         tmp = tmp.with_scope(s.clone());
     }
@@ -318,7 +318,7 @@ mod tests {
     }
 
     fn ns() -> Namespace {
-        Namespace::new("acme").with_scope("agent-a")
+        Namespace::new(TenantId::new("acme")).with_scope("agent-a")
     }
 
     #[tokio::test]
@@ -373,15 +373,15 @@ mod tests {
     #[tokio::test]
     async fn list_namespaces_finds_subscopes_under_prefix() {
         let store: InMemoryStore<String> = InMemoryStore::new();
-        let ns_a = Namespace::new("acme").with_scope("agent-a");
-        let ns_b = Namespace::new("acme")
+        let ns_a = Namespace::new(TenantId::new("acme")).with_scope("agent-a");
+        let ns_b = Namespace::new(TenantId::new("acme"))
             .with_scope("agent-a")
             .with_scope("conv-1");
-        let ns_other = Namespace::new("acme").with_scope("agent-b");
+        let ns_other = Namespace::new(TenantId::new("acme")).with_scope("agent-b");
         store.put(&ctx(), &ns_a, "k", "v".into()).await.unwrap();
         store.put(&ctx(), &ns_b, "k", "v".into()).await.unwrap();
         store.put(&ctx(), &ns_other, "k", "v".into()).await.unwrap();
-        let prefix = NamespacePrefix::new("acme").with_scope("agent-a");
+        let prefix = NamespacePrefix::new(TenantId::new("acme")).with_scope("agent-a");
         let found = store.list_namespaces(&ctx(), &prefix).await.unwrap();
         // ns_a + ns_b match; ns_other does not.
         assert_eq!(found.len(), 2);
@@ -397,11 +397,11 @@ mod tests {
     #[tokio::test]
     async fn list_namespaces_recovers_escaped_segments() {
         let store: InMemoryStore<String> = InMemoryStore::new();
-        let ns_colon = Namespace::new("acme")
+        let ns_colon = Namespace::new(TenantId::new("acme"))
             .with_scope("agent-a")
             .with_scope("k8s:pod:foo");
         store.put(&ctx(), &ns_colon, "k", "v".into()).await.unwrap();
-        let prefix = NamespacePrefix::new("acme").with_scope("agent-a");
+        let prefix = NamespacePrefix::new(TenantId::new("acme")).with_scope("agent-a");
         let found = store.list_namespaces(&ctx(), &prefix).await.unwrap();
         assert_eq!(found.len(), 1);
         // The `:`-bearing scope segment survives the render → store

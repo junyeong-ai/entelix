@@ -80,7 +80,11 @@ impl QuotaLimiter {
     /// of this request (typically 1 for "one request"); custom
     /// counters can be larger if the caller wants to spend extra
     /// against the bucket for expensive endpoints.
-    pub async fn check_pre_request(&self, tenant: &str, tokens: u32) -> PolicyResult<()> {
+    pub async fn check_pre_request(
+        &self,
+        tenant: &entelix_core::TenantId,
+        tokens: u32,
+    ) -> PolicyResult<()> {
         // Budget gate first — refusing on budget is preferable to
         // spending a rate-limit token only to bounce on the next
         // gate.
@@ -88,14 +92,14 @@ impl QuotaLimiter {
             let spent = meter.spent_by(tenant);
             if spent >= ceiling {
                 return Err(PolicyError::BudgetExhausted {
-                    tenant: tenant.to_owned(),
+                    tenant: tenant.as_str().to_owned(),
                     spent,
                     ceiling,
                 });
             }
         }
         if let Some(rate) = &self.rate_limiter {
-            rate.try_acquire(tenant, tokens).await?;
+            rate.try_acquire(tenant.as_str(), tokens).await?;
         }
         Ok(())
     }

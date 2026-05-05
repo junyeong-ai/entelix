@@ -19,8 +19,8 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
-use entelix_core::ThreadKey;
 use entelix_core::error::Result;
+use entelix_core::{TenantId, ThreadKey};
 
 /// Stable identifier for a checkpoint. Backed by UUID v7 — time-ordered
 /// and globally unique across processes.
@@ -75,7 +75,7 @@ where
     /// Unique identifier (UUID v7).
     pub id: CheckpointId,
     /// Tenant scope this checkpoint belongs to.
-    pub tenant_id: String,
+    pub tenant_id: TenantId,
     /// Conversation thread this checkpoint belongs to.
     pub thread_id: String,
     /// Optional parent — used by time-travel writes.
@@ -103,7 +103,7 @@ where
     pub fn new(key: &ThreadKey, step: usize, state: S, next_node: Option<String>) -> Self {
         Self {
             id: CheckpointId::new(),
-            tenant_id: key.tenant_id().to_owned(),
+            tenant_id: key.tenant_id().clone(),
             thread_id: key.thread_id().to_owned(),
             parent_id: None,
             step,

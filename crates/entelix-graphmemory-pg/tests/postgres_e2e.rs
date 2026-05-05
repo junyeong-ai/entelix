@@ -13,6 +13,7 @@
     clippy::many_single_char_names
 )]
 
+use entelix_core::TenantId;
 use std::sync::Arc;
 
 use chrono::{Duration, Utc};
@@ -39,7 +40,7 @@ async fn boot() -> (PgGraphMemory<String, String>, ContainerAsync<Postgres>) {
 #[ignore = "requires docker"]
 async fn add_and_lookup_node_round_trip() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme").with_scope("agent-a");
+    let ns = Namespace::new(TenantId::new("acme")).with_scope("agent-a");
     let ctx = ExecutionContext::new();
 
     let id = graph.add_node(&ctx, &ns, "alice".into()).await.unwrap();
@@ -47,7 +48,7 @@ async fn add_and_lookup_node_round_trip() {
     assert_eq!(got.as_deref(), Some("alice"));
 
     // Same id under a different namespace must not leak.
-    let other_ns = Namespace::new("acme").with_scope("agent-b");
+    let other_ns = Namespace::new(TenantId::new("acme")).with_scope("agent-b");
     assert!(graph.node(&ctx, &other_ns, &id).await.unwrap().is_none());
 }
 
@@ -60,7 +61,7 @@ async fn add_edges_batch_inserts_all_in_one_round_trip() {
     // every assigned EdgeId resolves back to a hop with the right
     // endpoints, and the count rises by exactly the input length.
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let now = Utc::now();
     // Five hub nodes; build 50 edges in a star-of-stars pattern.
@@ -106,7 +107,7 @@ async fn add_edges_batch_inserts_all_in_one_round_trip() {
 #[ignore = "requires docker"]
 async fn add_edges_batch_empty_input_is_a_noop() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let count_before = graph.edge_count(&ctx, &ns).await.unwrap();
     let ids = graph.add_edges_batch(&ctx, &ns, Vec::new()).await.unwrap();
@@ -118,7 +119,7 @@ async fn add_edges_batch_empty_input_is_a_noop() {
 #[ignore = "requires docker"]
 async fn neighbors_returns_outgoing_incoming_and_both() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let now = Utc::now();
 
@@ -159,7 +160,7 @@ async fn neighbors_returns_outgoing_incoming_and_both() {
 #[ignore = "requires docker"]
 async fn traverse_bfs_respects_max_depth() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let now = Utc::now();
 
@@ -200,7 +201,7 @@ async fn traverse_bfs_respects_max_depth() {
 #[ignore = "requires docker"]
 async fn find_path_returns_shortest_or_none() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let now = Utc::now();
 
@@ -253,7 +254,7 @@ async fn traverse_terminates_on_cycle() {
     // rows; with it, the dedupe layer keeps exactly one hop per
     // reachable destination.
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let now = Utc::now();
     let a = graph.add_node(&ctx, &ns, "a".into()).await.unwrap();
@@ -294,7 +295,7 @@ async fn find_path_picks_shortest_among_multiple() {
     // The recursive CTE's `ORDER BY depth ASC LIMIT 1` on the
     // `shortest` projection must pick the 2-hop traversal.
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let now = Utc::now();
     let a = graph.add_node(&ctx, &ns, "a".into()).await.unwrap();
@@ -343,7 +344,7 @@ async fn traverse_max_depth_zero_returns_empty() {
     // only the depth-0 base row exists, and it's filtered out by
     // `WHERE depth > 0` in the ranked projection.
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let now = Utc::now();
     let a = graph.add_node(&ctx, &ns, "a".into()).await.unwrap();
@@ -371,7 +372,7 @@ async fn traverse_direction_both_handles_cycles() {
     // `CASE WHEN ... END` next-node expression is the most complex
     // shape — verifying termination here exercises that branch).
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let now = Utc::now();
     let a = graph.add_node(&ctx, &ns, "a".into()).await.unwrap();
@@ -406,7 +407,7 @@ async fn traverse_direction_both_handles_cycles() {
 #[ignore = "requires docker"]
 async fn temporal_filter_picks_window() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let base = Utc::now();
 
@@ -467,8 +468,8 @@ async fn namespaces_isolate_nodes_and_edges() {
     let (graph, _c) = boot().await;
     let ctx = ExecutionContext::new();
     let now = Utc::now();
-    let ns_a = Namespace::new("tenant-a");
-    let ns_b = Namespace::new("tenant-b");
+    let ns_a = Namespace::new(TenantId::new("tenant-a"));
+    let ns_b = Namespace::new(TenantId::new("tenant-b"));
 
     let a_node = graph.add_node(&ctx, &ns_a, "a".into()).await.unwrap();
     let b_node = graph.add_node(&ctx, &ns_b, "b".into()).await.unwrap();
@@ -501,7 +502,7 @@ async fn namespaces_isolate_nodes_and_edges() {
 #[ignore = "requires docker"]
 async fn edge_lookup_returns_full_hop_at_db_layer() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let a = graph.add_node(&ctx, &ns, "a".into()).await.unwrap();
     let b = graph.add_node(&ctx, &ns, "b".into()).await.unwrap();
@@ -518,7 +519,7 @@ async fn edge_lookup_returns_full_hop_at_db_layer() {
 
     // Same id under a different namespace → None (RLS gate +
     // namespace anchor both prevent the leak).
-    let other_ns = Namespace::new("acme").with_scope("other");
+    let other_ns = Namespace::new(TenantId::new("acme")).with_scope("other");
     assert!(graph.edge(&ctx, &other_ns, &id).await.unwrap().is_none());
 }
 
@@ -526,7 +527,7 @@ async fn edge_lookup_returns_full_hop_at_db_layer() {
 #[ignore = "requires docker"]
 async fn node_count_and_edge_count_at_db_layer() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     assert_eq!(graph.node_count(&ctx, &ns).await.unwrap(), 0);
     assert_eq!(graph.edge_count(&ctx, &ns).await.unwrap(), 0);
@@ -539,7 +540,7 @@ async fn node_count_and_edge_count_at_db_layer() {
     assert_eq!(graph.node_count(&ctx, &ns).await.unwrap(), 2);
     assert_eq!(graph.edge_count(&ctx, &ns).await.unwrap(), 1);
     // Cross-namespace isolation.
-    let other = Namespace::new("acme").with_scope("other");
+    let other = Namespace::new(TenantId::new("acme")).with_scope("other");
     assert_eq!(graph.node_count(&ctx, &other).await.unwrap(), 0);
     assert_eq!(graph.edge_count(&ctx, &other).await.unwrap(), 0);
 }
@@ -548,7 +549,7 @@ async fn node_count_and_edge_count_at_db_layer() {
 #[ignore = "requires docker"]
 async fn list_edges_and_records_paginate_at_db_layer() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let a = graph.add_node(&ctx, &ns, "a".into()).await.unwrap();
     let b = graph.add_node(&ctx, &ns, "b".into()).await.unwrap();
@@ -576,7 +577,7 @@ async fn list_edges_and_records_paginate_at_db_layer() {
     assert!(payloads.contains(&"e3"));
 
     // Cross-namespace isolation.
-    let other = Namespace::new("acme").with_scope("other");
+    let other = Namespace::new(TenantId::new("acme")).with_scope("other");
     assert!(graph.list_edges(&other, 100, 0).await.unwrap().is_empty());
 }
 
@@ -584,7 +585,7 @@ async fn list_edges_and_records_paginate_at_db_layer() {
 #[ignore = "requires docker"]
 async fn list_node_records_returns_payloads_in_one_round_trip() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let mut id_payloads: Vec<(_, String)> = Vec::new();
     for label in ["alpha", "bravo", "charlie"] {
@@ -598,7 +599,7 @@ async fn list_node_records_returns_payloads_in_one_round_trip() {
     assert_eq!(records, sorted);
 
     // Cross-namespace isolation.
-    let other = Namespace::new("acme").with_scope("other");
+    let other = Namespace::new(TenantId::new("acme")).with_scope("other");
     assert!(
         graph
             .list_node_records(&other, 100, 0)
@@ -612,7 +613,7 @@ async fn list_node_records_returns_payloads_in_one_round_trip() {
 #[ignore = "requires docker"]
 async fn list_nodes_paginates_at_db_layer() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let mut ids = Vec::new();
     for label in ["a", "b", "c", "d", "e"] {
@@ -625,7 +626,7 @@ async fn list_nodes_paginates_at_db_layer() {
     let next = graph.list_nodes(&ns, 3, 3).await.unwrap();
     assert_eq!(next, sorted[3..]);
     // Cross-namespace isolation — different ns sees zero of these.
-    let other_ns = Namespace::new("acme").with_scope("other");
+    let other_ns = Namespace::new(TenantId::new("acme")).with_scope("other");
     assert!(
         graph
             .list_nodes(&other_ns, 100, 0)
@@ -639,7 +640,7 @@ async fn list_nodes_paginates_at_db_layer() {
 #[ignore = "requires docker"]
 async fn delete_edge_is_idempotent() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let a = graph.add_node(&ctx, &ns, "a".into()).await.unwrap();
     let b = graph.add_node(&ctx, &ns, "b".into()).await.unwrap();
@@ -661,7 +662,7 @@ async fn delete_edge_is_idempotent() {
 #[ignore = "requires docker"]
 async fn delete_node_cascades_to_incident_edges_at_db_layer() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let a = graph.add_node(&ctx, &ns, "a".into()).await.unwrap();
     let b = graph.add_node(&ctx, &ns, "b".into()).await.unwrap();
@@ -694,7 +695,7 @@ async fn delete_node_cascades_to_incident_edges_at_db_layer() {
 #[ignore = "requires docker"]
 async fn prune_orphan_nodes_drops_zero_edge_nodes_at_db_layer() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let connected_a = graph.add_node(&ctx, &ns, "a".into()).await.unwrap();
     let connected_b = graph.add_node(&ctx, &ns, "b".into()).await.unwrap();
@@ -722,7 +723,7 @@ async fn prune_orphan_nodes_drops_zero_edge_nodes_at_db_layer() {
 #[ignore = "requires docker"]
 async fn prune_older_than_drops_stale_edges_at_db_layer() {
     let (graph, _c) = boot().await;
-    let ns = Namespace::new("acme");
+    let ns = Namespace::new(TenantId::new("acme"));
     let ctx = ExecutionContext::new();
     let now = Utc::now();
     let a = graph.add_node(&ctx, &ns, "a".into()).await.unwrap();

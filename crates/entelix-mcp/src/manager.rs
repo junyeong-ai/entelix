@@ -315,10 +315,10 @@ impl McpManager {
     /// [`Self::prune_idle`] can distinguish hot from cold clients.
     pub(crate) async fn client_for(
         &self,
-        tenant_id: &str,
+        tenant_id: &entelix_core::TenantId,
         server: &str,
     ) -> McpResult<Arc<dyn McpClient>> {
-        let key = (tenant_id.to_owned(), server.to_owned());
+        let key = (tenant_id.as_str().to_owned(), server.to_owned());
         if let Some(existing) = self.pool.get(&key) {
             existing
                 .last_used_secs
@@ -329,7 +329,7 @@ impl McpManager {
             .configs
             .get(server)
             .ok_or_else(|| McpError::UnknownServer {
-                tenant_id: tenant_id.to_owned(),
+                tenant_id: tenant_id.as_str().to_owned(),
                 server: server.to_owned(),
             })?;
         let client = self.factory.build(config).await?;
@@ -539,7 +539,7 @@ mod tests {
     #[tokio::test]
     async fn unknown_server_returns_tenant_scoped_error() {
         let manager = McpManagerBuilder::new().build().unwrap();
-        let ctx = ExecutionContext::new().with_tenant_id("tenant-x");
+        let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("tenant-x"));
         let err = manager.list_tools(&ctx, "nope").await.unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("nope"), "{msg}");
@@ -553,7 +553,7 @@ mod tests {
         assert_eq!(manager.pool_size(), 0);
         assert_eq!(factory.builds(), 0);
 
-        let ctx = ExecutionContext::new().with_tenant_id("t1");
+        let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("t1"));
         manager.list_tools(&ctx, "fs").await.unwrap();
         assert_eq!(factory.builds(), 1);
         assert_eq!(manager.pool_size(), 1);
@@ -563,7 +563,7 @@ mod tests {
     async fn second_call_for_same_tenant_server_reuses_client() {
         let factory = Arc::new(CountingFactory::default());
         let manager = manager_with(&["fs"], factory.clone());
-        let ctx = ExecutionContext::new().with_tenant_id("t1");
+        let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("t1"));
 
         manager.list_tools(&ctx, "fs").await.unwrap();
         manager.list_tools(&ctx, "fs").await.unwrap();
@@ -581,8 +581,8 @@ mod tests {
         let factory = Arc::new(CountingFactory::default());
         let manager = manager_with(&["fs"], factory.clone());
 
-        let ctx_a = ExecutionContext::new().with_tenant_id("alpha");
-        let ctx_b = ExecutionContext::new().with_tenant_id("bravo");
+        let ctx_a = ExecutionContext::new().with_tenant_id(TenantId::new("alpha"));
+        let ctx_b = ExecutionContext::new().with_tenant_id(TenantId::new("bravo"));
 
         manager.list_tools(&ctx_a, "fs").await.unwrap();
         manager.list_tools(&ctx_b, "fs").await.unwrap();
@@ -595,7 +595,7 @@ mod tests {
     async fn fsm_advances_to_ready_after_initialize() {
         let factory = Arc::new(CountingFactory::default());
         let manager = manager_with(&["fs"], factory.clone());
-        let ctx = ExecutionContext::new().with_tenant_id("t1");
+        let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("t1"));
 
         manager.list_tools(&ctx, "fs").await.unwrap();
         assert_eq!(factory.last_client().state(), McpClientState::Ready);
@@ -605,7 +605,7 @@ mod tests {
     async fn call_tool_routes_arguments_to_named_server() {
         let factory = Arc::new(CountingFactory::default());
         let manager = manager_with(&["fs", "git"], factory.clone());
-        let ctx = ExecutionContext::new().with_tenant_id("t1");
+        let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("t1"));
 
         manager
             .call_tool(&ctx, "fs", "read", json!({"path": "/etc/hosts"}))
@@ -623,7 +623,7 @@ mod tests {
     async fn prune_idle_keeps_recently_used_clients() {
         let factory = Arc::new(CountingFactory::default());
         let manager = manager_with(&["fs"], factory.clone());
-        let ctx = ExecutionContext::new().with_tenant_id("t1");
+        let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("t1"));
         manager.list_tools(&ctx, "fs").await.unwrap();
         assert_eq!(manager.pool_size(), 1);
         // Anything 0 seconds idle stays in.
@@ -641,7 +641,7 @@ mod tests {
 
         let factory = Arc::new(CountingFactory::default());
         let manager = manager_with(&["fs"], factory.clone());
-        let ctx = ExecutionContext::new().with_tenant_id("t1");
+        let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("t1"));
         manager.list_tools(&ctx, "fs").await.unwrap();
         // Backdate the entry so it's well past any plausible TTL.
         for entry in manager.pool.iter() {

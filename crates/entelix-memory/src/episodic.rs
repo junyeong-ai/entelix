@@ -278,7 +278,7 @@ mod tests {
     use crate::store::InMemoryStore;
 
     fn ns(scope: &str) -> Namespace {
-        Namespace::new("test-tenant").with_scope(scope)
+        Namespace::new(TenantId::new("test-tenant")).with_scope(scope)
     }
 
     fn build() -> EpisodicMemory<String> {

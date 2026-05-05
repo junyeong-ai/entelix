@@ -480,14 +480,14 @@ pub fn entelix_core::context::ExecutionContext::idempotency_key(&self) -> core::
 pub fn entelix_core::context::ExecutionContext::is_cancelled(&self) -> bool
 pub fn entelix_core::context::ExecutionContext::new() -> Self
 pub fn entelix_core::context::ExecutionContext::run_id(&self) -> core::option::Option<&str>
-pub fn entelix_core::context::ExecutionContext::tenant_id(&self) -> &str
+pub const fn entelix_core::context::ExecutionContext::tenant_id(&self) -> &entelix_core::tenant_id::TenantId
 pub fn entelix_core::context::ExecutionContext::thread_id(&self) -> core::option::Option<&str>
 pub fn entelix_core::context::ExecutionContext::with_audit_sink(self, handle: entelix_core::audit::AuditSinkHandle) -> Self
 pub fn entelix_core::context::ExecutionContext::with_cancellation(cancellation: tokio_util::sync::cancellation_token::CancellationToken) -> Self
 pub const fn entelix_core::context::ExecutionContext::with_deadline(self, deadline: tokio::time::instant::Instant) -> Self
 pub fn entelix_core::context::ExecutionContext::with_idempotency_key(self, key: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::context::ExecutionContext::with_run_id(self, run_id: impl core::convert::Into<alloc::string::String>) -> Self
-pub fn entelix_core::context::ExecutionContext::with_tenant_id(self, tenant_id: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_core::context::ExecutionContext::with_tenant_id(self, tenant_id: entelix_core::tenant_id::TenantId) -> Self
 pub fn entelix_core::context::ExecutionContext::with_thread_id(self, thread_id: impl core::convert::Into<alloc::string::String>) -> Self
 impl core::clone::Clone for entelix_core::context::ExecutionContext
 pub fn entelix_core::context::ExecutionContext::clone(&self) -> entelix_core::context::ExecutionContext
@@ -502,7 +502,6 @@ impl core::marker::Unpin for entelix_core::context::ExecutionContext
 impl core::marker::UnsafeUnpin for entelix_core::context::ExecutionContext
 impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::context::ExecutionContext
 impl !core::panic::unwind_safe::UnwindSafe for entelix_core::context::ExecutionContext
-pub const entelix_core::context::DEFAULT_TENANT_ID: &str
 pub mod entelix_core::cost
 pub trait entelix_core::cost::CostCalculator: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::cost::CostCalculator::compute_cost<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, model: &'life1 str, usage: &'life2 entelix_core::ir::Usage, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<f64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
@@ -2188,12 +2187,53 @@ impl core::marker::Unpin for entelix_core::stream::StreamAggregator
 impl core::marker::UnsafeUnpin for entelix_core::stream::StreamAggregator
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::stream::StreamAggregator
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::stream::StreamAggregator
+pub mod entelix_core::tenant_id
+pub struct entelix_core::tenant_id::TenantId(_)
+impl entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::as_str(&self) -> &str
+pub fn entelix_core::tenant_id::TenantId::new(s: impl core::convert::AsRef<str>) -> Self
+impl core::borrow::Borrow<str> for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::borrow(&self) -> &str
+impl core::clone::Clone for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::clone(&self) -> entelix_core::tenant_id::TenantId
+impl core::cmp::Eq for entelix_core::tenant_id::TenantId
+impl core::cmp::PartialEq for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::eq(&self, other: &entelix_core::tenant_id::TenantId) -> bool
+impl core::convert::AsRef<str> for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::as_ref(&self) -> &str
+impl core::convert::TryFrom<&str> for entelix_core::tenant_id::TenantId
+pub type entelix_core::tenant_id::TenantId::Error = entelix_core::error::Error
+pub fn entelix_core::tenant_id::TenantId::try_from(s: &str) -> entelix_core::error::Result<Self>
+impl core::convert::TryFrom<alloc::string::String> for entelix_core::tenant_id::TenantId
+pub type entelix_core::tenant_id::TenantId::Error = entelix_core::error::Error
+pub fn entelix_core::tenant_id::TenantId::try_from(s: alloc::string::String) -> entelix_core::error::Result<Self>
+impl core::default::Default for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::default() -> Self
+impl core::fmt::Debug for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for entelix_core::tenant_id::TenantId
+impl serde_core::ser::Serialize for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::serialize<S: serde_core::ser::Serializer>(&self, ser: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::deserialize<D: serde_core::de::Deserializer<'de>>(de: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error>
+impl core::marker::Freeze for entelix_core::tenant_id::TenantId
+impl core::marker::Send for entelix_core::tenant_id::TenantId
+impl core::marker::Sync for entelix_core::tenant_id::TenantId
+impl core::marker::Unpin for entelix_core::tenant_id::TenantId
+impl core::marker::UnsafeUnpin for entelix_core::tenant_id::TenantId
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::tenant_id::TenantId
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::tenant_id::TenantId
+pub const entelix_core::tenant_id::DEFAULT_TENANT_ID: &str
 pub mod entelix_core::thread_key
 pub struct entelix_core::thread_key::ThreadKey
 impl entelix_core::thread_key::ThreadKey
 pub fn entelix_core::thread_key::ThreadKey::from_ctx(ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<Self>
-pub fn entelix_core::thread_key::ThreadKey::new(tenant_id: impl core::convert::Into<alloc::string::String>, thread_id: impl core::convert::Into<alloc::string::String>) -> Self
-pub fn entelix_core::thread_key::ThreadKey::tenant_id(&self) -> &str
+pub fn entelix_core::thread_key::ThreadKey::new(tenant_id: entelix_core::tenant_id::TenantId, thread_id: impl core::convert::Into<alloc::string::String>) -> Self
+pub const fn entelix_core::thread_key::ThreadKey::tenant_id(&self) -> &entelix_core::tenant_id::TenantId
 pub fn entelix_core::thread_key::ThreadKey::thread_id(&self) -> &str
 impl core::clone::Clone for entelix_core::thread_key::ThreadKey
 pub fn entelix_core::thread_key::ThreadKey::clone(&self) -> entelix_core::thread_key::ThreadKey
@@ -2842,14 +2882,14 @@ pub fn entelix_core::context::ExecutionContext::idempotency_key(&self) -> core::
 pub fn entelix_core::context::ExecutionContext::is_cancelled(&self) -> bool
 pub fn entelix_core::context::ExecutionContext::new() -> Self
 pub fn entelix_core::context::ExecutionContext::run_id(&self) -> core::option::Option<&str>
-pub fn entelix_core::context::ExecutionContext::tenant_id(&self) -> &str
+pub const fn entelix_core::context::ExecutionContext::tenant_id(&self) -> &entelix_core::tenant_id::TenantId
 pub fn entelix_core::context::ExecutionContext::thread_id(&self) -> core::option::Option<&str>
 pub fn entelix_core::context::ExecutionContext::with_audit_sink(self, handle: entelix_core::audit::AuditSinkHandle) -> Self
 pub fn entelix_core::context::ExecutionContext::with_cancellation(cancellation: tokio_util::sync::cancellation_token::CancellationToken) -> Self
 pub const fn entelix_core::context::ExecutionContext::with_deadline(self, deadline: tokio::time::instant::Instant) -> Self
 pub fn entelix_core::context::ExecutionContext::with_idempotency_key(self, key: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::context::ExecutionContext::with_run_id(self, run_id: impl core::convert::Into<alloc::string::String>) -> Self
-pub fn entelix_core::context::ExecutionContext::with_tenant_id(self, tenant_id: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_core::context::ExecutionContext::with_tenant_id(self, tenant_id: entelix_core::tenant_id::TenantId) -> Self
 pub fn entelix_core::context::ExecutionContext::with_thread_id(self, thread_id: impl core::convert::Into<alloc::string::String>) -> Self
 impl core::clone::Clone for entelix_core::context::ExecutionContext
 pub fn entelix_core::context::ExecutionContext::clone(&self) -> entelix_core::context::ExecutionContext
@@ -3012,11 +3052,50 @@ impl<'a> core::marker::Unpin for entelix_core::SkillSummary<'a>
 impl<'a> core::marker::UnsafeUnpin for entelix_core::SkillSummary<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for entelix_core::SkillSummary<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for entelix_core::SkillSummary<'a>
+pub struct entelix_core::TenantId(_)
+impl entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::as_str(&self) -> &str
+pub fn entelix_core::tenant_id::TenantId::new(s: impl core::convert::AsRef<str>) -> Self
+impl core::borrow::Borrow<str> for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::borrow(&self) -> &str
+impl core::clone::Clone for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::clone(&self) -> entelix_core::tenant_id::TenantId
+impl core::cmp::Eq for entelix_core::tenant_id::TenantId
+impl core::cmp::PartialEq for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::eq(&self, other: &entelix_core::tenant_id::TenantId) -> bool
+impl core::convert::AsRef<str> for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::as_ref(&self) -> &str
+impl core::convert::TryFrom<&str> for entelix_core::tenant_id::TenantId
+pub type entelix_core::tenant_id::TenantId::Error = entelix_core::error::Error
+pub fn entelix_core::tenant_id::TenantId::try_from(s: &str) -> entelix_core::error::Result<Self>
+impl core::convert::TryFrom<alloc::string::String> for entelix_core::tenant_id::TenantId
+pub type entelix_core::tenant_id::TenantId::Error = entelix_core::error::Error
+pub fn entelix_core::tenant_id::TenantId::try_from(s: alloc::string::String) -> entelix_core::error::Result<Self>
+impl core::default::Default for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::default() -> Self
+impl core::fmt::Debug for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for entelix_core::tenant_id::TenantId
+impl serde_core::ser::Serialize for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::serialize<S: serde_core::ser::Serializer>(&self, ser: S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::tenant_id::TenantId
+pub fn entelix_core::tenant_id::TenantId::deserialize<D: serde_core::de::Deserializer<'de>>(de: D) -> core::result::Result<Self, <D as serde_core::de::Deserializer>::Error>
+impl core::marker::Freeze for entelix_core::tenant_id::TenantId
+impl core::marker::Send for entelix_core::tenant_id::TenantId
+impl core::marker::Sync for entelix_core::tenant_id::TenantId
+impl core::marker::Unpin for entelix_core::tenant_id::TenantId
+impl core::marker::UnsafeUnpin for entelix_core::tenant_id::TenantId
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::tenant_id::TenantId
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::tenant_id::TenantId
 pub struct entelix_core::ThreadKey
 impl entelix_core::thread_key::ThreadKey
 pub fn entelix_core::thread_key::ThreadKey::from_ctx(ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<Self>
-pub fn entelix_core::thread_key::ThreadKey::new(tenant_id: impl core::convert::Into<alloc::string::String>, thread_id: impl core::convert::Into<alloc::string::String>) -> Self
-pub fn entelix_core::thread_key::ThreadKey::tenant_id(&self) -> &str
+pub fn entelix_core::thread_key::ThreadKey::new(tenant_id: entelix_core::tenant_id::TenantId, thread_id: impl core::convert::Into<alloc::string::String>) -> Self
+pub const fn entelix_core::thread_key::ThreadKey::tenant_id(&self) -> &entelix_core::tenant_id::TenantId
 pub fn entelix_core::thread_key::ThreadKey::thread_id(&self) -> &str
 impl core::clone::Clone for entelix_core::thread_key::ThreadKey
 pub fn entelix_core::thread_key::ThreadKey::clone(&self) -> entelix_core::thread_key::ThreadKey

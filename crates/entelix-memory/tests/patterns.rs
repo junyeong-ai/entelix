@@ -24,7 +24,7 @@ use parking_lot::Mutex;
 #[tokio::test]
 async fn summary_set_and_get_round_trip() -> Result<()> {
     let store: Arc<dyn Store<String>> = Arc::new(InMemoryStore::<String>::new());
-    let mem = SummaryMemory::new(store, Namespace::new("t"));
+    let mem = SummaryMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     assert!(mem.get(&ctx).await?.is_none());
     mem.set(&ctx, "user prefers brief replies").await?;
@@ -38,7 +38,7 @@ async fn summary_set_and_get_round_trip() -> Result<()> {
 #[tokio::test]
 async fn summary_append_concatenates_with_blank_line() -> Result<()> {
     let store: Arc<dyn Store<String>> = Arc::new(InMemoryStore::<String>::new());
-    let mem = SummaryMemory::new(store, Namespace::new("t"));
+    let mem = SummaryMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     mem.append(&ctx, "turn 1: hello").await?;
     mem.append(&ctx, "turn 2: hi back").await?;
@@ -50,7 +50,7 @@ async fn summary_append_concatenates_with_blank_line() -> Result<()> {
 #[tokio::test]
 async fn summary_append_to_empty_starts_fresh() -> Result<()> {
     let store: Arc<dyn Store<String>> = Arc::new(InMemoryStore::<String>::new());
-    let mem = SummaryMemory::new(store, Namespace::new("t"));
+    let mem = SummaryMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     mem.append(&ctx, "first content").await?;
     assert_eq!(mem.get(&ctx).await?.as_deref(), Some("first content"));
@@ -60,7 +60,7 @@ async fn summary_append_to_empty_starts_fresh() -> Result<()> {
 #[tokio::test]
 async fn summary_clear_removes_value() -> Result<()> {
     let store: Arc<dyn Store<String>> = Arc::new(InMemoryStore::<String>::new());
-    let mem = SummaryMemory::new(store, Namespace::new("t"));
+    let mem = SummaryMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     mem.set(&ctx, "anything").await?;
     mem.clear(&ctx).await?;
@@ -74,7 +74,7 @@ async fn summary_clear_removes_value() -> Result<()> {
 async fn entity_set_and_get() -> Result<()> {
     let store: Arc<dyn Store<HashMap<String, EntityRecord>>> =
         Arc::new(InMemoryStore::<HashMap<String, EntityRecord>>::new());
-    let mem = EntityMemory::new(store, Namespace::new("t"));
+    let mem = EntityMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     mem.set_entity(&ctx, "Alice", "vegetarian").await?;
     mem.set_entity(&ctx, "Bob", "prefers Korean").await?;
@@ -94,7 +94,7 @@ async fn entity_set_and_get() -> Result<()> {
 async fn entity_all_returns_full_map() -> Result<()> {
     let store: Arc<dyn Store<HashMap<String, EntityRecord>>> =
         Arc::new(InMemoryStore::<HashMap<String, EntityRecord>>::new());
-    let mem = EntityMemory::new(store, Namespace::new("t"));
+    let mem = EntityMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     mem.set_entity(&ctx, "Alice", "v").await?;
     mem.set_entity(&ctx, "Bob", "k").await?;
@@ -108,7 +108,7 @@ async fn entity_all_returns_full_map() -> Result<()> {
 async fn entity_remove_drops_one() -> Result<()> {
     let store: Arc<dyn Store<HashMap<String, EntityRecord>>> =
         Arc::new(InMemoryStore::<HashMap<String, EntityRecord>>::new());
-    let mem = EntityMemory::new(store, Namespace::new("t"));
+    let mem = EntityMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     mem.set_entity(&ctx, "A", "1").await?;
     mem.set_entity(&ctx, "B", "2").await?;
@@ -122,7 +122,7 @@ async fn entity_remove_drops_one() -> Result<()> {
 async fn entity_remove_idempotent_when_absent() -> Result<()> {
     let store: Arc<dyn Store<HashMap<String, EntityRecord>>> =
         Arc::new(InMemoryStore::<HashMap<String, EntityRecord>>::new());
-    let mem = EntityMemory::new(store, Namespace::new("t"));
+    let mem = EntityMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     mem.remove(&ctx, "ghost").await?; // no-op, no panic
     Ok(())
@@ -132,7 +132,7 @@ async fn entity_remove_idempotent_when_absent() -> Result<()> {
 async fn entity_clear_drops_everything() -> Result<()> {
     let store: Arc<dyn Store<HashMap<String, EntityRecord>>> =
         Arc::new(InMemoryStore::<HashMap<String, EntityRecord>>::new());
-    let mem = EntityMemory::new(store, Namespace::new("t"));
+    let mem = EntityMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     mem.set_entity(&ctx, "A", "1").await?;
     mem.set_entity(&ctx, "B", "2").await?;
@@ -145,7 +145,7 @@ async fn entity_clear_drops_everything() -> Result<()> {
 async fn entity_set_preserves_created_at_on_update() -> Result<()> {
     let store: Arc<dyn Store<HashMap<String, EntityRecord>>> =
         Arc::new(InMemoryStore::<HashMap<String, EntityRecord>>::new());
-    let mem = EntityMemory::new(store, Namespace::new("t"));
+    let mem = EntityMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     mem.set_entity(&ctx, "Alice", "v1").await?;
     let initial = mem.entity_record(&ctx, "Alice").await?.unwrap();
@@ -168,7 +168,7 @@ async fn entity_set_preserves_created_at_on_update() -> Result<()> {
 async fn entity_touch_refreshes_last_seen_without_changing_fact() -> Result<()> {
     let store: Arc<dyn Store<HashMap<String, EntityRecord>>> =
         Arc::new(InMemoryStore::<HashMap<String, EntityRecord>>::new());
-    let mem = EntityMemory::new(store, Namespace::new("t"));
+    let mem = EntityMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     mem.set_entity(&ctx, "Alice", "v1").await?;
     let initial = mem.entity_record(&ctx, "Alice").await?.unwrap();
@@ -185,7 +185,7 @@ async fn entity_touch_refreshes_last_seen_without_changing_fact() -> Result<()> 
 async fn entity_touch_returns_false_for_absent_entity() -> Result<()> {
     let store: Arc<dyn Store<HashMap<String, EntityRecord>>> =
         Arc::new(InMemoryStore::<HashMap<String, EntityRecord>>::new());
-    let mem = EntityMemory::new(store, Namespace::new("t"));
+    let mem = EntityMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     let touched = mem.touch(&ctx, "ghost").await?;
     assert!(!touched);
@@ -196,7 +196,7 @@ async fn entity_touch_returns_false_for_absent_entity() -> Result<()> {
 async fn entity_prune_drops_records_past_ttl() -> Result<()> {
     let store: Arc<dyn Store<HashMap<String, EntityRecord>>> =
         Arc::new(InMemoryStore::<HashMap<String, EntityRecord>>::new());
-    let mem = EntityMemory::new(store, Namespace::new("t"));
+    let mem = EntityMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     mem.set_entity(&ctx, "old", "stale").await?;
     tokio::time::sleep(std::time::Duration::from_millis(50)).await;
@@ -216,7 +216,7 @@ async fn entity_prune_drops_records_past_ttl() -> Result<()> {
 async fn entity_prune_returns_zero_when_namespace_is_empty() -> Result<()> {
     let store: Arc<dyn Store<HashMap<String, EntityRecord>>> =
         Arc::new(InMemoryStore::<HashMap<String, EntityRecord>>::new());
-    let mem = EntityMemory::new(store, Namespace::new("t"));
+    let mem = EntityMemory::new(store, Namespace::new(TenantId::new("t")));
     let ctx = ExecutionContext::new();
     let pruned = mem
         .prune_older_than(&ctx, std::time::Duration::from_secs(1))
@@ -330,7 +330,7 @@ impl VectorStore for StubVectorStore {
 async fn semantic_memory_add_and_search_round_trip() -> Result<()> {
     let embedder: Arc<StubEmbedder> = Arc::new(StubEmbedder { dimension: 8 });
     let vector_store: Arc<StubVectorStore> = Arc::new(StubVectorStore::new(8));
-    let ns = Namespace::new("t").with_scope("agent");
+    let ns = Namespace::new(TenantId::new("t")).with_scope("agent");
 
     let mem = SemanticMemory::new(embedder, vector_store, ns)?;
     let ctx = ExecutionContext::new();
@@ -378,7 +378,7 @@ async fn semantic_memory_batch_add_surfaces_embedder_count_mismatch() -> Result<
     // silently drop the trailing document via zip-truncation.
     let embedder: Arc<ShortBatchEmbedder> = Arc::new(ShortBatchEmbedder { dimension: 4 });
     let vector_store: Arc<StubVectorStore> = Arc::new(StubVectorStore::new(4));
-    let mem = SemanticMemory::new(embedder, vector_store, Namespace::new("t"))?;
+    let mem = SemanticMemory::new(embedder, vector_store, Namespace::new(TenantId::new("t")))?;
     let ctx = ExecutionContext::new();
     let docs = vec![
         Document::new("alpha"),
@@ -402,7 +402,7 @@ async fn semantic_memory_batch_add_surfaces_embedder_count_mismatch() -> Result<
 async fn semantic_memory_dimension_mismatch_returns_config_error() {
     let embedder: Arc<StubEmbedder> = Arc::new(StubEmbedder { dimension: 8 });
     let vector_store: Arc<StubVectorStore> = Arc::new(StubVectorStore::new(16)); // mismatch
-    match SemanticMemory::new(embedder, vector_store, Namespace::new("t")) {
+    match SemanticMemory::new(embedder, vector_store, Namespace::new(TenantId::new("t"))) {
         Err(entelix_core::Error::Config(_)) => {}
         Ok(_) => panic!("expected dimension-mismatch error, got Ok"),
         Err(other) => panic!("expected Config error, got {other:?}"),
@@ -417,12 +417,12 @@ async fn semantic_memory_namespaces_isolate_documents() -> Result<()> {
     let alpha = SemanticMemory::new(
         embedder.clone(),
         vector_store.clone(),
-        Namespace::new("tenant").with_scope("alpha"),
+        Namespace::new(TenantId::new("tenant")).with_scope("alpha"),
     )?;
     let beta = SemanticMemory::new(
         embedder,
         vector_store,
-        Namespace::new("tenant").with_scope("beta"),
+        Namespace::new(TenantId::new("tenant")).with_scope("beta"),
     )?;
 
     let ctx = ExecutionContext::new();
@@ -445,7 +445,7 @@ async fn semantic_memory_count_and_list_pass_through_to_vector_store() -> Result
     let mem = SemanticMemory::new(
         embedder,
         vector_store,
-        Namespace::new("tenant").with_scope("agent"),
+        Namespace::new(TenantId::new("tenant")).with_scope("agent"),
     )?;
     let ctx = ExecutionContext::new();
     for label in ["a", "b", "c", "d"] {
@@ -471,7 +471,7 @@ async fn vector_store_default_count_and_list_surface_config_error() {
     use entelix_memory::VectorStore;
     let store = StubAddOnly::new(4);
     let ctx = ExecutionContext::new();
-    let ns = Namespace::new("t");
+    let ns = Namespace::new(TenantId::new("t"));
     match store.count(&ctx, &ns, None).await {
         Err(entelix_core::Error::Config(msg)) => assert!(msg.contains("count")),
         other => panic!("expected Config error from default count, got {other:?}"),
@@ -529,7 +529,7 @@ async fn vector_store_default_batch_add_bails_on_cancellation() {
     let cancellation = CancellationToken::new();
     cancellation.cancel();
     let ctx = ExecutionContext::with_cancellation(cancellation);
-    let ns = Namespace::new("t");
+    let ns = Namespace::new(TenantId::new("t"));
     let items: Vec<(Document, Vec<f32>)> = (0..50)
         .map(|i| (Document::new(format!("d{i}")), vec![0.0; 4]))
         .collect();

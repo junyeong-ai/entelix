@@ -31,7 +31,7 @@
 
 use entelix::ExecutionContext;
 use entelix::tools::Tool;
-use entelix::{McpManager, McpServerConfig, McpToolAdapter};
+use entelix::{McpManager, McpServerConfig, McpToolAdapter, TenantId};
 use serde_json::json;
 use wiremock::matchers::method;
 use wiremock::{Mock, MockServer, Request, ResponseTemplate};
@@ -111,7 +111,7 @@ async fn main() -> entelix::Result<()> {
     );
 
     // ── tenant alpha ─────────────────────────────────────────────────
-    let ctx_alpha = ExecutionContext::new().with_tenant_id("alpha");
+    let ctx_alpha = ExecutionContext::new().with_tenant_id(TenantId::new("alpha"));
     let tools_alpha = manager
         .list_tools(&ctx_alpha, "records")
         .await
@@ -123,7 +123,7 @@ async fn main() -> entelix::Result<()> {
     );
 
     // ── tenant bravo (independent client — F9) ───────────────────────
-    let ctx_bravo = ExecutionContext::new().with_tenant_id("bravo");
+    let ctx_bravo = ExecutionContext::new().with_tenant_id(TenantId::new("bravo"));
     let tools_bravo = manager
         .list_tools(&ctx_bravo, "records")
         .await

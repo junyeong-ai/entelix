@@ -8,6 +8,7 @@
 #![cfg(feature = "postgres")]
 #![allow(clippy::unwrap_used, clippy::needless_pass_by_value)]
 
+use entelix_core::TenantId;
 use std::time::Duration;
 
 use entelix_core::ExecutionContext;
@@ -41,7 +42,7 @@ async fn checkpointer_round_trip() {
     let (pers, _container) = boot_persistence().await;
     let cp = pers.checkpointer::<u32>();
 
-    let key = ThreadKey::new("default", "t1");
+    let key = ThreadKey::new(TenantId::new("default"), "t1");
     let checkpoint = Checkpoint::new(&key, 0, 42u32, Some("next".into()));
     let id = checkpoint.id.clone();
     cp.put(checkpoint).await.unwrap();
@@ -56,7 +57,7 @@ async fn checkpointer_round_trip() {
     assert_eq!(history.len(), 1);
 
     // Tenant isolation: different tenant_id must return None / empty.
-    let other_key = ThreadKey::new("other", "t1");
+    let other_key = ThreadKey::new(TenantId::new("other"), "t1");
     assert!(cp.latest(&other_key).await.unwrap().is_none());
     assert!(cp.history(&other_key, 10).await.unwrap().is_empty());
 }
@@ -67,8 +68,8 @@ async fn store_round_trip_with_namespace_isolation() {
     let (pers, _container) = boot_persistence().await;
     let store = pers.store::<String>();
 
-    let ns_a = Namespace::new("tenant-a").with_scope("scope1");
-    let ns_b = Namespace::new("tenant-b").with_scope("scope1");
+    let ns_a = Namespace::new(TenantId::new("tenant-a")).with_scope("scope1");
+    let ns_b = Namespace::new(TenantId::new("tenant-b")).with_scope("scope1");
     let ctx = ExecutionContext::new();
 
     store
@@ -112,19 +113,19 @@ async fn list_namespaces_returns_typed_scopes_round_tripped_through_render() {
     // Three distinct namespaces under the same agent prefix, plus
     // one sibling under a different agent. The `:`-bearing scope
     // segment exercises the escape round-trip through SQL storage.
-    let ns_a = Namespace::new("acme").with_scope("agent-a");
-    let ns_b = Namespace::new("acme")
+    let ns_a = Namespace::new(TenantId::new("acme")).with_scope("agent-a");
+    let ns_b = Namespace::new(TenantId::new("acme"))
         .with_scope("agent-a")
         .with_scope("conv-1");
-    let ns_c = Namespace::new("acme")
+    let ns_c = Namespace::new(TenantId::new("acme"))
         .with_scope("agent-a")
         .with_scope("k8s:pod:foo");
-    let ns_other = Namespace::new("acme").with_scope("agent-b");
+    let ns_other = Namespace::new(TenantId::new("acme")).with_scope("agent-b");
     for ns in [&ns_a, &ns_b, &ns_c, &ns_other] {
         store.put(&ctx, ns, "k", "v".into()).await.unwrap();
     }
 
-    let prefix = NamespacePrefix::new("acme").with_scope("agent-a");
+    let prefix = NamespacePrefix::new(TenantId::new("acme")).with_scope("agent-a");
     let mut found = store.list_namespaces(&ctx, &prefix).await.unwrap();
     assert_eq!(found.len(), 3);
     found.sort_by_key(Namespace::render);
@@ -145,7 +146,7 @@ async fn session_log_append_load_archive() {
         content: vec![entelix_core::ir::ContentPart::text("first")],
         timestamp: chrono::Utc::now(),
     }];
-    let key = ThreadKey::new("tenant-x", "thread-1");
+    let key = ThreadKey::new(TenantId::new("tenant-x"), "thread-1");
     let head = log.append(&key, &events).await.unwrap();
     assert_eq!(head, 1);
 

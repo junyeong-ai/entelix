@@ -16,6 +16,7 @@
 //! for one helper is over-engineered. The 6-line function is
 //! trivial and identical across companions.
 
+use entelix_core::TenantId;
 use entelix_core::error::Error;
 use sqlx::Executor;
 use sqlx::postgres::Postgres;
@@ -25,16 +26,17 @@ use crate::error::PgVectorStoreError;
 /// Stamp the current transaction's `entelix.tenant_id` session
 /// variable. The third argument to `set_config` is `is_local =
 /// true`, scoping the assignment to the enclosing transaction
-/// (mirrors `SET LOCAL` semantics).
+/// (mirrors `SET LOCAL` semantics). Takes the typed [`TenantId`]
+/// so the policy cannot be armed with a tenantless value.
 pub(super) async fn set_tenant_session<'e, E>(
     executor: E,
-    tenant_id: &str,
+    tenant_id: &TenantId,
 ) -> entelix_core::Result<()>
 where
     E: Executor<'e, Database = Postgres>,
 {
     sqlx::query("SELECT set_config('entelix.tenant_id', $1, true)")
-        .bind(tenant_id)
+        .bind(tenant_id.as_str())
         .execute(executor)
         .await
         .map_err(into_core_sqlx)?;

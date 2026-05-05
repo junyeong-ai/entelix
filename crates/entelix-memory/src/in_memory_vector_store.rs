@@ -395,7 +395,7 @@ mod tests {
     use serde_json::json;
 
     fn ns() -> Namespace {
-        Namespace::new("acme").with_scope("agent-a")
+        Namespace::new(TenantId::new("acme")).with_scope("agent-a")
     }
 
     fn ctx() -> ExecutionContext {
@@ -633,8 +633,8 @@ mod tests {
     #[tokio::test]
     async fn namespaces_are_isolated() {
         let store = InMemoryVectorStore::new(2);
-        let ns_a = Namespace::new("acme").with_scope("agent-a");
-        let ns_b = Namespace::new("acme").with_scope("agent-b");
+        let ns_a = Namespace::new(TenantId::new("acme")).with_scope("agent-a");
+        let ns_b = Namespace::new(TenantId::new("acme")).with_scope("agent-b");
         store
             .add(&ctx(), &ns_a, doc("a", "x", json!({})), vec![1.0, 0.0])
             .await

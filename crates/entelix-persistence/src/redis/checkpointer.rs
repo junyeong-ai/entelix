@@ -194,11 +194,16 @@ where
             .cloned()
             .ok_or_else(|| PersistenceError::Backend("checkpoint missing id".into()))?,
     )?;
-    let tenant_id: String = body
+    // Persistence-layer row hydration validates the `tenant_id`
+    // through `TenantId::try_from`; an empty value (which would
+    // otherwise produce a tenantless `Checkpoint`) surfaces as a
+    // typed error rather than a constructed instance.
+    let tenant_id_str = body
         .get("tenant_id")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| PersistenceError::Backend("checkpoint missing tenant_id".into()))?
-        .to_owned();
+        .ok_or_else(|| PersistenceError::Backend("checkpoint missing tenant_id".into()))?;
+    let tenant_id = entelix_core::TenantId::try_from(tenant_id_str)
+        .map_err(|e| PersistenceError::Backend(format!("invalid persisted tenant_id: {e}")))?;
     let thread_id: String = body
         .get("thread_id")
         .and_then(|v| v.as_str())
@@ -237,4 +242,41 @@ fn backend_to_core(e: redis::RedisError) -> Error {
 
 fn into_core(e: PersistenceError) -> Error {
     e.into()
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+    use uuid::Uuid;
+
+    /// Redis-side mirror of the Postgres hydration regression. A
+    /// stored envelope whose `body.tenant_id` is empty cannot
+    /// hydrate into a `Checkpoint` — the validator catches it at
+    /// the deserialise boundary, surfacing
+    /// `PersistenceError::Backend("invalid persisted tenant_id …")`
+    /// rather than constructing a tenantless `Checkpoint` whose
+    /// downstream key comparison would silently mis-route
+    /// (invariant 11 / ADR-0074).
+    #[test]
+    fn unwrap_envelope_rejects_empty_persisted_tenant_id() {
+        let envelope = serde_json::json!({
+            "schema_version": SessionSchemaVersion::CURRENT,
+            "body": {
+                "id": CheckpointId::from_uuid(Uuid::new_v4()),
+                "tenant_id": "",
+                "thread_id": "th-1",
+                "parent_id": serde_json::Value::Null,
+                "step": 0u64,
+                "state": 42,
+                "next_node": serde_json::Value::Null,
+                "timestamp": chrono::Utc::now(),
+            }
+        });
+        let err = unwrap_envelope::<i32>(&envelope).unwrap_err();
+        assert!(
+            matches!(err, PersistenceError::Backend(ref m) if m.contains("invalid persisted tenant_id")),
+            "expected Backend(\"invalid persisted tenant_id …\"), got {err:?}"
+        );
+    }
 }

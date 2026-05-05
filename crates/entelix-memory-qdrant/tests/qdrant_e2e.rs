@@ -15,6 +15,7 @@
     clippy::doc_markdown
 )]
 
+use entelix_core::TenantId;
 use entelix_core::context::ExecutionContext;
 use entelix_memory::{Document, Namespace, VectorFilter, VectorStore};
 use entelix_memory_qdrant::{DistanceMetric, QdrantVectorStore};
@@ -61,7 +62,7 @@ fn doc(content: &str, metadata: serde_json::Value) -> Document {
 async fn round_trip_add_search_delete() {
     let (_container, store) = boot_qdrant().await;
     let ctx = ExecutionContext::new();
-    let ns = Namespace::new("tenant-a").with_scope("default");
+    let ns = Namespace::new(TenantId::new("tenant-a")).with_scope("default");
 
     store
         .add(
@@ -101,8 +102,8 @@ async fn round_trip_add_search_delete() {
 async fn cross_tenant_writes_are_isolated() {
     let (_container, store) = boot_qdrant().await;
     let ctx = ExecutionContext::new();
-    let ns_a = Namespace::new("tenant-a").with_scope("default");
-    let ns_b = Namespace::new("tenant-b").with_scope("default");
+    let ns_a = Namespace::new(TenantId::new("tenant-a")).with_scope("default");
+    let ns_b = Namespace::new(TenantId::new("tenant-b")).with_scope("default");
 
     store
         .add(
@@ -145,7 +146,7 @@ async fn cross_tenant_writes_are_isolated() {
 async fn search_filtered_with_eq_filter() {
     let (_container, store) = boot_qdrant().await;
     let ctx = ExecutionContext::new();
-    let ns = Namespace::new("tenant-a").with_scope("default");
+    let ns = Namespace::new(TenantId::new("tenant-a")).with_scope("default");
 
     store
         .add(
@@ -188,7 +189,7 @@ async fn search_filtered_with_eq_filter() {
 async fn batch_add_uses_single_round_trip() {
     let (_container, store) = boot_qdrant().await;
     let ctx = ExecutionContext::new();
-    let ns = Namespace::new("tenant-a").with_scope("default");
+    let ns = Namespace::new(TenantId::new("tenant-a")).with_scope("default");
 
     let items = (0..5)
         .map(|i| {
@@ -206,7 +207,7 @@ async fn batch_add_uses_single_round_trip() {
 async fn update_replaces_atomically() {
     let (_container, store) = boot_qdrant().await;
     let ctx = ExecutionContext::new();
-    let ns = Namespace::new("tenant-a").with_scope("default");
+    let ns = Namespace::new(TenantId::new("tenant-a")).with_scope("default");
 
     let doc_id = "stable-id".to_owned();
     let mut d = doc("v1", json!({}));
@@ -239,8 +240,8 @@ async fn update_replaces_atomically() {
 async fn colon_bearing_namespaces_isolated() {
     let (_container, store) = boot_qdrant().await;
     let ctx = ExecutionContext::new();
-    let a = Namespace::new("t:1").with_scope("a:b");
-    let b = Namespace::new("t").with_scope("1:a:b");
+    let a = Namespace::new(TenantId::new("t:1")).with_scope("a:b");
+    let b = Namespace::new(TenantId::new("t")).with_scope("1:a:b");
     assert_ne!(
         a.render(),
         b.render(),

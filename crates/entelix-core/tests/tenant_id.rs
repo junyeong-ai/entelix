@@ -19,13 +19,13 @@ fn default_impl_matches_new() {
 
 #[test]
 fn with_tenant_id_overrides() {
-    let ctx = ExecutionContext::new().with_tenant_id("acme-corp");
+    let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("acme-corp"));
     assert_eq!(ctx.tenant_id(), "acme-corp");
 }
 
 #[test]
 fn tenant_id_propagates_through_clone() {
-    let ctx = ExecutionContext::new().with_tenant_id("alpha");
+    let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("alpha"));
     #[allow(clippy::redundant_clone)]
     let cloned = ctx.clone();
     assert_eq!(cloned.tenant_id(), "alpha");
@@ -34,7 +34,7 @@ fn tenant_id_propagates_through_clone() {
 #[test]
 fn tenant_id_independent_of_thread_id() {
     let ctx = ExecutionContext::new()
-        .with_tenant_id("tenant-x")
+        .with_tenant_id(TenantId::new("tenant-x"))
         .with_thread_id("thread-y");
     assert_eq!(ctx.tenant_id(), "tenant-x");
     assert_eq!(ctx.thread_id(), Some("thread-y"));
@@ -42,7 +42,7 @@ fn tenant_id_independent_of_thread_id() {
 
 #[test]
 fn cancellation_inheritance_preserves_tenant() {
-    let parent = ExecutionContext::new().with_tenant_id("parent-tenant");
+    let parent = ExecutionContext::new().with_tenant_id(TenantId::new("parent-tenant"));
     let cancellation = parent.cancellation().clone();
     let child = ExecutionContext::with_cancellation(cancellation);
     // Child gets a fresh default tenant — explicit propagation is the

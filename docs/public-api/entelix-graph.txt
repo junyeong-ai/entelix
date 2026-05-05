@@ -88,7 +88,7 @@ pub entelix_graph::Checkpoint::next_node: core::option::Option<alloc::string::St
 pub entelix_graph::Checkpoint::parent_id: core::option::Option<entelix_graph::CheckpointId>
 pub entelix_graph::Checkpoint::state: S
 pub entelix_graph::Checkpoint::step: usize
-pub entelix_graph::Checkpoint::tenant_id: alloc::string::String
+pub entelix_graph::Checkpoint::tenant_id: entelix_core::tenant_id::TenantId
 pub entelix_graph::Checkpoint::thread_id: alloc::string::String
 pub entelix_graph::Checkpoint::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
 impl<S> entelix_graph::Checkpoint<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static

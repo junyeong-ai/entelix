@@ -22,6 +22,7 @@
     clippy::doc_markdown
 )]
 
+use entelix_core::TenantId;
 use std::sync::Arc;
 
 use chrono::Utc;
@@ -108,7 +109,7 @@ async fn rls_blocks_cross_tenant_node_lookup_at_db_layer() {
     // through the app role succeeds because (a) tenant_id matches
     // the session var (WITH CHECK), and (b) reads through SDK use
     // the same matching var (USING).
-    let ns_a = Namespace::new("tenant-A").with_scope("scope");
+    let ns_a = Namespace::new(TenantId::new("tenant-A")).with_scope("scope");
     let id = app_graph
         .add_node(&ctx, &ns_a, "alice".into())
         .await
@@ -162,7 +163,7 @@ async fn rls_with_check_blocks_mismatched_tenant_inserts() {
 async fn rls_applies_to_edges_table_too() {
     let (_super_graph, app_graph, container) = boot_with_app_role().await;
     let ctx = ExecutionContext::new();
-    let ns = Namespace::new("tenant-A");
+    let ns = Namespace::new(TenantId::new("tenant-A"));
     let now = Utc::now();
     let a = app_graph.add_node(&ctx, &ns, "a".into()).await.unwrap();
     let b = app_graph.add_node(&ctx, &ns, "b".into()).await.unwrap();
@@ -187,7 +188,7 @@ async fn rls_applies_to_edges_table_too() {
 async fn correct_tenant_session_returns_rows() {
     let (_super_graph, app_graph, container) = boot_with_app_role().await;
     let ctx = ExecutionContext::new();
-    let ns = Namespace::new("tenant-X").with_scope("conv");
+    let ns = Namespace::new(TenantId::new("tenant-X")).with_scope("conv");
     app_graph
         .add_node(&ctx, &ns, "node-1".into())
         .await

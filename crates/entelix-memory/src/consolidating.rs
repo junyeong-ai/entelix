@@ -202,7 +202,7 @@ mod tests {
         Arc::new(
             BufferMemory::new(
                 Arc::new(InMemoryStore::<Vec<Message>>::new()),
-                Namespace::new("t").with_scope("conv"),
+                Namespace::new(TenantId::new("t")).with_scope("conv"),
                 max_turns,
             )
             .with_consolidation_policy(policy),
@@ -212,7 +212,7 @@ mod tests {
     fn make_summary() -> Arc<SummaryMemory> {
         Arc::new(SummaryMemory::new(
             Arc::new(InMemoryStore::<String>::new()),
-            Namespace::new("t").with_scope("conv"),
+            Namespace::new(TenantId::new("t")).with_scope("conv"),
         ))
     }
 

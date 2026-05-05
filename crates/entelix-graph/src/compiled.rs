@@ -448,7 +448,7 @@ where
                 if let (Some(cp), Some(thread_id), Some(pre)) =
                     (&self.checkpointer, ctx.thread_id(), pre_state.clone())
                 {
-                    let key = ThreadKey::new(ctx.tenant_id(), thread_id);
+                    let key = ThreadKey::new(ctx.tenant_id().clone(), thread_id);
                     cp.put(Checkpoint::new(
                         &key,
                         total_step,
@@ -473,7 +473,7 @@ where
                     if let (Some(cp), Some(thread_id), Some(pre)) =
                         (&self.checkpointer, ctx.thread_id(), pre_state)
                     {
-                        let key = ThreadKey::new(ctx.tenant_id(), thread_id);
+                        let key = ThreadKey::new(ctx.tenant_id().clone(), thread_id);
                         cp.put(Checkpoint::new(
                             &key,
                             total_step,
@@ -495,7 +495,7 @@ where
             if self.interrupt_after.contains(&current) && !self.send_edges.contains_key(&current) {
                 let next_node = self.resolve_next_node(&current, &state)?;
                 if let (Some(cp), Some(thread_id)) = (&self.checkpointer, ctx.thread_id()) {
-                    let key = ThreadKey::new(ctx.tenant_id(), thread_id);
+                    let key = ThreadKey::new(ctx.tenant_id().clone(), thread_id);
                     cp.put(Checkpoint::new(
                         &key,
                         total_step,
@@ -545,7 +545,7 @@ where
             if granularity_writes
                 && let (Some(cp), Some(thread_id)) = (&self.checkpointer, ctx.thread_id())
             {
-                let key = ThreadKey::new(ctx.tenant_id(), thread_id);
+                let key = ThreadKey::new(ctx.tenant_id().clone(), thread_id);
                 cp.put(Checkpoint::new(
                     &key,
                     total_step,
@@ -677,7 +677,7 @@ where
             tracing::Level::DEBUG,
             entelix.graph.depth = depth,
             entelix.graph.recursion_limit = self.recursion_limit,
-            entelix.tenant_id = ctx.tenant_id(),
+            entelix.tenant_id = ctx.tenant_id().as_str(),
             entelix.thread_id = ctx.thread_id(),
             entelix.run_id = ctx.run_id(),
             "entelix.graph.run_complete"
@@ -735,7 +735,7 @@ where
         // observability hook. `FinalizingStream` only fires the
         // closure when the consumer drops the stream before it
         // signals completion — normal end-of-graph paths are silent.
-        let finalize_tenant = ctx.tenant_id().to_owned();
+        let finalize_tenant = ctx.tenant_id().clone();
         let finalize_thread = ctx.thread_id().map(str::to_owned);
         let finalize_mode = mode;
         let effective_recursion_limit = ctx

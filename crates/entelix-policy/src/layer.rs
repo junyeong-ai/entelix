@@ -301,7 +301,7 @@ mod tests {
 
         let invocation = ModelInvocation::new(
             make_request(),
-            ExecutionContext::new().with_tenant_id("acme"),
+            ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
         );
         let resp = tower::ServiceExt::oneshot(service, invocation)
             .await
@@ -337,7 +337,7 @@ mod tests {
             svc1,
             ModelInvocation::new(
                 make_request(),
-                ExecutionContext::new().with_tenant_id("acme"),
+                ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
             ),
         )
         .await
@@ -348,7 +348,7 @@ mod tests {
             svc2,
             ModelInvocation::new(
                 make_request(),
-                ExecutionContext::new().with_tenant_id("acme"),
+                ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
             ),
         )
         .await
@@ -404,7 +404,7 @@ mod tests {
                 json!({"type": "object"}),
             )),
             json!({"email": "user@acme.io"}),
-            ExecutionContext::new().with_tenant_id("acme"),
+            ExecutionContext::new().with_tenant_id(TenantId::new("acme")),
         );
         let out = tower::ServiceExt::oneshot(svc, inv).await.unwrap();
         // Both directions redacted: input redacted before echo;

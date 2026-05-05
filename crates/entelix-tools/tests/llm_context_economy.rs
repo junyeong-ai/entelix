@@ -142,7 +142,7 @@ impl InMemorySemantic {
     fn new() -> Self {
         Self {
             docs: Mutex::new(Vec::new()),
-            namespace: Namespace::new("test").with_scope("semantic"),
+            namespace: Namespace::new(TenantId::new("test")).with_scope("semantic"),
         }
     }
     fn seed(self, docs: Vec<Document>) -> Self {
@@ -299,7 +299,7 @@ async fn entity_memory_with_one_fact(fact: &str) -> Arc<EntityMemory> {
     let store = Arc::new(InMemoryStore::<HashMap<String, entelix_memory::EntityRecord>>::new());
     let entity = Arc::new(EntityMemory::new(
         store,
-        Namespace::new("test").with_scope("entity"),
+        Namespace::new(TenantId::new("test")).with_scope("entity"),
     ));
     entity
         .set_entity(&ExecutionContext::new(), "alice", fact)

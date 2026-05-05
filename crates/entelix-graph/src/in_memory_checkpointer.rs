@@ -11,18 +11,20 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use entelix_core::{Error, Result, ThreadKey};
+use entelix_core::{Error, Result, TenantId, ThreadKey};
 use parking_lot::Mutex;
 
 use crate::checkpoint::{Checkpoint, CheckpointId, Checkpointer};
 
 /// Internal partition key — bypasses the public `ThreadKey` so the
 /// `HashMap` can be cheaply cloned for entry lookups without
-/// constructing a new `ThreadKey` per operation.
-type Partition = (String, String);
+/// constructing a new `ThreadKey` per operation. Cloning a
+/// [`TenantId`] is an `Arc<str>` refcount bump, so the partition
+/// remains cheap to materialise.
+type Partition = (TenantId, String);
 
 fn partition(key: &ThreadKey) -> Partition {
-    (key.tenant_id().to_owned(), key.thread_id().to_owned())
+    (key.tenant_id().clone(), key.thread_id().to_owned())
 }
 
 /// In-process checkpointer backed by a

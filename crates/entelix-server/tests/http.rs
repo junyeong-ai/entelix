@@ -319,7 +319,7 @@ async fn wake_without_checkpointer_returns_config_error() {
 async fn wake_resume_uses_checkpointed_state() {
     let cp = Arc::new(InMemoryCheckpointer::<EchoState>::new());
     // Seed a checkpoint so wake has something to resume from.
-    let key = ThreadKey::new("acme", "conv-w");
+    let key = ThreadKey::new(TenantId::new("acme"), "conv-w");
     let checkpoint = Checkpoint::new(
         &key,
         0,
@@ -357,7 +357,7 @@ async fn wake_resume_uses_checkpointed_state() {
 #[tokio::test]
 async fn wake_update_replaces_checkpointed_state() {
     let cp = Arc::new(InMemoryCheckpointer::<EchoState>::new());
-    let key = ThreadKey::new("acme", "conv-u");
+    let key = ThreadKey::new(TenantId::new("acme"), "conv-u");
     let checkpoint = Checkpoint::new(
         &key,
         0,
@@ -401,7 +401,7 @@ async fn wake_approve_tool_attaches_pending_decisions_extension() {
     use entelix_core::approval::{ApprovalDecision, PendingApprovalDecisions};
 
     let cp = Arc::new(InMemoryCheckpointer::<EchoState>::new());
-    let key = ThreadKey::new("acme", "conv-a");
+    let key = ThreadKey::new(TenantId::new("acme"), "conv-a");
     let checkpoint = Checkpoint::new(
         &key,
         0,
@@ -447,7 +447,7 @@ async fn wake_approve_tool_rejects_await_external() {
     // Resume with AwaitExternal would re-enter the same pause —
     // structurally rejected at the HTTP boundary.
     let cp = Arc::new(InMemoryCheckpointer::<EchoState>::new());
-    let key = ThreadKey::new("acme", "conv-ax");
+    let key = ThreadKey::new(TenantId::new("acme"), "conv-ax");
     let checkpoint = Checkpoint::new(
         &key,
         0,

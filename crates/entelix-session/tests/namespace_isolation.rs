@@ -36,8 +36,8 @@ async fn append_and_load_isolate_distinct_tenants_under_identical_thread() {
     // Same thread_id under two different tenants must produce two
     // independent histories — invariant 11 enforced by ThreadKey.
     let log = InMemorySessionLog::new();
-    let alpha = ThreadKey::new("alpha", "conv-1");
-    let bravo = ThreadKey::new("bravo", "conv-1");
+    let alpha = ThreadKey::new(TenantId::new("alpha"), "conv-1");
+    let bravo = ThreadKey::new(TenantId::new("bravo"), "conv-1");
 
     let _ = log
         .append(&alpha, &[user("alpha-1"), user("alpha-2")])
@@ -69,8 +69,8 @@ async fn archive_before_does_not_cross_tenants() {
     // Archiving up to watermark N for tenant alpha must not touch
     // bravo's events even when both share a thread_id and ordinals.
     let log = InMemorySessionLog::new();
-    let alpha = ThreadKey::new("alpha", "conv-1");
-    let bravo = ThreadKey::new("bravo", "conv-1");
+    let alpha = ThreadKey::new(TenantId::new("alpha"), "conv-1");
+    let bravo = ThreadKey::new(TenantId::new("bravo"), "conv-1");
 
     let _ = log
         .append(&alpha, &[user("a1"), user("a2"), user("a3")])
@@ -101,10 +101,10 @@ async fn load_since_unknown_tenant_returns_empty_not_other_tenants_data() {
     // guard — a regression that fell back to "global" events on
     // miss would surface here.
     let log = InMemorySessionLog::new();
-    let alpha = ThreadKey::new("alpha", "conv-1");
+    let alpha = ThreadKey::new(TenantId::new("alpha"), "conv-1");
     let _ = log.append(&alpha, &[user("alpha-only")]).await.unwrap();
 
-    let unknown = ThreadKey::new("ghost", "conv-1");
+    let unknown = ThreadKey::new(TenantId::new("ghost"), "conv-1");
     let events = log.load_since(&unknown, 0).await.unwrap();
     assert!(
         events.is_empty(),
@@ -119,8 +119,8 @@ async fn distinct_threads_within_one_tenant_are_also_isolated() {
     // partitions on the full (tenant, thread) tuple, not just the
     // tenant prefix.
     let log = InMemorySessionLog::new();
-    let conv1 = ThreadKey::new("alpha", "conv-1");
-    let conv2 = ThreadKey::new("alpha", "conv-2");
+    let conv1 = ThreadKey::new(TenantId::new("alpha"), "conv-1");
+    let conv2 = ThreadKey::new(TenantId::new("alpha"), "conv-2");
 
     let _ = log.append(&conv1, &[user("c1-only")]).await.unwrap();
     let _ = log

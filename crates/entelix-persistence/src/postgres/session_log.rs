@@ -39,7 +39,7 @@ impl SessionLog for PostgresSessionLog {
                 WHERE tenant_id = $1 AND thread_id = $2
                 ",
             )
-            .bind(tenant_id)
+            .bind(tenant_id.as_str())
             .bind(thread_id)
             .fetch_optional(&mut *tx)
             .await
@@ -56,7 +56,7 @@ impl SessionLog for PostgresSessionLog {
         // Lock the per-thread row range so concurrent appends don't
         // interleave ordinals. Uses a thread-scoped advisory lock —
         // shared with `with_session_lock` so they cooperate.
-        let advisory = crate::AdvisoryKey::for_session(tenant_id, thread_id);
+        let advisory = crate::AdvisoryKey::for_session(tenant_id.as_str(), thread_id);
         let (high, low) = advisory.halves();
         sqlx::query("SELECT pg_advisory_xact_lock($1, $2)")
             .bind(high)
@@ -71,7 +71,7 @@ impl SessionLog for PostgresSessionLog {
             WHERE tenant_id = $1 AND thread_id = $2
             ",
         )
-        .bind(tenant_id)
+        .bind(tenant_id.as_str())
         .bind(thread_id)
         .fetch_optional(&mut *tx)
         .await
@@ -89,7 +89,7 @@ impl SessionLog for PostgresSessionLog {
                 VALUES ($1, $2, $3, $4, now())
                 ",
             )
-            .bind(tenant_id)
+            .bind(tenant_id.as_str())
             .bind(thread_id)
             .bind(seq_i64)
             .bind(&payload)
@@ -112,7 +112,7 @@ impl SessionLog for PostgresSessionLog {
             ORDER BY seq ASC
             ",
         )
-        .bind(key.tenant_id())
+        .bind(key.tenant_id().as_str())
         .bind(key.thread_id())
         .bind(cursor_i64)
         .fetch_all(&mut *tx)
@@ -134,7 +134,7 @@ impl SessionLog for PostgresSessionLog {
             WHERE tenant_id = $1 AND thread_id = $2 AND seq <= $3
             ",
         )
-        .bind(key.tenant_id())
+        .bind(key.tenant_id().as_str())
         .bind(key.thread_id())
         .bind(watermark_i64)
         .execute(&mut *tx)

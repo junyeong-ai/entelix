@@ -505,11 +505,11 @@ impl !core::panic::unwind_safe::RefUnwindSafe for entelix_memory::MmrReranker
 impl !core::panic::unwind_safe::UnwindSafe for entelix_memory::MmrReranker
 pub struct entelix_memory::Namespace
 impl entelix_memory::Namespace
-pub fn entelix_memory::Namespace::new(tenant_id: impl core::convert::Into<alloc::string::String>) -> Self
+pub const fn entelix_memory::Namespace::new(tenant_id: entelix_core::tenant_id::TenantId) -> Self
 pub fn entelix_memory::Namespace::parse(rendered: &str) -> entelix_core::error::Result<Self>
 pub fn entelix_memory::Namespace::render(&self) -> alloc::string::String
 pub fn entelix_memory::Namespace::scope(&self) -> &[alloc::string::String]
-pub fn entelix_memory::Namespace::tenant_id(&self) -> &str
+pub const fn entelix_memory::Namespace::tenant_id(&self) -> &entelix_core::tenant_id::TenantId
 pub fn entelix_memory::Namespace::with_scope(self, segment: impl core::convert::Into<alloc::string::String>) -> Self
 impl core::clone::Clone for entelix_memory::Namespace
 pub fn entelix_memory::Namespace::clone(&self) -> entelix_memory::Namespace
@@ -537,9 +537,9 @@ impl core::panic::unwind_safe::UnwindSafe for entelix_memory::Namespace
 pub struct entelix_memory::NamespacePrefix
 impl entelix_memory::NamespacePrefix
 pub fn entelix_memory::NamespacePrefix::matches(&self, ns: &entelix_memory::Namespace) -> bool
-pub fn entelix_memory::NamespacePrefix::new(tenant_id: impl core::convert::Into<alloc::string::String>) -> Self
+pub const fn entelix_memory::NamespacePrefix::new(tenant_id: entelix_core::tenant_id::TenantId) -> Self
 pub fn entelix_memory::NamespacePrefix::scope(&self) -> &[alloc::string::String]
-pub fn entelix_memory::NamespacePrefix::tenant_id(&self) -> &str
+pub const fn entelix_memory::NamespacePrefix::tenant_id(&self) -> &entelix_core::tenant_id::TenantId
 pub fn entelix_memory::NamespacePrefix::with_scope(self, segment: impl core::convert::Into<alloc::string::String>) -> Self
 impl core::clone::Clone for entelix_memory::NamespacePrefix
 pub fn entelix_memory::NamespacePrefix::clone(&self) -> entelix_memory::NamespacePrefix

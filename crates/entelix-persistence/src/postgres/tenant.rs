@@ -34,7 +34,7 @@
 //! sweepers from a separate database role configured with
 //! `BYPASSRLS`, scheduled outside the per-request application path.
 
-use entelix_core::{Error, Result};
+use entelix_core::{Error, Result, TenantId};
 use sqlx::Executor;
 use sqlx::postgres::Postgres;
 
@@ -43,13 +43,15 @@ use crate::error::PersistenceError;
 /// Stamp the current transaction's `entelix.tenant_id` session
 /// variable. The third argument to `set_config` is `is_local =
 /// true`, scoping the assignment to the enclosing transaction
-/// (mirrors `SET LOCAL` semantics).
-pub(super) async fn set_tenant_session<'e, E>(executor: E, tenant_id: &str) -> Result<()>
+/// (mirrors `SET LOCAL` semantics). Takes the typed [`TenantId`]
+/// (already validated non-empty by its constructor) so the policy
+/// cannot be armed with a tenantless value.
+pub(super) async fn set_tenant_session<'e, E>(executor: E, tenant_id: &TenantId) -> Result<()>
 where
     E: Executor<'e, Database = Postgres>,
 {
     sqlx::query("SELECT set_config('entelix.tenant_id', $1, true)")
-        .bind(tenant_id)
+        .bind(tenant_id.as_str())
         .execute(executor)
         .await
         .map_err(backend_to_core)?;

@@ -25,11 +25,7 @@ use tokio::time::Instant;
 use crate::audit::AuditSinkHandle;
 use crate::cancellation::CancellationToken;
 use crate::extensions::Extensions;
-
-/// Default tenant identifier — applied when callers do not specify one
-/// via [`ExecutionContext::with_tenant_id`]. Single-tenant deployments
-/// can rely on this and never touch the field.
-pub const DEFAULT_TENANT_ID: &str = "default";
+use crate::tenant_id::TenantId;
 
 /// Carrier for request-scope state that every `Runnable`, `Tool`,
 /// and codec sees.
@@ -38,10 +34,11 @@ pub const DEFAULT_TENANT_ID: &str = "default";
 /// through [`Self::new`] and the `with_*` builder methods, so adding
 /// a new field is a non-breaking change.
 ///
-/// `tenant_id` is stored as `Arc<str>` so cloning the context — done
-/// implicitly per tool dispatch and per sub-agent — bumps a refcount
-/// instead of allocating. The default-tenant Arc is initialised once
-/// per process via a static `OnceLock`, so a freshly-built context
+/// `tenant_id` is a [`TenantId`] (validating `Arc<str>` newtype, see
+/// [`crate::tenant_id`]). Cloning the context — done implicitly per
+/// tool dispatch and per sub-agent — bumps the underlying refcount
+/// instead of allocating. The default-tenant `TenantId` is shared
+/// process-wide via a `OnceLock`, so a freshly-built context
 /// allocates zero strings on the hot path.
 #[derive(Clone, Debug)]
 #[non_exhaustive]
@@ -49,7 +46,7 @@ pub struct ExecutionContext {
     cancellation: CancellationToken,
     deadline: Option<Instant>,
     thread_id: Option<String>,
-    tenant_id: Arc<str>,
+    tenant_id: TenantId,
     run_id: Option<String>,
     /// Idempotency key for the current logical call — vendor-side
     /// dedupe identifier shared across every retry attempt of the
@@ -67,26 +64,16 @@ impl Default for ExecutionContext {
     }
 }
 
-/// Process-wide shared `Arc<str>` for [`DEFAULT_TENANT_ID`].
-/// Every `ExecutionContext::new()` clones this Arc — an atomic
-/// refcount bump — instead of allocating a fresh `String`. With
-/// `100 req/s × 5 ctx-clones-per-request`, that's 500 allocations
-/// per second the SDK no longer pays.
-fn default_tenant_arc() -> Arc<str> {
-    use std::sync::OnceLock;
-    static SHARED: OnceLock<Arc<str>> = OnceLock::new();
-    Arc::clone(SHARED.get_or_init(|| Arc::from(DEFAULT_TENANT_ID)))
-}
-
 impl ExecutionContext {
     /// Create a fresh context with a new cancellation token, no deadline,
-    /// no thread ID, and the [`DEFAULT_TENANT_ID`] tenant scope.
+    /// no thread ID, and the [`TenantId::default()`] tenant scope
+    /// (which is the process-wide shared `"default"` `TenantId`).
     pub fn new() -> Self {
         Self {
             cancellation: CancellationToken::new(),
             deadline: None,
             thread_id: None,
-            tenant_id: default_tenant_arc(),
+            tenant_id: TenantId::default(),
             run_id: None,
             idempotency_key: None,
             extensions: Extensions::new(),
@@ -100,7 +87,7 @@ impl ExecutionContext {
             cancellation,
             deadline: None,
             thread_id: None,
-            tenant_id: default_tenant_arc(),
+            tenant_id: TenantId::default(),
             run_id: None,
             idempotency_key: None,
             extensions: Extensions::new(),
@@ -124,10 +111,10 @@ impl ExecutionContext {
 
     /// Override the tenant scope. Multi-tenant operators set this per
     /// request; single-tenant deployments leave it at
-    /// [`DEFAULT_TENANT_ID`] (invariant 11).
+    /// [`TenantId::default()`] (invariant 11).
     #[must_use]
-    pub fn with_tenant_id(mut self, tenant_id: impl Into<String>) -> Self {
-        self.tenant_id = Arc::from(tenant_id.into());
+    pub fn with_tenant_id(mut self, tenant_id: TenantId) -> Self {
+        self.tenant_id = tenant_id;
         self
     }
 
@@ -238,8 +225,10 @@ impl ExecutionContext {
         self.thread_id.as_deref()
     }
 
-    /// Borrow the tenant identifier (invariant 11). Always present.
-    pub fn tenant_id(&self) -> &str {
+    /// Borrow the tenant identifier (invariant 11). Always present —
+    /// defaults to the process-shared [`TenantId::default()`] when
+    /// not explicitly set.
+    pub const fn tenant_id(&self) -> &TenantId {
         &self.tenant_id
     }
 

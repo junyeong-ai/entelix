@@ -42,7 +42,7 @@
 
 use std::time::Duration;
 
-use entelix_core::{ExecutionContext, ThreadKey};
+use entelix_core::{ExecutionContext, TenantId, ThreadKey};
 use entelix_graph::{Checkpoint, Checkpointer};
 use entelix_memory::{Namespace, Store};
 use entelix_persistence::postgres::PostgresPersistence;
@@ -78,8 +78,8 @@ async fn store_isolates_colon_bearing_segments_via_escaping() {
     let store = pers.store::<String>();
     let ctx = ExecutionContext::new();
 
-    let a = Namespace::new("t:1").with_scope("a:b");
-    let b = Namespace::new("t").with_scope("1:a:b");
+    let a = Namespace::new(TenantId::new("t:1")).with_scope("a:b");
+    let b = Namespace::new(TenantId::new("t")).with_scope("1:a:b");
     assert_ne!(
         a.render(),
         b.render(),
@@ -124,8 +124,8 @@ async fn session_log_isolates_distinct_tenants_under_identical_thread_id() {
     let (pers, _container) = boot_persistence().await;
     let log = pers.session_log();
 
-    let acme_key = ThreadKey::new("acme", "shared-thread-name");
-    let beta_key = ThreadKey::new("beta", "shared-thread-name");
+    let acme_key = ThreadKey::new(TenantId::new("acme"), "shared-thread-name");
+    let beta_key = ThreadKey::new(TenantId::new("beta"), "shared-thread-name");
 
     let acme_event = vec![GraphEvent::UserMessage {
         content: vec![entelix_core::ir::ContentPart::text("acme private")],
@@ -237,8 +237,8 @@ async fn checkpointer_isolates_state_across_tenants_at_same_thread_id() {
     let (pers, _container) = boot_persistence().await;
     let cp = pers.checkpointer::<u64>();
 
-    let key_a = ThreadKey::new("tenant-a", "shared-thread");
-    let key_b = ThreadKey::new("tenant-b", "shared-thread");
+    let key_a = ThreadKey::new(TenantId::new("tenant-a"), "shared-thread");
+    let key_b = ThreadKey::new(TenantId::new("tenant-b"), "shared-thread");
     let cp_a = Checkpoint::new(&key_a, 0, 100u64, Some("next".into()));
     let cp_b = Checkpoint::new(&key_b, 0, 200u64, Some("next".into()));
     let id_a = cp_a.id.clone();

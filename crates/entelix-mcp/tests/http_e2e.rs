@@ -208,7 +208,7 @@ async fn manager_routes_tool_call_through_adapter() {
         .register(McpServerConfig::http("mock", server.uri()).unwrap())
         .build()
         .unwrap();
-    let ctx = ExecutionContext::new().with_tenant_id("t1");
+    let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("t1"));
 
     let tools = manager.list_tools(&ctx, "mock").await.unwrap();
     let adapter = McpToolAdapter::new(manager.clone(), "mock", tools[0].clone());
@@ -432,7 +432,7 @@ async fn manager_list_resources_round_trips() {
         .register(McpServerConfig::http("mock", server.uri()).unwrap())
         .build()
         .unwrap();
-    let ctx = ExecutionContext::new().with_tenant_id("t1");
+    let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("t1"));
 
     let resources = manager.list_resources(&ctx, "mock").await.unwrap();
     assert_eq!(resources.len(), 1);
@@ -453,7 +453,7 @@ async fn manager_read_resource_round_trips() {
         .register(McpServerConfig::http("mock", server.uri()).unwrap())
         .build()
         .unwrap();
-    let ctx = ExecutionContext::new().with_tenant_id("t1");
+    let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("t1"));
 
     let blocks = manager
         .read_resource(&ctx, "mock", "file:///etc/hosts")
@@ -479,7 +479,7 @@ async fn manager_list_prompts_round_trips() {
         .register(McpServerConfig::http("mock", server.uri()).unwrap())
         .build()
         .unwrap();
-    let ctx = ExecutionContext::new().with_tenant_id("t1");
+    let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("t1"));
 
     let prompts = manager.list_prompts(&ctx, "mock").await.unwrap();
     assert_eq!(prompts.len(), 1);
@@ -500,7 +500,7 @@ async fn manager_prompt_round_trips() {
         .register(McpServerConfig::http("mock", server.uri()).unwrap())
         .build()
         .unwrap();
-    let ctx = ExecutionContext::new().with_tenant_id("t1");
+    let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("t1"));
 
     let mut args = BTreeMap::new();
     args.insert("who".into(), "alice".into());
@@ -529,7 +529,7 @@ async fn manager_complete_round_trips() {
         .register(McpServerConfig::http("mock", server.uri()).unwrap())
         .build()
         .unwrap();
-    let ctx = ExecutionContext::new().with_tenant_id("t1");
+    let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("t1"));
 
     let result = manager
         .complete(
@@ -593,7 +593,7 @@ async fn manager_correlates_jsonrpc_error_with_server_and_op() {
         .register(McpServerConfig::http("mock", server.uri()).unwrap())
         .build()
         .unwrap();
-    let ctx = ExecutionContext::new().with_tenant_id("t1");
+    let ctx = ExecutionContext::new().with_tenant_id(TenantId::new("t1"));
 
     let err = manager
         .read_resource(&ctx, "mock", "file:///missing")

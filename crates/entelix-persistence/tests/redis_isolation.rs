@@ -29,6 +29,7 @@
     clippy::expect_used
 )]
 
+use entelix_core::TenantId;
 use std::time::Duration;
 
 use entelix_core::ExecutionContext;
@@ -62,8 +63,8 @@ async fn store_writes_under_one_tenant_invisible_to_other_tenants() {
     let (pers, _container) = boot_persistence().await;
     let store = pers.store::<String>();
     let ctx = ExecutionContext::new();
-    let ns_a = Namespace::new("tenant-a").with_scope("scope1");
-    let ns_b = Namespace::new("tenant-b").with_scope("scope1");
+    let ns_a = Namespace::new(TenantId::new("tenant-a")).with_scope("scope1");
+    let ns_b = Namespace::new(TenantId::new("tenant-b")).with_scope("scope1");
 
     store
         .put(&ctx, &ns_a, "shared-key", "value-a".to_owned())
@@ -127,8 +128,8 @@ async fn checkpointer_isolates_state_across_tenants_at_same_thread_id() {
     let (pers, _container) = boot_persistence().await;
     let cp = pers.checkpointer::<u64>();
 
-    let key_a = ThreadKey::new("tenant-a", "shared-thread");
-    let key_b = ThreadKey::new("tenant-b", "shared-thread");
+    let key_a = ThreadKey::new(TenantId::new("tenant-a"), "shared-thread");
+    let key_b = ThreadKey::new(TenantId::new("tenant-b"), "shared-thread");
     let cp_a = Checkpoint::new(&key_a, 0, 100u64, Some("next".into()));
     let cp_b = Checkpoint::new(&key_b, 0, 200u64, Some("next".into()));
     let id_a = cp_a.id.clone();
@@ -183,8 +184,8 @@ async fn session_log_event_streams_do_not_leak_across_tenants() {
         timestamp: chrono::Utc::now(),
     }];
 
-    let key_a = ThreadKey::new("tenant-a", "shared-thread");
-    let key_b = ThreadKey::new("tenant-b", "shared-thread");
+    let key_a = ThreadKey::new(TenantId::new("tenant-a"), "shared-thread");
+    let key_b = ThreadKey::new(TenantId::new("tenant-b"), "shared-thread");
     log.append(&key_a, &evt_a).await.unwrap();
     log.append(&key_b, &evt_b).await.unwrap();
 
@@ -265,8 +266,8 @@ async fn store_isolates_colon_bearing_segments_via_escaping() {
     let store = pers.store::<String>();
     let ctx = ExecutionContext::new();
 
-    let a = Namespace::new("t:1").with_scope("a:b");
-    let b = Namespace::new("t").with_scope("1:a:b");
+    let a = Namespace::new(TenantId::new("t:1")).with_scope("a:b");
+    let b = Namespace::new(TenantId::new("t")).with_scope("1:a:b");
     assert_ne!(
         a.render(),
         b.render(),

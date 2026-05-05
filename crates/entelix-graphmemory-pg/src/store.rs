@@ -392,7 +392,7 @@ where
         let mut tx = self.pool.begin().await.map_err(into_core_sqlx)?;
         set_tenant_session(&mut *tx, ns.tenant_id()).await?;
         sqlx::query(&sql)
-            .bind(ns.tenant_id())
+            .bind(ns.tenant_id().as_str())
             .bind(ns.render())
             .bind(id.as_str())
             .bind(&payload)
@@ -422,7 +422,7 @@ where
         let mut tx = self.pool.begin().await.map_err(into_core_sqlx)?;
         set_tenant_session(&mut *tx, ns.tenant_id()).await?;
         sqlx::query(&sql)
-            .bind(ns.tenant_id())
+            .bind(ns.tenant_id().as_str())
             .bind(ns.render())
             .bind(id.as_str())
             .bind(from.as_str())
@@ -475,7 +475,7 @@ where
         let mut tx = self.pool.begin().await.map_err(into_core_sqlx)?;
         set_tenant_session(&mut *tx, ns.tenant_id()).await?;
         sqlx::query(&sql)
-            .bind(ns.tenant_id())
+            .bind(ns.tenant_id().as_str())
             .bind(ns.render())
             .bind(&id_strings)
             .bind(&from_strings)

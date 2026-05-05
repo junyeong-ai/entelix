@@ -17,7 +17,7 @@ use entelix_memory::{BufferMemory, Document, InMemoryStore, Namespace, Store};
 
 #[test]
 fn namespace_render_with_no_scope_is_just_tenant() {
-    let ns = Namespace::new("tenant-A");
+    let ns = Namespace::new(TenantId::new("tenant-A"));
     assert_eq!(ns.tenant_id(), "tenant-A");
     assert!(ns.scope().is_empty());
     assert_eq!(ns.render(), "tenant-A");
@@ -25,7 +25,7 @@ fn namespace_render_with_no_scope_is_just_tenant() {
 
 #[test]
 fn namespace_render_joins_scope_with_colons() {
-    let ns = Namespace::new("tenant-A")
+    let ns = Namespace::new(TenantId::new("tenant-A"))
         .with_scope("agent-1")
         .with_scope("conversation-42");
     assert_eq!(ns.render(), "tenant-A:agent-1:conversation-42");
@@ -37,8 +37,8 @@ fn namespace_render_joins_scope_with_colons() {
 
 #[test]
 fn namespaces_are_distinct_when_tenant_differs() {
-    let a = Namespace::new("alpha").with_scope("x");
-    let b = Namespace::new("beta").with_scope("x");
+    let a = Namespace::new(TenantId::new("alpha")).with_scope("x");
+    let b = Namespace::new(TenantId::new("beta")).with_scope("x");
     assert_ne!(a.render(), b.render());
 }
 
@@ -47,7 +47,7 @@ fn namespaces_are_distinct_when_tenant_differs() {
 #[tokio::test]
 async fn memory_store_put_get_delete_round_trip() -> Result<()> {
     let store = InMemoryStore::<i64>::new();
-    let ns = Namespace::new("t");
+    let ns = Namespace::new(TenantId::new("t"));
     let ctx = ExecutionContext::new();
     store.put(&ctx, &ns, "k1", 42).await?;
     assert_eq!(store.get(&ctx, &ns, "k1").await?, Some(42));
@@ -59,8 +59,8 @@ async fn memory_store_put_get_delete_round_trip() -> Result<()> {
 #[tokio::test]
 async fn memory_store_namespaces_are_isolated() -> Result<()> {
     let store = InMemoryStore::<i64>::new();
-    let alpha = Namespace::new("alpha");
-    let beta = Namespace::new("beta");
+    let alpha = Namespace::new(TenantId::new("alpha"));
+    let beta = Namespace::new(TenantId::new("beta"));
     let ctx = ExecutionContext::new();
 
     store.put(&ctx, &alpha, "k", 1).await?;
@@ -75,8 +75,8 @@ async fn memory_store_namespaces_are_isolated() -> Result<()> {
 #[tokio::test]
 async fn memory_store_scope_segments_isolate_namespaces() -> Result<()> {
     let store = InMemoryStore::<String>::new();
-    let agent_a = Namespace::new("tenant").with_scope("agent-A");
-    let agent_b = Namespace::new("tenant").with_scope("agent-B");
+    let agent_a = Namespace::new(TenantId::new("tenant")).with_scope("agent-A");
+    let agent_b = Namespace::new(TenantId::new("tenant")).with_scope("agent-B");
     let ctx = ExecutionContext::new();
 
     store.put(&ctx, &agent_a, "name", "Alice".into()).await?;
@@ -96,7 +96,7 @@ async fn memory_store_scope_segments_isolate_namespaces() -> Result<()> {
 #[tokio::test]
 async fn memory_store_list_with_prefix_filters_correctly() -> Result<()> {
     let store = InMemoryStore::<i32>::new();
-    let ns = Namespace::new("t");
+    let ns = Namespace::new(TenantId::new("t"));
     let ctx = ExecutionContext::new();
     store.put(&ctx, &ns, "user.alice", 1).await?;
     store.put(&ctx, &ns, "user.bob", 2).await?;
@@ -117,7 +117,7 @@ async fn memory_store_list_with_prefix_filters_correctly() -> Result<()> {
 #[tokio::test]
 async fn memory_store_delete_is_idempotent() -> Result<()> {
     let store = InMemoryStore::<i32>::new();
-    let ns = Namespace::new("t");
+    let ns = Namespace::new(TenantId::new("t"));
     let ctx = ExecutionContext::new();
     store.delete(&ctx, &ns, "missing").await?; // no panic
     Ok(())
@@ -126,7 +126,7 @@ async fn memory_store_delete_is_idempotent() -> Result<()> {
 #[tokio::test]
 async fn memory_store_dyn_dispatch_works_via_arc_store() -> Result<()> {
     let store: Arc<dyn Store<String>> = Arc::new(InMemoryStore::<String>::new());
-    let ns = Namespace::new("t");
+    let ns = Namespace::new(TenantId::new("t"));
     let ctx = ExecutionContext::new();
     store.put(&ctx, &ns, "k", "v".into()).await?;
     assert_eq!(store.get(&ctx, &ns, "k").await?.as_deref(), Some("v"));
@@ -138,7 +138,7 @@ async fn memory_store_dyn_dispatch_works_via_arc_store() -> Result<()> {
 #[tokio::test]
 async fn buffer_memory_appends_and_returns_messages() -> Result<()> {
     let store: Arc<dyn Store<Vec<Message>>> = Arc::new(InMemoryStore::<Vec<Message>>::new());
-    let buf = BufferMemory::new(store, Namespace::new("tenant"), 10);
+    let buf = BufferMemory::new(store, Namespace::new(TenantId::new("tenant")), 10);
     let ctx = ExecutionContext::new();
 
     buf.append(&ctx, Message::user("hi")).await?;
@@ -152,7 +152,7 @@ async fn buffer_memory_appends_and_returns_messages() -> Result<()> {
 #[tokio::test]
 async fn buffer_memory_drops_oldest_when_over_capacity() -> Result<()> {
     let store: Arc<dyn Store<Vec<Message>>> = Arc::new(InMemoryStore::<Vec<Message>>::new());
-    let buf = BufferMemory::new(store, Namespace::new("tenant"), 3);
+    let buf = BufferMemory::new(store, Namespace::new(TenantId::new("tenant")), 3);
     let ctx = ExecutionContext::new();
 
     for i in 0..5 {
@@ -177,7 +177,7 @@ async fn buffer_memory_drops_oldest_when_over_capacity() -> Result<()> {
 #[tokio::test]
 async fn buffer_memory_clear_resets_to_empty() -> Result<()> {
     let store: Arc<dyn Store<Vec<Message>>> = Arc::new(InMemoryStore::<Vec<Message>>::new());
-    let buf = BufferMemory::new(store, Namespace::new("tenant"), 10);
+    let buf = BufferMemory::new(store, Namespace::new(TenantId::new("tenant")), 10);
     let ctx = ExecutionContext::new();
 
     buf.append(&ctx, Message::user("hi")).await?;
@@ -190,8 +190,16 @@ async fn buffer_memory_clear_resets_to_empty() -> Result<()> {
 #[tokio::test]
 async fn buffer_memory_namespaces_are_isolated() -> Result<()> {
     let store: Arc<dyn Store<Vec<Message>>> = Arc::new(InMemoryStore::<Vec<Message>>::new());
-    let buf_a = BufferMemory::new(store.clone(), Namespace::new("tenant").with_scope("A"), 10);
-    let buf_b = BufferMemory::new(store, Namespace::new("tenant").with_scope("B"), 10);
+    let buf_a = BufferMemory::new(
+        store.clone(),
+        Namespace::new(TenantId::new("tenant")).with_scope("A"),
+        10,
+    );
+    let buf_b = BufferMemory::new(
+        store,
+        Namespace::new(TenantId::new("tenant")).with_scope("B"),
+        10,
+    );
     let ctx = ExecutionContext::new();
 
     buf_a.append(&ctx, Message::user("from A")).await?;

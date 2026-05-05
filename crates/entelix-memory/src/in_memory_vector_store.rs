@@ -24,7 +24,6 @@
 //! linear scan evaluates the predicate per row before the dot
 //! product, so filter selectivity directly reduces work.
 
-use entelix_core::TenantId;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -393,6 +392,7 @@ fn compare_numeric(
 #[allow(clippy::unwrap_used, clippy::float_cmp, clippy::indexing_slicing)]
 mod tests {
     use super::*;
+    use entelix_core::TenantId;
     use serde_json::json;
 
     fn ns() -> Namespace {

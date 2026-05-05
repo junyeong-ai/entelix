@@ -26,7 +26,6 @@
 //! - **after inner.call**: PII `redact_tool_output` on the JSON
 //!   response.
 
-use entelix_core::TenantId;
 use std::sync::Arc;
 use std::task::{Context, Poll};
 
@@ -286,6 +285,7 @@ where
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::indexing_slicing)]
 mod tests {
+    use entelix_core::TenantId;
     use std::sync::Arc;
     use std::sync::atomic::{AtomicU32, Ordering};
     use std::task::Context as TaskContext;

@@ -15,7 +15,6 @@
 // the block scope already drops correctly.
 #![allow(clippy::significant_drop_tightening)]
 
-use entelix_core::TenantId;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -472,6 +471,7 @@ impl std::fmt::Debug for CostMeter {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
+    use entelix_core::TenantId;
     use std::str::FromStr;
 
     use super::*;

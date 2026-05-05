@@ -29,7 +29,6 @@
 //! - `temporal_filter(time_range)` — edges whose timestamp falls in
 //!   `[from, to)`. Returns `(EdgeId, NodeId, NodeId, E)` tuples.
 
-use entelix_core::TenantId;
 use std::collections::{BTreeMap, HashSet, VecDeque};
 use std::sync::Arc;
 
@@ -974,6 +973,7 @@ fn directional_edges<'a, N, E>(
 )]
 mod tests {
     use super::*;
+    use entelix_core::TenantId;
 
     fn ns() -> Namespace {
         Namespace::new(TenantId::new("tenant")).with_scope("graph")

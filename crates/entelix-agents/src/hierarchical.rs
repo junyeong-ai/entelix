@@ -49,7 +49,7 @@ pub fn team_from_supervisor(team: Agent<SupervisorState>) -> impl Runnable<Vec<M
                 last_speaker: None,
                 next_speaker: None,
             };
-            let final_state = team.execute(state, &ctx).await?;
+            let final_state = team.execute(state, &ctx).await?.into_state();
             final_state.messages.last().cloned().ok_or_else(|| {
                 entelix_core::Error::invalid_request(
                     "team_from_supervisor: team finished with empty conversation",

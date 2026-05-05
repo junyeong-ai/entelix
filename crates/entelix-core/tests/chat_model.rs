@@ -248,7 +248,9 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::task::{Context as TaskContext, Poll};
 
 use entelix_core::ModelInvocation;
-use entelix_core::service::BoxedModelService;
+use entelix_core::service::{
+    BoxedModelService, BoxedStreamingService, ModelStream, StreamingModelInvocation,
+};
 use futures::future::BoxFuture;
 use tower::{Layer, Service};
 
@@ -367,9 +369,54 @@ where
     }
 }
 
-// `BoxedModelService` reference exists to anchor the import to the
-// public surface; layers compose on it via `ChatModel::layer`.
+impl<S> Service<StreamingModelInvocation> for CountingService<S>
+where
+    S: Service<StreamingModelInvocation, Response = ModelStream, Error = Error>
+        + Clone
+        + Send
+        + 'static,
+    S::Future: Send + 'static,
+{
+    type Response = ModelStream;
+    type Error = Error;
+    type Future = BoxFuture<'static, Result<ModelStream>>;
+
+    fn poll_ready(&mut self, cx: &mut TaskContext<'_>) -> Poll<Result<()>> {
+        self.inner.poll_ready(cx)
+    }
+
+    fn call(&mut self, mut invocation: StreamingModelInvocation) -> Self::Future {
+        let state = self.state.clone();
+        let inner = self.inner.clone();
+        Box::pin(async move {
+            state.pre.fetch_add(1, Ordering::SeqCst);
+            if state.fail_pre {
+                return Err(Error::invalid_request("layer refused"));
+            }
+            if state.mutate_request {
+                invocation
+                    .inner
+                    .request
+                    .messages
+                    .push(Message::user("[layer]"));
+            }
+            // Streaming path: post-mutation of the response stream
+            // would require wrapping every delta — out of scope for
+            // the existing one-shot regression suite. The pre/post
+            // counters still observe one round-trip per call, which
+            // is what the chat_model layer-plumbing tests assert.
+            let stream = tower::ServiceExt::oneshot(inner, invocation).await?;
+            state.post.fetch_add(1, Ordering::SeqCst);
+            Ok(stream)
+        })
+    }
+}
+
+// `BoxedModelService` / `BoxedStreamingService` references exist to
+// anchor the imports to the public surface; layers compose on them
+// via `ChatModel::layer`.
 const _BOXED_MODEL_SERVICE_REF: Option<BoxedModelService> = None;
+const _BOXED_STREAMING_SERVICE_REF: Option<BoxedStreamingService> = None;
 
 #[tokio::test]
 async fn layer_fires_pre_and_post_around_complete_full() {

@@ -19,7 +19,6 @@
 //!   override when they own a TTL sweeper. Operators run it on a
 //!   timer to bound store growth.
 
-use entelix_core::TenantId;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -313,6 +312,7 @@ fn render_prefix(prefix: &NamespacePrefix) -> String {
 #[allow(clippy::unwrap_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
+    use entelix_core::TenantId;
 
     fn ctx() -> ExecutionContext {
         ExecutionContext::new()

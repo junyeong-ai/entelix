@@ -45,6 +45,7 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 
 use entelix_core::RenderedForLlm;
+use entelix_core::UsageSnapshot;
 use entelix_core::ir::ToolResultContent;
 use entelix_session::GraphEvent;
 
@@ -152,6 +153,14 @@ pub enum AgentEvent<S> {
         run_id: String,
         /// Final state returned by the inner runnable.
         state: S,
+        /// Frozen [`UsageSnapshot`] of the [`entelix_core::RunBudget`]
+        /// counters at the moment the inner runnable returned.
+        /// `None` when no budget was attached to the
+        /// [`entelix_core::ExecutionContext`]. Mirrors the
+        /// `usage` field on
+        /// [`crate::AgentRunResult`] so streaming and one-shot
+        /// surfaces observe the same terminal artifact.
+        usage: Option<UsageSnapshot>,
     },
 
     /// HITL approver decided to permit one tool dispatch. Emitted by
@@ -285,6 +294,7 @@ mod tests {
         let complete: AgentEvent<u32> = AgentEvent::Complete {
             run_id: "r1".into(),
             state: 7,
+            usage: None,
         };
         let failed: AgentEvent<u32> = AgentEvent::Failed {
             run_id: "r1".into(),

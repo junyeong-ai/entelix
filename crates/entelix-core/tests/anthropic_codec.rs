@@ -555,14 +555,18 @@ fn anthropic_ext_user_id_threads_into_metadata() {
 }
 
 #[test]
-fn anthropic_ext_thinking_emits_top_level_thinking_object() {
-    use entelix_core::ir::{AnthropicExt, ProviderExtensions};
+fn anthropic_thinking_emits_top_level_thinking_object_for_explicit_budget_models() {
+    use entelix_core::ir::ReasoningEffort;
+    // Sonnet accepts either adaptive or explicit budget; on
+    // `Medium` the codec emits `{enabled, budget_tokens: 4096}` per
+    // ADR-0078. Opus 4.7 maps the same effort onto an adaptive
+    // object — that path is exercised by the dedicated
+    // `anthropic_opus_4_7_*_adaptive_*` tests.
     let codec = AnthropicMessagesCodec::new();
     let req = ModelRequest {
-        model: "claude-opus-4-7".into(),
+        model: "claude-sonnet-4-6".into(),
         messages: vec![Message::user("solve")],
-        provider_extensions: ProviderExtensions::default()
-            .with_anthropic(AnthropicExt::default().with_thinking_budget(4096)),
+        reasoning_effort: Some(ReasoningEffort::Medium),
         max_tokens: Some(8192),
         ..ModelRequest::default()
     };

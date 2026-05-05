@@ -32,7 +32,6 @@
 //! call [`EpisodicMemory::append_record`] with a pre-built
 //! [`Episode`] instead.
 
-use entelix_core::TenantId;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use std::time::Duration;
@@ -277,6 +276,7 @@ where
 mod tests {
     use super::*;
     use crate::store::InMemoryStore;
+    use entelix_core::TenantId;
 
     fn ns(scope: &str) -> Namespace {
         Namespace::new(TenantId::new("test-tenant")).with_scope(scope)

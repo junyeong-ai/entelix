@@ -377,17 +377,15 @@ fn openai_responses_ext_seed_and_user_thread_into_body() {
 #[test]
 fn openai_responses_ext_reasoning_effort_emits_top_level_reasoning_object() {
     use entelix_core::ir::{
-        OpenAiResponsesExt, ProviderExtensions, ReasoningConfig, ReasoningEffort, ReasoningSummary,
+        OpenAiResponsesExt, ProviderExtensions, ReasoningEffort, ReasoningSummary,
     };
     let codec = OpenAiResponsesCodec::new();
     let req = ModelRequest {
         model: "o3".into(),
         messages: vec![Message::user("solve")],
+        reasoning_effort: Some(ReasoningEffort::High),
         provider_extensions: ProviderExtensions::default().with_openai_responses(
-            OpenAiResponsesExt::default().with_reasoning(
-                ReasoningConfig::new(ReasoningEffort::High)
-                    .with_summary(ReasoningSummary::Detailed),
-            ),
+            OpenAiResponsesExt::default().with_reasoning_summary(ReasoningSummary::Detailed),
         ),
         ..ModelRequest::default()
     };
@@ -398,17 +396,12 @@ fn openai_responses_ext_reasoning_effort_emits_top_level_reasoning_object() {
 
 #[test]
 fn openai_responses_ext_reasoning_summary_optional() {
-    use entelix_core::ir::{
-        OpenAiResponsesExt, ProviderExtensions, ReasoningConfig, ReasoningEffort,
-    };
+    use entelix_core::ir::ReasoningEffort;
     let codec = OpenAiResponsesCodec::new();
     let req = ModelRequest {
         model: "o3".into(),
         messages: vec![Message::user("solve")],
-        provider_extensions: ProviderExtensions::default().with_openai_responses(
-            OpenAiResponsesExt::default()
-                .with_reasoning(ReasoningConfig::new(ReasoningEffort::Low)),
-        ),
+        reasoning_effort: Some(ReasoningEffort::Low),
         ..ModelRequest::default()
     };
     let body = parse(&codec.encode(&req).unwrap().body);

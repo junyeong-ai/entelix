@@ -9,7 +9,6 @@
 //! single-tenant operator who never registers any policy still gets
 //! a working SDK with zero policy enforcement.
 
-use entelix_core::TenantId;
 use std::sync::Arc;
 
 use dashmap::DashMap;
@@ -210,6 +209,7 @@ mod tests {
     use super::*;
     use crate::cost::{CostMeter, PricingTable};
     use crate::pii::RegexRedactor;
+    use entelix_core::TenantId;
 
     #[test]
     fn empty_manager_returns_empty_fallback() {

@@ -29,7 +29,6 @@
 //! transient summariser outage from silently dropping conversation
 //! history.
 
-use entelix_core::TenantId;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -145,6 +144,7 @@ mod tests {
     use crate::consolidation::{ConsolidationPolicy, OnMessageCount};
     use crate::namespace::Namespace;
     use crate::store::InMemoryStore;
+    use entelix_core::TenantId;
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     /// Stub summariser that records call count and returns a fixed

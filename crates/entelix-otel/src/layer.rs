@@ -20,7 +20,6 @@ use futures::future::BoxFuture;
 use serde_json::Value;
 use tower::{Layer, Service, ServiceExt};
 
-use entelix_core::TenantId;
 use entelix_core::cost::{CostCalculator, ToolCostCalculator};
 use entelix_core::error::{Error, Result};
 use entelix_core::ir::{ModelResponse, StopReason};
@@ -660,6 +659,7 @@ fn capture_tool_payload(raw: &str, mode: ToolIoCaptureMode) -> String {
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::indexing_slicing)]
 mod tests {
+    use entelix_core::TenantId;
     use std::sync::Mutex;
     use std::sync::atomic::{AtomicU32, Ordering};
     use std::task::Context as TaskContext;

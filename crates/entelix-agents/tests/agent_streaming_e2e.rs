@@ -188,7 +188,8 @@ async fn completion_recorder_observes_terminal_state() {
             &ExecutionContext::new(),
         )
         .await
-        .unwrap();
+        .unwrap()
+        .into_state();
 
     // Full ReAct turn (planner → tools → planner → finish) →
     // 4 messages; observer received the same terminal state.

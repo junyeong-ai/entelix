@@ -21,9 +21,7 @@ use async_trait::async_trait;
 use entelix_core::context::ExecutionContext;
 use entelix_core::cost::CostCalculator;
 use entelix_core::error::Error;
-use entelix_core::ir::{
-    ContentPart, Message, ModelRequest, ModelResponse, Role, StopReason, Usage,
-};
+use entelix_core::ir::{ContentPart, Message, ModelRequest, Role, StopReason, Usage};
 use entelix_core::service::{ModelInvocation, ModelStream, StreamingModelInvocation};
 use entelix_core::stream::{StreamDelta, tap_aggregator};
 use entelix_otel::OtelLayer;

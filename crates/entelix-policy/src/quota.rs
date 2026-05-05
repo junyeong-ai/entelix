@@ -15,7 +15,6 @@
 //! ends up overshooting marginally. Hard caps live above this layer
 //! (e.g. payment-system pre-authorization).
 
-use entelix_core::TenantId;
 use std::sync::Arc;
 
 use rust_decimal::Decimal;
@@ -125,6 +124,7 @@ impl std::fmt::Debug for QuotaLimiter {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
+    use entelix_core::TenantId;
     use std::str::FromStr;
     use std::sync::Arc;
 

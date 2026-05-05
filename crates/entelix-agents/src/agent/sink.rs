@@ -355,6 +355,7 @@ mod tests {
         TestEvent::Complete {
             run_id: "test-run".into(),
             state,
+            usage: None,
         }
     }
 

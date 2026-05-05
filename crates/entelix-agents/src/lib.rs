@@ -41,7 +41,7 @@ mod summarizer;
 mod supervisor;
 
 pub use agent::{
-    Agent, AgentBuilder, AgentEvent, AgentEventSink, AgentObserver, AlwaysApprove,
+    Agent, AgentBuilder, AgentEvent, AgentEventSink, AgentObserver, AgentRunResult, AlwaysApprove,
     ApprovalDecision, ApprovalLayer, ApprovalRequest, ApprovalService, Approver, BroadcastSink,
     CaptureSink, ChannelApprover, ChannelApproverConfig, ChannelSink, DroppingSink, DynObserver,
     ExecutionMode, PendingApproval, ToolApprovalEventSink, ToolApprovalEventSinkHandle,

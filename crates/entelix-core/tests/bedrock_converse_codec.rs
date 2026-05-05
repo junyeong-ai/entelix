@@ -256,13 +256,15 @@ fn bedrock_ext_performance_tier_threads_into_performance_config() {
 
 #[test]
 fn bedrock_threads_anthropic_thinking_through_additional_model_request_fields() {
-    use entelix_core::ir::{AnthropicExt, ProviderExtensions};
+    use entelix_core::ir::ReasoningEffort;
     let codec = BedrockConverseCodec::new();
+    // Sonnet accepts explicit budget tokens on Bedrock — Opus 4.7
+    // hosted on Bedrock is adaptive-only and maps onto a different
+    // shape (covered by the dedicated Opus tests).
     let req = ModelRequest {
-        model: "anthropic.claude-opus-4-7".into(),
+        model: "anthropic.claude-sonnet-4-6".into(),
         messages: vec![Message::user("solve")],
-        provider_extensions: ProviderExtensions::default()
-            .with_anthropic(AnthropicExt::default().with_thinking_budget(2048)),
+        reasoning_effort: Some(ReasoningEffort::Medium),
         max_tokens: Some(8192),
         ..ModelRequest::default()
     };
@@ -273,7 +275,7 @@ fn bedrock_threads_anthropic_thinking_through_additional_model_request_fields() 
         .and_then(|f| f.get("thinking"))
         .expect("thinking must ride through additionalModelRequestFields on Anthropic-on-Bedrock");
     assert_eq!(thinking["type"], "enabled");
-    assert_eq!(thinking["budget_tokens"], 2048);
+    assert_eq!(thinking["budget_tokens"], 4096);
     // No `LossyEncode` for thinking — Anthropic-on-Bedrock honours
     // the same shape Anthropic Messages does.
     let thinking_lossy = encoded.warnings.iter().any(|w| match w {

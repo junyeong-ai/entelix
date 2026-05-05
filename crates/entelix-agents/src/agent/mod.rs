@@ -47,6 +47,7 @@ mod approver;
 mod event;
 mod mode;
 mod observer;
+mod result;
 mod sink;
 mod tool_event_layer;
 
@@ -69,6 +70,7 @@ pub use self::approver::{
 pub use self::event::AgentEvent;
 pub use self::mode::ExecutionMode;
 pub use self::observer::{AgentObserver, DynObserver};
+pub use self::result::AgentRunResult;
 pub use self::sink::{AgentEventSink, BroadcastSink, CaptureSink, ChannelSink, DroppingSink};
 pub use self::tool_event_layer::{ToolEventLayer, ToolEventService};
 
@@ -126,7 +128,7 @@ where
     /// The `run_id` is inherited from `ctx.run_id()` when present,
     /// otherwise a fresh UUID v7 is generated and propagated to the
     /// inner runnable through a cloned context.
-    pub async fn execute(&self, input: S, ctx: &ExecutionContext) -> Result<S> {
+    pub async fn execute(&self, input: S, ctx: &ExecutionContext) -> Result<AgentRunResult<S>> {
         let (run_id, scoped_ctx) = Self::scoped_run_context(ctx);
         let ctx = scoped_ctx.as_ref().map_or(ctx, |scoped| scoped);
 
@@ -160,12 +162,17 @@ where
         input: S,
         overrides: entelix_core::RunOverrides,
         ctx: &ExecutionContext,
-    ) -> Result<S> {
+    ) -> Result<AgentRunResult<S>> {
         let scoped = ctx.clone().add_extension(overrides);
         self.execute(input, &scoped).await
     }
 
-    async fn execute_inner(&self, input: S, run_id: String, ctx: &ExecutionContext) -> Result<S> {
+    async fn execute_inner(
+        &self,
+        input: S,
+        run_id: String,
+        ctx: &ExecutionContext,
+    ) -> Result<AgentRunResult<S>> {
         self.sink
             .send(AgentEvent::Started {
                 run_id: run_id.clone(),
@@ -183,18 +190,19 @@ where
         // outside the instrumented future without losing
         // observability.
         let outcome = self
-            .run_inner(input, ctx)
+            .run_inner(input, run_id.clone(), ctx)
             .instrument(self.run_span(&run_id, ctx))
             .await;
         match outcome {
-            Ok(state) => {
+            Ok(result) => {
                 self.sink
                     .send(AgentEvent::Complete {
-                        run_id,
-                        state: state.clone(),
+                        run_id: result.run_id.clone(),
+                        state: result.state.clone(),
+                        usage: result.usage,
                     })
                     .await?;
-                Ok(state)
+                Ok(result)
             }
             Err(err) => {
                 // Best-effort `Failed` emission — if the sink itself
@@ -231,11 +239,26 @@ where
     /// Drive observers + inner runnable as one cohesive unit so the
     /// outer terminal-event branching (`Complete` vs `Failed`) only
     /// matches once.
-    async fn run_inner(&self, input: S, ctx: &ExecutionContext) -> Result<S> {
+    ///
+    /// The [`AgentRunResult::usage`] snapshot is captured *between*
+    /// `runnable.invoke` returning and `on_complete` firing —
+    /// observer dispatches may themselves consume budget through
+    /// downstream `ChatModel` calls (memory consolidation, summary
+    /// writes), and we want the envelope to reflect the agent run
+    /// only. Freezing the snapshot here is the core invariant that
+    /// gives B-5 + B-4 their "frozen artifact at terminal"
+    /// semantics (ADR-0080 + ADR-0081).
+    async fn run_inner(
+        &self,
+        input: S,
+        run_id: String,
+        ctx: &ExecutionContext,
+    ) -> Result<AgentRunResult<S>> {
         for observer in &self.observers {
             observer.pre_turn(&input, ctx).await?;
         }
         let state = self.runnable.invoke(input, ctx).await?;
+        let usage = ctx.run_budget().map(|budget| budget.snapshot());
         // on_complete fires before any terminal event so observers
         // can mutate side-channel state (vector store writes,
         // summary persistence) and have those writes reflected in
@@ -243,7 +266,7 @@ where
         for observer in &self.observers {
             observer.on_complete(&state, ctx).await?;
         }
-        Ok(state)
+        Ok(AgentRunResult::new(state, run_id, usage))
     }
 
     /// Compute `(run_id, ctx_with_run_id_when_minted)` for an entry
@@ -341,15 +364,19 @@ where
             // stay outside the span; they're sink-only, not
             // tracing events.
             let outcome = self
-                .run_inner(input, inner_ctx)
+                .run_inner(input, run_id.clone(), inner_ctx)
                 .instrument(self.run_span(&run_id, inner_ctx))
                 .await;
             // `scoped` lives at least until here — the borrow above is
             // valid for the whole stream body.
             drop(scoped);
             match outcome {
-                Ok(state) => {
-                    let complete = AgentEvent::Complete { run_id, state };
+                Ok(result) => {
+                    let complete = AgentEvent::Complete {
+                        run_id: result.run_id,
+                        state: result.state,
+                        usage: result.usage,
+                    };
                     self.sink.send(complete.clone()).await?;
                     yield Ok(complete);
                 }
@@ -380,13 +407,20 @@ where
 
 /// `Agent<S>` is itself a [`Runnable<S, S>`] so it composes inside
 /// larger graphs (recursive sub-agent dispatch).
+///
+/// The composition contract is `S → S`, so the [`AgentRunResult`]
+/// envelope is unwrapped here — composing graphs see only the
+/// terminal state. Callers that need the per-run `UsageSnapshot`
+/// or `run_id` go through [`Agent::execute`] directly.
 #[async_trait]
 impl<S> Runnable<S, S> for Agent<S>
 where
     S: Clone + Send + Sync + 'static,
 {
     async fn invoke(&self, input: S, ctx: &ExecutionContext) -> Result<S> {
-        self.execute(input, ctx).await
+        self.execute(input, ctx)
+            .await
+            .map(AgentRunResult::into_state)
     }
 }
 
@@ -625,12 +659,68 @@ mod tests {
             .build()
             .unwrap();
 
-        let out = agent.execute(41, &ExecutionContext::new()).await.unwrap();
-        assert_eq!(out, 42);
+        let result = agent.execute(41, &ExecutionContext::new()).await.unwrap();
+        assert_eq!(result.state, 42);
+        assert!(!result.run_id.is_empty(), "run_id must be minted");
+        assert!(
+            result.usage.is_none(),
+            "no RunBudget on ctx → envelope.usage is None"
+        );
         let events = sink.events();
         assert_eq!(events.len(), 2);
         assert!(matches!(&events[0], AgentEvent::Started { agent, .. } if agent == "test-agent"));
         assert!(matches!(events[1], AgentEvent::Complete { state: 42, .. }));
+    }
+
+    #[tokio::test]
+    async fn execute_envelope_carries_frozen_usage_snapshot_when_budget_is_attached() {
+        // With a RunBudget on the context, the envelope's `usage`
+        // is `Some(snapshot)` — frozen at the moment the inner
+        // runnable returned. Subsequent budget mutations (which
+        // would happen in a real downstream layer) MUST NOT be
+        // reflected in the snapshot we already returned.
+        use entelix_core::RunBudget;
+
+        let sink = CaptureSink::<i32>::new();
+        let agent = Agent::<i32>::builder()
+            .with_name("budgeted-agent")
+            .with_runnable(echo_runnable())
+            .with_sink(sink.clone())
+            .build()
+            .unwrap();
+
+        let budget = RunBudget::unlimited();
+        // Pre-stamp the budget with a single request so the snapshot
+        // reflects observable counter state — the inner runnable
+        // does not call ChatModel here.
+        budget.check_pre_request().unwrap();
+        let ctx = ExecutionContext::new().with_run_budget(budget.clone());
+
+        let result = agent.execute(0, &ctx).await.unwrap();
+        let snapshot = result.usage.expect("budget attached → usage Some");
+        assert_eq!(snapshot.requests, 1, "snapshot reflects pre-stamped count");
+
+        // Mutate the budget after the run — the snapshot must NOT
+        // change. This is the frozen-at-terminal contract.
+        budget.check_pre_request().unwrap();
+        assert_eq!(
+            snapshot.requests, 1,
+            "snapshot is frozen — not Arc-shared with live counter",
+        );
+
+        // The matching `Complete` sink event carries the same
+        // snapshot — operators wiring telemetry through the sink
+        // see the same artifact as direct callers (one-shot vs
+        // streaming surfaces match).
+        let events = sink.events();
+        let complete = events
+            .iter()
+            .find_map(|event| match event {
+                AgentEvent::Complete { usage, .. } => Some(*usage),
+                _ => None,
+            })
+            .expect("Complete event must be emitted");
+        assert_eq!(complete, Some(snapshot));
     }
 
     #[tokio::test]
@@ -669,7 +759,11 @@ mod tests {
         assert!(matches!(received[0], AgentEvent::Started { .. }));
         assert!(matches!(
             received.last(),
-            Some(AgentEvent::Complete { state: 8, .. })
+            Some(AgentEvent::Complete {
+                state: 8,
+                usage: None,
+                ..
+            })
         ));
         assert_eq!(received.len(), sink.len());
     }

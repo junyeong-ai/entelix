@@ -4,6 +4,7 @@ pub use entelix_agents::ApprovalDecision
 pub entelix_agents::AgentEvent::Complete
 pub entelix_agents::AgentEvent::Complete::run_id: alloc::string::String
 pub entelix_agents::AgentEvent::Complete::state: S
+pub entelix_agents::AgentEvent::Complete::usage: core::option::Option<entelix_core::run_budget::UsageSnapshot>
 pub entelix_agents::AgentEvent::Failed
 pub entelix_agents::AgentEvent::Failed::error: alloc::string::String
 pub entelix_agents::AgentEvent::Failed::run_id: alloc::string::String
@@ -106,9 +107,9 @@ pub struct entelix_agents::Agent<S> where S: core::clone::Clone + core::marker::
 impl<S> entelix_agents::Agent<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_agents::Agent<S>::approver(&self) -> core::option::Option<&alloc::sync::Arc<dyn entelix_agents::Approver>>
 pub fn entelix_agents::Agent<S>::builder() -> entelix_agents::AgentBuilder<S>
-pub async fn entelix_agents::Agent<S>::execute(&self, input: S, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<S>
+pub async fn entelix_agents::Agent<S>::execute(&self, input: S, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_agents::AgentRunResult<S>>
 pub fn entelix_agents::Agent<S>::execute_stream<'a>(&'a self, input: S, ctx: &'a entelix_core::context::ExecutionContext) -> entelix_runnable::stream::BoxStream<'a, entelix_core::error::Result<entelix_agents::AgentEvent<S>>>
-pub async fn entelix_agents::Agent<S>::execute_with(&self, input: S, overrides: entelix_core::overrides::RunOverrides, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<S>
+pub async fn entelix_agents::Agent<S>::execute_with(&self, input: S, overrides: entelix_core::overrides::RunOverrides, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_agents::AgentRunResult<S>>
 pub const fn entelix_agents::Agent<S>::execution_mode(&self) -> entelix_agents::ExecutionMode
 pub fn entelix_agents::Agent<S>::inner(&self) -> &alloc::sync::Arc<dyn entelix_runnable::runnable::Runnable<S, S>>
 pub fn entelix_agents::Agent<S>::name(&self) -> &str
@@ -158,6 +159,23 @@ impl core::marker::Unpin for entelix_agents::AgentEntry
 impl core::marker::UnsafeUnpin for entelix_agents::AgentEntry
 impl !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::AgentEntry
 impl !core::panic::unwind_safe::UnwindSafe for entelix_agents::AgentEntry
+#[non_exhaustive] pub struct entelix_agents::AgentRunResult<S>
+pub entelix_agents::AgentRunResult::run_id: alloc::string::String
+pub entelix_agents::AgentRunResult::state: S
+pub entelix_agents::AgentRunResult::usage: core::option::Option<entelix_core::run_budget::UsageSnapshot>
+impl<S> entelix_agents::AgentRunResult<S>
+pub fn entelix_agents::AgentRunResult<S>::into_state(self) -> S
+impl<S: core::clone::Clone> core::clone::Clone for entelix_agents::AgentRunResult<S>
+pub fn entelix_agents::AgentRunResult<S>::clone(&self) -> entelix_agents::AgentRunResult<S>
+impl<S: core::fmt::Debug> core::fmt::Debug for entelix_agents::AgentRunResult<S>
+pub fn entelix_agents::AgentRunResult<S>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<S> core::marker::Freeze for entelix_agents::AgentRunResult<S> where S: core::marker::Freeze
+impl<S> core::marker::Send for entelix_agents::AgentRunResult<S> where S: core::marker::Send
+impl<S> core::marker::Sync for entelix_agents::AgentRunResult<S> where S: core::marker::Sync
+impl<S> core::marker::Unpin for entelix_agents::AgentRunResult<S> where S: core::marker::Unpin
+impl<S> core::marker::UnsafeUnpin for entelix_agents::AgentRunResult<S> where S: core::marker::UnsafeUnpin
+impl<S> core::panic::unwind_safe::RefUnwindSafe for entelix_agents::AgentRunResult<S> where S: core::panic::unwind_safe::RefUnwindSafe
+impl<S> core::panic::unwind_safe::UnwindSafe for entelix_agents::AgentRunResult<S> where S: core::panic::unwind_safe::UnwindSafe
 pub struct entelix_agents::AlwaysApprove
 impl core::clone::Clone for entelix_agents::AlwaysApprove
 pub fn entelix_agents::AlwaysApprove::clone(&self) -> entelix_agents::AlwaysApprove

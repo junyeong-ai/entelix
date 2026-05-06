@@ -10,7 +10,7 @@ Composition contract (invariant 7). `Runnable<I, O>` + LCEL `.pipe()` connector 
 - **`AnyRunnable` + `AnyRunnableHandle` + `erase`** — type-erased counterpart for dynamic dispatch (F12 mitigation). `invoke_any(Value, ctx) → Result<Value>`. Pays JSON ser/deser cost — typed `Runnable` for hot paths.
 - **Parsers** — `JsonOutputParser<T: DeserializeOwned>` + `RetryParser<P>` + `FixingOutputParser<P, F>`. Parsers are also `Runnable<Message, T>` — chainable via `.pipe()`.
 - **Streaming** — `StreamChunk<O>` + `RunnableEvent` + `StreamMode::{Values, Updates, Messages, Debug, Events}` (LangGraph parity). `BoxStream<'static, Result<StreamChunk<O>>>`.
-- **Adapters** — `Configured<R, F>` (per-call ctx mutation), `Mapping<R, F>` (output transform), `Retrying<R>`, `Fallback<R>`, `Timed<R>`, `ToolToRunnableAdapter` (re-exported from `entelix-core::tools`), `DebugEvent` for observability tap.
+- **Adapters** — `Configured<R, F>` (per-call ctx mutation), `Mapping<R, F>` (output transform), `Retrying<R>`, `Fallback<R>`, `Timed<R>`, `ToolToRunnableAdapter` (defined in this crate's `adapter` module; bridges `entelix_core::tools::Tool` into `Runnable<Value, Value>`), `DebugEvent` for observability tap.
 
 ## Crate-local rules
 

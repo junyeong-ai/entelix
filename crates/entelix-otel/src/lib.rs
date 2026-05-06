@@ -43,7 +43,7 @@
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-otel/1.0.0-rc.1")]
+#![doc(html_root_url = "https://docs.rs/entelix-otel/1.0.0-rc.2")]
 #![deny(missing_docs)]
 #![allow(
     clippy::doc_markdown,

@@ -18,7 +18,7 @@
 //! and `docs/architecture/overview.md`.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix/1.0.0-rc.1")]
+#![doc(html_root_url = "https://docs.rs/entelix/1.0.0-rc.2")]
 #![deny(missing_docs)]
 
 // ── Module re-exports — every type's canonical facade path lives

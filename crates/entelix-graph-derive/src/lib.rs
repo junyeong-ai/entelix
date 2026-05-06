@@ -77,7 +77,7 @@
 //! configuration are out of scope for the derive — operators
 //! using them implement `StateMerge` manually.
 
-#![doc(html_root_url = "https://docs.rs/entelix-graph-derive/1.0.0-rc.1")]
+#![doc(html_root_url = "https://docs.rs/entelix-graph-derive/1.0.0-rc.2")]
 #![deny(missing_docs)]
 
 use proc_macro::TokenStream;

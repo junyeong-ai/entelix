@@ -15,7 +15,7 @@
 //!   (Slice C).
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-cloud/1.0.0-rc.1")]
+#![doc(html_root_url = "https://docs.rs/entelix-cloud/1.0.0-rc.2")]
 #![deny(missing_docs)]
 // Cloud transports translate between AWS / GCP / Azure SDK error
 // shapes many times; the indexing / cast lints below are exercised

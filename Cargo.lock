@@ -1470,7 +1470,7 @@ dependencies = [
 
 [[package]]
 name = "entelix"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "axum 0.8.9",
@@ -1508,7 +1508,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-agents"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -1532,7 +1532,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-cloud"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -1560,7 +1560,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-core"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -1588,7 +1588,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-graph"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -1609,7 +1609,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-graph-derive"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "entelix-graph",
  "proc-macro2",
@@ -1619,7 +1619,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-graphmemory-pg"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1636,7 +1636,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-mcp"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "dashmap",
@@ -1657,7 +1657,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-mcp-chatmodel"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1670,7 +1670,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-memory"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1687,7 +1687,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-memory-openai"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "entelix-core",
@@ -1704,7 +1704,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-memory-pgvector"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "entelix-core",
@@ -1720,7 +1720,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-memory-qdrant"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "entelix-core",
@@ -1736,7 +1736,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-otel"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1758,7 +1758,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-persistence"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1783,7 +1783,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-policy"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "dashmap",
@@ -1802,7 +1802,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-prompt"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1817,7 +1817,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-runnable"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -1833,7 +1833,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-server"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "axum 0.8.9",
  "chrono",
@@ -1854,7 +1854,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-session"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1868,7 +1868,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-tool-derive"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "entelix-core",
@@ -1884,7 +1884,7 @@ dependencies = [
 
 [[package]]
 name = "entelix-tools"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "async-trait",
  "bytes",

@@ -28,7 +28,7 @@
 //!   delegate to a `Sandbox` backend. ADR-0024 §3.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-tools/1.0.0-rc.1")]
+#![doc(html_root_url = "https://docs.rs/entelix-tools/1.0.0-rc.2")]
 #![deny(missing_docs)]
 // Doc-prose lints fire on legitimate proper nouns (HTTP, URL, SSRF,
 // API names) and on the `RFC1918` shorthand; the redundant_pub_crate

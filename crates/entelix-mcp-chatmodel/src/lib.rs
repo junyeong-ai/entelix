@@ -58,7 +58,7 @@
 //! `tracing::warn!` — MCP sampling cannot carry them.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-mcp-chatmodel/1.0.0-rc.1")]
+#![doc(html_root_url = "https://docs.rs/entelix-mcp-chatmodel/1.0.0-rc.2")]
 #![deny(missing_docs)]
 
 mod provider;

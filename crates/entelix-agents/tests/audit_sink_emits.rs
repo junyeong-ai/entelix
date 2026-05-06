@@ -16,7 +16,7 @@ use entelix_agents::{
 };
 use entelix_core::ir::{ContentPart, Message, Role};
 use entelix_core::tools::Tool;
-use entelix_core::{AuditSink, AuditSinkHandle, ExecutionContext, Result, ToolRegistry};
+use entelix_core::{AgentContext, AuditSink, AuditSinkHandle, ExecutionContext, Result, ToolRegistry};
 use entelix_runnable::{Runnable, RunnableLambda};
 
 #[derive(Default)]
@@ -63,12 +63,13 @@ async fn subagent_tool_emits_sub_agent_invoked_with_fresh_thread_id() -> Result<
     let model = RunnableLambda::new(|_msgs: Vec<Message>, _ctx| async move {
         Ok::<_, _>(assistant_text("done"))
     });
-    let sub = Subagent::from_whitelist(model, &ToolRegistry::new(), &[])?;
+    let sub = Subagent::builder(model, &ToolRegistry::new()).restrict_to(&[]).build()?;
     let tool: SubagentTool = sub.into_tool("research_team", "spec")?;
 
     let sink = Arc::new(RecordingAuditSink::default());
     let ctx = ctx_with_sink(Arc::clone(&sink));
-    tool.execute(serde_json::json!({"task": "investigate"}), &ctx)
+    let agent_ctx = AgentContext::<()>::from(ctx);
+    tool.execute(serde_json::json!({"task": "investigate"}), &agent_ctx)
         .await?;
 
     let recorded: Vec<_> = sink.sub_agents.lock().clone();
@@ -86,11 +87,11 @@ async fn subagent_tool_without_sink_stays_silent() -> Result<()> {
     let model = RunnableLambda::new(|_msgs: Vec<Message>, _ctx| async move {
         Ok::<_, _>(assistant_text("done"))
     });
-    let sub = Subagent::from_whitelist(model, &ToolRegistry::new(), &[])?;
+    let sub = Subagent::builder(model, &ToolRegistry::new()).restrict_to(&[]).build()?;
     let tool: SubagentTool = sub.into_tool("agent_x", "spec")?;
 
     let out = tool
-        .execute(serde_json::json!({"task": "go"}), &ExecutionContext::new())
+        .execute(serde_json::json!({"task": "go"}), &AgentContext::default())
         .await?;
     assert_eq!(out["output"], "done");
     Ok(())

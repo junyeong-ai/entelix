@@ -6,7 +6,7 @@
 
 use std::sync::Arc;
 
-use entelix_core::context::ExecutionContext;
+use entelix_core::AgentContext;
 use entelix_core::skills::SkillRegistry;
 use entelix_core::tools::Tool;
 use entelix_tools::{
@@ -45,7 +45,7 @@ fn registry() -> SkillRegistry {
 async fn list_skills_returns_metadata_only() {
     let tool = ListSkillsTool::new(registry());
     let out = tool
-        .execute(json!({}), &ExecutionContext::new())
+        .execute(json!({}), &AgentContext::default())
         .await
         .unwrap();
     let arr = out.get("skills").and_then(Value::as_array).unwrap();
@@ -69,7 +69,7 @@ async fn list_skills_returns_metadata_only() {
 async fn activate_skill_returns_instructions_and_resource_keys() {
     let tool = ActivateSkillTool::new(registry());
     let out = tool
-        .execute(json!({"name": "echo"}), &ExecutionContext::new())
+        .execute(json!({"name": "echo"}), &AgentContext::default())
         .await
         .unwrap();
     assert!(
@@ -88,7 +88,7 @@ async fn activate_skill_returns_instructions_and_resource_keys() {
 async fn activate_unknown_skill_returns_config_error() {
     let tool = ActivateSkillTool::new(registry());
     let err = tool
-        .execute(json!({"name": "ghost"}), &ExecutionContext::new())
+        .execute(json!({"name": "ghost"}), &AgentContext::default())
         .await
         .unwrap_err();
     let msg = format!("{err}");
@@ -101,7 +101,7 @@ async fn read_skill_resource_text_returns_full_text() {
     let out = tool
         .execute(
             json!({"skill": "echo", "key": "examples/basic.md"}),
-            &ExecutionContext::new(),
+            &AgentContext::default(),
         )
         .await
         .unwrap();
@@ -117,7 +117,7 @@ async fn read_skill_resource_binary_returns_metadata_only() {
     let out = tool
         .execute(
             json!({"skill": "echo", "key": "icon.png"}),
-            &ExecutionContext::new(),
+            &AgentContext::default(),
         )
         .await
         .unwrap();
@@ -139,7 +139,7 @@ async fn read_skill_resource_missing_key_errors() {
     let err = tool
         .execute(
             json!({"skill": "echo", "key": "missing"}),
-            &ExecutionContext::new(),
+            &AgentContext::default(),
         )
         .await
         .unwrap_err();

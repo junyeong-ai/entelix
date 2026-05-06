@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-use entelix_core::context::ExecutionContext;
+use entelix_core::AgentContext;
 use entelix_core::error::Result;
 use entelix_core::sandbox::{CodeSpec, Sandbox, SandboxLanguage};
 use entelix_core::tools::{Tool, ToolEffect, ToolMetadata};
@@ -136,7 +136,7 @@ impl Tool for SandboxedCodeTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let parsed: CodeToolInput = serde_json::from_value(input).map_err(ToolError::from)?;
         if !self.policy.admits(parsed.language) {
             return Err(ToolError::config_msg(format!(
@@ -150,7 +150,7 @@ impl Tool for SandboxedCodeTool {
             source: parsed.source,
             timeout: Some(self.policy.max_duration()),
         };
-        let output = self.sandbox.run_code(spec, ctx).await?;
+        let output = self.sandbox.run_code(spec, ctx.core()).await?;
         // Lean LLM-facing payload — see SandboxedShellTool for the
         // success/failure split rationale (ADR-0024 §7).
         if output.succeeded() {

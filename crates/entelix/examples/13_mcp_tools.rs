@@ -29,7 +29,7 @@
     clippy::doc_markdown
 )]
 
-use entelix::ExecutionContext;
+use entelix::{AgentContext, ExecutionContext};
 use entelix::tools::Tool;
 use entelix::{McpManager, McpServerConfig, McpToolAdapter, TenantId};
 use serde_json::json;
@@ -138,11 +138,13 @@ async fn main() -> entelix::Result<()> {
     let lookup_alpha = McpToolAdapter::new(manager.clone(), "records", tools_alpha[0].clone());
     let lookup_bravo = McpToolAdapter::new(manager.clone(), "records", tools_bravo[0].clone());
 
+    let agent_ctx_alpha = AgentContext::<()>::from(ctx_alpha.clone());
+    let agent_ctx_bravo = AgentContext::<()>::from(ctx_bravo.clone());
     let alpha_result = lookup_alpha
-        .execute(json!({ "id": "alpha-001" }), &ctx_alpha)
+        .execute(json!({ "id": "alpha-001" }), &agent_ctx_alpha)
         .await?;
     let bravo_result = lookup_bravo
-        .execute(json!({ "id": "bravo-001" }), &ctx_bravo)
+        .execute(json!({ "id": "bravo-001" }), &agent_ctx_bravo)
         .await?;
 
     println!("\nalpha tool call result: {alpha_result}");

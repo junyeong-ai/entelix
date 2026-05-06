@@ -17,7 +17,7 @@
 
 use std::sync::Arc;
 
-use entelix_core::context::ExecutionContext;
+use entelix_core::AgentContext;
 use entelix_core::skills::SkillRegistry;
 use entelix_core::tools::Tool;
 use entelix_tools::{
@@ -52,7 +52,7 @@ fn registry() -> SkillRegistry {
 async fn t1_listing_excludes_instructions_and_resource_bodies() {
     let tool = ListSkillsTool::new(registry());
     let out = tool
-        .execute(json!({}), &ExecutionContext::new())
+        .execute(json!({}), &AgentContext::default())
         .await
         .unwrap();
     let serialized = serde_json::to_string(&out).unwrap();
@@ -75,7 +75,7 @@ async fn t1_listing_excludes_instructions_and_resource_bodies() {
 async fn t2_activation_includes_instructions_excludes_resource_bodies() {
     let tool = ActivateSkillTool::new(registry());
     let out = tool
-        .execute(json!({"name": "bulky"}), &ExecutionContext::new())
+        .execute(json!({"name": "bulky"}), &AgentContext::default())
         .await
         .unwrap();
     let serialized = serde_json::to_string(&out).unwrap();
@@ -97,7 +97,7 @@ async fn t3_text_read_returns_full_body() {
     let out = tool
         .execute(
             json!({"skill": "bulky", "key": "notes.md"}),
-            &ExecutionContext::new(),
+            &AgentContext::default(),
         )
         .await
         .unwrap();
@@ -113,7 +113,7 @@ async fn t3_binary_read_returns_metadata_only_never_bytes() {
     let out = tool
         .execute(
             json!({"skill": "bulky", "key": "asset.png"}),
-            &ExecutionContext::new(),
+            &AgentContext::default(),
         )
         .await
         .unwrap();

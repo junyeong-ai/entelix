@@ -17,7 +17,7 @@
 use std::sync::Arc;
 
 use entelix_core::tools::Tool;
-use entelix_core::{ExecutionContext, Result};
+use entelix_core::{AgentContext, ExecutionContext, Result};
 
 use crate::runnable::Runnable;
 
@@ -63,7 +63,13 @@ impl Runnable<serde_json::Value, serde_json::Value> for ToolToRunnableAdapter {
         input: serde_json::Value,
         ctx: &ExecutionContext,
     ) -> Result<serde_json::Value> {
-        self.inner.execute(input, ctx).await
+        // Bridge `Runnable` (D-free, ExecutionContext) → `Tool`
+        // (typed `D`). Adapter-wrapped tools are always `Tool<()>`
+        // because composition does not carry typed deps; operators
+        // threading deps reach for the typed registry path
+        // (slice 103).
+        let agent_ctx = AgentContext::<()>::from(ctx.clone());
+        self.inner.execute(input, &agent_ctx).await
     }
 
     fn name(&self) -> std::borrow::Cow<'_, str> {

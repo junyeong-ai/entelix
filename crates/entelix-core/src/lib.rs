@@ -33,6 +33,7 @@
     clippy::unnecessary_literal_bound
 )]
 
+pub mod agent_context;
 pub mod approval;
 pub mod audit;
 pub mod auth;
@@ -59,6 +60,7 @@ pub mod thread_key;
 pub mod tools;
 pub mod transports;
 
+pub use agent_context::AgentContext;
 pub use approval::{ApprovalDecision, INTERRUPT_KIND_APPROVAL_PENDING, PendingApprovalDecisions};
 pub use audit::{AuditSink, AuditSinkHandle};
 pub use auth::{

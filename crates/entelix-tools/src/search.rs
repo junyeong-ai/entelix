@@ -29,7 +29,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-use entelix_core::context::ExecutionContext;
+use entelix_core::AgentContext;
 use entelix_core::error::Result;
 use entelix_core::tools::{Tool, ToolEffect, ToolMetadata};
 
@@ -144,7 +144,7 @@ impl Tool for SearchTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, _ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, _ctx: &AgentContext<()>) -> Result<Value> {
         let parsed: SearchInput = serde_json::from_value(input).map_err(ToolError::from)?;
         let n = parsed
             .max_results
@@ -211,7 +211,7 @@ mod tests {
         ]));
         let tool = SearchTool::new(provider.clone());
         let out = tool
-            .execute(json!({"query": "rust async"}), &ExecutionContext::new())
+            .execute(json!({"query": "rust async"}), &AgentContext::default())
             .await
             .unwrap();
         assert_eq!(out["query"], "rust async");
@@ -231,7 +231,7 @@ mod tests {
         let out = tool
             .execute(
                 json!({"query": "x", "max_results": 2}),
-                &ExecutionContext::new(),
+                &AgentContext::default(),
             )
             .await
             .unwrap();
@@ -245,7 +245,7 @@ mod tests {
         let provider: Arc<dyn SearchProvider> = Arc::new(MockProvider::new(Vec::new()));
         let tool = SearchTool::new(provider);
         let err = tool
-            .execute(json!({"not_a_query": 1}), &ExecutionContext::new())
+            .execute(json!({"not_a_query": 1}), &AgentContext::default())
             .await
             .unwrap_err();
         assert!(format!("{err}").contains("missing field"));
@@ -266,7 +266,7 @@ mod tests {
         }
         let tool = SearchTool::new(Arc::new(FailingProvider));
         let err = tool
-            .execute(json!({"query": "x"}), &ExecutionContext::new())
+            .execute(json!({"query": "x"}), &AgentContext::default())
             .await
             .unwrap_err();
         assert!(format!("{err}").contains("upstream 503"));

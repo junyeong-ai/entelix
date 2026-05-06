@@ -305,6 +305,14 @@ fn is_builder_verb_prefix(name: &str) -> bool {
         || name == "build"
         || name == "new"
         || name == "default"
+        // Narrowing / selection verbs — analogous to
+        // `ToolRegistry::restricted_to` / `Iterator::filter`. They
+        // describe *which subset* the builder selects, not a
+        // configuration value, so the `with_*` prefix would read
+        // worse (`with_restriction` / `with_predicate` are vague).
+        // The convention is documented in ADR-0010.
+        || name == "restrict_to"
+        || name == "filter"
 }
 
 fn has_self_receiver(sig: &syn::Signature) -> bool {

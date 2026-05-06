@@ -39,7 +39,7 @@ use serde_json::{Value, json};
 
 use entelix_core::ir::{ContentPart, Message, Role};
 use entelix_core::tools::{Tool, ToolEffect, ToolMetadata};
-use entelix_core::{Error, ExecutionContext, Result, SkillRegistry, ToolRegistry};
+use entelix_core::{AgentContext, Error, ExecutionContext, Result, SkillRegistry, ToolRegistry};
 use entelix_runnable::Runnable;
 
 use crate::agent::{AgentEventSink, Approver};
@@ -90,100 +90,16 @@ impl<M> Subagent<M>
 where
     M: Runnable<Vec<Message>, Message> + 'static,
 {
-    /// Build a sub-agent restricted to tools whose name is in
-    /// `allowed_tools`. The skill registry starts empty; attach a
-    /// filtered subset via [`Self::with_skills`] when the parent
-    /// exposes skills.
-    ///
-    /// `parent_registry` carries the parent's layer stack — the
-    /// narrowed view this sub-agent dispatches through inherits
-    /// `PolicyLayer` / `OtelLayer` / retry middleware verbatim
-    /// (`Arc`-shared, no copy).
-    ///
-    /// Returns [`entelix_core::Error::Config`] when any name in
-    /// `allowed_tools` is absent from `parent_registry` — silently
-    /// dropping a missing name has caused production
-    /// misconfigurations (a sub-agent that quietly cannot reach a
-    /// tool it was supposed to call), so the constructor fails fast
-    /// at the moment the typo is introduced rather than at the moment
-    /// the model issues the call.
-    pub fn from_whitelist(
+    /// Open a [`SubagentBuilder`] anchored at `parent_registry`. The
+    /// builder is the sole construction surface — operators choose
+    /// the tool selection (`restrict_to` / `filter`) and attach
+    /// optional `sink` / `approver` / `skills` before calling
+    /// [`SubagentBuilder::build`].
+    pub fn builder(
         model: M,
         parent_registry: &ToolRegistry,
-        allowed_tools: &[&str],
-    ) -> Result<Self> {
-        let tool_registry = parent_registry.restricted_to(allowed_tools)?;
-        Ok(Self {
-            model: Arc::new(model),
-            tool_registry,
-            skills: SkillRegistry::new(),
-            sink: None,
-            approver: None,
-        })
-    }
-
-    /// Build a sub-agent using a custom predicate over the parent's
-    /// tools. The predicate is run once at construction; the resulting
-    /// sub-agent has a frozen tool view that still inherits the
-    /// parent's layer stack.
-    ///
-    /// Unlike [`Self::from_whitelist`], the filter form cannot detect
-    /// "intended but missing" — a closure that matches nothing
-    /// produces an empty sub-agent. That is the deliberate trade-off
-    /// for accepting an arbitrary predicate: the strict-name path is
-    /// preferred when the operator knows the tool names ahead of time.
-    pub fn from_filter<F>(model: M, parent_registry: &ToolRegistry, predicate: F) -> Self
-    where
-        F: Fn(&dyn Tool) -> bool,
-    {
-        Self {
-            model: Arc::new(model),
-            tool_registry: parent_registry.filter(predicate),
-            skills: SkillRegistry::new(),
-            sink: None,
-            approver: None,
-        }
-    }
-
-    /// Forward the sub-agent's lifecycle events into the parent's
-    /// sink. Without this call the resulting agent uses
-    /// [`crate::agent::DroppingSink`] (the AgentBuilder default) and
-    /// the parent loses visibility into child runs.
-    #[must_use]
-    pub fn with_sink(mut self, sink: Arc<dyn AgentEventSink<ReActState>>) -> Self {
-        self.sink = Some(sink);
-        self
-    }
-
-    /// Use the parent's [`Approver`] for any tool dispatch the
-    /// sub-agent issues — supervised execution propagates from
-    /// parent to child unless the operator explicitly overrides.
-    #[must_use]
-    pub fn with_approver(mut self, approver: Arc<dyn Approver>) -> Self {
-        self.approver = Some(approver);
-        self
-    }
-
-    /// Attach an explicitly-named subset of the parent's skill
-    /// registry. Mirrors [`Self::from_whitelist`] in shape and in
-    /// failure mode: returns [`entelix_core::Error::Config`] when
-    /// any `allowed` name is not present in `parent_skills`, so a
-    /// typo surfaces at construction rather than as a silent
-    /// "skill not found" at runtime.
-    pub fn with_skills(mut self, parent_skills: &SkillRegistry, allowed: &[&str]) -> Result<Self> {
-        let missing: Vec<&str> = allowed
-            .iter()
-            .copied()
-            .filter(|name| !parent_skills.has(name))
-            .collect();
-        if !missing.is_empty() {
-            return Err(entelix_core::Error::config(format!(
-                "Subagent::with_skills: skill name(s) not in parent registry: {}",
-                missing.join(", ")
-            )));
-        }
-        self.skills = parent_skills.filter(allowed);
-        Ok(self)
+    ) -> SubagentBuilder<'_, M> {
+        SubagentBuilder::new(model, parent_registry)
     }
 
     /// Number of tools the sub-agent can dispatch.
@@ -287,6 +203,174 @@ where
     }
 }
 
+/// Sub-agent selection surface — `All`, strict `Restrict`, or
+/// graceful `Filter`. Constructed via the [`SubagentBuilder`] verbs
+/// `restrict_to` / `filter` / (default) `All`. The strict / graceful
+/// asymmetry is intentional: name-typos in `restrict_to` fail at
+/// construction (the operator declared a known set), whereas `filter`
+/// accepts an empty result (a predicate is allowed to match nothing).
+/// Boxed predicate over the parent registry's tool set; matches the
+/// shape `ToolRegistry::filter` consumes. Held in a type alias so
+/// the [`SubagentSelection::Filter`] variant stays readable.
+type ToolPredicate = Box<dyn Fn(&dyn Tool) -> bool + Send + Sync>;
+
+enum SubagentSelection {
+    All,
+    Restrict(Vec<String>),
+    Filter(ToolPredicate),
+}
+
+impl SubagentSelection {
+    fn apply(self, parent: &ToolRegistry) -> Result<ToolRegistry> {
+        match self {
+            Self::All => Ok(parent.clone()),
+            Self::Restrict(allowed) => {
+                let refs: Vec<&str> = allowed.iter().map(String::as_str).collect();
+                parent.restricted_to(&refs)
+            }
+            Self::Filter(predicate) => Ok(parent.filter(|tool| predicate(tool))),
+        }
+    }
+}
+
+/// Builder for [`Subagent`]. Construct via
+/// [`Subagent::builder(model, &parent_registry)`](Subagent::builder).
+///
+/// The builder is the sole construction path — the sub-agent's
+/// authority bounds (`restrict_to` / `filter`) and optional wiring
+/// (`with_sink` / `with_approver` / `with_skills`) compose fluently
+/// before [`Self::build`] finalises a [`Subagent`]. Authority bounds
+/// are mandatory in spirit (F7 mitigation): a builder that never
+/// calls `restrict_to` / `filter` produces a sub-agent inheriting
+/// every parent tool — operators making that choice must do so
+/// explicitly.
+pub struct SubagentBuilder<'a, M>
+where
+    M: Runnable<Vec<Message>, Message> + 'static,
+{
+    model: M,
+    parent_registry: &'a ToolRegistry,
+    selection: SubagentSelection,
+    skills_request: Option<(&'a SkillRegistry, Vec<String>)>,
+    sink: Option<Arc<dyn AgentEventSink<ReActState>>>,
+    approver: Option<Arc<dyn Approver>>,
+}
+
+impl<'a, M> SubagentBuilder<'a, M>
+where
+    M: Runnable<Vec<Message>, Message> + 'static,
+{
+    fn new(model: M, parent_registry: &'a ToolRegistry) -> Self {
+        Self {
+            model,
+            parent_registry,
+            selection: SubagentSelection::All,
+            skills_request: None,
+            sink: None,
+            approver: None,
+        }
+    }
+
+    /// Restrict the sub-agent to tools whose name appears in
+    /// `allowed`. Returns [`entelix_core::Error::Config`] at
+    /// [`Self::build`] time if any name is absent from the parent
+    /// registry — strict-name lookup catches typos at the build
+    /// boundary rather than at runtime tool dispatch.
+    #[must_use]
+    pub fn restrict_to(mut self, allowed: &[&str]) -> Self {
+        let owned: Vec<String> = allowed.iter().map(|s| (*s).to_owned()).collect();
+        self.selection = SubagentSelection::Restrict(owned);
+        self
+    }
+
+    /// Restrict the sub-agent to tools matching `predicate`. Unlike
+    /// [`Self::restrict_to`], an empty match set is accepted — the
+    /// predicate form trades typo-detection for arbitrary-shape
+    /// flexibility.
+    #[must_use]
+    pub fn filter<F>(mut self, predicate: F) -> Self
+    where
+        F: Fn(&dyn Tool) -> bool + Send + Sync + 'static,
+    {
+        self.selection = SubagentSelection::Filter(Box::new(predicate));
+        self
+    }
+
+    /// Forward the sub-agent's lifecycle events into the parent's
+    /// sink. Without this call the resulting agent uses
+    /// [`crate::agent::DroppingSink`] (the AgentBuilder default) and
+    /// the parent loses visibility into child runs.
+    #[must_use]
+    pub fn with_sink(mut self, sink: Arc<dyn AgentEventSink<ReActState>>) -> Self {
+        self.sink = Some(sink);
+        self
+    }
+
+    /// Use the parent's [`Approver`] for any tool dispatch the
+    /// sub-agent issues — supervised execution propagates from
+    /// parent to child unless the operator explicitly overrides.
+    #[must_use]
+    pub fn with_approver(mut self, approver: Arc<dyn Approver>) -> Self {
+        self.approver = Some(approver);
+        self
+    }
+
+    /// Attach an explicitly-named subset of the parent's skill
+    /// registry. Validation runs at [`Self::build`] time — if any
+    /// `allowed` name is absent from `parent_skills`, build returns
+    /// [`entelix_core::Error::Config`].
+    #[must_use]
+    pub fn with_skills(
+        mut self,
+        parent_skills: &'a SkillRegistry,
+        allowed: &[&str],
+    ) -> Self {
+        let owned: Vec<String> = allowed.iter().map(|s| (*s).to_owned()).collect();
+        self.skills_request = Some((parent_skills, owned));
+        self
+    }
+
+    /// Finalise the sub-agent. Validates the selection and skills
+    /// requests against the parent registries, returning the first
+    /// configuration error encountered.
+    pub fn build(self) -> Result<Subagent<M>> {
+        let Self {
+            model,
+            parent_registry,
+            selection,
+            skills_request,
+            sink,
+            approver,
+        } = self;
+        let tool_registry = selection.apply(parent_registry)?;
+        let skills = match skills_request {
+            None => SkillRegistry::new(),
+            Some((parent_skills, allowed)) => {
+                let missing: Vec<&str> = allowed
+                    .iter()
+                    .map(String::as_str)
+                    .filter(|name| !parent_skills.has(name))
+                    .collect();
+                if !missing.is_empty() {
+                    return Err(entelix_core::Error::config(format!(
+                        "SubagentBuilder::with_skills: skill name(s) not in parent registry: {}",
+                        missing.join(", ")
+                    )));
+                }
+                let allowed_refs: Vec<&str> = allowed.iter().map(String::as_str).collect();
+                parent_skills.filter(&allowed_refs)
+            }
+        };
+        Ok(Subagent {
+            model: Arc::new(model),
+            tool_registry,
+            skills,
+            sink,
+            approver,
+        })
+    }
+}
+
 /// Wrapper exposing a [`crate::agent::Agent`] as a [`Tool`]. Built
 /// via [`Subagent::into_tool`].
 ///
@@ -353,7 +437,7 @@ impl Tool for SubagentTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let task = input.get("task").and_then(Value::as_str).ok_or_else(|| {
             Error::invalid_request("SubagentTool: input must include a string 'task' field")
         })?;
@@ -368,7 +452,7 @@ impl Tool for SubagentTool {
                 .as_sink()
                 .record_sub_agent_invoked(self.metadata.name.as_str(), &sub_thread_id);
         }
-        let child_ctx = ctx.clone().with_thread_id(sub_thread_id);
+        let child_ctx = ctx.core().clone().with_thread_id(sub_thread_id);
         let initial = ReActState::from_user(task);
         let final_state = self.inner.invoke(initial, &child_ctx).await?;
         // Surface only the terminal assistant text — see ADR-0024 §7

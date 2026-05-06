@@ -20,6 +20,7 @@ use serde_json::Value;
 use tower::util::BoxCloneService;
 use tower::{Layer, Service, ServiceExt};
 
+use crate::agent_context::AgentContext;
 use crate::context::ExecutionContext;
 use crate::error::{Error, Result};
 use crate::service::{BoxedToolService, ToolInvocation};
@@ -35,22 +36,32 @@ use crate::tools::tool::Tool;
 /// so malformed payloads (regardless of source — direct dispatch,
 /// model-driven tool call, MCP) fail fast with
 /// [`Error::InvalidRequest`] and never reach user-supplied tool code.
-/// Internal leaf service — wraps one [`Tool`] handle with a
-/// compiled JSON-Schema validator so layer impls don't pay the
-/// compilation cost per dispatch. Composed inside [`ToolRegistry`];
-/// users compose at the registry level so the layer stack always
-/// applies.
-#[derive(Clone)]
-pub(super) struct InnerToolService {
-    tool: Arc<dyn Tool>,
+/// Internal leaf service — wraps one [`Tool<D>`] handle with a
+/// compiled JSON-Schema validator and a clone of the registry's
+/// typed deps `D`. Layer impls operate on the D-erased
+/// [`BoxedToolService`] boundary; only the leaf handles `D`.
+pub(super) struct InnerToolService<D> {
+    tool: Arc<dyn Tool<D>>,
+    deps: D,
     validator: Arc<jsonschema::Validator>,
 }
 
-impl InnerToolService {
-    /// Build from a shared tool handle. Compiles the input schema
-    /// once at construction; subsequent dispatches reuse the
-    /// compiled validator.
-    pub(super) fn new(tool: Arc<dyn Tool>) -> Self {
+impl<D: Clone> Clone for InnerToolService<D> {
+    fn clone(&self) -> Self {
+        Self {
+            tool: Arc::clone(&self.tool),
+            deps: self.deps.clone(),
+            validator: Arc::clone(&self.validator),
+        }
+    }
+}
+
+impl<D: Send + Sync + 'static> InnerToolService<D> {
+    /// Build from a shared tool handle and a clone of the
+    /// registry-held deps. Compiles the input schema once at
+    /// construction; subsequent dispatches reuse the compiled
+    /// validator.
+    pub(super) fn new(tool: Arc<dyn Tool<D>>, deps: D) -> Self {
         // Schema compilation failure leaves the validator
         // permissive — a schema bug must not silently break every
         // dispatch. The tool author still gets a best-effort
@@ -71,6 +82,7 @@ impl InnerToolService {
             });
         Self {
             tool,
+            deps,
             validator: Arc::new(validator),
         }
     }
@@ -83,7 +95,7 @@ fn permissive_validator() -> jsonschema::Validator {
         .unwrap_or_else(|_| unreachable!("empty object schema is always valid"))
 }
 
-impl std::fmt::Debug for InnerToolService {
+impl<D: Send + Sync + 'static> std::fmt::Debug for InnerToolService<D> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("InnerToolService")
             .field("tool", &self.tool.metadata().name)
@@ -91,7 +103,7 @@ impl std::fmt::Debug for InnerToolService {
     }
 }
 
-impl Service<ToolInvocation> for InnerToolService {
+impl<D: Clone + Send + Sync + 'static> Service<ToolInvocation> for InnerToolService<D> {
     type Response = Value;
     type Error = Error;
     type Future = BoxFuture<'static, Result<Value>>;
@@ -103,6 +115,7 @@ impl Service<ToolInvocation> for InnerToolService {
 
     fn call(&mut self, invocation: ToolInvocation) -> Self::Future {
         let tool = Arc::clone(&self.tool);
+        let deps = self.deps.clone();
         let validator = Arc::clone(&self.validator);
         Box::pin(async move {
             if let Err(err) = validator.validate(&invocation.input) {
@@ -113,40 +126,73 @@ impl Service<ToolInvocation> for InnerToolService {
                     err
                 )));
             }
-            tool.execute(invocation.input, &invocation.ctx).await
+            // Build `AgentContext<D>` from the invocation's infra
+            // context plus the registry-held deps. Tower layers
+            // upstream see only `ToolInvocation` (D-erased); D
+            // surfaces solely at the leaf `Tool::execute` boundary.
+            let agent_ctx = AgentContext::new(invocation.ctx, deps);
+            tool.execute(invocation.input, &agent_ctx).await
         })
     }
 }
 
-/// Boxed factory that takes the leaf `InnerToolService` and returns
-/// the layered `BoxedToolService`. This is how we erase the type of
-/// the `Layer` stack at registry-construction time so the registry
-/// itself is a single concrete type regardless of how many layers
-/// the user attached.
-type LayerFactory = Arc<dyn Fn(InnerToolService) -> BoxedToolService + Send + Sync>;
+/// Boxed factory that takes the leaf [`InnerToolService<D>`] and
+/// returns the layered [`BoxedToolService`]. The factory itself is
+/// generic over `D`, but the boxed output is D-erased so layers and
+/// the dispatch hot path stay independent of the deps shape.
+type LayerFactory<D> = Arc<dyn Fn(InnerToolService<D>) -> BoxedToolService + Send + Sync>;
 
 /// Append-only tool registry with a layered dispatch path.
-#[derive(Clone)]
-pub struct ToolRegistry {
-    by_name: HashMap<String, Arc<dyn Tool>>,
+///
+/// `D` defaults to `()`. Deps-less registries (`ToolRegistry`,
+/// `ToolRegistry::new()`) work exactly as in slice 100. Operator-
+/// typed tools use [`ToolRegistry::with_deps`] to thread typed
+/// handles into every `Tool<D>::execute` body via the
+/// [`AgentContext<D>`] carrier.
+pub struct ToolRegistry<D = ()> {
+    by_name: HashMap<String, Arc<dyn Tool<D>>>,
+    deps: D,
     /// Wraps the leaf service with the configured layer stack. None
     /// means "no layers" — dispatch returns the inner service
     /// boxed.
-    factory: Option<LayerFactory>,
+    factory: Option<LayerFactory<D>>,
 }
 
-impl Default for ToolRegistry {
+impl<D: Clone> Clone for ToolRegistry<D> {
+    fn clone(&self) -> Self {
+        Self {
+            by_name: self.by_name.clone(),
+            deps: self.deps.clone(),
+            factory: self.factory.clone(),
+        }
+    }
+}
+
+impl Default for ToolRegistry<()> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl ToolRegistry {
-    /// Empty registry, no layers attached.
+impl ToolRegistry<()> {
+    /// Empty deps-less registry, no layers attached. Equivalent to
+    /// [`ToolRegistry::with_deps(())`](Self::with_deps).
     #[must_use]
     pub fn new() -> Self {
+        Self::with_deps(())
+    }
+}
+
+impl<D: Clone + Send + Sync + 'static> ToolRegistry<D> {
+    /// Empty registry holding `deps`, no layers attached. Every
+    /// dispatch through this registry — and every sub-agent narrowed
+    /// from it — surfaces `deps` to `Tool<D>::execute` via
+    /// [`AgentContext<D>::deps`].
+    #[must_use]
+    pub fn with_deps(deps: D) -> Self {
         Self {
             by_name: HashMap::new(),
+            deps,
             factory: None,
         }
     }
@@ -157,7 +203,7 @@ impl ToolRegistry {
     /// already-registered tool. Silent overwrite at registry
     /// construction is a configuration bug — surface it instead of
     /// papering over.
-    pub fn register(mut self, tool: Arc<dyn Tool>) -> Result<Self> {
+    pub fn register(mut self, tool: Arc<dyn Tool<D>>) -> Result<Self> {
         let name = tool.metadata().name.clone();
         if self.by_name.contains_key(&name) {
             return Err(Error::config(format!(
@@ -170,7 +216,7 @@ impl ToolRegistry {
     }
 
     /// Append a layer to the dispatch stack. Layers stack around the
-    /// leaf `InnerToolService` — the **last-registered layer is
+    /// leaf [`InnerToolService<D>`] — the **last-registered layer is
     /// outermost** (sees the request first, the response last).
     /// `registry.layer(A).layer(B)` resolves to `B → A → tool`.
     ///
@@ -189,11 +235,9 @@ impl ToolRegistry {
     /// ```
     ///
     /// The layer must produce a `Service<ToolInvocation, Response =
-    /// Value, Error = Error>`. Most layers in the entelix ecosystem
-    /// (`PolicyLayer`, `OtelLayer`, `ScopedToolLayer`,
-    /// `ApprovalLayer`) satisfy this. `PolicyLayer` and `OtelLayer`
-    /// also implement the `ModelInvocation` shape; the registry
-    /// only consumes the tool-side projection.
+    /// Value, Error = Error>`. Layers operate on the D-erased
+    /// [`BoxedToolService`] boundary so the same layer types work
+    /// across every `D`.
     #[must_use]
     pub fn layer<L>(mut self, layer: L) -> Self
     where
@@ -204,7 +248,7 @@ impl ToolRegistry {
     {
         let prev = self.factory.take();
         let layer = layer;
-        let new_factory: LayerFactory = Arc::new(move |inner: InnerToolService| {
+        let new_factory: LayerFactory<D> = Arc::new(move |inner: InnerToolService<D>| {
             let stacked: BoxedToolService = match &prev {
                 Some(prev_factory) => prev_factory(inner),
                 None => BoxCloneService::new(inner),
@@ -213,6 +257,15 @@ impl ToolRegistry {
         });
         self.factory = Some(new_factory);
         self
+    }
+
+    /// Borrow the registry-held deps. Operators typically thread
+    /// these through `Tool<D>::execute` via `ctx.deps()`; reach for
+    /// this when an out-of-band consumer (e.g. an observer that
+    /// inspects the dispatch path) needs the same handle.
+    #[must_use]
+    pub const fn deps(&self) -> &D {
+        &self.deps
     }
 
     /// Whether the registry has at least one tool.
@@ -234,15 +287,16 @@ impl ToolRegistry {
 
     /// Borrow a registered tool by name.
     #[must_use]
-    pub fn get(&self, name: &str) -> Option<&Arc<dyn Tool>> {
+    pub fn get(&self, name: &str) -> Option<&Arc<dyn Tool<D>>> {
         self.by_name.get(name)
     }
 
     /// Return a narrowed view of this registry containing only the
-    /// tools matching `predicate`. The full layer stack rides over —
-    /// `Arc`-shared at no copy cost — so observability, policy, and
-    /// retry layers attached at the parent level apply transparently
-    /// to dispatches through the view.
+    /// tools matching `predicate`. The full layer stack and the
+    /// registry-held deps ride over — `Arc`-shared at no copy cost —
+    /// so observability, policy, and retry layers attached at the
+    /// parent level apply transparently to dispatches through the
+    /// view.
     ///
     /// This is the canonical sub-agent / brain-passes-hand path:
     /// constructing a fresh `ToolRegistry::new()` would silently drop
@@ -251,7 +305,7 @@ impl ToolRegistry {
     #[must_use]
     pub fn filter<F>(&self, predicate: F) -> Self
     where
-        F: Fn(&dyn Tool) -> bool,
+        F: Fn(&dyn Tool<D>) -> bool,
     {
         let by_name = self
             .by_name
@@ -261,6 +315,7 @@ impl ToolRegistry {
             .collect();
         Self {
             by_name,
+            deps: self.deps.clone(),
             factory: self.factory.clone(),
         }
     }
@@ -291,13 +346,13 @@ impl ToolRegistry {
         Ok(self.filter(|tool| allowed_set.contains(tool.metadata().name.as_str())))
     }
 
-    /// Build a `BoxedToolService` for `name` — the inner
-    /// `InnerToolService` wrapped in the configured layer stack.
-    /// Returns `None` if the tool is not registered.
+    /// Build a [`BoxedToolService`] for `name` — the leaf
+    /// [`InnerToolService<D>`] wrapped in the configured layer
+    /// stack. Returns `None` if the tool is not registered.
     #[must_use]
     pub fn service(&self, name: &str) -> Option<BoxedToolService> {
         let tool = self.by_name.get(name)?;
-        let inner = InnerToolService::new(Arc::clone(tool));
+        let inner = InnerToolService::new(Arc::clone(tool), self.deps.clone());
         Some(match &self.factory {
             Some(factory) => factory(inner),
             None => BoxCloneService::new(inner),
@@ -312,6 +367,11 @@ impl ToolRegistry {
     /// Pass an empty string when the call has no upstream `ToolUse`
     /// (e.g. recipe-driven direct dispatch); event layers fall back
     /// to `name` in that case.
+    ///
+    /// `ctx` is the infra context. `D` is supplied from the registry
+    /// itself — operators never thread it through `dispatch`
+    /// arguments, which keeps the registry surface deps-shape
+    /// independent for layer authors.
     ///
     /// Returns `Error::InvalidRequest` if `name` is not registered.
     /// Errors from the leaf tool surface unchanged after the layer
@@ -342,7 +402,7 @@ impl ToolRegistry {
     }
 }
 
-impl std::fmt::Debug for ToolRegistry {
+impl<D: Send + Sync + 'static> std::fmt::Debug for ToolRegistry<D> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ToolRegistry")
             .field("tools", &self.by_name.keys().collect::<Vec<_>>())
@@ -377,7 +437,7 @@ mod tests {
         fn metadata(&self) -> &ToolMetadata {
             &self.metadata
         }
-        async fn execute(&self, input: Value, _ctx: &ExecutionContext) -> Result<Value> {
+        async fn execute(&self, input: Value, _ctx: &AgentContext<()>) -> Result<Value> {
             Ok(input)
         }
     }
@@ -529,7 +589,7 @@ mod tests {
         fn metadata(&self) -> &ToolMetadata {
             &self.metadata
         }
-        async fn execute(&self, _input: Value, _ctx: &ExecutionContext) -> Result<Value> {
+        async fn execute(&self, _input: Value, _ctx: &AgentContext<()>) -> Result<Value> {
             Ok(json!(null))
         }
     }

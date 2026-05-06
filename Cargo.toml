@@ -20,6 +20,7 @@ members = [
     "crates/entelix-prompt",          # PromptTemplate, ChatPromptTemplate, MessagesPlaceholder, FewShot
     "crates/entelix-graph",           # StateGraph, reducer, conditional edges, Send, subgraphs, Checkpointer trait, interrupts
     "crates/entelix-graph-derive",    # proc-macro — #[derive(StateMerge)] for per-field Annotated<T, R> reducer composition
+    "crates/entelix-tool-derive",     # proc-macro — #[tool] attribute generates SchemaTool impl from an async fn signature
 
     # ── state / memory ──────────────────────────────────────────────────
     "crates/entelix-session",         # SessionGraph (event log), fork, archival watermark
@@ -155,6 +156,7 @@ entelix-runnable    = { version = "1.0.0-rc.1", path = "crates/entelix-runnable"
 entelix-prompt      = { version = "1.0.0-rc.1", path = "crates/entelix-prompt" }
 entelix-graph       = { version = "1.0.0-rc.1", path = "crates/entelix-graph" }
 entelix-graph-derive = { version = "1.0.0-rc.1", path = "crates/entelix-graph-derive" }
+entelix-tool-derive = { version = "1.0.0-rc.1", path = "crates/entelix-tool-derive" }
 entelix-session     = { version = "1.0.0-rc.1", path = "crates/entelix-session" }
 entelix-memory      = { version = "1.0.0-rc.1", path = "crates/entelix-memory" }
 entelix-memory-openai   = { version = "1.0.0-rc.1", path = "crates/entelix-memory-openai" }
@@ -225,9 +227,54 @@ struct_excessive_bools = "warn"
 # Profile tuning
 # ─────────────────────────────────────────────────────────────────────────
 
+# Workspace dev profile is tuned for a 21-crate workspace with 112
+# integration-test binaries and 18 examples — every binary statically
+# links the full dependency graph (2447 transitive crates). The four
+# axes below cut `target/` from the multi-tens-of-GB stock-default
+# pathology to single-digit GB while keeping touched-file rebuilds
+# in the 1–2s range.
 [profile.dev]
-debug = "limited"
+# Line tables only: keeps backtraces with file:line resolution but
+# drops the DWARF variable / type metadata an interactive debugger
+# would consume. Cuts per-`.o` debug-info ~5×; SDKs are debugged
+# through `tracing` + test failure messages, not LLDB symbol
+# inspection.
+debug = "line-tables-only"
+# Unpacked DWARF: split debug info into separate `.dwo` files
+# instead of embedding inside `.o`. macOS-canonical; prevents
+# per-codegen-unit duplication of identical debug records.
+split-debuginfo = "unpacked"
+# Incremental compilation is on. The earlier 33 GB cache pathology
+# was caused by *full DWARF × 2400 third-party deps × per-feature
+# matrix*, not by incremental itself. With `debug = "line-tables-
+# only"` and the `package."*"` strip below, each fingerprint shrinks
+# 5–10×; cache stays in the low-GB range and per-edit rebuild drops
+# to ~1–2s vs ~8s without.
 incremental = true
+# Default codegen-units (16) matches typical core counts on dev
+# hardware and keeps file count tractable. Higher CGU counts inflate
+# `target/debug/deps/` linearly without parallelism gain past core
+# saturation; the earlier `256` experiment is the proximate cause
+# of the 970k-file pathology.
+codegen-units = 16
+
+# Third-party dependencies are debugged through their published
+# sources or release builds — never through this workspace's debug
+# info. Stripping their debuginfo entirely is the single biggest
+# disk saving (~80% of the dev `target/`). `opt-level = 0` stays
+# so panic / overflow / bounds checks remain useful when entelix
+# code calls into a third-party crate.
+[profile.dev.package."*"]
+debug = false
+opt-level = 0
+
+# Test profile inherits dev so `cargo build` and `cargo test`
+# share a single cache instead of fragmenting into two parallel
+# build trees. Cargo's default already inherits, but the explicit
+# declaration documents the intent and protects against silent
+# default drift in future cargo releases.
+[profile.test]
+inherits = "dev"
 
 [profile.release]
 lto = "thin"

@@ -42,9 +42,10 @@ fn one_skill_registry() -> SkillRegistry {
 #[test]
 fn subagent_with_skills_into_react_installs_three_skill_tools() {
     let parent_skills = one_skill_registry();
-    let sub = Subagent::from_whitelist(StubModel, &ToolRegistry::new(), &[])
-        .unwrap()
+    let sub = Subagent::builder(StubModel, &ToolRegistry::new())
+        .restrict_to(&[])
         .with_skills(&parent_skills, &["echo"])
+        .build()
         .unwrap();
     let agent = sub.into_react_agent().expect("recipe builds");
     // The recipe wires a CompiledGraph as inner runnable; we cannot
@@ -60,7 +61,7 @@ fn subagent_without_with_skills_does_not_install_skill_tools() {
     // Sibling case — the absence of `.with_skills(...)` keeps the
     // skill registry empty, so the auto-install short-circuits and
     // the resulting agent's tool registry contains no skill tools.
-    let sub = Subagent::from_whitelist(StubModel, &ToolRegistry::new(), &[]).unwrap();
+    let sub = Subagent::builder(StubModel, &ToolRegistry::new()).restrict_to(&[]).build().unwrap();
     let _agent = sub.into_react_agent().expect("recipe builds");
 }
 

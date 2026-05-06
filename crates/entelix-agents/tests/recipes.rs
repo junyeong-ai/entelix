@@ -20,7 +20,7 @@ use entelix_agents::{
 };
 use entelix_core::ir::{ContentPart, Message, Role};
 use entelix_core::tools::{Tool, ToolMetadata};
-use entelix_core::{ExecutionContext, Result, ToolRegistry};
+use entelix_core::{AgentContext, ExecutionContext, Result, ToolRegistry};
 use entelix_runnable::{Runnable, RunnableLambda};
 use std::sync::Mutex;
 
@@ -85,7 +85,7 @@ impl Tool for DoubleTool {
     async fn execute(
         &self,
         input: serde_json::Value,
-        _ctx: &ExecutionContext,
+        _ctx: &AgentContext<()>,
     ) -> Result<serde_json::Value> {
         let n = input
             .get("n")
@@ -303,7 +303,7 @@ async fn subagent_filters_tool_set() -> Result<()> {
         async fn execute(
             &self,
             _input: serde_json::Value,
-            _ctx: &ExecutionContext,
+            _ctx: &AgentContext<()>,
         ) -> Result<serde_json::Value> {
             Ok(serde_json::json!({}))
         }
@@ -313,7 +313,7 @@ async fn subagent_filters_tool_set() -> Result<()> {
         .register(Arc::new(OtherTool::new()) as Arc<dyn Tool>)?;
 
     let (model, _) = MockModel::new(vec![assistant_text("done")]);
-    let sub = Subagent::from_whitelist(model, &parent_registry, &["double"])?;
+    let sub = Subagent::builder(model, &parent_registry).restrict_to(&["double"]).build()?;
     assert_eq!(sub.tool_count(), 1);
     assert_eq!(sub.tool_names(), vec!["double"]);
     Ok(())
@@ -344,7 +344,7 @@ async fn react_agent_builder_recursion_limit_overrides_graph_default() -> Result
         async fn execute(
             &self,
             _input: serde_json::Value,
-            _ctx: &ExecutionContext,
+            _ctx: &AgentContext<()>,
         ) -> Result<serde_json::Value> {
             Ok(serde_json::json!({}))
         }
@@ -399,7 +399,7 @@ async fn subagent_from_whitelist_rejects_unknown_tool_name() -> Result<()> {
         async fn execute(
             &self,
             _input: serde_json::Value,
-            _ctx: &ExecutionContext,
+            _ctx: &AgentContext<()>,
         ) -> Result<serde_json::Value> {
             Ok(serde_json::json!({}))
         }
@@ -408,7 +408,7 @@ async fn subagent_from_whitelist_rejects_unknown_tool_name() -> Result<()> {
         ToolRegistry::new().register(Arc::new(OnlyDouble::new()) as Arc<dyn Tool>)?;
     let (model, _) = MockModel::new(vec![assistant_text("noop")]);
     let err =
-        Subagent::from_whitelist(model, &parent_registry, &["double", "ghost-tool"]).unwrap_err();
+        Subagent::builder(model, &parent_registry).restrict_to(&["double", "ghost-tool"]).build().unwrap_err();
     let msg = format!("{err}");
     assert!(
         msg.contains("ghost-tool"),
@@ -423,7 +423,7 @@ async fn subagent_into_tool_dispatches_full_react_loop() -> Result<()> {
     let (model, calls) = MockModel::new(vec![assistant_text("task done")]);
     let parent_registry =
         ToolRegistry::new().register(Arc::new(DoubleTool::new()) as Arc<dyn Tool>)?;
-    let sub = Subagent::from_whitelist(model, &parent_registry, &["double"])?;
+    let sub = Subagent::builder(model, &parent_registry).restrict_to(&["double"]).build()?;
     let tool: SubagentTool = sub.into_tool(
         "research_team",
         "Dispatch the research sub-agent to handle the supplied task.",
@@ -440,7 +440,7 @@ async fn subagent_into_tool_dispatches_full_react_loop() -> Result<()> {
     let out = tool
         .execute(
             serde_json::json!({"task": "investigate widget bookmarks"}),
-            &ExecutionContext::new(),
+            &AgentContext::default(),
         )
         .await?;
     assert_eq!(out["output"], "task done");
@@ -453,10 +453,10 @@ async fn subagent_into_tool_dispatches_full_react_loop() -> Result<()> {
 async fn subagent_tool_rejects_input_without_task_field() -> Result<()> {
     let (model, _) = MockModel::new(vec![assistant_text("noop")]);
     let parent_registry = ToolRegistry::new();
-    let sub = Subagent::from_whitelist(model, &parent_registry, &[])?;
+    let sub = Subagent::builder(model, &parent_registry).restrict_to(&[]).build()?;
     let tool: SubagentTool = sub.into_tool("agent_x", "x")?;
     let err = tool
-        .execute(serde_json::json!({}), &ExecutionContext::new())
+        .execute(serde_json::json!({}), &AgentContext::default())
         .await
         .unwrap_err();
     assert!(format!("{err}").contains("'task' field"));
@@ -467,7 +467,7 @@ async fn subagent_tool_rejects_input_without_task_field() -> Result<()> {
 async fn subagent_tool_with_effect_overrides_default() -> Result<()> {
     let (model, _) = MockModel::new(vec![assistant_text("ok")]);
     let parent_registry = ToolRegistry::new();
-    let sub = Subagent::from_whitelist(model, &parent_registry, &[])?;
+    let sub = Subagent::builder(model, &parent_registry).restrict_to(&[]).build()?;
     let tool = sub
         .into_tool("read_only_agent", "x")?
         .with_effect(entelix_core::tools::ToolEffect::ReadOnly);

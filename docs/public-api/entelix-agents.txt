@@ -434,17 +434,13 @@ impl<R> core::panic::unwind_safe::RefUnwindSafe for entelix_agents::RunnableToSu
 impl<R> core::panic::unwind_safe::UnwindSafe for entelix_agents::RunnableToSummarizerAdapter<R> where R: core::panic::unwind_safe::RefUnwindSafe
 pub struct entelix_agents::Subagent<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
 impl<M> entelix_agents::Subagent<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
-pub fn entelix_agents::Subagent<M>::from_filter<F>(model: M, parent_registry: &entelix_core::tools::registry::ToolRegistry, predicate: F) -> Self where F: core::ops::function::Fn(&dyn entelix_core::tools::tool::Tool) -> bool
-pub fn entelix_agents::Subagent<M>::from_whitelist(model: M, parent_registry: &entelix_core::tools::registry::ToolRegistry, allowed_tools: &[&str]) -> entelix_core::error::Result<Self>
+pub fn entelix_agents::Subagent<M>::builder(model: M, parent_registry: &entelix_core::tools::registry::ToolRegistry) -> entelix_agents::subagent::SubagentBuilder<'_, M>
 pub fn entelix_agents::Subagent<M>::into_react_agent(self) -> entelix_core::error::Result<entelix_agents::Agent<entelix_agents::ReActState>>
 pub fn entelix_agents::Subagent<M>::into_tool(self, name: impl core::convert::Into<alloc::string::String>, description: impl core::convert::Into<alloc::string::String>) -> entelix_core::error::Result<entelix_agents::SubagentTool>
 pub const fn entelix_agents::Subagent<M>::skills(&self) -> &entelix_core::skills::registry::SkillRegistry
 pub fn entelix_agents::Subagent<M>::tool_count(&self) -> usize
 pub fn entelix_agents::Subagent<M>::tool_names(&self) -> alloc::vec::Vec<&str>
 pub const fn entelix_agents::Subagent<M>::tool_registry(&self) -> &entelix_core::tools::registry::ToolRegistry
-pub fn entelix_agents::Subagent<M>::with_approver(self, approver: alloc::sync::Arc<dyn entelix_agents::Approver>) -> Self
-pub fn entelix_agents::Subagent<M>::with_sink(self, sink: alloc::sync::Arc<dyn entelix_agents::AgentEventSink<entelix_agents::ReActState>>) -> Self
-pub fn entelix_agents::Subagent<M>::with_skills(self, parent_skills: &entelix_core::skills::registry::SkillRegistry, allowed: &[&str]) -> entelix_core::error::Result<Self>
 impl<M> core::fmt::Debug for entelix_agents::Subagent<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
 pub fn entelix_agents::Subagent<M>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<M> core::marker::Freeze for entelix_agents::Subagent<M>
@@ -460,7 +456,7 @@ pub fn entelix_agents::SubagentTool::with_effect(self, effect: entelix_core::too
 impl core::fmt::Debug for entelix_agents::SubagentTool
 pub fn entelix_agents::SubagentTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl entelix_core::tools::tool::Tool for entelix_agents::SubagentTool
-pub fn entelix_agents::SubagentTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_agents::SubagentTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::agent_context::AgentContext<()>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn entelix_agents::SubagentTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
 impl core::marker::Freeze for entelix_agents::SubagentTool
 impl core::marker::Send for entelix_agents::SubagentTool

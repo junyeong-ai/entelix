@@ -47,11 +47,11 @@ pub use entelix_core::transports;
 // matching, LLM-facing error rendering) reaches them. Keep them at
 // the top so callers don't need to memorise an internal module name.
 pub use entelix_core::{
-    ApprovalDecision, AuditSink, AuditSinkHandle, ChatModel, ChatModelConfig, CostCalculator,
-    DEFAULT_TENANT_ID, Error, ExecutionContext, Extensions, INTERRUPT_KIND_APPROVAL_PENDING,
-    LlmFacingSchema, LlmRenderable, PendingApprovalDecisions, ProviderErrorKind, RenderedForLlm,
-    Result, RunBudget, RunOverrides, TenantId, ThreadKey, ToolCostCalculator, UsageLimitAxis,
-    UsageSnapshot,
+    AgentContext, ApprovalDecision, AuditSink, AuditSinkHandle, ChatModel, ChatModelConfig,
+    CostCalculator, DEFAULT_TENANT_ID, Error, ExecutionContext, Extensions,
+    INTERRUPT_KIND_APPROVAL_PENDING, LlmFacingSchema, LlmRenderable, PendingApprovalDecisions,
+    ProviderErrorKind, RenderedForLlm, Result, RunBudget, RunOverrides, TenantId, ThreadKey,
+    ToolCostCalculator, UsageLimitAxis, UsageSnapshot,
 };
 
 // ── Sub-crate re-exports — the 90% surface for crates that don't
@@ -204,7 +204,7 @@ pub use entelix_session::{
     GraphEvent, InMemorySessionLog, SessionAuditSink, SessionGraph, SessionLog,
 };
 pub use entelix_tools::{
-    ActivateSkillTool, CalculatorTool, CodePolicy,
+    ActivateSkillTool, Calculator, CalculatorInput, CalculatorOutput, CodePolicy,
     DEFAULT_FETCH_TIMEOUT as HTTP_FETCH_DEFAULT_TIMEOUT,
     DEFAULT_MAX_REDIRECTS as HTTP_FETCH_DEFAULT_MAX_REDIRECTS,
     DEFAULT_MAX_RESPONSE_BYTES as HTTP_FETCH_DEFAULT_MAX_RESPONSE_BYTES,
@@ -214,6 +214,7 @@ pub use entelix_tools::{
     SandboxedReadFileTool, SandboxedShellTool, SandboxedWriteFileTool, SchemaTool,
     SchemaToolAdapter, SchemaToolExt, SearchProvider, SearchResult, SearchTool, ShellPolicy,
     ShellPolicyError, SsrfSafeDnsResolver, StaticResource, ToolError, ToolResult, is_ssrf_blocked,
+    tool,
 };
 
 /// Common imports for typical SDK usage.
@@ -223,7 +224,7 @@ pub use entelix_tools::{
 /// ```
 pub mod prelude {
     pub use entelix_core::ir::{ContentPart, Message, Role};
-    pub use entelix_core::{ChatModel, Error, ExecutionContext, Result};
+    pub use entelix_core::{AgentContext, ChatModel, Error, ExecutionContext, Result};
     pub use entelix_prompt::{ChatPromptPart, ChatPromptTemplate, PromptValue, PromptVars};
     pub use entelix_runnable::{JsonOutputParser, Runnable, RunnableExt};
 }

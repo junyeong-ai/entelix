@@ -5,7 +5,7 @@
 //! One adapter instance binds to one `(server, tool_name)` pair on a
 //! shared [`crate::McpManager`]. The adapter holds no connection — it
 //! defers to the manager, which routes to the correct
-//! `(tenant, server)` `McpClient` based on `ExecutionContext::tenant_id`.
+//! `(tenant, server)` `McpClient` based on `AgentContext::tenant_id`.
 //!
 //! ## Namespacing — `mcp:{server}:{tool}` by default
 //!
@@ -24,7 +24,7 @@
 use async_trait::async_trait;
 use serde_json::Value;
 
-use entelix_core::context::ExecutionContext;
+use entelix_core::AgentContext;
 use entelix_core::error::Result;
 use entelix_core::tools::{Tool, ToolMetadata};
 
@@ -123,13 +123,13 @@ impl Tool for McpToolAdapter {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         // Always dispatch using the unqualified MCP name — the
         // `mcp:` prefix is an entelix-side namespacing decision and
         // would be rejected by the upstream server.
         let result = self
             .manager
-            .call_tool(ctx, &self.server, &self.definition.name, input)
+            .call_tool(ctx.core(), &self.server, &self.definition.name, input)
             .await?;
         Ok(result)
     }

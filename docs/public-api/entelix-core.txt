@@ -1,4 +1,50 @@
 pub mod entelix_core
+pub mod entelix_core::agent_context
+pub struct entelix_core::agent_context::AgentContext<D>
+impl<D: core::clone::Clone> entelix_core::agent_context::AgentContext<D>
+pub fn entelix_core::agent_context::AgentContext<D>::child(&self) -> Self
+impl<D> entelix_core::agent_context::AgentContext<D>
+pub fn entelix_core::agent_context::AgentContext<D>::add_extension<T>(self, value: T) -> Self where T: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::agent_context::AgentContext<D>::audit_sink(&self) -> core::option::Option<alloc::sync::Arc<entelix_core::audit::AuditSinkHandle>>
+pub const fn entelix_core::agent_context::AgentContext<D>::cancellation(&self) -> &tokio_util::sync::cancellation_token::CancellationToken
+pub const fn entelix_core::agent_context::AgentContext<D>::core(&self) -> &entelix_core::context::ExecutionContext
+pub const fn entelix_core::agent_context::AgentContext<D>::core_mut(&mut self) -> &mut entelix_core::context::ExecutionContext
+pub const fn entelix_core::agent_context::AgentContext<D>::deadline(&self) -> core::option::Option<tokio::time::instant::Instant>
+pub const fn entelix_core::agent_context::AgentContext<D>::deps(&self) -> &D
+pub const fn entelix_core::agent_context::AgentContext<D>::deps_mut(&mut self) -> &mut D
+pub fn entelix_core::agent_context::AgentContext<D>::extension<T>(&self) -> core::option::Option<alloc::sync::Arc<T>> where T: core::marker::Send + core::marker::Sync + 'static
+pub const fn entelix_core::agent_context::AgentContext<D>::extensions(&self) -> &entelix_core::extensions::Extensions
+pub fn entelix_core::agent_context::AgentContext<D>::idempotency_key(&self) -> core::option::Option<&str>
+pub fn entelix_core::agent_context::AgentContext<D>::into_parts(self) -> (entelix_core::context::ExecutionContext, D)
+pub fn entelix_core::agent_context::AgentContext<D>::is_cancelled(&self) -> bool
+pub fn entelix_core::agent_context::AgentContext<D>::map_deps<E, F>(self, f: F) -> entelix_core::agent_context::AgentContext<E> where F: core::ops::function::FnOnce(D) -> E
+pub const fn entelix_core::agent_context::AgentContext<D>::new(core: entelix_core::context::ExecutionContext, deps: D) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::run_budget(&self) -> core::option::Option<alloc::sync::Arc<entelix_core::run_budget::RunBudget>>
+pub fn entelix_core::agent_context::AgentContext<D>::run_id(&self) -> core::option::Option<&str>
+pub const fn entelix_core::agent_context::AgentContext<D>::tenant_id(&self) -> &entelix_core::tenant_id::TenantId
+pub fn entelix_core::agent_context::AgentContext<D>::thread_id(&self) -> core::option::Option<&str>
+pub fn entelix_core::agent_context::AgentContext<D>::with_audit_sink(self, handle: entelix_core::audit::AuditSinkHandle) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::with_deadline(self, deadline: tokio::time::instant::Instant) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::with_idempotency_key(self, key: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::with_run_budget(self, budget: entelix_core::run_budget::RunBudget) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::with_run_id(self, run_id: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::with_tenant_id(self, tenant_id: entelix_core::tenant_id::TenantId) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::with_thread_id(self, thread_id: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::convert::From<entelix_core::context::ExecutionContext> for entelix_core::agent_context::AgentContext<()>
+pub fn entelix_core::agent_context::AgentContext<()>::from(core: entelix_core::context::ExecutionContext) -> Self
+impl core::default::Default for entelix_core::agent_context::AgentContext<()>
+pub fn entelix_core::agent_context::AgentContext<()>::default() -> Self
+impl<D: core::clone::Clone> core::clone::Clone for entelix_core::agent_context::AgentContext<D>
+pub fn entelix_core::agent_context::AgentContext<D>::clone(&self) -> Self
+impl<D: core::fmt::Debug> core::fmt::Debug for entelix_core::agent_context::AgentContext<D>
+pub fn entelix_core::agent_context::AgentContext<D>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<D> core::marker::Freeze for entelix_core::agent_context::AgentContext<D> where D: core::marker::Freeze
+impl<D> core::marker::Send for entelix_core::agent_context::AgentContext<D> where D: core::marker::Send
+impl<D> core::marker::Sync for entelix_core::agent_context::AgentContext<D> where D: core::marker::Sync
+impl<D> core::marker::Unpin for entelix_core::agent_context::AgentContext<D> where D: core::marker::Unpin
+impl<D> core::marker::UnsafeUnpin for entelix_core::agent_context::AgentContext<D> where D: core::marker::UnsafeUnpin
+impl<D> !core::panic::unwind_safe::RefUnwindSafe for entelix_core::agent_context::AgentContext<D>
+impl<D> !core::panic::unwind_safe::UnwindSafe for entelix_core::agent_context::AgentContext<D>
 pub mod entelix_core::approval
 #[non_exhaustive] pub enum entelix_core::approval::ApprovalDecision
 pub entelix_core::approval::ApprovalDecision::Approve
@@ -237,6 +283,7 @@ pub fn entelix_core::chat::ChatModel<C, T>::with_tool(self, t: entelix_core::ir:
 pub fn entelix_core::chat::ChatModel<C, T>::with_tool_choice(self, c: entelix_core::ir::ToolChoice) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_tools(self, tools: alloc::vec::Vec<entelix_core::ir::ToolSpec>) -> Self
 pub const fn entelix_core::chat::ChatModel<C, T>::with_top_p(self, p: f32) -> Self
+pub const fn entelix_core::chat::ChatModel<C, T>::with_validation_retries(self, n: u32) -> Self
 impl<C: entelix_core::codecs::Codec + 'static, T: entelix_core::transports::Transport + 'static> core::clone::Clone for entelix_core::chat::ChatModel<C, T>
 pub fn entelix_core::chat::ChatModel<C, T>::clone(&self) -> Self
 impl<C: entelix_core::codecs::Codec + 'static, T: entelix_core::transports::Transport + 'static> core::fmt::Debug for entelix_core::chat::ChatModel<C, T>
@@ -261,6 +308,7 @@ pub const fn entelix_core::chat::ChatModelConfig::temperature(&self) -> core::op
 pub const fn entelix_core::chat::ChatModelConfig::tool_choice(&self) -> &entelix_core::ir::ToolChoice
 pub fn entelix_core::chat::ChatModelConfig::tools(&self) -> &[entelix_core::ir::ToolSpec]
 pub const fn entelix_core::chat::ChatModelConfig::top_p(&self) -> core::option::Option<f32>
+pub const fn entelix_core::chat::ChatModelConfig::validation_retries(&self) -> u32
 impl core::clone::Clone for entelix_core::chat::ChatModelConfig
 pub fn entelix_core::chat::ChatModelConfig::clone(&self) -> entelix_core::chat::ChatModelConfig
 impl core::fmt::Debug for entelix_core::chat::ChatModelConfig
@@ -509,6 +557,8 @@ pub fn entelix_core::context::ExecutionContext::with_tenant_id(self, tenant_id: 
 pub fn entelix_core::context::ExecutionContext::with_thread_id(self, thread_id: impl core::convert::Into<alloc::string::String>) -> Self
 impl core::clone::Clone for entelix_core::context::ExecutionContext
 pub fn entelix_core::context::ExecutionContext::clone(&self) -> entelix_core::context::ExecutionContext
+impl core::convert::From<entelix_core::context::ExecutionContext> for entelix_core::agent_context::AgentContext<()>
+pub fn entelix_core::agent_context::AgentContext<()>::from(core: entelix_core::context::ExecutionContext) -> Self
 impl core::default::Default for entelix_core::context::ExecutionContext
 pub fn entelix_core::context::ExecutionContext::default() -> Self
 impl core::fmt::Debug for entelix_core::context::ExecutionContext
@@ -534,6 +584,9 @@ pub entelix_core::error::Error::DeadlineExceeded
 pub entelix_core::error::Error::Interrupted
 pub entelix_core::error::Error::Interrupted::payload: serde_json::value::Value
 pub entelix_core::error::Error::InvalidRequest(alloc::borrow::Cow<'static, str>)
+pub entelix_core::error::Error::ModelRetry
+pub entelix_core::error::Error::ModelRetry::attempt: u32
+pub entelix_core::error::Error::ModelRetry::hint: entelix_core::llm_facing::RenderedForLlm<alloc::string::String>
 pub entelix_core::error::Error::Provider
 pub entelix_core::error::Error::Provider::kind: entelix_core::error::ProviderErrorKind
 pub entelix_core::error::Error::Provider::message: alloc::string::String
@@ -547,6 +600,7 @@ pub entelix_core::error::Error::UsageLimitExceeded::observed: u64
 impl entelix_core::error::Error
 pub fn entelix_core::error::Error::config(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
 pub fn entelix_core::error::Error::invalid_request(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
+pub const fn entelix_core::error::Error::model_retry(hint: entelix_core::llm_facing::RenderedForLlm<alloc::string::String>, attempt: u32) -> Self
 pub fn entelix_core::error::Error::provider_dns(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::error::Error::provider_dns_from<E>(err: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::error::Error::provider_http(status: u16, message: impl core::convert::Into<alloc::string::String>) -> Self
@@ -2545,34 +2599,37 @@ impl core::marker::Unpin for entelix_core::tools::ToolMetadata
 impl core::marker::UnsafeUnpin for entelix_core::tools::ToolMetadata
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::tools::ToolMetadata
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::tools::ToolMetadata
-pub struct entelix_core::tools::ToolRegistry
-impl entelix_core::ToolRegistry
-pub async fn entelix_core::ToolRegistry::dispatch(&self, tool_use_id: &str, name: &str, input: serde_json::value::Value, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<serde_json::value::Value>
-pub fn entelix_core::ToolRegistry::filter<F>(&self, predicate: F) -> Self where F: core::ops::function::Fn(&dyn entelix_core::Tool) -> bool
-pub fn entelix_core::ToolRegistry::get(&self, name: &str) -> core::option::Option<&alloc::sync::Arc<dyn entelix_core::Tool>>
-pub fn entelix_core::ToolRegistry::is_empty(&self) -> bool
-pub fn entelix_core::ToolRegistry::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedToolService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer>::Service: tower_service::Service<entelix_core::service::ToolInvocation, Response = serde_json::value::Value, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer>::Service as tower_service::Service<entelix_core::service::ToolInvocation>>::Future: core::marker::Send + 'static
-pub fn entelix_core::ToolRegistry::len(&self) -> usize
-pub fn entelix_core::ToolRegistry::names(&self) -> impl core::iter::traits::iterator::Iterator<Item = &str>
-pub fn entelix_core::ToolRegistry::new() -> Self
-pub fn entelix_core::ToolRegistry::register(self, tool: alloc::sync::Arc<dyn entelix_core::Tool>) -> entelix_core::error::Result<Self>
-pub fn entelix_core::ToolRegistry::restricted_to(&self, allowed: &[&str]) -> entelix_core::error::Result<Self>
-pub fn entelix_core::ToolRegistry::service(&self, name: &str) -> core::option::Option<entelix_core::service::BoxedToolService>
-impl core::clone::Clone for entelix_core::ToolRegistry
-pub fn entelix_core::ToolRegistry::clone(&self) -> entelix_core::ToolRegistry
-impl core::default::Default for entelix_core::ToolRegistry
-pub fn entelix_core::ToolRegistry::default() -> Self
-impl core::fmt::Debug for entelix_core::ToolRegistry
-pub fn entelix_core::ToolRegistry::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for entelix_core::ToolRegistry
-impl core::marker::Send for entelix_core::ToolRegistry
-impl core::marker::Sync for entelix_core::ToolRegistry
-impl core::marker::Unpin for entelix_core::ToolRegistry
-impl core::marker::UnsafeUnpin for entelix_core::ToolRegistry
-impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::ToolRegistry
-impl !core::panic::unwind_safe::UnwindSafe for entelix_core::ToolRegistry
-pub trait entelix_core::tools::Tool: core::marker::Send + core::marker::Sync + 'static
-pub fn entelix_core::tools::Tool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub struct entelix_core::tools::ToolRegistry<D>
+impl entelix_core::ToolRegistry<()>
+pub fn entelix_core::ToolRegistry<()>::new() -> Self
+impl<D: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static> entelix_core::ToolRegistry<D>
+pub const fn entelix_core::ToolRegistry<D>::deps(&self) -> &D
+pub async fn entelix_core::ToolRegistry<D>::dispatch(&self, tool_use_id: &str, name: &str, input: serde_json::value::Value, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<serde_json::value::Value>
+pub fn entelix_core::ToolRegistry<D>::filter<F>(&self, predicate: F) -> Self where F: core::ops::function::Fn(&dyn entelix_core::Tool<D>) -> bool
+pub fn entelix_core::ToolRegistry<D>::get(&self, name: &str) -> core::option::Option<&alloc::sync::Arc<dyn entelix_core::Tool<D>>>
+pub fn entelix_core::ToolRegistry<D>::is_empty(&self) -> bool
+pub fn entelix_core::ToolRegistry<D>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedToolService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer>::Service: tower_service::Service<entelix_core::service::ToolInvocation, Response = serde_json::value::Value, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer>::Service as tower_service::Service<entelix_core::service::ToolInvocation>>::Future: core::marker::Send + 'static
+pub fn entelix_core::ToolRegistry<D>::len(&self) -> usize
+pub fn entelix_core::ToolRegistry<D>::names(&self) -> impl core::iter::traits::iterator::Iterator<Item = &str>
+pub fn entelix_core::ToolRegistry<D>::register(self, tool: alloc::sync::Arc<dyn entelix_core::Tool<D>>) -> entelix_core::error::Result<Self>
+pub fn entelix_core::ToolRegistry<D>::restricted_to(&self, allowed: &[&str]) -> entelix_core::error::Result<Self>
+pub fn entelix_core::ToolRegistry<D>::service(&self, name: &str) -> core::option::Option<entelix_core::service::BoxedToolService>
+pub fn entelix_core::ToolRegistry<D>::with_deps(deps: D) -> Self
+impl core::default::Default for entelix_core::ToolRegistry<()>
+pub fn entelix_core::ToolRegistry<()>::default() -> Self
+impl<D: core::clone::Clone> core::clone::Clone for entelix_core::ToolRegistry<D>
+pub fn entelix_core::ToolRegistry<D>::clone(&self) -> Self
+impl<D: core::marker::Send + core::marker::Sync + 'static> core::fmt::Debug for entelix_core::ToolRegistry<D>
+pub fn entelix_core::ToolRegistry<D>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<D> core::marker::Freeze for entelix_core::ToolRegistry<D> where D: core::marker::Freeze
+impl<D> core::marker::Send for entelix_core::ToolRegistry<D> where D: core::marker::Send
+impl<D> core::marker::Sync for entelix_core::ToolRegistry<D> where D: core::marker::Sync
+impl<D> core::marker::Unpin for entelix_core::ToolRegistry<D> where D: core::marker::Unpin
+impl<D> core::marker::UnsafeUnpin for entelix_core::ToolRegistry<D> where D: core::marker::UnsafeUnpin
+impl<D> !core::panic::unwind_safe::RefUnwindSafe for entelix_core::ToolRegistry<D>
+impl<D> !core::panic::unwind_safe::UnwindSafe for entelix_core::ToolRegistry<D>
+pub trait entelix_core::tools::Tool<D> where D: core::marker::Send + core::marker::Sync + 'static: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::tools::Tool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::agent_context::AgentContext<D>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn entelix_core::tools::Tool::metadata(&self) -> &entelix_core::tools::ToolMetadata
 pub trait entelix_core::tools::ToolDispatchScope: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::tools::ToolDispatchScope::wrap(&self, ctx: entelix_core::context::ExecutionContext, fut: futures_core::future::BoxFuture<'static, entelix_core::error::Result<serde_json::value::Value>>) -> futures_core::future::BoxFuture<'static, entelix_core::error::Result<serde_json::value::Value>>
@@ -2806,6 +2863,9 @@ pub entelix_core::Error::DeadlineExceeded
 pub entelix_core::Error::Interrupted
 pub entelix_core::Error::Interrupted::payload: serde_json::value::Value
 pub entelix_core::Error::InvalidRequest(alloc::borrow::Cow<'static, str>)
+pub entelix_core::Error::ModelRetry
+pub entelix_core::Error::ModelRetry::attempt: u32
+pub entelix_core::Error::ModelRetry::hint: entelix_core::llm_facing::RenderedForLlm<alloc::string::String>
 pub entelix_core::Error::Provider
 pub entelix_core::Error::Provider::kind: entelix_core::error::ProviderErrorKind
 pub entelix_core::Error::Provider::message: alloc::string::String
@@ -2819,6 +2879,7 @@ pub entelix_core::Error::UsageLimitExceeded::observed: u64
 impl entelix_core::error::Error
 pub fn entelix_core::error::Error::config(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
 pub fn entelix_core::error::Error::invalid_request(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
+pub const fn entelix_core::error::Error::model_retry(hint: entelix_core::llm_facing::RenderedForLlm<alloc::string::String>, attempt: u32) -> Self
 pub fn entelix_core::error::Error::provider_dns(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::error::Error::provider_dns_from<E>(err: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::error::Error::provider_http(status: u16, message: impl core::convert::Into<alloc::string::String>) -> Self
@@ -2922,6 +2983,51 @@ impl core::marker::Unpin for entelix_core::run_budget::UsageLimitAxis
 impl core::marker::UnsafeUnpin for entelix_core::run_budget::UsageLimitAxis
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::UsageLimitAxis
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::UsageLimitAxis
+pub struct entelix_core::AgentContext<D>
+impl<D: core::clone::Clone> entelix_core::agent_context::AgentContext<D>
+pub fn entelix_core::agent_context::AgentContext<D>::child(&self) -> Self
+impl<D> entelix_core::agent_context::AgentContext<D>
+pub fn entelix_core::agent_context::AgentContext<D>::add_extension<T>(self, value: T) -> Self where T: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::agent_context::AgentContext<D>::audit_sink(&self) -> core::option::Option<alloc::sync::Arc<entelix_core::audit::AuditSinkHandle>>
+pub const fn entelix_core::agent_context::AgentContext<D>::cancellation(&self) -> &tokio_util::sync::cancellation_token::CancellationToken
+pub const fn entelix_core::agent_context::AgentContext<D>::core(&self) -> &entelix_core::context::ExecutionContext
+pub const fn entelix_core::agent_context::AgentContext<D>::core_mut(&mut self) -> &mut entelix_core::context::ExecutionContext
+pub const fn entelix_core::agent_context::AgentContext<D>::deadline(&self) -> core::option::Option<tokio::time::instant::Instant>
+pub const fn entelix_core::agent_context::AgentContext<D>::deps(&self) -> &D
+pub const fn entelix_core::agent_context::AgentContext<D>::deps_mut(&mut self) -> &mut D
+pub fn entelix_core::agent_context::AgentContext<D>::extension<T>(&self) -> core::option::Option<alloc::sync::Arc<T>> where T: core::marker::Send + core::marker::Sync + 'static
+pub const fn entelix_core::agent_context::AgentContext<D>::extensions(&self) -> &entelix_core::extensions::Extensions
+pub fn entelix_core::agent_context::AgentContext<D>::idempotency_key(&self) -> core::option::Option<&str>
+pub fn entelix_core::agent_context::AgentContext<D>::into_parts(self) -> (entelix_core::context::ExecutionContext, D)
+pub fn entelix_core::agent_context::AgentContext<D>::is_cancelled(&self) -> bool
+pub fn entelix_core::agent_context::AgentContext<D>::map_deps<E, F>(self, f: F) -> entelix_core::agent_context::AgentContext<E> where F: core::ops::function::FnOnce(D) -> E
+pub const fn entelix_core::agent_context::AgentContext<D>::new(core: entelix_core::context::ExecutionContext, deps: D) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::run_budget(&self) -> core::option::Option<alloc::sync::Arc<entelix_core::run_budget::RunBudget>>
+pub fn entelix_core::agent_context::AgentContext<D>::run_id(&self) -> core::option::Option<&str>
+pub const fn entelix_core::agent_context::AgentContext<D>::tenant_id(&self) -> &entelix_core::tenant_id::TenantId
+pub fn entelix_core::agent_context::AgentContext<D>::thread_id(&self) -> core::option::Option<&str>
+pub fn entelix_core::agent_context::AgentContext<D>::with_audit_sink(self, handle: entelix_core::audit::AuditSinkHandle) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::with_deadline(self, deadline: tokio::time::instant::Instant) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::with_idempotency_key(self, key: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::with_run_budget(self, budget: entelix_core::run_budget::RunBudget) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::with_run_id(self, run_id: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::with_tenant_id(self, tenant_id: entelix_core::tenant_id::TenantId) -> Self
+pub fn entelix_core::agent_context::AgentContext<D>::with_thread_id(self, thread_id: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::convert::From<entelix_core::context::ExecutionContext> for entelix_core::agent_context::AgentContext<()>
+pub fn entelix_core::agent_context::AgentContext<()>::from(core: entelix_core::context::ExecutionContext) -> Self
+impl core::default::Default for entelix_core::agent_context::AgentContext<()>
+pub fn entelix_core::agent_context::AgentContext<()>::default() -> Self
+impl<D: core::clone::Clone> core::clone::Clone for entelix_core::agent_context::AgentContext<D>
+pub fn entelix_core::agent_context::AgentContext<D>::clone(&self) -> Self
+impl<D: core::fmt::Debug> core::fmt::Debug for entelix_core::agent_context::AgentContext<D>
+pub fn entelix_core::agent_context::AgentContext<D>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<D> core::marker::Freeze for entelix_core::agent_context::AgentContext<D> where D: core::marker::Freeze
+impl<D> core::marker::Send for entelix_core::agent_context::AgentContext<D> where D: core::marker::Send
+impl<D> core::marker::Sync for entelix_core::agent_context::AgentContext<D> where D: core::marker::Sync
+impl<D> core::marker::Unpin for entelix_core::agent_context::AgentContext<D> where D: core::marker::Unpin
+impl<D> core::marker::UnsafeUnpin for entelix_core::agent_context::AgentContext<D> where D: core::marker::UnsafeUnpin
+impl<D> !core::panic::unwind_safe::RefUnwindSafe for entelix_core::agent_context::AgentContext<D>
+impl<D> !core::panic::unwind_safe::UnwindSafe for entelix_core::agent_context::AgentContext<D>
 pub struct entelix_core::ApiKeyProvider
 impl entelix_core::auth::ApiKeyProvider
 pub fn entelix_core::auth::ApiKeyProvider::anthropic(api_key: impl core::convert::Into<secrecy::SecretString>) -> Self
@@ -3026,6 +3132,7 @@ pub fn entelix_core::chat::ChatModel<C, T>::with_tool(self, t: entelix_core::ir:
 pub fn entelix_core::chat::ChatModel<C, T>::with_tool_choice(self, c: entelix_core::ir::ToolChoice) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_tools(self, tools: alloc::vec::Vec<entelix_core::ir::ToolSpec>) -> Self
 pub const fn entelix_core::chat::ChatModel<C, T>::with_top_p(self, p: f32) -> Self
+pub const fn entelix_core::chat::ChatModel<C, T>::with_validation_retries(self, n: u32) -> Self
 impl<C: entelix_core::codecs::Codec + 'static, T: entelix_core::transports::Transport + 'static> core::clone::Clone for entelix_core::chat::ChatModel<C, T>
 pub fn entelix_core::chat::ChatModel<C, T>::clone(&self) -> Self
 impl<C: entelix_core::codecs::Codec + 'static, T: entelix_core::transports::Transport + 'static> core::fmt::Debug for entelix_core::chat::ChatModel<C, T>
@@ -3050,6 +3157,7 @@ pub const fn entelix_core::chat::ChatModelConfig::temperature(&self) -> core::op
 pub const fn entelix_core::chat::ChatModelConfig::tool_choice(&self) -> &entelix_core::ir::ToolChoice
 pub fn entelix_core::chat::ChatModelConfig::tools(&self) -> &[entelix_core::ir::ToolSpec]
 pub const fn entelix_core::chat::ChatModelConfig::top_p(&self) -> core::option::Option<f32>
+pub const fn entelix_core::chat::ChatModelConfig::validation_retries(&self) -> u32
 impl core::clone::Clone for entelix_core::chat::ChatModelConfig
 pub fn entelix_core::chat::ChatModelConfig::clone(&self) -> entelix_core::chat::ChatModelConfig
 impl core::fmt::Debug for entelix_core::chat::ChatModelConfig
@@ -3102,6 +3210,8 @@ pub fn entelix_core::context::ExecutionContext::with_tenant_id(self, tenant_id: 
 pub fn entelix_core::context::ExecutionContext::with_thread_id(self, thread_id: impl core::convert::Into<alloc::string::String>) -> Self
 impl core::clone::Clone for entelix_core::context::ExecutionContext
 pub fn entelix_core::context::ExecutionContext::clone(&self) -> entelix_core::context::ExecutionContext
+impl core::convert::From<entelix_core::context::ExecutionContext> for entelix_core::agent_context::AgentContext<()>
+pub fn entelix_core::agent_context::AgentContext<()>::from(core: entelix_core::context::ExecutionContext) -> Self
 impl core::default::Default for entelix_core::context::ExecutionContext
 pub fn entelix_core::context::ExecutionContext::default() -> Self
 impl core::fmt::Debug for entelix_core::context::ExecutionContext
@@ -3454,32 +3564,35 @@ impl core::marker::Unpin for entelix_core::service::ToolInvocation
 impl core::marker::UnsafeUnpin for entelix_core::service::ToolInvocation
 impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::service::ToolInvocation
 impl !core::panic::unwind_safe::UnwindSafe for entelix_core::service::ToolInvocation
-pub struct entelix_core::ToolRegistry
-impl entelix_core::ToolRegistry
-pub async fn entelix_core::ToolRegistry::dispatch(&self, tool_use_id: &str, name: &str, input: serde_json::value::Value, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<serde_json::value::Value>
-pub fn entelix_core::ToolRegistry::filter<F>(&self, predicate: F) -> Self where F: core::ops::function::Fn(&dyn entelix_core::Tool) -> bool
-pub fn entelix_core::ToolRegistry::get(&self, name: &str) -> core::option::Option<&alloc::sync::Arc<dyn entelix_core::Tool>>
-pub fn entelix_core::ToolRegistry::is_empty(&self) -> bool
-pub fn entelix_core::ToolRegistry::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedToolService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer>::Service: tower_service::Service<entelix_core::service::ToolInvocation, Response = serde_json::value::Value, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer>::Service as tower_service::Service<entelix_core::service::ToolInvocation>>::Future: core::marker::Send + 'static
-pub fn entelix_core::ToolRegistry::len(&self) -> usize
-pub fn entelix_core::ToolRegistry::names(&self) -> impl core::iter::traits::iterator::Iterator<Item = &str>
-pub fn entelix_core::ToolRegistry::new() -> Self
-pub fn entelix_core::ToolRegistry::register(self, tool: alloc::sync::Arc<dyn entelix_core::Tool>) -> entelix_core::error::Result<Self>
-pub fn entelix_core::ToolRegistry::restricted_to(&self, allowed: &[&str]) -> entelix_core::error::Result<Self>
-pub fn entelix_core::ToolRegistry::service(&self, name: &str) -> core::option::Option<entelix_core::service::BoxedToolService>
-impl core::clone::Clone for entelix_core::ToolRegistry
-pub fn entelix_core::ToolRegistry::clone(&self) -> entelix_core::ToolRegistry
-impl core::default::Default for entelix_core::ToolRegistry
-pub fn entelix_core::ToolRegistry::default() -> Self
-impl core::fmt::Debug for entelix_core::ToolRegistry
-pub fn entelix_core::ToolRegistry::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for entelix_core::ToolRegistry
-impl core::marker::Send for entelix_core::ToolRegistry
-impl core::marker::Sync for entelix_core::ToolRegistry
-impl core::marker::Unpin for entelix_core::ToolRegistry
-impl core::marker::UnsafeUnpin for entelix_core::ToolRegistry
-impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::ToolRegistry
-impl !core::panic::unwind_safe::UnwindSafe for entelix_core::ToolRegistry
+pub struct entelix_core::ToolRegistry<D>
+impl entelix_core::ToolRegistry<()>
+pub fn entelix_core::ToolRegistry<()>::new() -> Self
+impl<D: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static> entelix_core::ToolRegistry<D>
+pub const fn entelix_core::ToolRegistry<D>::deps(&self) -> &D
+pub async fn entelix_core::ToolRegistry<D>::dispatch(&self, tool_use_id: &str, name: &str, input: serde_json::value::Value, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<serde_json::value::Value>
+pub fn entelix_core::ToolRegistry<D>::filter<F>(&self, predicate: F) -> Self where F: core::ops::function::Fn(&dyn entelix_core::Tool<D>) -> bool
+pub fn entelix_core::ToolRegistry<D>::get(&self, name: &str) -> core::option::Option<&alloc::sync::Arc<dyn entelix_core::Tool<D>>>
+pub fn entelix_core::ToolRegistry<D>::is_empty(&self) -> bool
+pub fn entelix_core::ToolRegistry<D>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedToolService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer>::Service: tower_service::Service<entelix_core::service::ToolInvocation, Response = serde_json::value::Value, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer>::Service as tower_service::Service<entelix_core::service::ToolInvocation>>::Future: core::marker::Send + 'static
+pub fn entelix_core::ToolRegistry<D>::len(&self) -> usize
+pub fn entelix_core::ToolRegistry<D>::names(&self) -> impl core::iter::traits::iterator::Iterator<Item = &str>
+pub fn entelix_core::ToolRegistry<D>::register(self, tool: alloc::sync::Arc<dyn entelix_core::Tool<D>>) -> entelix_core::error::Result<Self>
+pub fn entelix_core::ToolRegistry<D>::restricted_to(&self, allowed: &[&str]) -> entelix_core::error::Result<Self>
+pub fn entelix_core::ToolRegistry<D>::service(&self, name: &str) -> core::option::Option<entelix_core::service::BoxedToolService>
+pub fn entelix_core::ToolRegistry<D>::with_deps(deps: D) -> Self
+impl core::default::Default for entelix_core::ToolRegistry<()>
+pub fn entelix_core::ToolRegistry<()>::default() -> Self
+impl<D: core::clone::Clone> core::clone::Clone for entelix_core::ToolRegistry<D>
+pub fn entelix_core::ToolRegistry<D>::clone(&self) -> Self
+impl<D: core::marker::Send + core::marker::Sync + 'static> core::fmt::Debug for entelix_core::ToolRegistry<D>
+pub fn entelix_core::ToolRegistry<D>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<D> core::marker::Freeze for entelix_core::ToolRegistry<D> where D: core::marker::Freeze
+impl<D> core::marker::Send for entelix_core::ToolRegistry<D> where D: core::marker::Send
+impl<D> core::marker::Sync for entelix_core::ToolRegistry<D> where D: core::marker::Sync
+impl<D> core::marker::Unpin for entelix_core::ToolRegistry<D> where D: core::marker::Unpin
+impl<D> core::marker::UnsafeUnpin for entelix_core::ToolRegistry<D> where D: core::marker::UnsafeUnpin
+impl<D> !core::panic::unwind_safe::RefUnwindSafe for entelix_core::ToolRegistry<D>
+impl<D> !core::panic::unwind_safe::UnwindSafe for entelix_core::ToolRegistry<D>
 #[non_exhaustive] pub struct entelix_core::UsageSnapshot
 pub entelix_core::UsageSnapshot::input_tokens: u64
 pub entelix_core::UsageSnapshot::output_tokens: u64
@@ -3542,8 +3655,8 @@ pub fn entelix_core::Skill::name(&self) -> &str
 pub fn entelix_core::Skill::version(&self) -> core::option::Option<&str>
 pub trait entelix_core::SkillResource: core::marker::Send + core::marker::Sync + core::fmt::Debug
 pub fn entelix_core::SkillResource::read<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::SkillResourceContent>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-pub trait entelix_core::Tool: core::marker::Send + core::marker::Sync + 'static
-pub fn entelix_core::Tool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub trait entelix_core::Tool<D> where D: core::marker::Send + core::marker::Sync + 'static: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::Tool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::agent_context::AgentContext<D>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn entelix_core::Tool::metadata(&self) -> &entelix_core::tools::ToolMetadata
 pub trait entelix_core::ToolCostCalculator: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::ToolCostCalculator::compute_cost<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, tool_name: &'life1 str, output: &'life2 serde_json::value::Value, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<f64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait

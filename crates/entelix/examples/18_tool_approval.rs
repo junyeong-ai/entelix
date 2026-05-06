@@ -39,7 +39,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use entelix::tools::{Tool, ToolMetadata, ToolRegistry};
 use entelix::{
-    ApprovalDecision, ApprovalLayer, ApprovalRequest, Approver, Error, ExecutionContext, Result,
+    AgentContext, ApprovalDecision, ApprovalLayer, ApprovalRequest, Approver, Error,
+    ExecutionContext, Result,
 };
 use serde_json::{Value, json};
 
@@ -75,7 +76,7 @@ impl Tool for SensitiveActionTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, _ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, _ctx: &AgentContext<()>) -> Result<Value> {
         // Real impl would call the payment provider. The example
         // just echoes — the gating flow is the demonstration target.
         let customer = input

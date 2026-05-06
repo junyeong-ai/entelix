@@ -194,6 +194,7 @@ impl Sandbox for MockSandbox {
 mod tests {
     use serde_json::json;
 
+    use entelix_core::AgentContext;
     use entelix_core::tools::Tool;
 
     use super::*;
@@ -215,7 +216,7 @@ mod tests {
         ));
         let tool = SandboxedShellTool::read_only(sandbox.clone());
         let out = tool
-            .execute(json!({"argv": ["ls", "-la"]}), &ExecutionContext::new())
+            .execute(json!({"argv": ["ls", "-la"]}), &AgentContext::default())
             .await
             .unwrap();
         // Lean success payload: stdout only, no exit_code or
@@ -233,7 +234,7 @@ mod tests {
         let err = tool
             .execute(
                 json!({"argv": ["rm", "-rf", "/"]}),
-                &ExecutionContext::new(),
+                &AgentContext::default(),
             )
             .await
             .unwrap_err();
@@ -248,7 +249,7 @@ mod tests {
         let err = tool
             .execute(
                 json!({"language": "bash", "source": "echo hi"}),
-                &ExecutionContext::new(),
+                &AgentContext::default(),
             )
             .await
             .unwrap_err();
@@ -262,7 +263,7 @@ mod tests {
         let out = tool
             .execute(
                 json!({"language": "python", "source": "print('hi')"}),
-                &ExecutionContext::new(),
+                &AgentContext::default(),
             )
             .await
             .unwrap();
@@ -282,18 +283,18 @@ mod tests {
         let _ = writer
             .execute(
                 json!({"path": "/tmp/note.txt", "content": "hello"}),
-                &ExecutionContext::new(),
+                &AgentContext::default(),
             )
             .await
             .unwrap();
         let read = reader
-            .execute(json!({"path": "/tmp/note.txt"}), &ExecutionContext::new())
+            .execute(json!({"path": "/tmp/note.txt"}), &AgentContext::default())
             .await
             .unwrap();
         assert_eq!(read["content"], "hello");
 
         let listing = lister
-            .execute(json!({"path": "/tmp"}), &ExecutionContext::new())
+            .execute(json!({"path": "/tmp"}), &AgentContext::default())
             .await
             .unwrap();
         let entries = listing["entries"].as_array().unwrap();

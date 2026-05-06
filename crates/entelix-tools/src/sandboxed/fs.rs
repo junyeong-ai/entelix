@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-use entelix_core::context::ExecutionContext;
+use entelix_core::AgentContext;
 use entelix_core::error::Result;
 use entelix_core::sandbox::Sandbox;
 use entelix_core::tools::{Tool, ToolEffect, ToolMetadata};
@@ -68,9 +68,9 @@ impl Tool for SandboxedReadFileTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let parsed: PathInput = serde_json::from_value(input).map_err(ToolError::from)?;
-        let bytes = self.sandbox.read_file(&parsed.path, ctx).await?;
+        let bytes = self.sandbox.read_file(&parsed.path, ctx.core()).await?;
         // Lean LLM-facing payload: text on UTF-8, base64 on binary.
         // Operators that always know binary handle it explicitly.
         let content = String::from_utf8(bytes.clone()).unwrap_or_else(|e| {
@@ -148,10 +148,10 @@ impl Tool for SandboxedWriteFileTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let parsed: WriteInput = serde_json::from_value(input).map_err(ToolError::from)?;
         let bytes = parsed.content.as_bytes();
-        self.sandbox.write_file(&parsed.path, bytes, ctx).await?;
+        self.sandbox.write_file(&parsed.path, bytes, ctx.core()).await?;
         // Lean LLM-facing payload — bare confirmation. The model
         // already knows the path it wrote to and the content it
         // sent; echoing those is token waste (ADR-0024 §7).
@@ -207,9 +207,9 @@ impl Tool for SandboxedListDirTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let parsed: PathInput = serde_json::from_value(input).map_err(ToolError::from)?;
-        let entries = self.sandbox.list_dir(&parsed.path, ctx).await?;
+        let entries = self.sandbox.list_dir(&parsed.path, ctx.core()).await?;
         // Lean LLM-facing payload — just the entries; the model
         // already knows the path it queried (ADR-0024 §7).
         Ok(json!({"entries": entries}))

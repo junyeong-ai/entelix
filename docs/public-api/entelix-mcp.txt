@@ -576,7 +576,7 @@ pub fn entelix_mcp::McpToolAdapter::new(manager: entelix_mcp::McpManager, server
 pub fn entelix_mcp::McpToolAdapter::server(&self) -> &str
 pub fn entelix_mcp::McpToolAdapter::with_unqualified_name(self) -> Self
 impl entelix_core::tools::tool::Tool for entelix_mcp::McpToolAdapter
-pub fn entelix_mcp::McpToolAdapter::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_mcp::McpToolAdapter::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::agent_context::AgentContext<()>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn entelix_mcp::McpToolAdapter::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
 impl core::marker::Freeze for entelix_mcp::McpToolAdapter
 impl core::marker::Send for entelix_mcp::McpToolAdapter

@@ -22,6 +22,7 @@
 use std::collections::BTreeMap;
 
 use entelix_core::TenantId;
+use entelix_core::AgentContext;
 use entelix_core::context::ExecutionContext;
 use entelix_mcp::{
     HttpMcpClient, McpClient, McpClientState, McpCompletionArgument, McpCompletionReference,
@@ -220,7 +221,11 @@ async fn manager_routes_tool_call_through_adapter() {
     assert_eq!(adapter.metadata().name, "mcp:mock:echo");
     assert_eq!(adapter.mcp_tool_name(), "echo");
 
-    let out = adapter.execute(json!({ "x": 1 }), &ctx).await.unwrap();
+    let agent_ctx = AgentContext::<()>::from(ctx.clone());
+    let out = adapter
+        .execute(json!({ "x": 1 }), &agent_ctx)
+        .await
+        .unwrap();
     assert_eq!(out, json!("you said: {\"x\":1}"));
 
     // Opt-out path for single-server deployments.

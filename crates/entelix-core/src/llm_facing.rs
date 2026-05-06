@@ -192,6 +192,11 @@ impl LlmRenderable<String> for Error {
             // model does not need budget visibility (and exposing
             // it would invite the model to plan around limits).
             Self::UsageLimitExceeded { .. } => "request quota reached".to_owned(),
+            // `ModelRetry` carries an already-rendered hint by
+            // construction — surface that text verbatim. The retry
+            // loop catches the variant before LLM emission in normal
+            // flow; this branch covers leaks past the loop boundary.
+            Self::ModelRetry { hint, .. } => hint.as_inner().clone(),
         }
     }
 }

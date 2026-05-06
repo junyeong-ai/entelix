@@ -63,9 +63,10 @@ fn parent_skills() -> SkillRegistry {
 #[test]
 fn subagent_inherits_only_named_skills() {
     let parent = parent_skills();
-    let sub = Subagent::from_whitelist(StubModel, &ToolRegistry::new(), &[])
-        .unwrap()
+    let sub = Subagent::builder(StubModel, &ToolRegistry::new())
+        .restrict_to(&[])
         .with_skills(&parent, &["echo", "sql-expert"])
+        .build()
         .unwrap();
     let inherited = sub.skills();
     assert_eq!(inherited.len(), 2);
@@ -77,9 +78,10 @@ fn subagent_inherits_only_named_skills() {
 #[test]
 fn subagent_with_skills_rejects_missing_names() {
     let parent = parent_skills();
-    let err = Subagent::from_whitelist(StubModel, &ToolRegistry::new(), &[])
-        .unwrap()
+    let err = Subagent::builder(StubModel, &ToolRegistry::new())
+        .restrict_to(&[])
         .with_skills(&parent, &["echo", "ghost-skill", "sql-expert"])
+        .build()
         .unwrap_err();
     let msg = format!("{err}");
     assert!(
@@ -92,6 +94,6 @@ fn subagent_with_skills_rejects_missing_names() {
 fn subagent_default_skills_are_empty_no_inheritance_without_explicit_call() {
     // F7 mitigation: never auto-inherit. The default for a freshly
     // built sub-agent is an empty skill registry.
-    let sub = Subagent::from_whitelist(StubModel, &ToolRegistry::new(), &[]).unwrap();
+    let sub = Subagent::builder(StubModel, &ToolRegistry::new()).restrict_to(&[]).build().unwrap();
     assert!(sub.skills().is_empty());
 }

@@ -4,11 +4,11 @@
 //!
 //! The constructors split on strictness:
 //!
-//! - `Subagent::from_whitelist(model, parent, allowed_names)` — strict.
+//! - `Subagent::builder(model, parent).restrict_to(allowed_names).build()` — strict.
 //!   Every name in `allowed` must exist in the parent registry; a typo
 //!   surfaces as `Error::Config` at construction time. Duplicate names
 //!   silently dedup (`HashSet` semantic) — the deduped view is correct.
-//! - `Subagent::from_filter(model, parent, predicate)` — graceful.
+//! - `Subagent::builder(model, parent).filter(predicate).build()` — graceful.
 //!   The predicate is `Fn(&dyn Tool) -> bool`, evaluated once per
 //!   parent tool at construction; the resulting view is frozen.
 //!   Empty results are valid (a "pure orchestration" sub-agent with
@@ -32,6 +32,7 @@ use serde_json::{Value, json};
 
 use entelix_agents::Subagent;
 use entelix_core::ExecutionContext;
+use entelix_core::AgentContext;
 use entelix_core::Result;
 use entelix_core::ir::Message;
 use entelix_core::tools::{Tool, ToolMetadata};
@@ -55,7 +56,7 @@ impl Tool for EchoTool {
     fn metadata(&self) -> &ToolMetadata {
         &self.metadata
     }
-    async fn execute(&self, input: Value, _ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, _ctx: &AgentContext<()>) -> Result<Value> {
         Ok(input)
     }
 }
@@ -86,7 +87,7 @@ fn from_whitelist_rejects_typo_at_construction_time() {
     // `Error::Config` rather than producing a sub-agent that
     // silently can't reach the tool the operator intended.
     let parent = parent_with(&["alpha", "beta"]);
-    let err = Subagent::from_whitelist(StubModel, &parent, &["alpha", "ghost"]).unwrap_err();
+    let err = Subagent::builder(StubModel, &parent).restrict_to(&["alpha", "ghost"]).build().unwrap_err();
     let rendered = format!("{err}");
     assert!(
         rendered.contains("ghost") && rendered.contains("not in registry"),
@@ -102,7 +103,7 @@ fn from_whitelist_dedup_handles_duplicate_names_correctly() {
     // swapped to Vec-based comparison would surface as either an
     // inflated tool_count or a spurious "already-registered" error.
     let parent = parent_with(&["alpha", "beta"]);
-    let sub = Subagent::from_whitelist(StubModel, &parent, &["alpha", "alpha"]).unwrap();
+    let sub = Subagent::builder(StubModel, &parent).restrict_to(&["alpha", "alpha"]).build().unwrap();
     assert_eq!(sub.tool_count(), 1);
 }
 
@@ -120,10 +121,13 @@ fn from_filter_predicate_evaluated_once_per_parent_tool() {
     let calls = Arc::new(AtomicUsize::new(0));
     let calls_in = Arc::clone(&calls);
 
-    let sub = Subagent::from_filter(StubModel, &parent, move |t| {
-        calls_in.fetch_add(1, Ordering::SeqCst);
-        t.metadata().name == "beta"
-    });
+    let sub = Subagent::builder(StubModel, &parent)
+        .filter(move |t| {
+            calls_in.fetch_add(1, Ordering::SeqCst);
+            t.metadata().name == "beta"
+        })
+        .build()
+        .unwrap();
     let post_construction = calls.load(Ordering::SeqCst);
     assert_eq!(
         post_construction, 3,
@@ -158,7 +162,7 @@ fn from_filter_empty_result_is_valid_pure_orchestration_subagent() {
     // erroring on empty filter would break legitimate
     // pure-orchestration sub-agent shapes.
     let parent = parent_with(&["alpha", "beta"]);
-    let sub = Subagent::from_filter(StubModel, &parent, |_| false);
+    let sub = Subagent::builder(StubModel, &parent).filter(|_| false).build().unwrap();
     assert_eq!(sub.tool_count(), 0);
 }
 
@@ -170,10 +174,11 @@ fn with_skills_rejects_typo_at_construction_time() {
     // it. A regression that swapped to direct `filter` would lose
     // the typo-detection.
     let parent = parent_with(&["alpha"]);
-    let sub = Subagent::from_whitelist(StubModel, &parent, &["alpha"]).unwrap();
     let parent_skills = SkillRegistry::new();
-    let err = sub
+    let err = Subagent::builder(StubModel, &parent)
+        .restrict_to(&["alpha"])
         .with_skills(&parent_skills, &["nonexistent"])
+        .build()
         .unwrap_err();
     let rendered = format!("{err}");
     assert!(

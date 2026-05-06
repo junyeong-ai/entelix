@@ -21,6 +21,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dependencies]
 entelix-core = { workspace = true }
 entelix-memory = { workspace = true }
+entelix-tool-derive = { workspace = true }
 async-trait = { workspace = true }
 bytes = { workspace = true }
 chrono = { workspace = true }

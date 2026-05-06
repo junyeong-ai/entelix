@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-use entelix_core::context::ExecutionContext;
+use entelix_core::AgentContext;
 use entelix_core::error::Result;
 use entelix_core::sandbox::{CommandSpec, Sandbox};
 use entelix_core::tools::{Tool, ToolEffect, ToolMetadata};
@@ -99,7 +99,7 @@ impl Tool for SandboxedShellTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let parsed: ShellToolInput = serde_json::from_value(input).map_err(ToolError::from)?;
 
         // Policy check — first defense layer.
@@ -113,7 +113,7 @@ impl Tool for SandboxedShellTool {
             stdin: None,
             timeout: Some(self.policy.max_duration()),
         };
-        let output = self.sandbox.run_command(spec, ctx).await?;
+        let output = self.sandbox.run_command(spec, ctx.core()).await?;
 
         // Lean LLM-facing payload (ADR-0024 §7):
         // - Success: stdout text only — the model reasons over output.

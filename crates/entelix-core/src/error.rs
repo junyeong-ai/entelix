@@ -79,6 +79,36 @@ pub enum Error {
         payload: serde_json::Value,
     },
 
+    /// A validator (typed-output `OutputValidator`, tool body, hook)
+    /// requested the model retry the current turn with corrective
+    /// feedback. Distinct from [`Self::Provider`] (transport
+    /// retries — wire-level failure) and [`Self::InvalidRequest`]
+    /// (operator misuse) so retry classifiers, OTel dashboards, and
+    /// budget meters all branch on a typed signal.
+    ///
+    /// Catch-and-resume semantics: the surrounding agent or
+    /// `complete_typed<O>` loop catches this variant, appends a
+    /// `RetryPromptPart` to the conversation carrying `hint`, and
+    /// re-invokes the model — counting one increment against
+    /// `ChatModelConfig::validation_retries`. Operators that want to
+    /// raise this variant build it via [`Error::model_retry`] so
+    /// the `RenderedForLlm` funnel (invariant 16) cannot be
+    /// bypassed.
+    #[error("model retry requested (attempt {attempt})")]
+    ModelRetry {
+        /// Corrective text the loop will surface to the model on the
+        /// retried turn. The `RenderedForLlm` carrier ensures the
+        /// payload was filtered through the operator-controlled
+        /// rendering funnel rather than copied raw from a
+        /// vendor-side error string.
+        hint: crate::llm_facing::RenderedForLlm<String>,
+        /// Per-call attempt counter. The retry loop stamps this on
+        /// emit so the variant is self-describing without callers
+        /// tracking attempt state externally. The first retry sees
+        /// `attempt = 1`.
+        attempt: u32,
+    },
+
     /// JSON serialization or deserialization failed at an entelix-managed
     /// boundary (codec, tool I/O, persistence write/read).
     #[error(transparent)]
@@ -120,6 +150,25 @@ impl Error {
     /// Build a `Config` error from a static or owned string.
     pub fn config(msg: impl Into<Cow<'static, str>>) -> Self {
         Self::Config(msg.into())
+    }
+
+    /// Build a [`Self::ModelRetry`] from an LLM-rendered hint. The
+    /// `attempt` counter starts at zero and is incremented by the
+    /// surrounding retry loop on each emit; validators / tools
+    /// raising this variant from a fresh call site pass `0` and
+    /// trust the loop to stamp the running counter.
+    ///
+    /// Construction goes through [`crate::llm_facing::RenderedForLlm`] so the
+    /// hint is not a free-form `String` — the typed carrier ensures
+    /// the message has been routed through the operator's rendering
+    /// funnel (invariant 16). Consumers raising this variant from a
+    /// validator typically obtain the rendered hint via
+    /// `LlmRenderable::for_llm`.
+    pub const fn model_retry(
+        hint: crate::llm_facing::RenderedForLlm<String>,
+        attempt: u32,
+    ) -> Self {
+        Self::ModelRetry { hint, attempt }
     }
 
     /// Build an HTTP-class provider error (4xx / 5xx). Use the

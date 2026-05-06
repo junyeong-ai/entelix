@@ -9,7 +9,7 @@
 
 use async_trait::async_trait;
 use entelix_core::tools::{Tool, ToolMetadata};
-use entelix_core::{ExecutionContext, Result};
+use entelix_core::{AgentContext, ExecutionContext, Result};
 use entelix_runnable::{Runnable, RunnableExt, RunnableLambda, ToolToRunnableAdapter};
 
 /// Tool that doubles a numeric `value` field.
@@ -42,7 +42,7 @@ impl Tool for DoubleTool {
     async fn execute(
         &self,
         input: serde_json::Value,
-        _ctx: &ExecutionContext,
+        _ctx: &AgentContext<()>,
     ) -> Result<serde_json::Value> {
         let n = input
             .get("value")

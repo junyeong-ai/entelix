@@ -15,6 +15,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use entelix_agents::{Agent, AgentEvent, CaptureSink, ToolEventLayer};
 use entelix_core::context::ExecutionContext;
+use entelix_core::AgentContext;
 use entelix_core::error::{Error, Result};
 use entelix_core::tools::{Tool, ToolMetadata, ToolRegistry};
 use entelix_runnable::{Runnable, RunnableLambda};
@@ -172,7 +173,7 @@ impl Tool for AddOneTool {
     fn metadata(&self) -> &ToolMetadata {
         &self.metadata
     }
-    async fn execute(&self, input: Value, _ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, _ctx: &AgentContext<()>) -> Result<Value> {
         let n = input.get("n").and_then(Value::as_i64).unwrap_or(0);
         Ok(json!({"result": n + 1}))
     }
@@ -200,7 +201,7 @@ impl Tool for AlwaysFailTool {
     fn metadata(&self) -> &ToolMetadata {
         &self.metadata
     }
-    async fn execute(&self, _input: Value, _ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, _input: Value, _ctx: &AgentContext<()>) -> Result<Value> {
         Err(Error::config("intentional failure"))
     }
 }
@@ -232,7 +233,7 @@ impl Tool for VersionedTool {
     fn metadata(&self) -> &ToolMetadata {
         &self.metadata
     }
-    async fn execute(&self, _input: Value, _ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, _input: Value, _ctx: &AgentContext<()>) -> Result<Value> {
         if self.fail {
             Err(Error::config("versioned tool intentional failure"))
         } else {

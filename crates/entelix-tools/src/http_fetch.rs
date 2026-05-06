@@ -51,7 +51,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use url::Url;
 
-use entelix_core::context::ExecutionContext;
+use entelix_core::AgentContext;
 use entelix_core::error::Result;
 use entelix_core::tools::{Tool, ToolEffect, ToolMetadata};
 
@@ -494,7 +494,7 @@ impl Tool for HttpFetchTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let parsed: FetchInput = serde_json::from_value(input).map_err(ToolError::from)?;
         let url = Url::parse(&parsed.url)
             .map_err(|e| ToolError::InvalidInput(format!("malformed URL: {e}")))?;

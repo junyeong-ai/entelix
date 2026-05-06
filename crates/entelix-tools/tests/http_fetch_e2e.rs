@@ -9,7 +9,7 @@
 
 use std::net::IpAddr;
 
-use entelix_core::context::ExecutionContext;
+use entelix_core::AgentContext;
 use entelix_core::tools::Tool;
 use entelix_tools::{HostAllowlist, HttpFetchTool};
 use serde_json::json;
@@ -44,7 +44,7 @@ async fn happy_path_get_returns_status_and_body() {
     let out = tool
         .execute(
             json!({"url": format!("{}/hello", server.uri())}),
-            &ExecutionContext::new(),
+            &AgentContext::default(),
         )
         .await
         .unwrap();
@@ -68,7 +68,7 @@ async fn body_cap_truncates_and_marks_truncated() {
         .build()
         .unwrap();
     let out = tool
-        .execute(json!({"url": server.uri()}), &ExecutionContext::new())
+        .execute(json!({"url": server.uri()}), &AgentContext::default())
         .await
         .unwrap();
     assert_eq!(out["truncated"], true);
@@ -92,7 +92,7 @@ async fn host_outside_allowlist_is_rejected() {
         .build()
         .unwrap();
     let err = tool
-        .execute(json!({"url": server.uri()}), &ExecutionContext::new())
+        .execute(json!({"url": server.uri()}), &AgentContext::default())
         .await
         .unwrap_err();
     assert!(format!("{err}").contains("not on the allowlist"));
@@ -108,7 +108,7 @@ async fn method_allowlist_rejects_post_by_default() {
     let err = tool
         .execute(
             json!({"url": server.uri(), "method": "POST"}),
-            &ExecutionContext::new(),
+            &AgentContext::default(),
         )
         .await
         .unwrap_err();
@@ -124,7 +124,7 @@ async fn unsupported_scheme_is_rejected_before_network() {
     let err = tool
         .execute(
             json!({"url": "file:///etc/passwd"}),
-            &ExecutionContext::new(),
+            &AgentContext::default(),
         )
         .await
         .unwrap_err();
@@ -155,7 +155,7 @@ async fn dns_rebinding_block_rejects_hostname_resolving_to_loopback() {
             // service would respond. The block fires earlier
             // anyway — the connect never starts.
             json!({"url": "http://localhost:9/probe"}),
-            &ExecutionContext::new(),
+            &AgentContext::default(),
         )
         .await
         .unwrap_err();
@@ -191,7 +191,7 @@ async fn explicit_ip_allow_round_trips_against_loopback_listener() {
     let out = tool
         .execute(
             json!({"url": format!("{}/probe", server.uri())}),
-            &ExecutionContext::new(),
+            &AgentContext::default(),
         )
         .await
         .unwrap();
@@ -231,7 +231,7 @@ async fn redirect_to_non_allowlisted_host_is_rejected() {
     let err = tool
         .execute(
             json!({"url": format!("{}/start", permit.uri())}),
-            &ExecutionContext::new(),
+            &AgentContext::default(),
         )
         .await
         .unwrap_err();
@@ -284,7 +284,7 @@ async fn redirect_within_allowlist_is_followed() {
     let out = tool
         .execute(
             json!({"url": format!("{}/start", a.uri())}),
-            &ExecutionContext::new(),
+            &AgentContext::default(),
         )
         .await
         .unwrap();

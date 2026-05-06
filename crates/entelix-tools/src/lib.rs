@@ -15,8 +15,9 @@
 //!   hosts produces a tool that refuses every URL.
 //! - [`HostAllowlist`] — domain / wildcard / literal-IP rules with a
 //!   fail-closed default policy.
-//! - [`CalculatorTool`] — arithmetic over `f64` (`+ - * / parens`).
-//!   Recursive-descent parser; no `eval` or shell-out.
+//! - [`Calculator`] — arithmetic over `f64` (`+ - * / parens`).
+//!   Recursive-descent parser; no `eval` or shell-out. Generated
+//!   from a free async fn via the [`tool`] macro.
 //! - [`SearchProvider`] (trait) + [`SearchTool`] — adapter for
 //!   external search APIs (Brave / Tavily / Perplexity / …).
 //!   Concrete providers are deferred to 1.1 (same trait-only policy
@@ -50,7 +51,13 @@
     clippy::unnecessary_literal_bound
 )]
 
-mod calculator;
+// Make the crate self-referential so the `#[tool]` proc-macro's
+// generated `::entelix_tools::SchemaTool` paths resolve when the
+// macro is invoked from inside this crate. Standard Rust hygiene
+// pattern for proc-macro consumers that re-export their own macro.
+extern crate self as entelix_tools;
+
+pub mod calculator;
 mod dns;
 mod error;
 mod http_fetch;
@@ -60,8 +67,14 @@ mod schema_tool;
 mod search;
 pub mod skills;
 
-pub use calculator::CalculatorTool;
+pub use calculator::{Calculator, CalculatorInput, CalculatorOutput};
 pub use dns::{SsrfSafeDnsResolver, is_ssrf_blocked};
+/// `#[tool]` attribute macro — generates a [`SchemaTool`] impl
+/// from an `async fn` signature. Doc-comment first paragraph
+/// becomes the tool description; the function name (snake_case)
+/// becomes the tool struct name (PascalCase). See the
+/// `entelix-tool-derive` crate docs for the full contract.
+pub use entelix_tool_derive::tool;
 pub use error::{ToolError, ToolResult};
 pub use http_fetch::{
     DEFAULT_FETCH_TIMEOUT, DEFAULT_MAX_REDIRECTS, DEFAULT_MAX_RESPONSE_BYTES, HostAllowlist,

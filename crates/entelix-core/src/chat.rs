@@ -79,6 +79,13 @@ pub struct ChatModelConfig {
     tools: Vec<ToolSpec>,
     tool_choice: ToolChoice,
     reasoning_effort: Option<ReasoningEffort>,
+    /// `complete_typed<O>` retry budget — schema-mismatch failures
+    /// reflect the parse error to the model and re-prompt up to
+    /// `validation_retries` times before bubbling
+    /// [`Error::Serde`]. Default `0` (no retry); operators opt in
+    /// per ADR-0090. Distinct from [`crate::Error::Provider`]'s
+    /// transport retries (handled by `RetryService`).
+    validation_retries: u32,
 }
 
 impl ChatModelConfig {
@@ -96,7 +103,16 @@ impl ChatModelConfig {
             tools: Vec::new(),
             tool_choice: ToolChoice::default(),
             reasoning_effort: None,
+            validation_retries: 0,
         }
+    }
+
+    /// `complete_typed<O>` retry budget. Default `0` — the first
+    /// schema-mismatch fail surfaces unchanged. Operators that want
+    /// the loop to reflect the parse error to the model and ask for
+    /// a corrected JSON response set this to `1`–`3`.
+    pub const fn validation_retries(&self) -> u32 {
+        self.validation_retries
     }
 
     /// Provider model identifier sent on the wire.
@@ -418,6 +434,18 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         self
     }
 
+    /// Set the [`complete_typed`](Self::complete_typed) validation
+    /// retry budget — number of times the loop reflects a
+    /// schema-mismatch [`Error::Serde`] back to the model with
+    /// corrective hint text before bubbling the error. Default `0`
+    /// (no retry). Each retry increments the conversation length by
+    /// two messages (assistant's failed reply + retry prompt).
+    #[must_use]
+    pub const fn with_validation_retries(mut self, n: u32) -> Self {
+        self.config.validation_retries = n;
+        self
+    }
+
     /// Set nucleus sampling parameter.
     #[must_use]
     pub const fn with_top_p(mut self, p: f32) -> Self {
@@ -683,20 +711,58 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         let spec = JsonSchemaSpec::new(short_name, schema_value)?;
         let format = ResponseFormat::strict(spec);
 
-        let budget = ctx.run_budget();
-        if let Some(budget) = &budget {
-            budget.check_pre_request()?;
-        }
-        let mut request = self.config.build_request(messages);
-        apply_run_overrides(&mut request, ctx);
-        request.response_format = Some(format);
+        let mut conversation = messages;
+        let max_retries = self.config.validation_retries;
+        let mut attempt: u32 = 0;
+        loop {
+            let budget = ctx.run_budget();
+            if let Some(budget) = &budget {
+                budget.check_pre_request()?;
+            }
+            let mut request = self.config.build_request(conversation.clone());
+            apply_run_overrides(&mut request, ctx);
+            request.response_format = Some(format.clone());
 
-        let invocation = ModelInvocation::new(request, ctx.clone());
-        let response = self.service().oneshot(invocation).await?;
-        if let Some(budget) = &budget {
-            budget.observe_usage(&response.usage)?;
+            let invocation = ModelInvocation::new(request, ctx.clone());
+            let response = self.service().oneshot(invocation).await?;
+            if let Some(budget) = &budget {
+                budget.observe_usage(&response.usage)?;
+            }
+            // Capture the assistant's reply text for the retry path.
+            // `parse_typed_response` consumes by value; clone the
+            // text-block content first so a parse failure can
+            // re-feed the model its own output as context.
+            let assistant_text = response_text_for_retry(&response);
+            match parse_typed_response::<O>(response) {
+                Ok(value) => return Ok(value),
+                Err(err) if matches!(err, Error::Serde(_)) && attempt < max_retries => {
+                    attempt += 1;
+                    let parse_diagnostic = err.to_string();
+                    // Echo the assistant's failed turn into the
+                    // conversation so the next call sees what it
+                    // produced; then add a user-side correction.
+                    conversation.push(Message::new(
+                        crate::ir::Role::Assistant,
+                        vec![ContentPart::Text {
+                            text: assistant_text.unwrap_or_default(),
+                            cache_control: None,
+                        }],
+                    ));
+                    conversation.push(Message::new(
+                        crate::ir::Role::User,
+                        vec![ContentPart::Text {
+                            text: format!(
+                                "Your previous response did not match the required JSON schema for `{short_name}`. \
+                                 Parser diagnostic: {parse_diagnostic}\n\
+                                 Re-emit the response as a single valid JSON object that conforms to the schema."
+                            ),
+                            cache_control: None,
+                        }],
+                    ));
+                }
+                Err(err) => return Err(err),
+            }
         }
-        parse_typed_response(response)
     }
 
     /// Open a streaming model call and return an IR `StreamDelta`
@@ -786,6 +852,21 @@ impl<C: Codec + 'static, T: Transport + 'static> std::fmt::Debug for ChatModel<C
 // (etc.) after `parse_typed_response` succeeded, masking the
 // "this response has been consumed" intent the typed surface
 // communicates.
+/// Concatenate every `ContentPart::Text` block in `response` for
+/// the retry-path conversation echo. Returns `None` when the model
+/// surfaced no textual content (in that case the retry loop seeds
+/// the assistant turn with an empty string — the diagnostic message
+/// alone is enough context for the model to course-correct).
+fn response_text_for_retry(response: &ModelResponse) -> Option<String> {
+    let mut out = String::new();
+    for part in &response.content {
+        if let ContentPart::Text { text, .. } = part {
+            out.push_str(text);
+        }
+    }
+    if out.is_empty() { None } else { Some(out) }
+}
+
 #[allow(clippy::needless_pass_by_value)]
 fn parse_typed_response<O>(response: ModelResponse) -> Result<O>
 where

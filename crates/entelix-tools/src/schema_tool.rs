@@ -11,7 +11,7 @@
 //! ## What you write
 //!
 //! ```no_run
-//! use entelix_core::context::ExecutionContext;
+//! use entelix_core::AgentContext;
 //! use entelix_core::error::Result;
 //! use entelix_tools::{SchemaTool, SchemaToolExt};
 //! use schemars::JsonSchema;
@@ -41,7 +41,7 @@
 //!     async fn execute(
 //!         &self,
 //!         input: Self::Input,
-//!         _ctx: &ExecutionContext,
+//!         _ctx: &AgentContext<()>,
 //!     ) -> Result<Self::Output> {
 //!         Ok(DoubleOutput { doubled: input.n * 2 })
 //!     }
@@ -72,15 +72,15 @@
 //!   is what implements `Tool`. Nothing on the dispatcher side needs
 //!   to know `SchemaTool` exists.
 //! - Invariant 10 (no tokens in tools): `SchemaTool::execute` takes
-//!   `&ExecutionContext`. Credentials still live in transports.
+//!   `&AgentContext`. Credentials still live in transports.
 //! - Cancellation (CLAUDE.md §"Cancellation"): typed authors check
 //!   `ctx.is_cancelled()` for long loops just like the erased path.
 
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use entelix_core::AgentContext;
 use entelix_core::LlmFacingSchema;
-use entelix_core::context::ExecutionContext;
 use entelix_core::error::{Error, Result};
 use entelix_core::tools::{RetryHint, Tool, ToolEffect, ToolMetadata};
 use schemars::JsonSchema;
@@ -145,11 +145,20 @@ pub trait SchemaTool: Send + Sync + 'static {
         None
     }
 
+    /// Whether the tool is idempotent — repeat calls with the same
+    /// input produce the same effect. Defaults to `false`; pure
+    /// computational tools (`ReadOnly` effect) and idempotent
+    /// transports override to `true` so the runtime can dedupe
+    /// retries server-side.
+    fn idempotent(&self) -> bool {
+        false
+    }
+
     /// Run the tool against a typed input. The adapter handles
     /// JSON deserialisation upstream — implementors only see fully
     /// validated `Self::Input` and return a typed `Self::Output`.
     /// Long loops should periodically check `ctx.is_cancelled()`.
-    async fn execute(&self, input: Self::Input, ctx: &ExecutionContext) -> Result<Self::Output>;
+    async fn execute(&self, input: Self::Input, ctx: &AgentContext<()>) -> Result<Self::Output>;
 }
 
 /// Provided extension methods on every [`SchemaTool`]. Lives in a
@@ -192,7 +201,8 @@ impl<T: SchemaTool> SchemaToolAdapter<T> {
         let raw_schema: serde_json::Value = schemars::schema_for!(T::Input).to_value();
         let input_schema = LlmFacingSchema::strip(&raw_schema);
         let mut metadata = ToolMetadata::function(T::NAME, inner.description(), input_schema)
-            .with_effect(inner.effect());
+            .with_effect(inner.effect())
+            .with_idempotent(inner.idempotent());
         if let Some(version) = inner.version() {
             metadata = metadata.with_version(version);
         }
@@ -239,7 +249,7 @@ impl<T: SchemaTool> Tool for SchemaToolAdapter<T> {
     async fn execute(
         &self,
         input: serde_json::Value,
-        ctx: &ExecutionContext,
+        ctx: &AgentContext<()>,
     ) -> Result<serde_json::Value> {
         // Diagnostics surface only the tool name and the serde
         // message — internal Rust type identifiers
@@ -289,7 +299,7 @@ mod tests {
         async fn execute(
             &self,
             input: Self::Input,
-            _ctx: &ExecutionContext,
+            _ctx: &AgentContext<()>,
         ) -> Result<Self::Output> {
             Ok(DoubleOutput {
                 doubled: input.n * 2,
@@ -321,7 +331,7 @@ mod tests {
         async fn execute(
             &self,
             input: Self::Input,
-            _ctx: &ExecutionContext,
+            _ctx: &AgentContext<()>,
         ) -> Result<Self::Output> {
             Ok(DoubleOutput {
                 doubled: input.n + 1,
@@ -359,7 +369,7 @@ mod tests {
         async fn execute(
             &self,
             input: Self::Input,
-            _ctx: &ExecutionContext,
+            _ctx: &AgentContext<()>,
         ) -> Result<Self::Output> {
             Ok(DoubleOutput { doubled: input.n })
         }
@@ -368,7 +378,7 @@ mod tests {
     #[tokio::test]
     async fn typed_round_trip_through_adapter() {
         let adapter = DoubleTool.into_adapter();
-        let ctx = ExecutionContext::new();
+        let ctx = AgentContext::default();
         let out = adapter.execute(json!({"n": 21}), &ctx).await.unwrap();
         assert_eq!(out, json!({"doubled": 42}));
     }
@@ -376,7 +386,7 @@ mod tests {
     #[tokio::test]
     async fn malformed_input_surfaces_invalid_request() {
         let adapter = DoubleTool.into_adapter();
-        let ctx = ExecutionContext::new();
+        let ctx = AgentContext::default();
         let err = adapter
             .execute(json!({"wrong_field": 21}), &ctx)
             .await
@@ -464,7 +474,7 @@ mod tests {
         async fn execute(
             &self,
             input: Self::Input,
-            _ctx: &ExecutionContext,
+            _ctx: &AgentContext<()>,
         ) -> Result<Self::Output> {
             Ok(DoubleOutput { doubled: input.n })
         }

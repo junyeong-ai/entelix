@@ -7,7 +7,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
-use entelix_core::context::ExecutionContext;
+use entelix_core::AgentContext;
 use entelix_core::error::{Error, Result};
 use entelix_core::skills::{SkillRegistry, SkillResourceContent};
 use entelix_core::tools::{Tool, ToolEffect, ToolMetadata};
@@ -59,7 +59,7 @@ impl Tool for ListSkillsTool {
         &self.metadata
     }
 
-    async fn execute(&self, _input: Value, _ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, _input: Value, _ctx: &AgentContext<()>) -> Result<Value> {
         let summaries = self.registry.summaries();
         let entries: Vec<Value> = summaries
             .iter()
@@ -131,7 +131,7 @@ impl Tool for ActivateSkillTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let parsed: ActivateInput = serde_json::from_value(input).map_err(ToolError::from)?;
         let skill = self.registry.get(&parsed.name).ok_or_else(|| {
             Error::config(format!(
@@ -139,7 +139,7 @@ impl Tool for ActivateSkillTool {
                 parsed.name
             ))
         })?;
-        let loaded = skill.load(ctx).await?;
+        let loaded = skill.load(ctx.core()).await?;
         let keys: Vec<Value> = loaded
             .resource_keys()
             .into_iter()
@@ -212,7 +212,7 @@ impl Tool for ReadSkillResourceTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let parsed: ReadResourceInput = serde_json::from_value(input).map_err(ToolError::from)?;
         let skill = self.registry.get(&parsed.skill).ok_or_else(|| {
             Error::config(format!(
@@ -220,14 +220,14 @@ impl Tool for ReadSkillResourceTool {
                 parsed.skill
             ))
         })?;
-        let loaded = skill.load(ctx).await?;
+        let loaded = skill.load(ctx.core()).await?;
         let resource = loaded.resources.get(&parsed.key).ok_or_else(|| {
             Error::config(format!(
                 "read_skill_resource: skill {:?} has no resource {:?}",
                 parsed.skill, parsed.key
             ))
         })?;
-        let content = resource.read(ctx).await?;
+        let content = resource.read(ctx.core()).await?;
         match content {
             SkillResourceContent::Text(text) => Ok(json!({ "text": text })),
             SkillResourceContent::Binary { mime_type, bytes } => {

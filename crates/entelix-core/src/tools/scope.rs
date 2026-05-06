@@ -224,7 +224,7 @@ mod tests {
             &self.metadata
         }
 
-        async fn execute(&self, input: Value, _ctx: &ExecutionContext) -> Result<Value> {
+        async fn execute(&self, input: Value, _ctx: &crate::AgentContext<()>) -> Result<Value> {
             Ok(input)
         }
     }

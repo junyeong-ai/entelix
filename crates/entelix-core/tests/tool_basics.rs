@@ -11,7 +11,7 @@
 
 use async_trait::async_trait;
 use entelix_core::tools::{Tool, ToolMetadata};
-use entelix_core::{ExecutionContext, Result};
+use entelix_core::{AgentContext, Result};
 
 struct EchoTool {
     metadata: ToolMetadata,
@@ -42,7 +42,7 @@ impl Tool for EchoTool {
     async fn execute(
         &self,
         input: serde_json::Value,
-        _ctx: &ExecutionContext,
+        _ctx: &AgentContext<()>,
     ) -> Result<serde_json::Value> {
         Ok(input)
     }
@@ -60,7 +60,7 @@ async fn tool_metadata_is_accessible() {
 #[tokio::test]
 async fn tool_execute_returns_input() -> Result<()> {
     let t = EchoTool::new();
-    let ctx = ExecutionContext::new();
+    let ctx = AgentContext::default();
     let input = serde_json::json!({ "message": "hello" });
     let out = t.execute(input.clone(), &ctx).await?;
     assert_eq!(out, input);

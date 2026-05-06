@@ -108,8 +108,9 @@ Async-by-default: most entelix APIs are `async`. Use `_async` suffix only when a
 | `set_<role>(self, …)` | designate one element as a named role | `StateGraph::set_entry_point`, `StateGraph::set_finish_point` |
 | `register(self, …) -> Result<Self>` | append to a registry collection with validation, init-time | `ToolRegistry::register`, `SkillRegistry::register` |
 | `register(&self, …)` (+ `unregister(&self, …)`) | runtime-mutable registry of operator-scoped entries (tenants, plugins) | `PolicyRegistry::register` |
+| `restrict_to(self, …)` / `filter(self, F)` | selection / narrowing — *which subset* the builder targets, not a configuration value | `SubagentBuilder::restrict_to`, `SubagentBuilder::filter` |
 
-This is the **only** authorized exception to `with_*`. Do not introduce new verb prefixes (`define_*`, `attach_*`, `mount_*`). If unsure, reach for `with_` / `add_` / `set_` / `register` in that order.
+These are the **only** authorized exceptions to `with_*`. Do not introduce new verb prefixes (`define_*`, `attach_*`, `mount_*`). If unsure, reach for `with_` / `add_` / `set_` / `register` in that order. Selection verbs (`restrict_to` / `filter`) are reserved for builders that produce *narrowed views* of an existing parent set.
 
 Canonical: ADR-0010 §"Builder verb-prefix exception".
 

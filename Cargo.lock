@@ -1867,6 +1867,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "entelix-tool-derive"
+version = "1.0.0-rc.1"
+dependencies = [
+ "async-trait",
+ "entelix-core",
+ "entelix-tools",
+ "proc-macro2",
+ "quote",
+ "schemars 1.2.1",
+ "serde",
+ "serde_json",
+ "syn 2.0.117",
+ "tokio",
+]
+
+[[package]]
 name = "entelix-tools"
 version = "1.0.0-rc.1"
 dependencies = [
@@ -1875,6 +1891,7 @@ dependencies = [
  "chrono",
  "entelix-core",
  "entelix-memory",
+ "entelix-tool-derive",
  "futures",
  "hickory-resolver",
  "idna",

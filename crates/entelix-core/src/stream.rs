@@ -523,6 +523,10 @@ fn clone_error(e: &Error) -> Error {
             limit: *limit,
             observed: *observed,
         },
+        Error::ModelRetry { hint, attempt } => Error::ModelRetry {
+            hint: hint.clone(),
+            attempt: *attempt,
+        },
     }
 }
 

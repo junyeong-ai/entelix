@@ -28,7 +28,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use entelix_core::tools::{Tool, ToolEffect, ToolMetadata};
-use entelix_core::{ExecutionContext, Result, ToolRegistry};
+use entelix_core::{AgentContext, Result, ToolRegistry};
 use entelix_memory::{Document, EntityMemory, SemanticMemoryBackend};
 use serde_json::{Value, json};
 
@@ -200,14 +200,14 @@ impl Tool for QuerySemanticMemoryTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let query = input
             .get("query")
             .and_then(Value::as_str)
             .unwrap_or_default();
         let top_k =
             usize::try_from(input.get("top_k").and_then(Value::as_u64).unwrap_or(5)).unwrap_or(5);
-        let docs = self.handle.search(ctx, query, top_k).await?;
+        let docs = self.handle.search(ctx.core(), query, top_k).await?;
         if let Some(handle) = ctx.audit_sink() {
             handle.as_sink().record_memory_recall(
                 "semantic",
@@ -285,14 +285,14 @@ impl Tool for SaveToSemanticMemoryTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let content = input
             .get("content")
             .and_then(Value::as_str)
             .unwrap_or_default();
         let metadata = input.get("metadata").cloned().unwrap_or(Value::Null);
         let doc = Document::new(content).with_metadata(metadata);
-        self.handle.add(ctx, doc).await?;
+        self.handle.add(ctx.core(), doc).await?;
         Ok(json!({"saved": true}))
     }
 }
@@ -336,7 +336,7 @@ impl Tool for UpdateInSemanticMemoryTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let doc_id = input
             .get("doc_id")
             .and_then(Value::as_str)
@@ -347,7 +347,7 @@ impl Tool for UpdateInSemanticMemoryTool {
             .unwrap_or_default();
         let metadata = input.get("metadata").cloned().unwrap_or(Value::Null);
         let doc = Document::new(content).with_metadata(metadata);
-        self.handle.update(ctx, doc_id, doc).await?;
+        self.handle.update(ctx.core(), doc_id, doc).await?;
         Ok(json!({"updated": true, "doc_id": doc_id}))
     }
 }
@@ -388,12 +388,12 @@ impl Tool for DeleteFromSemanticMemoryTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let doc_id = input
             .get("doc_id")
             .and_then(Value::as_str)
             .unwrap_or_default();
-        self.handle.delete(ctx, doc_id).await?;
+        self.handle.delete(ctx.core(), doc_id).await?;
         Ok(json!({"deleted": true, "doc_id": doc_id}))
     }
 }
@@ -437,7 +437,7 @@ impl Tool for SetEntityFactTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let entity = input
             .get("entity")
             .and_then(Value::as_str)
@@ -446,7 +446,7 @@ impl Tool for SetEntityFactTool {
             .get("fact")
             .and_then(Value::as_str)
             .unwrap_or_default();
-        self.entity.set_entity(ctx, entity, fact).await?;
+        self.entity.set_entity(ctx.core(), entity, fact).await?;
         Ok(json!({"saved": true, "entity": entity}))
     }
 }
@@ -486,12 +486,12 @@ impl Tool for GetEntityFactTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let entity = input
             .get("entity")
             .and_then(Value::as_str)
             .unwrap_or_default();
-        let fact = self.entity.entity(ctx, entity).await?;
+        let fact = self.entity.entity(ctx.core(), entity).await?;
         // Invariant #18 — entity-tier point lookup is a recall act
         // and must surface on the audit channel alongside the
         // semantic / list recalls. `hits` is 0 for a miss, 1 for a
@@ -550,8 +550,8 @@ impl Tool for ListEntityFactsTool {
         &self.metadata
     }
 
-    async fn execute(&self, _input: Value, ctx: &ExecutionContext) -> Result<Value> {
-        let records = self.entity.all_records(ctx).await?;
+    async fn execute(&self, _input: Value, ctx: &AgentContext<()>) -> Result<Value> {
+        let records = self.entity.all_records(ctx.core()).await?;
         if let Some(handle) = ctx.audit_sink() {
             handle.as_sink().record_memory_recall(
                 "entity",
@@ -619,12 +619,12 @@ impl Tool for ClearEntityFactTool {
         &self.metadata
     }
 
-    async fn execute(&self, input: Value, ctx: &ExecutionContext) -> Result<Value> {
+    async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let entity = input
             .get("entity")
             .and_then(Value::as_str)
             .unwrap_or_default();
-        self.entity.remove(ctx, entity).await?;
+        self.entity.remove(ctx.core(), entity).await?;
         Ok(json!({"cleared": true, "entity": entity}))
     }
 }

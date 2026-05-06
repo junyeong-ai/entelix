@@ -1,8 +1,8 @@
 //! `18_tool_approval` — HITL approval flow at the tool-dispatch
 //! boundary, demonstrating the full pause-and-resume cycle.
 //!
-//! Build: `cargo build --example 18_tool_approval -p entelix`
-//! Run:   `cargo run   --example 18_tool_approval -p entelix`
+//! Build: `cargo build --example 18_tool_approval -p entelix --features policy`
+//! Run:   `cargo run   --example 18_tool_approval -p entelix --features policy`
 //!
 //! Demonstrates the operator-facing surface for HITL approval:
 //!

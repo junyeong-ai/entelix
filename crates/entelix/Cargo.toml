@@ -81,5 +81,21 @@ name = "12_compat_matrix"
 required-features = ["aws", "gcp", "azure"]
 
 [[example]]
+name = "13_mcp_tools"
+required-features = ["mcp"]
+
+[[example]]
 name = "14_serve_agent"
 required-features = ["server"]
+
+[[example]]
+name = "15_production_workflow"
+required-features = ["policy"]
+
+[[example]]
+name = "17_mcp_sampling_provider"
+required-features = ["mcp", "mcp-chatmodel"]
+
+[[example]]
+name = "18_tool_approval"
+required-features = ["policy"]

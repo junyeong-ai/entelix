@@ -3,8 +3,8 @@
 //! `entelix_core::ChatModel<C, T>` via the
 //! `entelix-mcp-chatmodel` companion adapter.
 //!
-//! Build: `cargo build --example 17_mcp_sampling_provider -p entelix`
-//! Run:   `cargo run   --example 17_mcp_sampling_provider -p entelix`
+//! Build: `cargo build --example 17_mcp_sampling_provider -p entelix --features mcp,mcp-chatmodel`
+//! Run:   `cargo run   --example 17_mcp_sampling_provider -p entelix --features mcp,mcp-chatmodel`
 //!
 //! Demonstrates the operator-side wiring of MCP sampling
 //! (ADR-0054 trait surface, ADR-0060 ChatModel bridge):

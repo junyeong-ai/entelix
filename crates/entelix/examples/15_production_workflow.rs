@@ -1,7 +1,7 @@
 //! `15_production_workflow` — composed end-to-end agent workflow.
 //!
-//! Build: `cargo build --example 15_production_workflow -p entelix`
-//! Run:   `cargo run --example 15_production_workflow -p entelix`
+//! Build: `cargo build --example 15_production_workflow -p entelix --features policy`
+//! Run:   `cargo run --example 15_production_workflow -p entelix --features policy`
 //!
 //! What this demonstrates (single deterministic run, no external
 //! providers, no API keys):

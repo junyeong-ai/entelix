@@ -1,8 +1,8 @@
 //! `13_mcp_tools` — MCP-published tool through the entelix `Tool`
 //! adapter, with F9 (per-tenant pool isolation) on display.
 //!
-//! Build: `cargo build --example 13_mcp_tools -p entelix`
-//! Run:   `cargo run   --example 13_mcp_tools -p entelix`
+//! Build: `cargo build --example 13_mcp_tools -p entelix --features mcp`
+//! Run:   `cargo run   --example 13_mcp_tools -p entelix --features mcp`
 //!
 //! Wire shape:
 //!

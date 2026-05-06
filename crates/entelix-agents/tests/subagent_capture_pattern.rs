@@ -82,7 +82,7 @@ fn parent_with(names: &[&str]) -> ToolRegistry {
 }
 
 #[test]
-fn from_whitelist_rejects_typo_at_construction_time() {
+fn restrict_to_rejects_typo_at_build_time() {
     // Strict-name contract — a missing name surfaces as
     // `Error::Config` rather than producing a sub-agent that
     // silently can't reach the tool the operator intended.
@@ -96,7 +96,7 @@ fn from_whitelist_rejects_typo_at_construction_time() {
 }
 
 #[test]
-fn from_whitelist_dedup_handles_duplicate_names_correctly() {
+fn restrict_to_dedup_handles_duplicate_names_correctly() {
     // Duplicate names in the whitelist must produce a view of the
     // *unique* set — not an error, not a duplicated tool. The
     // underlying HashSet conversion handles this; a regression that
@@ -108,7 +108,7 @@ fn from_whitelist_dedup_handles_duplicate_names_correctly() {
 }
 
 #[test]
-fn from_filter_predicate_evaluated_once_per_parent_tool() {
+fn filter_predicate_evaluated_once_per_parent_tool() {
     // The closure is `Fn(&dyn Tool) -> bool` — one call per parent
     // entry at construction time. After construction the view is
     // frozen; subsequent dispatches don't re-evaluate.
@@ -155,7 +155,7 @@ fn from_filter_predicate_evaluated_once_per_parent_tool() {
 }
 
 #[test]
-fn from_filter_empty_result_is_valid_pure_orchestration_subagent() {
+fn filter_empty_result_is_valid_pure_orchestration_subagent() {
     // The doc records this as a deliberate trade-off: the predicate
     // form cannot detect "intended but missing", so an empty result
     // is the operator's responsibility. A regression that started
@@ -203,7 +203,7 @@ fn build_rejects_empty_description() {
 
 #[test]
 fn with_skills_rejects_typo_at_construction_time() {
-    // Skill side mirrors `from_whitelist` — strict, surfaces typos
+    // Skill side mirrors `restrict_to` — strict, surfaces typos
     // as `Error::Config`. The lower-level `SkillRegistry::filter`
     // is silent-skip; `with_skills` is the strict wrapper around
     // it. A regression that swapped to direct `filter` would lose

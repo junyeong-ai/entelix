@@ -161,7 +161,7 @@ async fn subagent_inherits_parent_layer_stack_for_every_dispatch() {
 
 #[tokio::test]
 async fn subagent_filter_form_also_inherits_parent_layer_stack() {
-    // Same contract via the `from_filter` predicate path — both
+    // Same contract via the `filter` predicate path — both
     // construction modes must preserve the layer stack.
     let (counting, counter) = CountingLayer::new();
     let parent = ToolRegistry::new()

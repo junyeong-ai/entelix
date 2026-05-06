@@ -382,7 +382,7 @@ async fn react_agent_builder_recursion_limit_overrides_graph_default() -> Result
 }
 
 #[tokio::test]
-async fn subagent_from_whitelist_rejects_unknown_tool_name() -> Result<()> {
+async fn subagent_restrict_to_rejects_unknown_tool_name() -> Result<()> {
     struct OnlyDouble {
         metadata: ToolMetadata,
     }

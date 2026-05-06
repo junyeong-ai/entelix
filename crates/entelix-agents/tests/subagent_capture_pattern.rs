@@ -167,6 +167,40 @@ fn filter_empty_result_is_valid_pure_orchestration_subagent() {
 }
 
 #[test]
+fn metadata_inspect_without_consume() {
+    // Slice 111 / ADR-0093: identity is set at builder construction
+    // and is inspectable on the built `Subagent` via
+    // `name()` / `description()` / `metadata()` *before* the
+    // `into_tool()` conversion that consumes self. This is the
+    // load-bearing capability for parent-side system-prompt
+    // enrichment (parent agent lists "available sub-agents:
+    // {name} — {description}" without dropping the Subagent).
+    let parent = parent_with(&["alpha", "beta"]);
+    let sub = Subagent::builder(
+        StubModel,
+        &parent,
+        "research_assistant",
+        "Search the web for citations.",
+    )
+    .restrict_to(&["alpha"])
+    .build()
+    .unwrap();
+
+    assert_eq!(sub.name(), "research_assistant");
+    assert_eq!(sub.description(), "Search the web for citations.");
+
+    let md = sub.metadata();
+    assert_eq!(md.name, "research_assistant");
+    assert_eq!(md.description, "Search the web for citations.");
+    assert_eq!(md.tool_count, 1);
+    assert_eq!(md.tool_names, vec!["alpha".to_owned()]);
+
+    // The Subagent is still usable — metadata() returned a snapshot
+    // by clone, not a consuming move.
+    assert_eq!(sub.tool_count(), 1);
+}
+
+#[test]
 fn build_rejects_empty_name() {
     // Identity is required at the type level (`builder` signature
     // takes `impl Into<String>`) but `""` is still a valid

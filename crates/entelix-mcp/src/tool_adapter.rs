@@ -88,6 +88,35 @@ impl McpToolAdapter {
         self
     }
 
+    /// Override the namespace prefix used in the LLM-facing tool
+    /// name. Default is `mcp:{server}:{tool}` (the
+    /// [`qualified_name`] form); calling `with_prefix("myapp")`
+    /// produces `myapp:{server}:{tool}` instead. Useful when the
+    /// deployment integrates entelix-managed agents with a wider
+    /// tool catalogue that already namespaces by team / surface
+    /// (`platform:files:read`, `external:slack:post`, …) and the
+    /// MCP-side tools should fit that scheme.
+    ///
+    /// `prefix` is rejected at construction time if empty (a
+    /// zero-length prefix would render as `:{server}:{tool}` —
+    /// the leading colon is not a useful artefact). Returns the
+    /// adapter unchanged on the empty-string path; an empty
+    /// override at runtime is a programming error, not a
+    /// configuration choice.
+    ///
+    /// Mutually exclusive with [`Self::with_unqualified_name`] —
+    /// the *last* call wins. Operators that want both branches
+    /// (one-server-bare for default, custom-prefix for the rest)
+    /// build two adapters from the same definition.
+    #[must_use]
+    pub fn with_prefix(mut self, prefix: impl Into<String>) -> Self {
+        let prefix = prefix.into();
+        if !prefix.is_empty() {
+            self.metadata.name = format!("{prefix}:{}:{}", self.server, self.definition.name);
+        }
+        self
+    }
+
     /// Borrow the underlying MCP definition (diagnostics / tests).
     pub const fn definition(&self) -> &McpToolDefinition {
         &self.definition

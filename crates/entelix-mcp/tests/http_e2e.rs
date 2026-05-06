@@ -232,6 +232,31 @@ async fn manager_routes_tool_call_through_adapter() {
     let unq =
         McpToolAdapter::new(manager.clone(), "mock", tools[0].clone()).with_unqualified_name();
     assert_eq!(unq.metadata().name, "echo");
+
+    // Custom prefix — operator integrating entelix-managed agents
+    // with a wider tool catalogue that already namespaces by team
+    // / surface. ADR-0097.
+    let custom =
+        McpToolAdapter::new(manager.clone(), "mock", tools[0].clone()).with_prefix("platform");
+    assert_eq!(custom.metadata().name, "platform:mock:echo");
+
+    // Empty prefix is rejected silently — the adapter keeps its
+    // current namespace name. Programmer-error guard rather than
+    // a configuration choice.
+    let empty =
+        McpToolAdapter::new(manager.clone(), "mock", tools[0].clone()).with_prefix("");
+    assert_eq!(empty.metadata().name, "mcp:mock:echo");
+
+    // Last-call wins between with_unqualified_name and with_prefix.
+    let unq_then_prefix = McpToolAdapter::new(manager.clone(), "mock", tools[0].clone())
+        .with_unqualified_name()
+        .with_prefix("platform");
+    assert_eq!(unq_then_prefix.metadata().name, "platform:mock:echo");
+
+    let prefix_then_unq = McpToolAdapter::new(manager.clone(), "mock", tools[0].clone())
+        .with_prefix("platform")
+        .with_unqualified_name();
+    assert_eq!(prefix_then_unq.metadata().name, "echo");
 }
 
 #[tokio::test]

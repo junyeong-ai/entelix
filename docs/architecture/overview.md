@@ -151,22 +151,33 @@ This combines Anthropic's `wake(sessionId) → getSession(id) → continue` with
 
 ## Multi-agent — brain passes hand
 
-Parent agent spawns a sub-agent:
+Parent agent registers a sub-agent as a tool. The brain hands a
+narrowed `ToolRegistry` to the sub-agent; the sub-agent runs as a
+ReAct loop and reports a final string result back through the
+parent's tool-call surface.
 
 ```rust
-let parent = Agent::builder()
-    .model("claude-opus-4-7")
-    .tool_registry(parent_tools.clone())
-    .build()?;
+use entelix::{Subagent, create_react_agent};
 
-let sub = parent.spawn_subagent()
-    .system("Code review specialist.")
-    .tool_filter(|name| name.starts_with("github_"))   // restrict hands (F7 mitigation)
-    .build();
+// Sub-agent: narrowed view of the parent registry, exposed to
+// the parent as a single tool.
+let code_review = Subagent::builder(
+        model.clone(),
+        &parent_tools,
+        "code_review",
+        "Review the supplied PR and return a short summary.",
+    )
+    .filter(|t| t.metadata().name.starts_with("github_"))   // F7 — restrict hands
+    .build()?
+    .into_tool()?;
 
-let summary = sub.invoke("Review PR #482").await?;
-// sub-agent's events nested in parent SessionGraph as a child branch.
-// sub-agent's costs roll up to parent CostMeter.
+// Parent registry includes the sub-agent alongside its other tools.
+let parent_tools = parent_tools.register(Arc::new(code_review))?;
+let agent = create_react_agent(model, parent_tools)?;
+// Sub-agent dispatch emits AuditSink::record_sub_agent_invoked
+// (invariant 18, ADR-0037); replays reconstruct the lifecycle.
+// Costs roll up through the inherited tower::Layer stack
+// (PolicyLayer + CostMeter), no per-sub-agent rewiring.
 ```
 
 ## Why a workspace, not a single crate

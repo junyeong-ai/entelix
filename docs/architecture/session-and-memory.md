@@ -30,29 +30,49 @@ Owned by `entelix-session`.
 
 ```rust
 pub struct SessionGraph {
-    pub thread_id: ThreadId,
+    pub thread_id: ThreadKey,
     pub tenant_id: TenantId,
     pub events: Vec<GraphEvent>,
-    pub archived_watermark: Option<EventSeq>,
+    pub archived_watermark: Option<usize>,
 }
 
 #[non_exhaustive]
 pub enum GraphEvent {
-    UserMessage { content: Vec<ContentPart>, at: DateTime<Utc> },
-    AssistantStart { node: NodeName },
-    AssistantDelta { text: String, at: DateTime<Utc> },
-    AssistantComplete { content: Vec<ContentPart>, usage: Usage, at: DateTime<Utc> },
-    ToolCall { id: String, name: String, input: serde_json::Value, at: DateTime<Utc> },
-    ToolResult { tool_call_id: String, output: serde_json::Value, is_error: bool, at: DateTime<Utc> },
-    SystemMessage { content: String, at: DateTime<Utc> },
-    BranchCreate { branch: BranchName, parent: Option<EventSeq> },
-    Checkpoint { checkpoint_id: CheckpointId, at_node: NodeName },
-    Interrupt { reason: String, payload: serde_json::Value },
-    Resume { command: ResumeCommand },
-    HookFired { name: String, phase: HookPhase },
-    Error { message: String, recoverable: bool },
+    // Conversation surface
+    UserMessage { content: Vec<ContentPart>, timestamp: DateTime<Utc> },
+    AssistantMessage { content: Vec<ContentPart>, usage: Option<Usage>, timestamp: DateTime<Utc> },
+    ThinkingDelta { text: String, signature: Option<String>, timestamp: DateTime<Utc> },
+    ToolCall { id: String, name: String, input: serde_json::Value, timestamp: DateTime<Utc> },
+    ToolResult { tool_use_id: String, name: String, content: ToolResultContent, is_error: bool, timestamp: DateTime<Utc> },
+
+    // Codec / runtime advisories captured into the audit trail
+    Warning { warning: ModelWarning, timestamp: DateTime<Utc> },
+    RateLimit { snapshot: RateLimitSnapshot, timestamp: DateTime<Utc> },
+
+    // Cross-tier markers
+    BranchCreated { branch_id: String, parent_event: usize, timestamp: DateTime<Utc> },
+    CheckpointMarker { checkpoint_id: String, thread_id: String, timestamp: DateTime<Utc> },
+    Cancelled { reason: String, timestamp: DateTime<Utc> },
+    Interrupt { kind: String, payload: serde_json::Value, timestamp: DateTime<Utc> },
+    Error { message: String, recoverable: bool, timestamp: DateTime<Utc> },
+
+    // Managed-agent lifecycle (invariant 18, ADR-0037)
+    SubAgentInvoked { agent_id: String, sub_thread_id: String, timestamp: DateTime<Utc> },
+    AgentHandoff { from: Option<String>, to: String, timestamp: DateTime<Utc> },
+    Resumed { from_checkpoint: String, timestamp: DateTime<Utc> },
+    MemoryRecall { tier: String, namespace_key: String, hits: usize, timestamp: DateTime<Utc> },
+    UsageLimitExceeded { axis: String, limit: u64, observed: u64, timestamp: DateTime<Utc> },
 }
 ```
+
+Truncated for brevity — see `crates/entelix-session/src/event.rs`
+for every field. The shape splits roughly into four bands:
+conversation (assistant turn aggregated post-stream), advisories
+(`Warning` carries the typed `ModelWarning`, `RateLimit` carries
+provider headers), cross-tier markers (`CheckpointMarker` ties
+to a `Checkpointer` snapshot, `BranchCreated` tracks a fork),
+and the audit-channel band ADR-0037 / invariant 18 carved out
+for managed-agent lifecycle.
 
 ### Why an event log when we have Checkpointer?
 

@@ -88,6 +88,57 @@ impl core::marker::Unpin for entelix_session::GraphEvent
 impl core::marker::UnsafeUnpin for entelix_session::GraphEvent
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_session::GraphEvent
 impl core::panic::unwind_safe::UnwindSafe for entelix_session::GraphEvent
+#[non_exhaustive] pub enum entelix_session::Turn
+pub entelix_session::Turn::Assistant
+pub entelix_session::Turn::Assistant::content: alloc::vec::Vec<entelix_core::ir::content::ContentPart>
+pub entelix_session::Turn::Assistant::tools: alloc::vec::Vec<entelix_session::ToolPair>
+pub entelix_session::Turn::User
+pub entelix_session::Turn::User::content: alloc::vec::Vec<entelix_core::ir::content::ContentPart>
+impl core::clone::Clone for entelix_session::Turn
+pub fn entelix_session::Turn::clone(&self) -> entelix_session::Turn
+impl core::fmt::Debug for entelix_session::Turn
+pub fn entelix_session::Turn::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_session::Turn
+impl core::marker::Send for entelix_session::Turn
+impl core::marker::Sync for entelix_session::Turn
+impl core::marker::Unpin for entelix_session::Turn
+impl core::marker::UnsafeUnpin for entelix_session::Turn
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_session::Turn
+impl core::panic::unwind_safe::UnwindSafe for entelix_session::Turn
+pub struct entelix_session::CompactedHistory
+impl entelix_session::CompactedHistory
+pub const fn entelix_session::CompactedHistory::is_empty(&self) -> bool
+pub const fn entelix_session::CompactedHistory::len(&self) -> usize
+pub fn entelix_session::CompactedHistory::to_messages(&self) -> alloc::vec::Vec<entelix_core::ir::message::Message>
+pub fn entelix_session::CompactedHistory::turns(&self) -> &[entelix_session::Turn]
+impl core::clone::Clone for entelix_session::CompactedHistory
+pub fn entelix_session::CompactedHistory::clone(&self) -> entelix_session::CompactedHistory
+impl core::fmt::Debug for entelix_session::CompactedHistory
+pub fn entelix_session::CompactedHistory::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_session::CompactedHistory
+impl core::marker::Send for entelix_session::CompactedHistory
+impl core::marker::Sync for entelix_session::CompactedHistory
+impl core::marker::Unpin for entelix_session::CompactedHistory
+impl core::marker::UnsafeUnpin for entelix_session::CompactedHistory
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_session::CompactedHistory
+impl core::panic::unwind_safe::UnwindSafe for entelix_session::CompactedHistory
+pub struct entelix_session::HeadDropCompactor
+impl core::clone::Clone for entelix_session::HeadDropCompactor
+pub fn entelix_session::HeadDropCompactor::clone(&self) -> entelix_session::HeadDropCompactor
+impl core::default::Default for entelix_session::HeadDropCompactor
+pub fn entelix_session::HeadDropCompactor::default() -> entelix_session::HeadDropCompactor
+impl core::fmt::Debug for entelix_session::HeadDropCompactor
+pub fn entelix_session::HeadDropCompactor::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_session::HeadDropCompactor
+impl entelix_session::Compactor for entelix_session::HeadDropCompactor
+pub fn entelix_session::HeadDropCompactor::compact(&self, events: &[entelix_session::GraphEvent], budget_chars: usize) -> entelix_core::error::Result<entelix_session::CompactedHistory>
+impl core::marker::Freeze for entelix_session::HeadDropCompactor
+impl core::marker::Send for entelix_session::HeadDropCompactor
+impl core::marker::Sync for entelix_session::HeadDropCompactor
+impl core::marker::Unpin for entelix_session::HeadDropCompactor
+impl core::marker::UnsafeUnpin for entelix_session::HeadDropCompactor
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_session::HeadDropCompactor
+impl core::panic::unwind_safe::UnwindSafe for entelix_session::HeadDropCompactor
 pub struct entelix_session::InMemorySessionLog
 impl entelix_session::InMemorySessionLog
 pub fn entelix_session::InMemorySessionLog::new() -> Self
@@ -153,6 +204,28 @@ impl core::marker::Unpin for entelix_session::SessionGraph
 impl core::marker::UnsafeUnpin for entelix_session::SessionGraph
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_session::SessionGraph
 impl core::panic::unwind_safe::UnwindSafe for entelix_session::SessionGraph
+pub struct entelix_session::ToolPair
+impl entelix_session::ToolPair
+pub fn entelix_session::ToolPair::id(&self) -> &str
+pub const fn entelix_session::ToolPair::input(&self) -> &serde_json::value::Value
+pub const fn entelix_session::ToolPair::is_error(&self) -> bool
+pub fn entelix_session::ToolPair::name(&self) -> &str
+pub const fn entelix_session::ToolPair::result(&self) -> &entelix_core::ir::content::ToolResultContent
+impl core::clone::Clone for entelix_session::ToolPair
+pub fn entelix_session::ToolPair::clone(&self) -> entelix_session::ToolPair
+impl core::fmt::Debug for entelix_session::ToolPair
+pub fn entelix_session::ToolPair::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_session::ToolPair
+impl core::marker::Send for entelix_session::ToolPair
+impl core::marker::Sync for entelix_session::ToolPair
+impl core::marker::Unpin for entelix_session::ToolPair
+impl core::marker::UnsafeUnpin for entelix_session::ToolPair
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_session::ToolPair
+impl core::panic::unwind_safe::UnwindSafe for entelix_session::ToolPair
+pub trait entelix_session::Compactor: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_session::Compactor::compact(&self, events: &[entelix_session::GraphEvent], budget_chars: usize) -> entelix_core::error::Result<entelix_session::CompactedHistory>
+impl entelix_session::Compactor for entelix_session::HeadDropCompactor
+pub fn entelix_session::HeadDropCompactor::compact(&self, events: &[entelix_session::GraphEvent], budget_chars: usize) -> entelix_core::error::Result<entelix_session::CompactedHistory>
 pub trait entelix_session::SessionLog: core::marker::Send + core::marker::Sync
 pub fn entelix_session::SessionLog::append<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, events: &'life2 [entelix_session::GraphEvent]) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<u64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
 pub fn entelix_session::SessionLog::archive_before<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, watermark: u64) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait

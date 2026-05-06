@@ -201,7 +201,8 @@ pub use entelix_server::{
     DEFAULT_TENANT_HEADER as SERVER_DEFAULT_TENANT_HEADER, ServerError, ServerResult, TenantMode,
 };
 pub use entelix_session::{
-    GraphEvent, InMemorySessionLog, SessionAuditSink, SessionGraph, SessionLog,
+    CompactedHistory, Compactor, GraphEvent, HeadDropCompactor, InMemorySessionLog,
+    SessionAuditSink, SessionGraph, SessionLog, ToolPair, Turn,
 };
 pub use entelix_tools::{
     ActivateSkillTool, Calculator, CalculatorInput, CalculatorOutput, CodePolicy,

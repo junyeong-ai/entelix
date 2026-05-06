@@ -15,11 +15,13 @@
 #![deny(missing_docs)]
 
 mod audit_sink;
+mod compaction;
 mod event;
 mod log;
 mod session_graph;
 
 pub use audit_sink::SessionAuditSink;
+pub use compaction::{CompactedHistory, Compactor, HeadDropCompactor, ToolPair, Turn};
 pub use event::GraphEvent;
 pub use log::{InMemorySessionLog, SessionLog};
 pub use session_graph::SessionGraph;

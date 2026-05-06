@@ -26,7 +26,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use entelix_core::context::ExecutionContext;
-use entelix_core::error::Result;
+use entelix_core::error::{Error, Result};
 
 /// Turn-level agent-lifecycle observer.
 ///
@@ -61,6 +61,25 @@ where
     async fn on_complete(&self, _state: &S, _ctx: &ExecutionContext) -> Result<()> {
         Ok(())
     }
+
+    /// Called once when the agent run terminates with an error,
+    /// instead of [`Self::on_complete`]. Mirrors the success path
+    /// for failure observation: per-run error counters, rollback
+    /// of side-channel state written under [`Self::pre_turn`],
+    /// alerting / pager hooks. The hook does **not** fire for
+    /// [`Error::Interrupted`] — HITL pause-and-resume is a control
+    /// signal, not a failure; operators observing pauses use the
+    /// `AgentEvent` stream instead.
+    ///
+    /// Observer errors raised from `on_error` are logged via
+    /// `tracing::warn!` and dropped — they do **not** replace the
+    /// original runnable error. The contract mirrors the audit
+    /// channel (invariant 18, ADR-0037): failure-path observability
+    /// is one-way and never disturbs the failure that's already
+    /// in flight.
+    async fn on_error(&self, _error: &Error, _ctx: &ExecutionContext) -> Result<()> {
+        Ok(())
+    }
 }
 
 /// Convenience type alias for the dynamic-dispatch handle the
@@ -79,6 +98,7 @@ mod tests {
         name: &'static str,
         pre_turn: AtomicUsize,
         on_complete: AtomicUsize,
+        on_error: AtomicUsize,
     }
 
     impl CountingObserver {
@@ -87,6 +107,7 @@ mod tests {
                 name,
                 pre_turn: AtomicUsize::new(0),
                 on_complete: AtomicUsize::new(0),
+                on_error: AtomicUsize::new(0),
             }
         }
     }
@@ -104,6 +125,10 @@ mod tests {
             self.on_complete.fetch_add(1, Ordering::SeqCst);
             Ok(())
         }
+        async fn on_error(&self, _error: &Error, _ctx: &ExecutionContext) -> Result<()> {
+            self.on_error.fetch_add(1, Ordering::SeqCst);
+            Ok(())
+        }
     }
 
     #[tokio::test]
@@ -115,6 +140,10 @@ mod tests {
         let ctx = ExecutionContext::new();
         observer.pre_turn(&0, &ctx).await.unwrap();
         observer.on_complete(&0, &ctx).await.unwrap();
+        observer
+            .on_error(&Error::config("nope"), &ctx)
+            .await
+            .unwrap();
         assert_eq!(observer.name(), "");
     }
 
@@ -124,10 +153,12 @@ mod tests {
         let ctx = ExecutionContext::new();
         obs.pre_turn(&0, &ctx).await.unwrap();
         obs.on_complete(&100, &ctx).await.unwrap();
+        obs.on_error(&Error::config("nope"), &ctx).await.unwrap();
 
         assert_eq!(obs.name(), "test");
         assert_eq!(obs.pre_turn.load(Ordering::SeqCst), 1);
         assert_eq!(obs.on_complete.load(Ordering::SeqCst), 1);
+        assert_eq!(obs.on_error.load(Ordering::SeqCst), 1);
     }
 
     #[tokio::test]

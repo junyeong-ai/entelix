@@ -175,6 +175,128 @@ async fn observer_pre_turn_and_on_complete_fire_in_order() {
 }
 
 #[tokio::test]
+async fn observer_on_error_fires_when_runnable_fails() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    use entelix_agents::AgentObserver;
+    use entelix_core::context::ExecutionContext as Ctx;
+
+    /// Records `on_error` and `on_complete` fires so the test can
+    /// assert the failure-path branch is taken.
+    struct FailureObserver {
+        on_error: AtomicUsize,
+        on_complete: AtomicUsize,
+    }
+
+    #[async_trait::async_trait]
+    impl AgentObserver<i32> for FailureObserver {
+        async fn on_complete(&self, _state: &i32, _ctx: &Ctx) -> entelix_core::Result<()> {
+            self.on_complete.fetch_add(1, Ordering::SeqCst);
+            Ok(())
+        }
+        async fn on_error(
+            &self,
+            _error: &entelix_core::Error,
+            _ctx: &Ctx,
+        ) -> entelix_core::Result<()> {
+            self.on_error.fetch_add(1, Ordering::SeqCst);
+            Ok(())
+        }
+    }
+
+    // Inner runnable that always fails. Distinct from the
+    // observer-veto test (next) — failure originates in the
+    // runnable, not in pre_turn.
+    let failing = RunnableLambda::new(|_n: i32, _ctx| async move {
+        Err::<i32, _>(entelix_core::Error::config("inner runnable refused"))
+    });
+
+    let observer = Arc::new(FailureObserver {
+        on_error: AtomicUsize::new(0),
+        on_complete: AtomicUsize::new(0),
+    });
+    let observer_dyn: Arc<dyn AgentObserver<i32>> = observer.clone();
+
+    let agent = Agent::<i32>::builder()
+        .with_name("on-error-test")
+        .with_runnable(failing)
+        .with_observer_arc(observer_dyn)
+        .build()
+        .unwrap();
+
+    let err = agent
+        .execute(7, &ExecutionContext::new())
+        .await
+        .unwrap_err();
+    assert!(format!("{err}").contains("inner runnable refused"));
+    assert_eq!(
+        observer.on_error.load(Ordering::SeqCst),
+        1,
+        "on_error must fire when runnable.invoke returns Err"
+    );
+    assert_eq!(
+        observer.on_complete.load(Ordering::SeqCst),
+        0,
+        "on_complete must NOT fire on the failure path"
+    );
+}
+
+#[tokio::test]
+async fn observer_on_error_skipped_for_interrupted_variant() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    use entelix_agents::AgentObserver;
+    use entelix_core::context::ExecutionContext as Ctx;
+
+    /// Counts `on_error` fires. Interrupt is a control signal, not
+    /// a failure — operators wanting interrupt observation
+    /// consume `AgentEvent::Interrupted` from the sink instead.
+    struct InterruptObserver {
+        on_error: AtomicUsize,
+    }
+
+    #[async_trait::async_trait]
+    impl AgentObserver<i32> for InterruptObserver {
+        async fn on_error(
+            &self,
+            _error: &entelix_core::Error,
+            _ctx: &Ctx,
+        ) -> entelix_core::Result<()> {
+            self.on_error.fetch_add(1, Ordering::SeqCst);
+            Ok(())
+        }
+    }
+
+    let interrupting = RunnableLambda::new(|_n: i32, _ctx| async move {
+        Err::<i32, _>(entelix_core::Error::Interrupted {
+            payload: serde_json::json!({"kind": "approval_pending"}),
+        })
+    });
+
+    let observer = Arc::new(InterruptObserver {
+        on_error: AtomicUsize::new(0),
+    });
+    let observer_dyn: Arc<dyn AgentObserver<i32>> = observer.clone();
+
+    let agent = Agent::<i32>::builder()
+        .with_name("interrupt-test")
+        .with_runnable(interrupting)
+        .with_observer_arc(observer_dyn)
+        .build()
+        .unwrap();
+
+    let _err = agent
+        .execute(0, &ExecutionContext::new())
+        .await
+        .unwrap_err();
+    assert_eq!(
+        observer.on_error.load(Ordering::SeqCst),
+        0,
+        "on_error must NOT fire for Error::Interrupted (HITL pause is a control signal)"
+    );
+}
+
+#[tokio::test]
 async fn observer_returning_err_aborts_agent() {
     use entelix_agents::AgentObserver;
     use entelix_core::context::ExecutionContext as Ctx;

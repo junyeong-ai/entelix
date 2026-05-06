@@ -55,7 +55,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use entelix_core::context::ExecutionContext;
-use entelix_core::error::Result;
+use entelix_core::error::{Error, Result};
 use entelix_runnable::Runnable;
 use entelix_runnable::stream::BoxStream;
 use tracing::Instrument;
@@ -284,7 +284,32 @@ where
         for observer in &self.observers {
             observer.pre_turn(&input, ctx).await?;
         }
-        let state = self.runnable.invoke(input, ctx).await?;
+        let state = match self.runnable.invoke(input, ctx).await {
+            Ok(state) => state,
+            Err(err) => {
+                // HITL pause-and-resume is a control signal, not a
+                // failure — observers wanting interrupt observation
+                // consume `AgentEvent::Interrupted` from the sink.
+                if !matches!(err, Error::Interrupted { .. }) {
+                    for observer in &self.observers {
+                        // Failure-path observability is one-way:
+                        // observer errors raised from on_error get
+                        // dropped (with a tracing warn) so they don't
+                        // replace the original error in flight.
+                        // Mirrors the audit-sink contract from
+                        // invariant 18 / ADR-0037.
+                        if let Err(observer_err) = observer.on_error(&err, ctx).await {
+                            tracing::warn!(
+                                observer = %observer.name(),
+                                source = %observer_err,
+                                "AgentObserver::on_error returned an error; dropping"
+                            );
+                        }
+                    }
+                }
+                return Err(err);
+            }
+        };
         let usage = ctx.run_budget().map(|budget| budget.snapshot());
         // Mirror the frozen snapshot onto the `entelix.agent.run`
         // span declared in `run_span` — `Span::current()` here is

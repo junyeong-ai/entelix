@@ -242,6 +242,70 @@ async fn observer_on_error_fires_when_runnable_fails() {
 }
 
 #[tokio::test]
+async fn observer_on_error_fires_through_streaming_path() {
+    // execute_stream and execute both route through run_inner, so a
+    // single on_error fire-site covers both. Pin the streaming
+    // path explicitly so a future refactor that splits the two
+    // doesn't silently lose the failure-observation surface for
+    // streaming consumers.
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    use entelix_agents::AgentObserver;
+    use entelix_core::context::ExecutionContext as Ctx;
+
+    struct StreamObserver {
+        on_error: AtomicUsize,
+    }
+
+    #[async_trait::async_trait]
+    impl AgentObserver<i32> for StreamObserver {
+        async fn on_error(
+            &self,
+            _error: &entelix_core::Error,
+            _ctx: &Ctx,
+        ) -> entelix_core::Result<()> {
+            self.on_error.fetch_add(1, Ordering::SeqCst);
+            Ok(())
+        }
+    }
+
+    let failing = RunnableLambda::new(|_n: i32, _ctx| async move {
+        Err::<i32, _>(entelix_core::Error::config("streaming runnable refused"))
+    });
+
+    let observer = Arc::new(StreamObserver {
+        on_error: AtomicUsize::new(0),
+    });
+    let observer_dyn: Arc<dyn AgentObserver<i32>> = observer.clone();
+
+    let agent = Agent::<i32>::builder()
+        .with_name("streaming-on-error")
+        .with_runnable(failing)
+        .with_observer_arc(observer_dyn)
+        .build()
+        .unwrap();
+
+    let ctx = ExecutionContext::new();
+    let mut stream = agent.execute_stream(0, &ctx);
+    let mut saw_failed = false;
+    let mut saw_err = false;
+    while let Some(event) = stream.next().await {
+        match event {
+            Ok(entelix_agents::AgentEvent::Failed { .. }) => saw_failed = true,
+            Err(_) => saw_err = true,
+            _ => {}
+        }
+    }
+    assert!(saw_failed, "streaming caller must see AgentEvent::Failed");
+    assert!(saw_err, "streaming caller must see the typed Err yield");
+    assert_eq!(
+        observer.on_error.load(Ordering::SeqCst),
+        1,
+        "on_error must fire on the streaming failure path",
+    );
+}
+
+#[tokio::test]
 async fn observer_on_error_skipped_for_interrupted_variant() {
     use std::sync::atomic::{AtomicUsize, Ordering};
 

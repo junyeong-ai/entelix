@@ -100,7 +100,8 @@ Detail: `docs/architecture/session-and-memory.md`.
 ## Data flow — single request
 
 ```
-1. Client → POST /v1/threads/{id}/run   (HTTP, SSE-capable)
+1. Client → POST /v1/threads/{thread_id}/runs   (sync) or
+            GET  /v1/threads/{thread_id}/stream  (5-mode SSE)
                           │
 2. entelix-server          extract tenant_id from header, attach to
                           ExecutionContext::tenant_id (mandatory,

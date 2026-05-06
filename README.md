@@ -27,7 +27,9 @@
 - **OpenTelemetry GenAI semconv 0.32** — `OtelLayer` (tower middleware on both model and tool invocations) emits `gen_ai.*` events including cache token telemetry (`cached_input_tokens`, `cache_creation_input_tokens`, `reasoning_tokens`). Tool I/O capture mode (`Off` / `Truncated{4096}` / `Full`). `Agent::execute` opens an `entelix.agent.run` root span so trace UIs show agent → model → tool as one tree.
 - **Typed audit channel** — `entelix::AuditSink` with 4 `record_*` verbs (`sub_agent_invoked` / `agent_handoff` / `resumed` / `memory_recall`). `entelix::SessionAuditSink` maps onto `GraphEvent` so replays reconstruct managed-agent lifecycle without re-running the dispatch path.
 - **axum HTTP server** — `AgentRouterBuilder` with sync / 5-mode SSE / wake-from-checkpoint endpoints + tenant header extraction.
-- **`Tool` trait + built-ins** — `HttpFetchTool` (3-layer SSRF defense), `CalculatorTool`, `SearchTool` adapter, `SchemaTool` typed-I/O adapter (auto-generated schema goes through `LlmFacingSchema::strip` so envelope keys never reach the model), sandboxed shell / file / code / list-dir tools that delegate every syscall through the `Sandbox` trait.
+- **`Tool<D = ()>` trait + built-ins + `#[tool]` macro** — `HttpFetchTool` (3-layer SSRF defense), `CalculatorTool`, `SearchTool` adapter, `SchemaTool` typed-I/O adapter (auto-generated schema goes through `LlmFacingSchema::strip` so envelope keys never reach the model), sandboxed shell / file / code / list-dir tools delegating syscalls through the `Sandbox` trait. The `#[tool]` proc-macro (in `entelix-tool-derive`) turns an `async fn(ctx: &AgentContext<D>, ...args) -> Result<O>` into a fully-wired `SchemaTool` impl — no boilerplate. Operators thread typed dependencies through `D`; the layer ecosystem (`PolicyLayer`, `OtelLayer`, `RetryService`, `ApprovalLayer`) stays D-free and composes unchanged regardless of operator deps.
+- **Typed structured output with semantic validation** — `complete_typed::<O>()` parses the model's response into your typed `O`; `complete_typed_validated` runs an `OutputValidator<O>` (any `Fn(&O) -> Result<()>` works) so cross-field invariants the JSON schema can't express get caught and corrected. Schema-mismatch and validator failures share one budget (`ChatModelConfig::with_validation_retries`) and one typed retry channel (`Error::ModelRetry { hint: RenderedForLlm<String>, ... }`); the loop reflects the corrective hint to the model and re-invokes within budget.
+- **Type-enforced conversation compaction** — `Compactor` trait + sealed `CompactedHistory`. The `tool_call` / `tool_result` pair invariant is structurally impossible to violate: `ToolPair` fields are private, so external compactors can drop or pass through tool round-trips obtained from `CompactedHistory::group(events)` but cannot synthesize unmatched ones. `HeadDropCompactor` ships as the reference "drop oldest until fits" strategy.
 - **Pre-built recipes** — `create_react_agent`, `create_supervisor_agent`, `create_hierarchical_agent`, `create_chat_agent`.
 
 ## Quickstart — single API call
@@ -160,7 +162,8 @@ entelix-runnable         — Runnable trait + LCEL .pipe() + Sequence/Parallel/R
 entelix-prompt           — PromptTemplate, ChatPromptTemplate, MessagesPlaceholder, FewShot
 entelix-graph            — StateGraph, Reducer, StateMerge trait, Dispatch, Checkpointer, interrupts
 entelix-graph-derive     — proc-macro: #[derive(StateMerge)] emits Contribution + builders + impl
-entelix-session          — SessionGraph event log, fork, archival watermark, SessionAuditSink
+entelix-tool-derive      — proc-macro: #[tool] generates SchemaTool impl from an async fn signature
+entelix-session          — SessionGraph event log + Compactor + SessionAuditSink, fork, archival watermark
 entelix-memory           — Store + Embedder/Retriever/VectorStore/GraphMemory traits + 5 LC-style memory patterns
 entelix-memory-openai    — OpenAI Embeddings concrete Embedder (companion)
 entelix-memory-qdrant    — qdrant gRPC concrete VectorStore (companion)

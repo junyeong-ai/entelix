@@ -87,13 +87,22 @@ Detail: `docs/architecture/state-graph.md`.
 
 ## Three-tier state model
 
-This is the most important structural decision in entelix. State is **explicitly partitioned** into three tiers:
+This is the most important structural decision in entelix. State is **explicitly partitioned** into three tiers (invariant 3):
 
 | Tier | Lifetime | Owner crate | Role |
 |---|---|---|---|
 | **StateGraph state** | per-thread, working | `entelix-graph` | working memory the graph mutates |
 | **SessionGraph events** | per-thread, durable audit | `entelix-session` | append-only log of what happened |
 | **Memory Store** | cross-thread, persistent | `entelix-memory` | facts that outlive any thread |
+
+Alongside the three state tiers, the typed **AuditSink** channel
+(invariant 18, ADR-0037) emits managed-agent lifecycle events
+(`SubAgentInvoked` / `AgentHandoff` / `Resumed` / `MemoryRecall` /
+`UsageLimitExceeded`) one-way into Tier 2's event log via
+`SessionAuditSink`. The audit channel is *not* a fourth state tier
+— it's a typed input into Tier 2 — but `session-and-memory.md`
+groups it as a separate concern because it crosses the
+managed-agent boundary that ordinary state mutations don't.
 
 Detail: `docs/architecture/session-and-memory.md`.
 

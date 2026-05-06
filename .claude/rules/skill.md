@@ -43,8 +43,10 @@ No `triggers()` method. Keyword/pattern auto-activation is brittle (false positi
 ## Sub-agents
 
 ```rust
-let sub = Subagent::from_whitelist(model, &parent_tools, &["read_file"])
-    .with_skills(&parent_skills, &["code-review", "sql-expert"]);
+let sub = Subagent::builder(model, &parent_tools, "research_assistant", "...")
+    .restrict_to(&["read_file"])
+    .with_skills(&parent_skills, &["code-review", "sql-expert"])?
+    .build()?;
 ```
 
 Default skill set is empty — `with_skills` must be called explicitly to inherit a parent subset.

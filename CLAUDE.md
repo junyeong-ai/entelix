@@ -84,7 +84,7 @@ This SDK mirrors [Anthropic's managed-agents pattern](https://www.anthropic.com/
 - **Session** = `SessionGraph` (event log, externally stored)
 - **Harness** = `Agent` + codecs (stateless brain, replaceable)
 - **Hand** = `Tool` trait (sandbox-agnostic, single `execute` interface)
-- **Brain passes hand** — `Subagent::from_whitelist(model, &parent_registry, &[...])` narrows the parent `ToolRegistry` through `restricted_to` / `filter`. The narrowed view shares the parent's layer factory by `Arc` — `PolicyLayer`, `OtelLayer`, retry middleware all apply transparently to sub-agent dispatches. `Subagent` *never* constructs a fresh `ToolRegistry::new()`; the raw `Vec<Arc<dyn Tool>>` surface does not exist on this path. Enforced by `cargo xtask managed-shape` plus `tests/subagent_layer_inheritance.rs`. ADR-0035.
+- **Brain passes hand** — `Subagent::builder(model, &parent_registry, name, description)` returns a `SubagentBuilder` that narrows the parent `ToolRegistry` through the `restrict_to(&[…])` / `filter(predicate)` selection verbs. The narrowed view shares the parent's layer factory by `Arc` — `PolicyLayer`, `OtelLayer`, retry middleware all apply transparently to sub-agent dispatches. `Subagent` *never* constructs a fresh `ToolRegistry::new()`; the raw `Vec<Arc<dyn Tool>>` surface does not exist on this path. Identity is set at builder construction (ADR-0093) so the built `Subagent` is inspectable via `metadata()` / `name()` / `description()` before the `into_tool()` conversion. Enforced by `cargo xtask managed-shape` plus `tests/subagent_layer_inheritance.rs`. ADR-0035 + ADR-0089 + ADR-0093.
 - **Lazy provisioning** — MCP / cloud connections opened on tool call
 - **Wake / resume** — first-class
 

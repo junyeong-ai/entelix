@@ -6,7 +6,7 @@ Production agent SDK on top of `entelix-runnable` + `entelix-graph`. Recipes (Re
 
 - **`Agent<S>`** + **`AgentBuilder<S>`** — runtime entity wrapping any `Runnable<S, S>` with `AgentEventSink`, optional `Approver` (HITL gate), `ExecutionMode::{Auto, Supervised}` (`Supervised` requires an `Approver` — `build` returns `Error::Config` otherwise), and `Vec<Arc<dyn AgentObserver<S>>>`. `Agent::execute` opens the `entelix.agent.run` OTel span (ADR-0057).
 - **Recipes** — `create_react_agent` / `create_supervisor_agent` / `create_hierarchical_agent` / `create_chat_agent`. Each returns a ready-to-stream `Agent<StateType>` so the common patterns are one call.
-- **`Subagent::from_whitelist(model, &parent_registry, &[...])` + `Subagent::from_filter(...)`** — narrows the parent `ToolRegistry` through `restricted_to` / `filter`. Layer factory rides over by `Arc` (ADR-0035, invariant 7). `into_tool` exposes the sub-agent as a parent-side `Tool`.
+- **`Subagent::builder(model, &parent_registry, name, description)`** — returns a `SubagentBuilder` that narrows the parent `ToolRegistry` through `restrict_to(&[…])` / `filter(predicate)` selection verbs and accepts `with_skills` / `with_sink` / `with_approver` configuration. `build()` finalises into a `Subagent` whose identity (`name()` / `description()` / `metadata()`) is inspectable before the `into_tool()` conversion exposes it as a parent-side `Tool`. Layer factory rides over by `Arc` (ADR-0035, invariant 7). ADR-0089 + ADR-0093.
 - **`AgentEventSink` trait** + `BroadcastSink` / `CaptureSink` / `ChannelSink` / `DroppingSink` — fan-out for `AgentEvent<S>`.
 - **`AgentObserver` trait** + `DynObserver` adapter — `pre_turn` / `on_complete` lifecycle hooks (ctx-last per naming taxonomy).
 - **`Approver` trait** + `AlwaysApprove` / `ChannelApprover` — `decide(&request, ctx)` for HITL gating.
@@ -14,7 +14,7 @@ Production agent SDK on top of `entelix-runnable` + `entelix-graph`. Recipes (Re
 
 ## Crate-local rules
 
-- **`Subagent::from_whitelist` strict, `from_filter` graceful** — typo in whitelist returns `Error::Config` at construction; predicate filter accepts empty result (pure-orchestration shape). The asymmetry is regression-locked (ADR-0035).
+- **`SubagentBuilder::restrict_to` strict, `filter` graceful** — typo in `restrict_to` returns `Error::Config` at `build()`; predicate filter accepts empty result (pure-orchestration shape). The asymmetry is regression-locked (ADR-0035). `build()` also rejects empty `name` or `description` so operators fail-fast instead of shipping an empty tool name to the LLM (ADR-0093).
 - **Sub-agent dispatch emits `record_sub_agent_invoked`** on the parent's `AuditSink` (invariant 18, ADR-0037). Sub-agents NEVER bypass the parent registry's layer stack — `scripts/check-managed-shape.sh` fails the PR.
 - **Recipe routers MUST return typed `SupervisorDecision`**, not stringly-typed sentinels. Probability literals (`0.X`) in recipe routing are forbidden (`scripts/check-magic-constants.sh`, invariant 17).
 - **`Agent::execute_stream`** opens its own root span; consumers compose with `tower::Layer<S>` (e.g. `OtelLayer`, `PolicyLayer`) on the underlying `ChatModel`, not on the agent itself.

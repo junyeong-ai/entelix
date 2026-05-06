@@ -915,6 +915,110 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
             completion: Box::pin(user_facing),
         })
     }
+
+    /// Streaming sibling of [`Self::complete_typed`]. Returns a
+    /// [`TypedModelStream<O>`] whose `stream` field exposes raw
+    /// [`StreamDelta`]s (text fragments operators echo to the user
+    /// during generation) and whose `completion` future resolves to
+    /// the aggregated, parsed `O`.
+    ///
+    /// `response_format = ResponseFormat::strict(JsonSchemaSpec::for::<O>())`
+    /// is set on the request so the model emits the typed JSON
+    /// payload natively (Native strategy via `text` deltas) or
+    /// through a `tool_use` block (Tool strategy). The aggregator
+    /// behind [`Self::stream_deltas`] already collects both shapes
+    /// into the final [`ModelResponse`]; `stream_typed` parses the
+    /// completion the same way [`Self::complete_typed`] does.
+    ///
+    /// `O: JsonSchema + DeserializeOwned + Send + 'static` —
+    /// schemars derives the JSON Schema at call time.
+    ///
+    /// # Streaming + retry tradeoff
+    ///
+    /// `stream_typed` does **not** retry on parse failure: by the
+    /// time `completion` resolves the deltas have already been
+    /// surfaced to the consumer, so re-invoking with a corrective
+    /// hint would emit a divergent second stream. Operators wanting
+    /// the [`ChatModelConfig::validation_retries`] loop call
+    /// [`Self::complete_typed`] / [`Self::complete_typed_validated`]
+    /// instead — a parse failure there is fully recoverable because
+    /// no partial output was surfaced.
+    ///
+    /// A validator that needs to inspect the parsed `O` runs after
+    /// `completion` resolves: `let value = stream.completion.await?;
+    /// validator.validate(&value)?;`. The validator's `Err` does not
+    /// flow back into the stream — it surfaces alongside the typed
+    /// completion at the call site.
+    pub async fn stream_typed<O>(
+        &self,
+        messages: Vec<Message>,
+        ctx: &ExecutionContext,
+    ) -> Result<TypedModelStream<O>>
+    where
+        O: schemars::JsonSchema + serde::de::DeserializeOwned + Send + 'static,
+    {
+        let schema_value = serde_json::to_value(schemars::schema_for!(O)).map_err(Error::Serde)?;
+        let type_name = std::any::type_name::<O>();
+        let short_name = type_name.rsplit("::").next().unwrap_or(type_name);
+        let spec = JsonSchemaSpec::new(short_name, schema_value)?;
+        let format = ResponseFormat::strict(spec);
+
+        let budget = ctx.run_budget();
+        if let Some(budget) = &budget {
+            budget.check_pre_request()?;
+        }
+        let mut request = self.config.build_request(messages);
+        apply_run_overrides(&mut request, ctx);
+        request.response_format = Some(format);
+
+        let invocation = StreamingModelInvocation::new(ModelInvocation::new(request, ctx.clone()));
+        let model_stream = self.streaming_service().oneshot(invocation).await?;
+        let ModelStream { stream, completion } = model_stream;
+
+        let budget_for_completion = budget.clone();
+        let typed_completion = async move {
+            let response = completion.await?;
+            if let Some(budget) = &budget_for_completion {
+                budget.observe_usage(&response.usage)?;
+            }
+            parse_typed_response::<O>(response)
+        };
+        Ok(TypedModelStream {
+            stream,
+            completion: Box::pin(typed_completion),
+        })
+    }
+}
+
+/// Streaming counterpart to a `complete_typed` call — raw deltas on
+/// `stream`, the aggregated typed payload on `completion`.
+///
+/// The `stream` field is identical to [`ModelStream::stream`]: raw
+/// [`StreamDelta`]s the consumer surfaces to the user (text
+/// fragments, thinking deltas, …) as the model emits them. The
+/// `completion` future resolves to the typed `O` parsed from the
+/// aggregated final response — operators await it once the stream
+/// has been drained.
+///
+/// Mirrors [`crate::service::ModelStream`] for the typed-output
+/// path; the underlying aggregator is the same `tap_aggregator`
+/// used by [`ChatModel::stream_deltas`].
+pub struct TypedModelStream<O> {
+    /// Raw delta stream surfaced to the consumer.
+    pub stream: BoxDeltaStream<'static>,
+    /// Future resolving to the typed `O` after the stream has been
+    /// consumed to its terminal `Stop`. Drops the `TypedModelStream`
+    /// before draining the stream to surface an `Err` on completion.
+    pub completion: BoxFuture<'static, Result<O>>,
+}
+
+impl<O> std::fmt::Debug for TypedModelStream<O> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TypedModelStream")
+            .field("stream", &"<BoxDeltaStream>")
+            .field("completion", &format_args!("<BoxFuture<Result<{}>>>", std::any::type_name::<O>()))
+            .finish()
+    }
 }
 
 impl<C: Codec + 'static, T: Transport + 'static> std::fmt::Debug for ChatModel<C, T> {

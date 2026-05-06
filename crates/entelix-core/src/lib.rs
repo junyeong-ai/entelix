@@ -68,7 +68,7 @@ pub use auth::{
     ApiKeyProvider, AuthError, BearerProvider, CachedCredentialProvider, ChainedCredentialProvider,
     CredentialProvider, Credentials,
 };
-pub use chat::{ChatModel, ChatModelConfig};
+pub use chat::{ChatModel, ChatModelConfig, TypedModelStream};
 pub use context::ExecutionContext;
 pub use cost::{CostCalculator, ToolCostCalculator};
 pub use error::{Error, ProviderErrorKind, Result};

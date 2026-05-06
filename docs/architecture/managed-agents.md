@@ -166,7 +166,7 @@ For long-running review (operator approves over hours/days through a separate UI
 
 When the operator's decision lands, resume threads it through the typed `Command::ApproveTool { tool_use_id, decision }` resume primitive on `CompiledGraph::resume_with`. The graph's resume path attaches the decision to `ExecutionContext` internally; the layer's override-lookup runs *before* the approver and short-circuits — the approver isn't re-asked, the pending dispatch completes with the operator's decision.
 
-`ReActAgentBuilder::with_approver(approver)` and `Subagent::with_approver(approver)` both auto-wire `ApprovalLayer` into the tool registry; sub-agent narrowed views inherit the approval layer through the `Arc`-shared layer factory (ADR-0035 + ADR-0070). The agent's `AgentEventSink<S>` observes `AgentEvent::ToolCallApproved` / `ToolCallDenied` for both flows. See `crates/entelix/examples/18_tool_approval.rs` for the full pause-and-resume pattern.
+`ReActAgentBuilder::with_approver(approver)` and `SubagentBuilder::with_approver(approver)` both auto-wire `ApprovalLayer` into the tool registry; sub-agent narrowed views inherit the approval layer through the `Arc`-shared layer factory (ADR-0035 + ADR-0070). The agent's `AgentEventSink<S>` observes `AgentEvent::ToolCallApproved` / `ToolCallDenied` for both flows. See `crates/entelix/examples/18_tool_approval.rs` for the full pause-and-resume pattern.
 
 ADRs 0070 (HITL approval Layer) + 0071 (`AwaitExternal` graph-interrupt integration). The two flows compose: an approver may return `Approve` for some tool calls, `AwaitExternal` for others — the layer handles each path correctly.
 

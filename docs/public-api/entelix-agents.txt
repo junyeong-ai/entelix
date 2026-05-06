@@ -434,9 +434,12 @@ impl<R> core::panic::unwind_safe::RefUnwindSafe for entelix_agents::RunnableToSu
 impl<R> core::panic::unwind_safe::UnwindSafe for entelix_agents::RunnableToSummarizerAdapter<R> where R: core::panic::unwind_safe::RefUnwindSafe
 pub struct entelix_agents::Subagent<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
 impl<M> entelix_agents::Subagent<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
-pub fn entelix_agents::Subagent<M>::builder(model: M, parent_registry: &entelix_core::tools::registry::ToolRegistry) -> entelix_agents::subagent::SubagentBuilder<'_, M>
+pub fn entelix_agents::Subagent<M>::builder(model: M, parent_registry: &entelix_core::tools::registry::ToolRegistry, name: impl core::convert::Into<alloc::string::String>, description: impl core::convert::Into<alloc::string::String>) -> entelix_agents::SubagentBuilder<'_, M>
+pub fn entelix_agents::Subagent<M>::description(&self) -> &str
 pub fn entelix_agents::Subagent<M>::into_react_agent(self) -> entelix_core::error::Result<entelix_agents::Agent<entelix_agents::ReActState>>
-pub fn entelix_agents::Subagent<M>::into_tool(self, name: impl core::convert::Into<alloc::string::String>, description: impl core::convert::Into<alloc::string::String>) -> entelix_core::error::Result<entelix_agents::SubagentTool>
+pub fn entelix_agents::Subagent<M>::into_tool(self) -> entelix_core::error::Result<entelix_agents::SubagentTool>
+pub fn entelix_agents::Subagent<M>::metadata(&self) -> entelix_agents::SubagentMetadata
+pub fn entelix_agents::Subagent<M>::name(&self) -> &str
 pub const fn entelix_agents::Subagent<M>::skills(&self) -> &entelix_core::skills::registry::SkillRegistry
 pub fn entelix_agents::Subagent<M>::tool_count(&self) -> usize
 pub fn entelix_agents::Subagent<M>::tool_names(&self) -> alloc::vec::Vec<&str>
@@ -450,6 +453,37 @@ impl<M> core::marker::Unpin for entelix_agents::Subagent<M>
 impl<M> core::marker::UnsafeUnpin for entelix_agents::Subagent<M>
 impl<M> !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::Subagent<M>
 impl<M> !core::panic::unwind_safe::UnwindSafe for entelix_agents::Subagent<M>
+pub struct entelix_agents::SubagentBuilder<'a, M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+impl<'a, M> entelix_agents::SubagentBuilder<'a, M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_agents::SubagentBuilder<'a, M>::build(self) -> entelix_core::error::Result<entelix_agents::Subagent<M>>
+pub fn entelix_agents::SubagentBuilder<'a, M>::filter<F>(self, predicate: F) -> Self where F: core::ops::function::Fn(&dyn entelix_core::tools::tool::Tool) -> bool + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::SubagentBuilder<'a, M>::restrict_to(self, allowed: &[&str]) -> Self
+pub fn entelix_agents::SubagentBuilder<'a, M>::with_approver(self, approver: alloc::sync::Arc<dyn entelix_agents::Approver>) -> Self
+pub fn entelix_agents::SubagentBuilder<'a, M>::with_sink(self, sink: alloc::sync::Arc<dyn entelix_agents::AgentEventSink<entelix_agents::ReActState>>) -> Self
+pub fn entelix_agents::SubagentBuilder<'a, M>::with_skills(self, parent_skills: &'a entelix_core::skills::registry::SkillRegistry, allowed: &[&str]) -> Self
+impl<'a, M> core::marker::Freeze for entelix_agents::SubagentBuilder<'a, M> where M: core::marker::Freeze
+impl<'a, M> core::marker::Send for entelix_agents::SubagentBuilder<'a, M>
+impl<'a, M> core::marker::Sync for entelix_agents::SubagentBuilder<'a, M>
+impl<'a, M> core::marker::Unpin for entelix_agents::SubagentBuilder<'a, M> where M: core::marker::Unpin
+impl<'a, M> core::marker::UnsafeUnpin for entelix_agents::SubagentBuilder<'a, M> where M: core::marker::UnsafeUnpin
+impl<'a, M> !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::SubagentBuilder<'a, M>
+impl<'a, M> !core::panic::unwind_safe::UnwindSafe for entelix_agents::SubagentBuilder<'a, M>
+pub struct entelix_agents::SubagentMetadata
+pub entelix_agents::SubagentMetadata::description: alloc::string::String
+pub entelix_agents::SubagentMetadata::name: alloc::string::String
+pub entelix_agents::SubagentMetadata::tool_count: usize
+pub entelix_agents::SubagentMetadata::tool_names: alloc::vec::Vec<alloc::string::String>
+impl core::clone::Clone for entelix_agents::SubagentMetadata
+pub fn entelix_agents::SubagentMetadata::clone(&self) -> entelix_agents::SubagentMetadata
+impl core::fmt::Debug for entelix_agents::SubagentMetadata
+pub fn entelix_agents::SubagentMetadata::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_agents::SubagentMetadata
+impl core::marker::Send for entelix_agents::SubagentMetadata
+impl core::marker::Sync for entelix_agents::SubagentMetadata
+impl core::marker::Unpin for entelix_agents::SubagentMetadata
+impl core::marker::UnsafeUnpin for entelix_agents::SubagentMetadata
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_agents::SubagentMetadata
+impl core::panic::unwind_safe::UnwindSafe for entelix_agents::SubagentMetadata
 pub struct entelix_agents::SubagentTool
 impl entelix_agents::SubagentTool
 pub fn entelix_agents::SubagentTool::with_effect(self, effect: entelix_core::tools::effect::ToolEffect) -> Self

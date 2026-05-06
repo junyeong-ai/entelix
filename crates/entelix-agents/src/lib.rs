@@ -51,7 +51,7 @@ pub use chat_agent::{build_chat_graph, create_chat_agent};
 pub use hierarchical::{create_hierarchical_agent, team_from_supervisor};
 pub use react_agent::{ReActAgentBuilder, build_react_graph, create_react_agent};
 pub use state::{ChatState, ReActState, SupervisorState};
-pub use subagent::{Subagent, SubagentTool};
+pub use subagent::{Subagent, SubagentBuilder, SubagentMetadata, SubagentTool};
 pub use summarizer::RunnableToSummarizerAdapter;
 pub use supervisor::{
     AgentEntry, SupervisorDecision, build_supervisor_graph, create_supervisor_agent,

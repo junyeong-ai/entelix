@@ -63,8 +63,10 @@ async fn subagent_tool_emits_sub_agent_invoked_with_fresh_thread_id() -> Result<
     let model = RunnableLambda::new(|_msgs: Vec<Message>, _ctx| async move {
         Ok::<_, _>(assistant_text("done"))
     });
-    let sub = Subagent::builder(model, &ToolRegistry::new()).restrict_to(&[]).build()?;
-    let tool: SubagentTool = sub.into_tool("research_team", "spec")?;
+    let sub = Subagent::builder(model, &ToolRegistry::new(), "research_team", "spec")
+        .restrict_to(&[])
+        .build()?;
+    let tool: SubagentTool = sub.into_tool()?;
 
     let sink = Arc::new(RecordingAuditSink::default());
     let ctx = ctx_with_sink(Arc::clone(&sink));
@@ -87,8 +89,10 @@ async fn subagent_tool_without_sink_stays_silent() -> Result<()> {
     let model = RunnableLambda::new(|_msgs: Vec<Message>, _ctx| async move {
         Ok::<_, _>(assistant_text("done"))
     });
-    let sub = Subagent::builder(model, &ToolRegistry::new()).restrict_to(&[]).build()?;
-    let tool: SubagentTool = sub.into_tool("agent_x", "spec")?;
+    let sub = Subagent::builder(model, &ToolRegistry::new(), "agent_x", "spec")
+        .restrict_to(&[])
+        .build()?;
+    let tool: SubagentTool = sub.into_tool()?;
 
     let out = tool
         .execute(serde_json::json!({"task": "go"}), &AgentContext::default())

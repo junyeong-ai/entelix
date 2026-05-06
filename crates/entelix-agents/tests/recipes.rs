@@ -313,7 +313,9 @@ async fn subagent_filters_tool_set() -> Result<()> {
         .register(Arc::new(OtherTool::new()) as Arc<dyn Tool>)?;
 
     let (model, _) = MockModel::new(vec![assistant_text("done")]);
-    let sub = Subagent::builder(model, &parent_registry).restrict_to(&["double"]).build()?;
+    let sub = Subagent::builder(model, &parent_registry, "test_subagent", "test description")
+        .restrict_to(&["double"])
+        .build()?;
     assert_eq!(sub.tool_count(), 1);
     assert_eq!(sub.tool_names(), vec!["double"]);
     Ok(())
@@ -408,7 +410,7 @@ async fn subagent_from_whitelist_rejects_unknown_tool_name() -> Result<()> {
         ToolRegistry::new().register(Arc::new(OnlyDouble::new()) as Arc<dyn Tool>)?;
     let (model, _) = MockModel::new(vec![assistant_text("noop")]);
     let err =
-        Subagent::builder(model, &parent_registry).restrict_to(&["double", "ghost-tool"]).build().unwrap_err();
+        Subagent::builder(model, &parent_registry, "test_subagent", "test description").restrict_to(&["double", "ghost-tool"]).build().unwrap_err();
     let msg = format!("{err}");
     assert!(
         msg.contains("ghost-tool"),
@@ -423,11 +425,15 @@ async fn subagent_into_tool_dispatches_full_react_loop() -> Result<()> {
     let (model, calls) = MockModel::new(vec![assistant_text("task done")]);
     let parent_registry =
         ToolRegistry::new().register(Arc::new(DoubleTool::new()) as Arc<dyn Tool>)?;
-    let sub = Subagent::builder(model, &parent_registry).restrict_to(&["double"]).build()?;
-    let tool: SubagentTool = sub.into_tool(
+    let sub = Subagent::builder(
+        model,
+        &parent_registry,
         "research_team",
         "Dispatch the research sub-agent to handle the supplied task.",
-    )?;
+    )
+    .restrict_to(&["double"])
+    .build()?;
+    let tool: SubagentTool = sub.into_tool()?;
     // Metadata reads back as we set it.
     assert_eq!(tool.metadata().name, "research_team");
     assert!(tool.metadata().description.contains("research sub-agent"));
@@ -453,8 +459,10 @@ async fn subagent_into_tool_dispatches_full_react_loop() -> Result<()> {
 async fn subagent_tool_rejects_input_without_task_field() -> Result<()> {
     let (model, _) = MockModel::new(vec![assistant_text("noop")]);
     let parent_registry = ToolRegistry::new();
-    let sub = Subagent::builder(model, &parent_registry).restrict_to(&[]).build()?;
-    let tool: SubagentTool = sub.into_tool("agent_x", "x")?;
+    let sub = Subagent::builder(model, &parent_registry, "agent_x", "x")
+        .restrict_to(&[])
+        .build()?;
+    let tool: SubagentTool = sub.into_tool()?;
     let err = tool
         .execute(serde_json::json!({}), &AgentContext::default())
         .await
@@ -467,9 +475,11 @@ async fn subagent_tool_rejects_input_without_task_field() -> Result<()> {
 async fn subagent_tool_with_effect_overrides_default() -> Result<()> {
     let (model, _) = MockModel::new(vec![assistant_text("ok")]);
     let parent_registry = ToolRegistry::new();
-    let sub = Subagent::builder(model, &parent_registry).restrict_to(&[]).build()?;
+    let sub = Subagent::builder(model, &parent_registry, "read_only_agent", "x")
+        .restrict_to(&[])
+        .build()?;
     let tool = sub
-        .into_tool("read_only_agent", "x")?
+        .into_tool()?
         .with_effect(entelix_core::tools::ToolEffect::ReadOnly);
     assert_eq!(
         tool.metadata().effect,

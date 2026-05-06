@@ -61,11 +61,35 @@ pub struct Subagent<M>
 where
     M: Runnable<Vec<Message>, Message> + 'static,
 {
+    name: String,
+    description: String,
     model: Arc<M>,
     tool_registry: ToolRegistry,
     skills: SkillRegistry,
     sink: Option<Arc<dyn AgentEventSink<ReActState>>>,
     approver: Option<Arc<dyn Approver>>,
+}
+
+/// Compact metadata snapshot of a [`Subagent`] for parent-side
+/// inspection — the LLM-facing identity (`name`, `description`)
+/// plus the tool surface bound at construction. Operators that
+/// list available sub-agents in a parent agent's system prompt
+/// reach for this struct rather than calling each accessor
+/// individually.
+///
+/// The `description` is the same one-line summary
+/// [`SubagentBuilder::with_description`] received; longer dev-side
+/// documentation belongs in code comments, not in metadata.
+#[derive(Clone, Debug)]
+pub struct SubagentMetadata {
+    /// LLM-facing tool name. Same value [`Subagent::name`] returns.
+    pub name: String,
+    /// One-line description for parent-side tool listings.
+    pub description: String,
+    /// Tools the sub-agent can dispatch (count).
+    pub tool_count: usize,
+    /// Tool names the sub-agent can dispatch — order unspecified.
+    pub tool_names: Vec<String>,
 }
 
 impl<M> std::fmt::Debug for Subagent<M>
@@ -78,6 +102,8 @@ where
         // implement it. Counts are sufficient for diagnostic
         // purposes; structural fields are surfaced via accessors.
         f.debug_struct("Subagent")
+            .field("name", &self.name)
+            .field("description", &self.description)
             .field("tool_count", &self.tool_registry.len())
             .field("skill_count", &self.skills.len())
             .field("has_sink", &self.sink.is_some())
@@ -91,15 +117,52 @@ where
     M: Runnable<Vec<Message>, Message> + 'static,
 {
     /// Open a [`SubagentBuilder`] anchored at `parent_registry`. The
-    /// builder is the sole construction surface — operators choose
-    /// the tool selection (`restrict_to` / `filter`) and attach
-    /// optional `sink` / `approver` / `skills` before calling
+    /// builder is the sole construction surface — operators set
+    /// the LLM-facing identity (`name`, `description`), choose the
+    /// tool selection (`restrict_to` / `filter`), and attach optional
+    /// `sink` / `approver` / `skills` before calling
     /// [`SubagentBuilder::build`].
+    ///
+    /// `name` and `description` flow through `into_tool` to populate
+    /// [`SubagentTool`]'s metadata; declaring them at the builder
+    /// surface (not at `into_tool`) makes the sub-agent's identity
+    /// inspectable via [`Subagent::name`] / [`Subagent::description`]
+    /// before the conversion-to-tool boundary, which matters for
+    /// operators that list sub-agent metadata in a parent agent's
+    /// system prompt.
     pub fn builder(
         model: M,
         parent_registry: &ToolRegistry,
+        name: impl Into<String>,
+        description: impl Into<String>,
     ) -> SubagentBuilder<'_, M> {
-        SubagentBuilder::new(model, parent_registry)
+        SubagentBuilder::new(model, parent_registry, name.into(), description.into())
+    }
+
+    /// LLM-facing name surfaced to the parent's tool dispatch.
+    /// Equal to the [`SubagentTool`]'s metadata name after
+    /// [`Self::into_tool`].
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// One-line description surfaced to the parent's tool listing.
+    pub fn description(&self) -> &str {
+        &self.description
+    }
+
+    /// Compact metadata snapshot for parent-side inspection.
+    /// Convenient when the parent's system prompt enumerates
+    /// available sub-agents and their tool surfaces without
+    /// consuming the [`Subagent`] (which `into_tool` does).
+    #[must_use]
+    pub fn metadata(&self) -> SubagentMetadata {
+        SubagentMetadata {
+            name: self.name.clone(),
+            description: self.description.clone(),
+            tool_count: self.tool_registry.len(),
+            tool_names: self.tool_registry.names().map(str::to_owned).collect(),
+        }
     }
 
     /// Number of tools the sub-agent can dispatch.
@@ -141,6 +204,8 @@ where
     /// matching their declared authority.
     pub fn into_react_agent(self) -> Result<crate::agent::Agent<ReActState>> {
         let Self {
+            name: _,
+            description: _,
             model,
             tool_registry,
             skills,
@@ -193,13 +258,16 @@ where
     /// every transitive tool, a conservative
     /// [`ToolEffect::Mutating`] is reported. Operators that know the
     /// sub-agent is read-only override via [`SubagentTool::with_effect`].
-    pub fn into_tool(
-        self,
-        name: impl Into<String>,
-        description: impl Into<String>,
-    ) -> Result<SubagentTool> {
+    pub fn into_tool(self) -> Result<SubagentTool> {
+        let Self {
+            name,
+            description,
+            ..
+        } = &self;
+        let name = name.clone();
+        let description = description.clone();
         let agent = self.into_react_agent()?;
-        Ok(SubagentTool::new(agent, name.into(), description.into()))
+        Ok(SubagentTool::new(agent, name, description))
     }
 }
 
@@ -250,6 +318,8 @@ where
 {
     model: M,
     parent_registry: &'a ToolRegistry,
+    name: String,
+    description: String,
     selection: SubagentSelection,
     skills_request: Option<(&'a SkillRegistry, Vec<String>)>,
     sink: Option<Arc<dyn AgentEventSink<ReActState>>>,
@@ -260,10 +330,17 @@ impl<'a, M> SubagentBuilder<'a, M>
 where
     M: Runnable<Vec<Message>, Message> + 'static,
 {
-    fn new(model: M, parent_registry: &'a ToolRegistry) -> Self {
+    fn new(
+        model: M,
+        parent_registry: &'a ToolRegistry,
+        name: String,
+        description: String,
+    ) -> Self {
         Self {
             model,
             parent_registry,
+            name,
+            description,
             selection: SubagentSelection::All,
             skills_request: None,
             sink: None,
@@ -337,6 +414,8 @@ where
         let Self {
             model,
             parent_registry,
+            name,
+            description,
             selection,
             skills_request,
             sink,
@@ -362,6 +441,8 @@ where
             }
         };
         Ok(Subagent {
+            name,
+            description,
             model: Arc::new(model),
             tool_registry,
             skills,

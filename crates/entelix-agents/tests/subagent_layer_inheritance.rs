@@ -140,7 +140,7 @@ async fn subagent_inherits_parent_layer_stack_for_every_dispatch() {
 
     // Sub-agent narrows to {alpha} and inherits the parent's layer
     // stack via `ToolRegistry::restricted_to` (managed-agent contract).
-    let sub = Subagent::builder(StubModel, &parent).restrict_to(&["alpha"]).build().unwrap();
+    let sub = Subagent::builder(StubModel, &parent, "test_subagent", "test description").restrict_to(&["alpha"]).build().unwrap();
     assert_eq!(sub.tool_count(), 1);
 
     // Dispatch through the sub-agent's narrowed registry must
@@ -171,7 +171,7 @@ async fn subagent_filter_form_also_inherits_parent_layer_stack() {
         .unwrap()
         .layer(counting);
 
-    let sub = Subagent::builder(StubModel, &parent)
+    let sub = Subagent::builder(StubModel, &parent, "test_subagent", "test description")
         .filter(|t| t.metadata().name == "beta")
         .build()
         .unwrap();
@@ -195,7 +195,7 @@ async fn narrowed_registry_rejects_tools_outside_the_filter() {
         .register(Arc::new(EchoTool::new("beta")) as Arc<dyn Tool>)
         .unwrap();
 
-    let sub = Subagent::builder(StubModel, &parent).restrict_to(&["alpha"]).build().unwrap();
+    let sub = Subagent::builder(StubModel, &parent, "test_subagent", "test description").restrict_to(&["alpha"]).build().unwrap();
     let err = sub
         .tool_registry()
         .dispatch("call_s", "beta", json!({}), &ExecutionContext::new())
@@ -238,7 +238,7 @@ async fn subagent_with_approver_attaches_approval_layer() {
     let parent = ToolRegistry::new()
         .register(Arc::new(EchoTool::new("alpha")) as Arc<dyn Tool>)
         .unwrap();
-    let sub = Subagent::builder(StubModel, &parent)
+    let sub = Subagent::builder(StubModel, &parent, "test_subagent", "test description")
         .restrict_to(&["alpha"])
         .with_approver(Arc::new(AlwaysReject))
         .build()

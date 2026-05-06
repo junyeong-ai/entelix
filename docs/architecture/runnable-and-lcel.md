@@ -95,9 +95,9 @@ pub trait RunnableExt<I, O>: Runnable<I, O> + Sized + 'static {
 | `ChatModel<C, T>` (codec + transport bundle) | `Vec<Message>` | `Message` | `entelix-core` |
 | `PromptTemplate` | `HashMap<&str, Value>` | `String` | `entelix-prompt` |
 | `ChatPromptTemplate` | `HashMap<&str, Value>` | `Vec<Message>` | `entelix-prompt` |
-| `JsonOutputParser<T: DeserializeOwned>` | `String` | `T` | `entelix-runnable::parsers` |
-| `RetryParser<P>` | `String` | `<P as Runnable>::O` | `entelix-runnable::parsers` |
-| `FixingOutputParser<P, F>` | `String` | `<P as Runnable>::O` | `entelix-runnable::parsers` |
+| `JsonOutputParser<T: DeserializeOwned>` | `String` | `T` | `entelix-runnable::parser` |
+| `RetryParser<P>` | `String` | `<P as Runnable>::O` | `entelix-runnable::parser` |
+| `FixingOutputParser<P, F>` | `String` | `<P as Runnable>::O` | `entelix-runnable::parser` |
 | `Tool` (via `ToolToRunnableAdapter`) | `serde_json::Value` | `serde_json::Value` | `entelix-core::tools` |
 | `SchemaTool` (via `SchemaToolAdapter`) | `T::Input` | `T::Output` | `entelix-tools` |
 | `Retriever` (via `RetrieverToRunnableAdapter`) | `String` | `Vec<Document>` | `entelix-memory` |
@@ -110,29 +110,28 @@ pub trait RunnableExt<I, O>: Runnable<I, O> + Sized + 'static {
 For dynamic dispatch (e.g., agent picking tools at runtime), we expose a Value-erased counterpart:
 
 ```rust
-pub trait AnyRunnable: Send + Sync {
-    fn name(&self) -> Cow<'_, str>;
-    async fn invoke_any(&self, input: serde_json::Value, ctx: &ExecutionContext) -> Result<serde_json::Value, Error>;
-    async fn stream_any(&self, input: serde_json::Value, ctx: &ExecutionContext) -> Result<BoxStream<'static, Result<serde_json::Value, Error>>, Error>;
+#[async_trait]
+pub trait AnyRunnable: Send + Sync + 'static {
+    fn name(&self) -> Cow<'_, str> { Cow::Borrowed("any-runnable") }
+    async fn invoke_any(
+        &self,
+        input: serde_json::Value,
+        ctx: &ExecutionContext,
+    ) -> Result<serde_json::Value>;
 }
 
-// blanket impl
-impl<R, I, O> AnyRunnable for R
-where
-    R: Runnable<I, O>,
-    I: DeserializeOwned + Send + 'static,
-    O: Serialize + Send + 'static,
-{
-    async fn invoke_any(&self, input: serde_json::Value, ctx: &ExecutionContext) -> Result<serde_json::Value, Error> {
-        let typed_in: I = serde_json::from_value(input)?;
-        let typed_out = self.invoke(typed_in, ctx).await?;
-        Ok(serde_json::to_value(typed_out)?)
-    }
-    // ...
-}
+pub type AnyRunnableHandle = Arc<dyn AnyRunnable>;
+
+// `entelix-runnable::any_runnable::erase` wraps any `Runnable<I, O>`
+// (with `I: DeserializeOwned`, `O: Serialize`) into a value-erased
+// `AnyRunnable` by transcoding through JSON at the boundary.
+let erased: AnyRunnableHandle = Arc::new(erase(typed_runnable));
 ```
 
-This is F12 mitigation from PLAN.md — both static-typed and dynamically-dispatched usage supported.
+The trait surface is intentionally narrow — `name` + `invoke_any`.
+Streaming over the value-erased path stays on the typed
+[`Runnable::stream`] surface; the erased boundary is for one-shot
+dispatch tables (tool registries, plug-in routers).
 
 ## Tool-vs-Runnable relationship (ADR-0011 territory)
 
@@ -141,9 +140,11 @@ This is F12 mitigation from PLAN.md — both static-typed and dynamically-dispat
 - Trait inheritance across crates couples them in the wrong direction.
 - `Tool` carries metadata (`name`, `description`, `input_schema`) that `Runnable<Value, Value>` doesn't need.
 
-Instead, **`ToolToRunnableAdapter`** in `entelix-core::tools` exposes any `Tool` as a `Runnable<Value, Value>`:
+Instead, **`ToolToRunnableAdapter`** in `entelix-runnable::adapter` exposes any `Tool` as a `Runnable<Value, Value>`:
 
 ```rust
+use entelix::{RunnableExt, ToolToRunnableAdapter};
+
 let runnable_tool = ToolToRunnableAdapter::new(my_tool);
 let chain = prompt.pipe(model).pipe(runnable_tool);   // works
 ```

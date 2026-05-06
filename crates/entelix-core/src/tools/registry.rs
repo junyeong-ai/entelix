@@ -216,7 +216,7 @@ impl<D: Clone + Send + Sync + 'static> ToolRegistry<D> {
     }
 
     /// Append a layer to the dispatch stack. Layers stack around the
-    /// leaf [`InnerToolService<D>`] — the **last-registered layer is
+    /// leaf inner tool service — the **last-registered layer is
     /// outermost** (sees the request first, the response last).
     /// `registry.layer(A).layer(B)` resolves to `B → A → tool`.
     ///
@@ -346,9 +346,9 @@ impl<D: Clone + Send + Sync + 'static> ToolRegistry<D> {
         Ok(self.filter(|tool| allowed_set.contains(tool.metadata().name.as_str())))
     }
 
-    /// Build a [`BoxedToolService`] for `name` — the leaf
-    /// [`InnerToolService<D>`] wrapped in the configured layer
-    /// stack. Returns `None` if the tool is not registered.
+    /// Build a [`BoxedToolService`] for `name` — the leaf inner
+    /// tool service wrapped in the configured layer stack. Returns
+    /// `None` if the tool is not registered.
     #[must_use]
     pub fn service(&self, name: &str) -> Option<BoxedToolService> {
         let tool = self.by_name.get(name)?;

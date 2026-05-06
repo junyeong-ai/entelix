@@ -7,8 +7,8 @@
 //! async fn name(ctx: &AgentContext<()>, arg1: T1, arg2: T2, ...) -> Result<O>
 //! ```
 //!
-//! and generates everything an agent needs to dispatch it as a
-//! [`entelix_tools::SchemaTool`]:
+//! and generates everything an agent needs to dispatch it as an
+//! `entelix_tools::SchemaTool`:
 //!
 //! 1. An `<Name>Input` struct over the argument list, derived
 //!    `serde::Deserialize` + `schemars::JsonSchema`.
@@ -147,7 +147,7 @@ fn parse_str_lit(expr: &Expr) -> syn::Result<LitStr> {
     }
 }
 
-/// Generate a [`entelix_tools::SchemaTool`] impl from an async fn.
+/// Generate an `entelix_tools::SchemaTool` impl from an async fn.
 /// See the crate-level docs for the contract and an example.
 #[proc_macro_attribute]
 pub fn tool(attr: TokenStream, item: TokenStream) -> TokenStream {

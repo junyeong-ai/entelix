@@ -4,7 +4,7 @@
 //! parses the model's response into `O`. Validators that detect a
 //! semantic problem the JSON schema cannot catch — value out of
 //! range, business-rule violation, cross-field invariant — return
-//! [`Error::ModelRetry`] with a corrective hint. The chat model's
+//! [`crate::Error::ModelRetry`] with a corrective hint. The chat model's
 //! retry loop catches the variant, reflects the hint to the model
 //! as a user message (mirror of the schema-mismatch retry path,
 //! ADR-0090), and re-invokes within the configured

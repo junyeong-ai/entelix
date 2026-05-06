@@ -774,7 +774,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
     /// [`ChatModelConfig::validation_retries`](crate::ChatModelConfig::validation_retries)
     /// budget.
     ///
-    /// The validator surface is sync ([`OutputValidator::validate`])
+    /// The validator surface is sync ([`crate::OutputValidator::validate`])
     /// so simple closures (`|out: &O| -> Result<()>`) compose
     /// without `async-trait` ceremony. Validators that need to
     /// `.await` (DB lookup, external check) compose around the

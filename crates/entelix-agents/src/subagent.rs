@@ -77,8 +77,8 @@ where
 /// reach for this struct rather than calling each accessor
 /// individually.
 ///
-/// The `description` is the same one-line summary
-/// [`SubagentBuilder::with_description`] received; longer dev-side
+/// The `description` is the same one-line summary the
+/// [`Subagent::builder`] constructor received; longer dev-side
 /// documentation belongs in code comments, not in metadata.
 #[derive(Clone, Debug)]
 pub struct SubagentMetadata {
@@ -187,7 +187,7 @@ where
     }
 
     /// Borrow the filtered skill registry the sub-agent inherited.
-    /// Empty when [`Self::with_skills`] was never called.
+    /// Empty when [`SubagentBuilder::with_skills`] was never called.
     #[must_use]
     pub const fn skills(&self) -> &SkillRegistry {
         &self.skills
@@ -195,8 +195,8 @@ where
 
     /// Build a `ReAct` loop bound to this sub-agent's narrowed tool
     /// registry (which inherits the parent's layer stack), model, and
-    /// — when [`Self::with_skills`] was called — the three
-    /// LLM-facing skill tools (`list_skills`, `activate_skill`,
+    /// — when [`SubagentBuilder::with_skills`] was called — the
+    /// three LLM-facing skill tools (`list_skills`, `activate_skill`,
     /// `read_skill_resource`) backed by the inherited skill registry.
     /// See ADR-0027 §"Auto-wire" and ADR-0035
     /// §"Sub-agent layer-stack inheritance". Sub-agents with no

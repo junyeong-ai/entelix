@@ -107,15 +107,24 @@ entelix:
 ```rust
 use entelix::Subagent;
 
-// Strict-name sub-agent — typo surfaces as Error::Config at construction.
-let sub = Subagent::from_whitelist(model, &parent_registry, &["search", "fetch_url"])?
+// Strict-name sub-agent — typo in restrict_to surfaces as
+// Error::Config when build() runs. Identity is set at builder
+// construction (ADR-0093) so the Subagent is inspectable
+// (`metadata()`, `name()`, `description()`) before the
+// `into_tool()` conversion.
+let sub = Subagent::builder(model, &parent_registry, "research_assistant", "Search the web for citations.")
+    .restrict_to(&["search", "fetch_url"])
     .with_skills(&parent_skills, &["citation-format"])?
     .with_sink(parent_sink)
-    .into_tool("research_assistant", "Search the web for citations.")?;
+    .build()?
+    .into_tool()?;
 
-// Predicate sub-agent — frozen view, evaluated once per parent tool at construction.
-let sub = Subagent::from_filter(model, &parent_registry, |t| t.metadata().name.starts_with("read_"))
-    .into_tool("read_only", "Read-only assistant.")?;
+// Predicate sub-agent — frozen view, evaluated once per parent
+// tool at build() time.
+let sub = Subagent::builder(model, &parent_registry, "read_only", "Read-only assistant.")
+    .filter(|t| t.metadata().name.starts_with("read_"))
+    .build()?
+    .into_tool()?;
 ```
 
 - `parent_registry.restricted_to(...)` / `parent_registry.filter(...)`
@@ -136,10 +145,10 @@ let sub = Subagent::from_filter(model, &parent_registry, |t| t.metadata().name.s
 - Cost/usage rolls up to the parent's `entelix-policy::CostMeter`
   through the inherited layer stack.
 - `crates/entelix-agents/tests/subagent_capture_pattern.rs`
-  pins the strict / graceful asymmetry: `from_whitelist` rejects
-  typos, `from_filter` accepts empty results (pure-orchestration
-  shape), the predicate is evaluated once per parent tool at
-  construction (frozen view).
+  pins the strict / graceful asymmetry: `restrict_to` rejects
+  typos at `build()`, `filter` accepts empty results
+  (pure-orchestration shape), the predicate is evaluated once
+  per parent tool at `build()` (frozen view).
 
 This is the **one-line sub-agent pattern** that LangGraph requires ~50 lines to express. We get it from honoring the brain/hand decoupling.
 
@@ -176,7 +185,7 @@ Anthropic: *"tokens are never reachable from the sandbox where Claude's code run
 entelix:
 
 1. `CredentialProvider::resolve()` returns a `secrecy::Secret<String>` only inside `Transport::authorize()`. The token is added to `http::HeaderMap` and immediately scoped out.
-2. `Tool::execute(input: serde_json::Value, ctx: ExecutionContext)` — `ctx` carries tenant_id, span context, and registry handles, but **never** the token. Compile-checked: `ExecutionContext` does not embed `CredentialProvider`.
+2. `Tool::execute(input: Value, ctx: &AgentContext<D>)` — `AgentContext<D>` wraps `ExecutionContext` (tenant_id, span context, registry handles) and an operator-supplied typed `D` (defaults to `()`); neither carries the token. Compile-checked: `ExecutionContext` does not embed `CredentialProvider`. ADR-0067.
 3. `entelix-policy::PiiRedactor` runs in a `pre_request` hook to scrub user-provided tokens before they reach `Codec::encode_request`.
 4. CI grep gate: `grep -rE 'CredentialProvider|Secret<String>' crates/entelix-tools/` must return zero hits — tools cannot see credentials.
 

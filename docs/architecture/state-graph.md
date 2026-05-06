@@ -169,23 +169,44 @@ compiled.invoke(state, &ctx).await?;  // effective cap = min(25, 10) = 10
 ## Checkpointer — durable state
 
 ```rust
-pub trait Checkpointer<S>: Send + Sync + 'static {
-    async fn append(&self, key: &ThreadKey, checkpoint: Checkpoint<S>) -> Result<CheckpointId>;
+#[async_trait]
+pub trait Checkpointer<S>: Send + Sync + 'static
+where
+    S: Clone + Send + Sync + 'static,
+{
+    async fn put(&self, checkpoint: Checkpoint<S>) -> Result<()>;
     async fn latest(&self, key: &ThreadKey) -> Result<Option<Checkpoint<S>>>;
     async fn by_id(&self, key: &ThreadKey, id: &CheckpointId) -> Result<Option<Checkpoint<S>>>;
-    async fn history(&self, key: &ThreadKey, limit: usize) -> Result<Vec<CheckpointId>>;
-    async fn update_state(&self, key: &ThreadKey, from: &CheckpointId, partial: S) -> Result<CheckpointId>;
+    async fn history(&self, key: &ThreadKey, limit: usize) -> Result<Vec<Checkpoint<S>>>;
+    async fn update_state(
+        &self,
+        key: &ThreadKey,
+        parent_id: &CheckpointId,
+        new_state: S,
+    ) -> Result<CheckpointId>;
 }
 
-pub struct Checkpoint<S> {
+#[non_exhaustive]
+pub struct Checkpoint<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
     pub id: CheckpointId,
-    pub key: ThreadKey,                    // (tenant_id, thread_id) — invariant 11
-    pub parent: Option<CheckpointId>,
+    pub tenant_id: TenantId,               // invariant 11 — mandatory
+    pub thread_id: String,
+    pub parent_id: Option<CheckpointId>,   // time-travel parent
+    pub step: usize,                       // monotonic counter within thread
     pub state: S,
-    pub next_node: Option<String>,
-    pub created_at: DateTime<Utc>,
+    pub next_node: Option<String>,         // None when the graph terminated
+    pub timestamp: DateTime<Utc>,
 }
 ```
+
+The checkpoint carries `tenant_id` + `thread_id` directly (the
+`ThreadKey` newtype is a borrowed view, not a stored field) so
+the persistence-side row layout indexes naturally. `put` takes
+the checkpoint by value — the addressing comes from the
+checkpoint's own fields, not a separate key argument.
 
 Implementations:
 - `InMemoryCheckpointer<S>` — in-process default, in `entelix-graph`

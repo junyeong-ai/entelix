@@ -14,7 +14,7 @@
 | Provider client | `providers::openai::Client` | `ChatModel<C, T>` (codec + transport) |
 | Completion call | `client.completion_request(...).send().await` | `model.complete(messages, &ctx).await` |
 | Streaming | `.stream().await` (provider-shaped) | `model.stream_deltas(messages, &ctx).await` (`StreamDelta` IR) |
-| Tools | `#[tool]` macro on `impl Tool` | `impl Tool for X { ... }` (no macro) |
+| Tools | `#[tool]` macro on `impl Tool` | `#[tool]` proc-macro (entelix-tool-derive) on an `async fn` |
 | Agents | `Agent::new(model).preamble(...).tool(...)` | `create_react_agent(model, tools)?` (or build a `StateGraph`) |
 | Memory | (loose conventions in user code) | `entelix::{BufferMemory, EntityMemory, …}` |
 | Multi-step graphs | (none) | `entelix::StateGraph<S>` |
@@ -78,34 +78,32 @@ async fn lookup(args: LookupArgs) -> Result<String> {
 
 ```rust
 // entelix
-use async_trait::async_trait;
-use entelix::tools::Tool;
+use entelix::{AgentContext, Result};
+use entelix_tool_derive::tool;
 
-struct LookupTool;
-
-#[async_trait]
-impl Tool for LookupTool {
-    fn name(&self) -> &str { "lookup" }
-    fn description(&self) -> &str { "Look up a record by id." }
-    fn input_schema(&self) -> serde_json::Value {
-        serde_json::json!({
-            "type": "object",
-            "required": ["id"],
-            "properties": { "id": { "type": "string" } }
-        })
-    }
-    async fn execute(&self, input: serde_json::Value, ctx: &ExecutionContext)
-        -> Result<serde_json::Value>
-    {
-        let id = input["id"].as_str().ok_or_else(/* ... */)?;
-        Ok(serde_json::Value::String(fetch(id, ctx).await?))
-    }
+#[tool]
+/// Look up a record by id.
+async fn lookup(ctx: &AgentContext<()>, id: String) -> Result<String> {
+    fetch(&id, ctx.core()).await
 }
 ```
 
-entelix doesn't ship a `#[tool]` macro at 1.0 — the manual `impl
-Tool` pattern is small and explicit. The trait stays
-intentionally minimal (entelix invariant 4).
+entelix's `#[tool]` proc-macro generates a `SchemaTool` impl from
+the function signature: an `Input` struct (`Deserialize +
+JsonSchema` over the params), a unit struct named after the fn
+(snake_case → PascalCase), and the routing impl. The first
+doc-comment paragraph becomes the LLM-facing description; the
+JSON schema is auto-generated. Operators that need the manual
+form (effect classes, custom routing, generic tools) implement
+`Tool` directly — the macro is sugar over the underlying trait,
+not a replacement.
+
+The `ctx: &AgentContext<D>` parameter carries an operator-supplied
+typed `D` (defaults to `()`); pass `&AgentContext<MyDeps>` for
+typed handles (DB connection, auth client, …). The layer ecosystem
+(`PolicyLayer`, `OtelLayer`, `RetryService`, `ApprovalLayer`) stays
+`D`-free so existing layer impls compile unchanged regardless of
+your deps choice.
 
 ## Agent loop
 
@@ -211,10 +209,6 @@ to watch the tool-calling loop tick by tick. See
 
 ## What rig has that entelix doesn't
 
-- **`#[tool]` proc macro** — entelix uses manual trait impls (or
-  the `SchemaTool` typed-I/O adapter for Deserialize+JsonSchema
-  inputs, which auto-generates the schema and routes it through
-  `LlmFacingSchema::strip` so envelope keys don't reach the model).
 - **Larger provider matrix at the surface** — rig integrates
   Cohere, Mistral, etc. directly; entelix routes through codec +
   transport (Anthropic / OpenAI Chat / OpenAI Responses / Gemini /
@@ -225,8 +219,11 @@ to watch the tool-calling loop tick by tick. See
 
 1. **Replace the provider client** with a `ChatModel<C, T>` matching
    your provider (codec) and route (transport).
-2. **Translate tools** to `impl Tool`. Field-by-field; the JSON
-   schema is the same.
+2. **Translate tools** to `#[tool]` proc-macro on an `async fn`
+   — the JSON schema is auto-generated from the param types via
+   `schemars::JsonSchema`. Operators with custom-effect or
+   generic tools implement `Tool` directly (the macro is sugar
+   over the trait).
 3. **For ReAct-shaped agents**: swap `Agent::new(...).build()` for
    `create_react_agent(model, tools)?`. The same prompt/system
    string flows through `ChatModel::with_system`.

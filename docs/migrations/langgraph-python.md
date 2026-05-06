@@ -21,7 +21,7 @@
 | Checkpointer | `MemorySaver()` / `PostgresSaver` | `InMemoryCheckpointer::new()` / `PostgresCheckpointer::connect(url)?` |
 | Resume | `graph.invoke(None, config)` | `graph.resume(thread_id, &ctx).await?` |
 | Interrupt | `interrupt(payload)` | `interrupt(payload)?` |
-| Tools | `@tool` decorator | `impl Tool for X { ... }` |
+| Tools | `@tool` decorator | `#[tool]` proc-macro (entelix-tool-derive) on an `async fn` |
 | ReAct recipe | `create_react_agent(model, tools)` | `create_react_agent(model, tools)?` |
 | HTTP server | `LangServe` | `entelix::AgentRouterBuilder` |
 
@@ -345,31 +345,29 @@ def lookup(record_id: str) -> str:
 ```
 
 ```rust
-struct LookupTool;
+use entelix::{AgentContext, Result};
+use entelix_tool_derive::tool;
 
-#[async_trait]
-impl Tool for LookupTool {
-    fn name(&self) -> &str { "lookup" }
-    fn description(&self) -> &str { "Look up a record by id." }
-    fn input_schema(&self) -> serde_json::Value {
-        serde_json::json!({
-            "type": "object",
-            "required": ["record_id"],
-            "properties": { "record_id": { "type": "string" } }
-        })
-    }
-    async fn execute(&self, input: serde_json::Value, ctx: &ExecutionContext)
-        -> Result<serde_json::Value>
-    {
-        let id = input["record_id"].as_str().unwrap_or("");
-        Ok(serde_json::Value::String(fetch(id, ctx).await?))
-    }
+#[tool]
+/// Look up a record by id.
+async fn lookup(ctx: &AgentContext<()>, record_id: String) -> Result<String> {
+    fetch(&record_id, ctx.core()).await
 }
 ```
 
-The `Tool` trait is intentionally *minimal* — `name`,
-`description`, `input_schema`, `execute`. No `prepare`, no
-`cleanup`, no back-channels (entelix invariant 4).
+The `#[tool]` proc-macro generates a `SchemaTool` impl from the
+function signature: an `Input` struct (`Deserialize +
+JsonSchema` over the params), a unit struct named after the fn
+(snake_case → PascalCase), and the routing impl. The first
+doc-comment paragraph becomes the LLM-facing description; the
+JSON schema is auto-generated. The `Tool` trait under the macro
+stays intentionally minimal — `metadata`, `execute`, no
+back-channels (entelix invariant 4).
+
+The `&AgentContext<D>` parameter carries an operator-supplied
+typed `D` (defaults to `()`); pass `&AgentContext<MyDeps>` for
+typed handles (DB connection, auth client, …) without touching
+the layer ecosystem, which stays `D`-free.
 
 ## Pre-built agent recipes
 

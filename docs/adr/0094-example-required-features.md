@@ -55,6 +55,10 @@ Without that, copy-paste users hit the same compile error.
 - `cargo build --examples -p entelix --all-features` — finishes in ~13s (builds all 18).
 - `cargo xtask invariants` — 11/11 clean.
 
+### CI regression gate
+
+`.github/workflows/ci.yml` adds a bare `cargo build --examples -p entelix` step (no features) inside the `build` job. The `--all-features` build that ran before it satisfies every feature gate by accident — only the bare build catches a future example that imports a feature-gated facade item without declaring `required-features`. With the declaration, Cargo skips the example silently; without it, the build fails with E0432 unresolved import.
+
 ## Consequences
 
 - Examples are split into two cohorts by Cargo's `required-features`:

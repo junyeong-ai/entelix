@@ -87,6 +87,16 @@ jobs:
       - name: cargo build --workspace --all-features
         run: cargo build --workspace --all-features
 
+      # Bare `cargo build --examples` (no features) catches an
+      # example that imports a feature-gated facade item without
+      # declaring `required-features` in `Cargo.toml`. With the
+      # declaration, Cargo silently skips the example; without it,
+      # the build fails with E0432 unresolved import. The
+      # `--all-features` build above can't catch this — every gate
+      # is satisfied by accident. ADR-0094.
+      - name: cargo build --examples -p entelix (no-features regression gate)
+        run: cargo build --examples -p entelix
+
       - name: cargo test --workspace --all-features (excluding ignored)
         run: cargo test --workspace --all-features --no-fail-fast
 

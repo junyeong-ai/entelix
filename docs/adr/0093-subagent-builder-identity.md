@@ -81,6 +81,10 @@ let tool = sub.into_tool()?;
 
 Tests that didn't call `into_tool` get stub identity (`"test_subagent"`, `"test description"`) — the builder requires identity even when the test never looks at it.
 
+### Empty-string validation
+
+`Subagent::builder` accepts `impl Into<String>` so `""` is a valid call-site argument. `build()` rejects empty `name` or `description` with `Error::Config { msg: "SubagentBuilder: name cannot be empty" }` (or the matching description-side message). Operators get a clear fail-fast diagnostic at construction instead of a confusing dispatch failure later when the LLM receives an empty tool name. Mirrors the runtime non-empty enforcement pattern from `TenantId` / `Namespace` (slice 64) but with `Result` rather than `assert!` because the builder finalizer is `Result<T>` per naming taxonomy.
+
 ## Consequences
 
 - `SubagentBuilder` requires identity at construction. Tests / operators that built nameless sub-agents must supply stub strings — small mechanical cost, structural win.

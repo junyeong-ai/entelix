@@ -167,6 +167,41 @@ fn from_filter_empty_result_is_valid_pure_orchestration_subagent() {
 }
 
 #[test]
+fn build_rejects_empty_name() {
+    // Identity is required at the type level (`builder` signature
+    // takes `impl Into<String>`) but `""` is still a valid
+    // `String`. `build()` rejects it with `Error::Config` so
+    // operators get a clear diagnostic at construction instead of
+    // a confusing dispatch failure when the LLM receives an
+    // empty tool name.
+    let parent = parent_with(&["alpha"]);
+    let err = Subagent::builder(StubModel, &parent, "", "test description")
+        .build()
+        .unwrap_err();
+    let rendered = format!("{err}");
+    assert!(
+        rendered.contains("name cannot be empty"),
+        "expected diagnostic naming the empty field; got: {rendered}"
+    );
+}
+
+#[test]
+fn build_rejects_empty_description() {
+    // Mirror of the empty-name rejection. Description carries the
+    // sub-agent's purpose to the parent's LLM; an empty string
+    // there ships an unhelpful tool listing.
+    let parent = parent_with(&["alpha"]);
+    let err = Subagent::builder(StubModel, &parent, "test_subagent", "")
+        .build()
+        .unwrap_err();
+    let rendered = format!("{err}");
+    assert!(
+        rendered.contains("description cannot be empty"),
+        "expected diagnostic naming the empty field; got: {rendered}"
+    );
+}
+
+#[test]
 fn with_skills_rejects_typo_at_construction_time() {
     // Skill side mirrors `from_whitelist` — strict, surfaces typos
     // as `Error::Config`. The lower-level `SkillRegistry::filter`

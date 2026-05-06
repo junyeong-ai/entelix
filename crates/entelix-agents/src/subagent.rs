@@ -421,6 +421,16 @@ where
             sink,
             approver,
         } = self;
+        if name.is_empty() {
+            return Err(entelix_core::Error::config(
+                "SubagentBuilder: name cannot be empty",
+            ));
+        }
+        if description.is_empty() {
+            return Err(entelix_core::Error::config(
+                "SubagentBuilder: description cannot be empty",
+            ));
+        }
         let tool_registry = selection.apply(parent_registry)?;
         let skills = match skills_request {
             None => SkillRegistry::new(),

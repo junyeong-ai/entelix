@@ -111,15 +111,48 @@ pub enum Turn {
 
 /// Compacted view over a `SessionGraph`'s event log.
 ///
-/// The constructor is private to this module; operators receive
-/// instances through [`Compactor::compact`] and read them via
-/// [`Self::turns`] / [`Self::to_messages`].
+/// External operators implementing [`Compactor`] for a custom
+/// strategy (LLM-summary compaction, importance-weighted retention,
+/// …) construct the initial form via [`CompactedHistory::group`]
+/// and return either the same value or one rebuilt with
+/// [`CompactedHistory::from_turns`] after filtering. The
+/// `tool_call` / `tool_result` pair invariant stays type-enforced:
+/// the only path to a [`ToolPair`] is the internal grouping code,
+/// so external impls can drop or pass through tool round-trips
+/// but can't synthesize unmatched ones.
 #[derive(Clone, Debug)]
 pub struct CompactedHistory {
     turns: Vec<Turn>,
 }
 
 impl CompactedHistory {
+    /// Group `events` into the type-enforced [`Turn`] shape and
+    /// return the un-trimmed compaction. The grouping rejects an
+    /// event log that violates the pair invariant *before*
+    /// compaction (e.g. `ToolResult` without a preceding
+    /// `ToolCall`); a well-formed `SessionGraph` never hits the
+    /// error path.
+    ///
+    /// External [`Compactor`] impls call this to get the initial
+    /// grouped form, then choose which turns to retain.
+    pub fn group(events: &[GraphEvent]) -> Result<Self> {
+        Ok(Self {
+            turns: group_into_turns(events)?,
+        })
+    }
+
+    /// Build a `CompactedHistory` from a pre-grouped `Vec<Turn>`.
+    /// External [`Compactor`] impls reach for this after filtering
+    /// or transforming the turns returned by
+    /// [`CompactedHistory::group`]. The pair invariant survives
+    /// the round-trip because the only path to a [`ToolPair`] is
+    /// still the internal grouping — operators pass them through
+    /// but can't synthesize new ones.
+    #[must_use]
+    pub const fn from_turns(turns: Vec<Turn>) -> Self {
+        Self { turns }
+    }
+
     /// Borrow the compacted turns.
     pub fn turns(&self) -> &[Turn] {
         &self.turns
@@ -200,7 +233,7 @@ pub struct HeadDropCompactor;
 
 impl Compactor for HeadDropCompactor {
     fn compact(&self, events: &[GraphEvent], budget_chars: usize) -> Result<CompactedHistory> {
-        let mut turns = group_into_turns(events)?;
+        let mut turns = CompactedHistory::group(events)?.turns;
         // Walk newest to oldest, keep turns that fit under budget.
         let mut remaining = budget_chars;
         let mut keep_index = turns.len();
@@ -213,7 +246,7 @@ impl Compactor for HeadDropCompactor {
             keep_index = idx;
         }
         let trimmed = turns.split_off(keep_index);
-        Ok(CompactedHistory { turns: trimmed })
+        Ok(CompactedHistory::from_turns(trimmed))
     }
 }
 

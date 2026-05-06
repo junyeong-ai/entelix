@@ -107,6 +107,8 @@ impl core::panic::unwind_safe::RefUnwindSafe for entelix_session::Turn
 impl core::panic::unwind_safe::UnwindSafe for entelix_session::Turn
 pub struct entelix_session::CompactedHistory
 impl entelix_session::CompactedHistory
+pub const fn entelix_session::CompactedHistory::from_turns(turns: alloc::vec::Vec<entelix_session::Turn>) -> Self
+pub fn entelix_session::CompactedHistory::group(events: &[entelix_session::GraphEvent]) -> entelix_core::error::Result<Self>
 pub const fn entelix_session::CompactedHistory::is_empty(&self) -> bool
 pub const fn entelix_session::CompactedHistory::len(&self) -> usize
 pub fn entelix_session::CompactedHistory::to_messages(&self) -> alloc::vec::Vec<entelix_core::ir::message::Message>

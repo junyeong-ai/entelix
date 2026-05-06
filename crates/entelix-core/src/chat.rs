@@ -765,6 +765,100 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         }
     }
 
+    /// Send a conversation, parse the structured-output response as
+    /// `O`, and run `validator` against the parsed value. Mirrors
+    /// [`Self::complete_typed`] for the schema-mismatch retry path
+    /// and additionally catches [`crate::Error::ModelRetry`] raised
+    /// from the validator — both error kinds reflect a corrective
+    /// hint to the model and re-invoke within the same
+    /// [`ChatModelConfig::validation_retries`](crate::ChatModelConfig::validation_retries)
+    /// budget.
+    ///
+    /// The validator surface is sync ([`OutputValidator::validate`])
+    /// so simple closures (`|out: &O| -> Result<()>`) compose
+    /// without `async-trait` ceremony. Validators that need to
+    /// `.await` (DB lookup, external check) compose around the
+    /// `complete_typed_validated` call boundary instead — run the
+    /// async work after the typed response returns.
+    pub async fn complete_typed_validated<O, V>(
+        &self,
+        messages: Vec<Message>,
+        validator: V,
+        ctx: &ExecutionContext,
+    ) -> Result<O>
+    where
+        O: schemars::JsonSchema + serde::de::DeserializeOwned + Send + 'static,
+        V: crate::output_validator::OutputValidator<O>,
+    {
+        let schema_value = serde_json::to_value(schemars::schema_for!(O)).map_err(Error::Serde)?;
+        let type_name = std::any::type_name::<O>();
+        let short_name = type_name.rsplit("::").next().unwrap_or(type_name);
+        let spec = JsonSchemaSpec::new(short_name, schema_value)?;
+        let format = ResponseFormat::strict(spec);
+
+        let mut conversation = messages;
+        let max_retries = self.config.validation_retries;
+        let mut attempt: u32 = 0;
+        loop {
+            let budget = ctx.run_budget();
+            if let Some(budget) = &budget {
+                budget.check_pre_request()?;
+            }
+            let mut request = self.config.build_request(conversation.clone());
+            apply_run_overrides(&mut request, ctx);
+            request.response_format = Some(format.clone());
+
+            let invocation = ModelInvocation::new(request, ctx.clone());
+            let response = self.service().oneshot(invocation).await?;
+            if let Some(budget) = &budget {
+                budget.observe_usage(&response.usage)?;
+            }
+            let assistant_text = response_text_for_retry(&response);
+            let parse_outcome = parse_typed_response::<O>(response);
+
+            // Combine schema-mismatch and validator-driven retries
+            // through one match. The retry budget is shared because
+            // both paths represent "the model emitted output we
+            // can't accept" — distinguishing them at the budget
+            // level adds knobs without buying behaviour operators
+            // commonly want to vary independently.
+            let retry_hint = match parse_outcome {
+                Ok(value) => match validator.validate(&value) {
+                    Ok(()) => return Ok(value),
+                    Err(Error::ModelRetry { hint, .. }) if attempt < max_retries => {
+                        Some(hint.into_inner())
+                    }
+                    Err(err) => return Err(err),
+                },
+                Err(err) if matches!(err, Error::Serde(_)) && attempt < max_retries => {
+                    Some(format!(
+                        "Your previous response did not match the required JSON schema for `{short_name}`. \
+                         Parser diagnostic: {err}\n\
+                         Re-emit the response as a single valid JSON object that conforms to the schema."
+                    ))
+                }
+                Err(err) => return Err(err),
+            };
+
+            let Some(hint) = retry_hint else { unreachable!() };
+            attempt += 1;
+            conversation.push(Message::new(
+                crate::ir::Role::Assistant,
+                vec![ContentPart::Text {
+                    text: assistant_text.unwrap_or_default(),
+                    cache_control: None,
+                }],
+            ));
+            conversation.push(Message::new(
+                crate::ir::Role::User,
+                vec![ContentPart::Text {
+                    text: hint,
+                    cache_control: None,
+                }],
+            ));
+        }
+    }
+
     /// Open a streaming model call and return an IR `StreamDelta`
     /// stream.
     ///

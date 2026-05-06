@@ -264,6 +264,7 @@ pub fn entelix_core::chat::ChatModel<C, T>::codec(&self) -> &C
 pub async fn entelix_core::chat::ChatModel<C, T>::complete(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::ir::Message>
 pub async fn entelix_core::chat::ChatModel<C, T>::complete_full(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub async fn entelix_core::chat::ChatModel<C, T>::complete_typed<O>(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<O> where O: schemars::JsonSchema + serde_core::de::DeserializeOwned + core::marker::Send + 'static
+pub async fn entelix_core::chat::ChatModel<C, T>::complete_typed_validated<O, V>(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, validator: V, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<O> where O: schemars::JsonSchema + serde_core::de::DeserializeOwned + core::marker::Send + 'static, V: entelix_core::output_validator::OutputValidator<O>
 pub const fn entelix_core::chat::ChatModel<C, T>::config(&self) -> &entelix_core::chat::ChatModelConfig
 pub fn entelix_core::chat::ChatModel<C, T>::from_arc(codec: alloc::sync::Arc<C>, transport: alloc::sync::Arc<T>, model: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedModelService> + tower_layer::Layer<entelix_core::service::BoxedStreamingService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service: tower_service::Service<entelix_core::service::ModelInvocation, Response = entelix_core::ir::ModelResponse, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service as tower_service::Service<entelix_core::service::ModelInvocation>>::Future: core::marker::Send + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service: tower_service::Service<entelix_core::service::StreamingModelInvocation, Response = entelix_core::service::ModelStream, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service as tower_service::Service<entelix_core::service::StreamingModelInvocation>>::Future: core::marker::Send + 'static
@@ -1888,9 +1889,20 @@ impl<T> core::panic::unwind_safe::UnwindSafe for entelix_core::llm_facing::Rende
 pub trait entelix_core::llm_facing::LlmRenderable<T>
 pub fn entelix_core::llm_facing::LlmRenderable::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
 pub fn entelix_core::llm_facing::LlmRenderable::render_for_llm(&self) -> T
+impl entelix_core::llm_facing::LlmRenderable<alloc::string::String> for &str
+pub fn &str::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
+pub fn &str::render_for_llm(&self) -> alloc::string::String
+impl entelix_core::llm_facing::LlmRenderable<alloc::string::String> for alloc::string::String
+pub fn alloc::string::String::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
+pub fn alloc::string::String::render_for_llm(&self) -> alloc::string::String
 impl entelix_core::llm_facing::LlmRenderable<alloc::string::String> for entelix_core::error::Error
 pub fn entelix_core::error::Error::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
 pub fn entelix_core::error::Error::render_for_llm(&self) -> alloc::string::String
+pub mod entelix_core::output_validator
+pub trait entelix_core::output_validator::OutputValidator<O> where O: core::marker::Send + 'static: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::output_validator::OutputValidator::validate(&self, output: &O) -> entelix_core::error::Result<()>
+impl<O, F> entelix_core::output_validator::OutputValidator<O> for F where O: core::marker::Send + 'static, F: core::ops::function::Fn(&O) -> entelix_core::error::Result<()> + core::marker::Send + core::marker::Sync + 'static
+pub fn F::validate(&self, output: &O) -> entelix_core::error::Result<()>
 pub mod entelix_core::overrides
 #[non_exhaustive] pub struct entelix_core::overrides::RunOverrides
 impl entelix_core::overrides::RunOverrides
@@ -3113,6 +3125,7 @@ pub fn entelix_core::chat::ChatModel<C, T>::codec(&self) -> &C
 pub async fn entelix_core::chat::ChatModel<C, T>::complete(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::ir::Message>
 pub async fn entelix_core::chat::ChatModel<C, T>::complete_full(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
 pub async fn entelix_core::chat::ChatModel<C, T>::complete_typed<O>(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<O> where O: schemars::JsonSchema + serde_core::de::DeserializeOwned + core::marker::Send + 'static
+pub async fn entelix_core::chat::ChatModel<C, T>::complete_typed_validated<O, V>(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, validator: V, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<O> where O: schemars::JsonSchema + serde_core::de::DeserializeOwned + core::marker::Send + 'static, V: entelix_core::output_validator::OutputValidator<O>
 pub const fn entelix_core::chat::ChatModel<C, T>::config(&self) -> &entelix_core::chat::ChatModelConfig
 pub fn entelix_core::chat::ChatModel<C, T>::from_arc(codec: alloc::sync::Arc<C>, transport: alloc::sync::Arc<T>, model: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedModelService> + tower_layer::Layer<entelix_core::service::BoxedStreamingService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service: tower_service::Service<entelix_core::service::ModelInvocation, Response = entelix_core::ir::ModelResponse, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service as tower_service::Service<entelix_core::service::ModelInvocation>>::Future: core::marker::Send + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service: tower_service::Service<entelix_core::service::StreamingModelInvocation, Response = entelix_core::service::ModelStream, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service as tower_service::Service<entelix_core::service::StreamingModelInvocation>>::Future: core::marker::Send + 'static
@@ -3645,9 +3658,19 @@ pub fn entelix_core::auth::CachedCredentialProvider<P>::resolve<'life0, 'async_t
 pub trait entelix_core::LlmRenderable<T>
 pub fn entelix_core::LlmRenderable::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
 pub fn entelix_core::LlmRenderable::render_for_llm(&self) -> T
+impl entelix_core::llm_facing::LlmRenderable<alloc::string::String> for &str
+pub fn &str::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
+pub fn &str::render_for_llm(&self) -> alloc::string::String
+impl entelix_core::llm_facing::LlmRenderable<alloc::string::String> for alloc::string::String
+pub fn alloc::string::String::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
+pub fn alloc::string::String::render_for_llm(&self) -> alloc::string::String
 impl entelix_core::llm_facing::LlmRenderable<alloc::string::String> for entelix_core::error::Error
 pub fn entelix_core::error::Error::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
 pub fn entelix_core::error::Error::render_for_llm(&self) -> alloc::string::String
+pub trait entelix_core::OutputValidator<O> where O: core::marker::Send + 'static: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::OutputValidator::validate(&self, output: &O) -> entelix_core::error::Result<()>
+impl<O, F> entelix_core::output_validator::OutputValidator<O> for F where O: core::marker::Send + 'static, F: core::ops::function::Fn(&O) -> entelix_core::error::Result<()> + core::marker::Send + core::marker::Sync + 'static
+pub fn F::validate(&self, output: &O) -> entelix_core::error::Result<()>
 pub trait entelix_core::Skill: core::marker::Send + core::marker::Sync + core::fmt::Debug
 pub fn entelix_core::Skill::description(&self) -> &str
 pub fn entelix_core::Skill::load<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::LoadedSkill>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait

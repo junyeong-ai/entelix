@@ -162,6 +162,30 @@ pub trait LlmRenderable<T> {
     }
 }
 
+// `use_self` would prefer `Self` in place of `String` here, but the
+// trait param `String` and the receiver type `String` are
+// fundamentally the same in this two-parameter `LlmRenderable<T>`
+// shape — substituting `Self` reads worse than the explicit form.
+#[allow(clippy::use_self)]
+impl LlmRenderable<String> for String {
+    /// Identity rendering. The seal still holds — `for_llm()`'s
+    /// default impl (the only path to `RenderedForLlm::new`) routes
+    /// every emit through this trait, even when the operator's hint
+    /// is already a plain string. Validators raising
+    /// `Error::ModelRetry` thus write
+    /// `"corrective text".to_owned().for_llm()` and the type system
+    /// confirms the rendering boundary was crossed.
+    fn render_for_llm(&self) -> String {
+        self.clone()
+    }
+}
+
+impl LlmRenderable<String> for &str {
+    fn render_for_llm(&self) -> String {
+        (*self).to_owned()
+    }
+}
+
 impl LlmRenderable<String> for Error {
     /// Short, model-actionable rendering. Mapping:
     ///

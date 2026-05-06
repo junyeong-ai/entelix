@@ -48,6 +48,7 @@ pub mod events;
 pub mod extensions;
 pub mod ir;
 pub mod llm_facing;
+pub mod output_validator;
 pub mod overrides;
 pub mod rate_limit;
 pub mod run_budget;
@@ -73,6 +74,7 @@ pub use cost::{CostCalculator, ToolCostCalculator};
 pub use error::{Error, ProviderErrorKind, Result};
 pub use extensions::Extensions;
 pub use llm_facing::{LlmFacingSchema, LlmRenderable, RenderedForLlm};
+pub use output_validator::OutputValidator;
 pub use overrides::RunOverrides;
 pub use run_budget::{RunBudget, UsageLimitAxis, UsageSnapshot};
 pub use service::{

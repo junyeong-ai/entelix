@@ -20,7 +20,7 @@ use entelix_core::ir::{
     StopReason, Usage,
 };
 use entelix_core::transports::{Transport, TransportResponse};
-use entelix_core::{ChatModel, ExecutionContext, Result};
+use entelix_core::{ChatModel, Error, ExecutionContext, LlmRenderable, Result};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -154,4 +154,119 @@ async fn schema_mismatch_retries_exhausted_surfaces_final_serde_error() {
         .unwrap_err();
     assert!(matches!(err, entelix_core::Error::Serde(_)), "got: {err:?}");
     assert_eq!(codec.call_count(), 3, "initial + 2 retries");
+}
+
+// ── complete_typed_validated — slice 106b coverage ─────────────────
+
+#[tokio::test]
+async fn validator_accepts_first_response_with_zero_retries() {
+    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![
+        r#"{"answer":"yes","score":50}"#,
+    ]));
+    let model = ChatModel::from_arc(codec.clone(), std::sync::Arc::new(EmptyTransport), "test");
+    let ctx = ExecutionContext::new();
+    let out: Reply = model
+        .complete_typed_validated(
+            vec![Message::new(Role::User, vec![ContentPart::text("ask")])],
+            |out: &Reply| {
+                if out.score <= 100 {
+                    Ok(())
+                } else {
+                    Err(Error::model_retry(
+                        "score too high".to_owned().for_llm(),
+                        0,
+                    ))
+                }
+            },
+            &ctx,
+        )
+        .await
+        .unwrap();
+    assert_eq!(out, Reply { answer: "yes".to_owned(), score: 50 });
+    assert_eq!(codec.call_count(), 1);
+}
+
+#[tokio::test]
+async fn validator_rejection_triggers_retry_within_budget() {
+    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![
+        // First response parses OK, validator rejects (score > 100).
+        r#"{"answer":"yes","score":250}"#,
+        // Second response passes both parse and validator.
+        r#"{"answer":"yes","score":42}"#,
+    ]));
+    let model = ChatModel::from_arc(codec.clone(), std::sync::Arc::new(EmptyTransport), "test")
+        .with_validation_retries(2);
+    let ctx = ExecutionContext::new();
+    let out: Reply = model
+        .complete_typed_validated(
+            vec![Message::new(Role::User, vec![ContentPart::text("ask")])],
+            |out: &Reply| {
+                if out.score <= 100 {
+                    Ok(())
+                } else {
+                    Err(Error::model_retry(
+                        "score must be 0-100".to_owned().for_llm(),
+                        0,
+                    ))
+                }
+            },
+            &ctx,
+        )
+        .await
+        .unwrap();
+    assert_eq!(out, Reply { answer: "yes".to_owned(), score: 42 });
+    assert_eq!(codec.call_count(), 2, "validator triggered exactly one retry");
+}
+
+#[tokio::test]
+async fn validator_persistent_rejection_exhausts_budget_and_surfaces_model_retry() {
+    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![
+        r#"{"answer":"x","score":250}"#,
+        r#"{"answer":"x","score":260}"#,
+        r#"{"answer":"x","score":270}"#,
+    ]));
+    let model = ChatModel::from_arc(codec.clone(), std::sync::Arc::new(EmptyTransport), "test")
+        .with_validation_retries(2);
+    let ctx = ExecutionContext::new();
+    let err = model
+        .complete_typed_validated(
+            vec![Message::new(Role::User, vec![ContentPart::text("ask")])],
+            |out: &Reply| {
+                if out.score <= 100 {
+                    Ok(())
+                } else {
+                    Err(Error::model_retry(
+                        format!("score {} > 100", out.score).for_llm(),
+                        0,
+                    ))
+                }
+            },
+            &ctx,
+        )
+        .await
+        .unwrap_err();
+    // After exhausting retries, the loop surfaces the validator's
+    // last `ModelRetry` unchanged (no special wrapping).
+    assert!(matches!(err, Error::ModelRetry { .. }), "got: {err:?}");
+    assert_eq!(codec.call_count(), 3, "initial + 2 retries");
+}
+
+#[tokio::test]
+async fn validator_non_model_retry_error_bubbles_unchanged() {
+    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![
+        r#"{"answer":"x","score":50}"#,
+    ]));
+    let model = ChatModel::from_arc(codec.clone(), std::sync::Arc::new(EmptyTransport), "test")
+        .with_validation_retries(3); // budget unused — non-retry error
+    let ctx = ExecutionContext::new();
+    let err = model
+        .complete_typed_validated(
+            vec![Message::new(Role::User, vec![ContentPart::text("ask")])],
+            |_out: &Reply| Err(Error::config("operator-side validator config")),
+            &ctx,
+        )
+        .await
+        .unwrap_err();
+    assert!(matches!(err, Error::Config(_)), "got: {err:?}");
+    assert_eq!(codec.call_count(), 1, "non-retry error short-circuits");
 }

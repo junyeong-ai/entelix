@@ -49,9 +49,9 @@ pub use entelix_core::transports;
 pub use entelix_core::{
     AgentContext, ApprovalDecision, AuditSink, AuditSinkHandle, ChatModel, ChatModelConfig,
     CostCalculator, DEFAULT_TENANT_ID, Error, ExecutionContext, Extensions,
-    INTERRUPT_KIND_APPROVAL_PENDING, LlmFacingSchema, LlmRenderable, PendingApprovalDecisions,
-    ProviderErrorKind, RenderedForLlm, Result, RunBudget, RunOverrides, TenantId, ThreadKey,
-    ToolCostCalculator, UsageLimitAxis, UsageSnapshot,
+    INTERRUPT_KIND_APPROVAL_PENDING, LlmFacingSchema, LlmRenderable, OutputValidator,
+    PendingApprovalDecisions, ProviderErrorKind, RenderedForLlm, Result, RunBudget, RunOverrides,
+    TenantId, ThreadKey, ToolCostCalculator, UsageLimitAxis, UsageSnapshot,
 };
 
 // ── Sub-crate re-exports — the 90% surface for crates that don't

@@ -13,7 +13,7 @@
 ┌──────────────────────────────────────────────────────────────────────┐
 │  Layer 3 — Persistence & integrations                                │
 │  entelix-persistence     (Postgres + Redis backends)                 │
-│  entelix-mcp             (rmcp 1.5 HTTP/SSE)                         │
+│  entelix-mcp             (native JSON-RPC; MCP 1.5 streamable-http)  │
 │  entelix-cloud           (Bedrock + Vertex + Foundry transports)     │
 │  entelix-tools           (http_fetch, search adapters)               │
 └──────────────────────────────────────────────────────────────────────┘

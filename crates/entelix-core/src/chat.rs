@@ -957,6 +957,22 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
     where
         O: schemars::JsonSchema + serde::de::DeserializeOwned + Send + 'static,
     {
+        if self.config.validation_retries > 0 {
+            // Surface the contract divergence — operators wiring
+            // with_validation_retries on a ChatModel and then calling
+            // stream_typed almost certainly expect the retry loop to
+            // also cover the streaming path. ADR-0096 records the
+            // design decision (no-retry on streaming because deltas
+            // were already surfaced to the consumer); a debug log
+            // makes the silent ignore visible at run time.
+            tracing::debug!(
+                validation_retries = self.config.validation_retries,
+                "ChatModel::stream_typed ignores validation_retries — \
+                 streaming + retry would emit a divergent second stream \
+                 over already-surfaced deltas. Use complete_typed for \
+                 the unified retry budget. ADR-0096."
+            );
+        }
         let schema_value = serde_json::to_value(schemars::schema_for!(O)).map_err(Error::Serde)?;
         let type_name = std::any::type_name::<O>();
         let short_name = type_name.rsplit("::").next().unwrap_or(type_name);

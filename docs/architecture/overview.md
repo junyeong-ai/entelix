@@ -100,38 +100,51 @@ Detail: `docs/architecture/session-and-memory.md`.
 ## Data flow — single request
 
 ```
-1. Client → POST /v1/agents/{id}/messages   (HTTP, SSE-capable)
+1. Client → POST /v1/threads/{id}/run   (HTTP, SSE-capable)
                           │
-2. entelix-server          extract tenant_id, attach TenantContext
+2. entelix-server          extract tenant_id from header, attach to
+                          ExecutionContext::tenant_id (mandatory,
+                          invariant 11)
                           │
-3. entelix-policy          rate-limit check, PII redact input,
-                          cost quota preflight
+3. entelix-policy          rate-limit check (RateLimiter), PII redact
+                          input (PiiRedactor), cost quota preflight
+                          (QuotaLimiter)
                           │
 4. entelix-session         load events for thread (or create)
                           replay → build initial StateGraph state
                           │
-5. entelix-graph           CompiledGraph.invoke(state, ctx)
+5. entelix-graph           CompiledGraph::execute(state, ctx)
                           - run node functions in order
-                          - apply Reducer to state updates
+                          - fold via per-field StateMerge reducers
                           - dispatch tools at tool-use steps
                           - persist Checkpoint per step
                           - record GraphEvent per step
                           │
 6. entelix-core            for each model call:
-                          - Codec.encode_request(IR) → wire JSON
-                          - Transport.authorize() → POST → stream
+                          - Codec::encode_request(IR) → wire JSON
+                          - Transport::authorize() → POST → stream
                           - StreamAggregator: deltas → coherent turn
                           │
 7. entelix-tools / entelix-mcp   for each tool call:
-                          - lookup in ToolRegistry (per-tenant filtered for sub-agents)
-                          - dispatch via Tool::execute or rmcp
+                          - lookup in ToolRegistry<D> (narrowed view
+                            for sub-agents, ADR-0089)
+                          - dispatch via Tool<D>::execute (built-ins,
+                            #[tool] macro outputs) or McpToolAdapter
+                            (MCP-published tools)
                           │
-8. entelix-policy          on response: charge CostMeter (transactional),
+8. entelix-policy          on response: charge CostMeter (transactional,
+                          inside Ok branch only — invariant 12),
                           PII redact output
                           │
-9. entelix-otel            throughout: emit gen_ai.* spans, metrics
+9. entelix-otel            throughout: emit gen_ai.* spans + cache
+                          token attributes; entelix.agent.run root
+                          span scopes the whole tree (ADR-0057)
                           │
-10. entelix-server         stream SSE frames to client (5-mode)
+10. entelix-core           AuditSink emits sub-agent / handoff /
+                          resume / memory-recall lifecycle events
+                          (invariant 18, ADR-0037)
+                          │
+11. entelix-server         stream SSE frames to client (5-mode)
                           final state persisted to Checkpointer
 ```
 

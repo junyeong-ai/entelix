@@ -185,7 +185,7 @@ Anthropic: *"tokens are never reachable from the sandbox where Claude's code run
 entelix:
 
 1. `CredentialProvider::resolve()` returns a `secrecy::Secret<String>` only inside `Transport::authorize()`. The token is added to `http::HeaderMap` and immediately scoped out.
-2. `Tool::execute(input: Value, ctx: &AgentContext<D>)` — `AgentContext<D>` wraps `ExecutionContext` (tenant_id, span context, registry handles) and an operator-supplied typed `D` (defaults to `()`); neither carries the token. Compile-checked: `ExecutionContext` does not embed `CredentialProvider`. ADR-0067.
+2. `Tool::execute(input: Value, ctx: &AgentContext<D>)` — `AgentContext<D>` wraps `ExecutionContext` (tenant_id, span context, registry handles) and an operator-supplied typed `D` (defaults to `()`); neither carries the token. Compile-checked: `ExecutionContext` does not embed `CredentialProvider`. ADR-0084.
 3. `entelix-policy::PiiRedactor` runs in a `pre_request` hook to scrub user-provided tokens before they reach `Codec::encode_request`.
 4. CI grep gate: `grep -rE 'CredentialProvider|Secret<String>' crates/entelix-tools/` must return zero hits — tools cannot see credentials.
 

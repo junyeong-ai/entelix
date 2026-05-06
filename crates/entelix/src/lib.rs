@@ -14,7 +14,7 @@
 //! optional sub-crates for memory, persistence, MCP, policy,
 //! observability, the HTTP server, and agent recipes.
 //!
-//! Architectural canon: see `CLAUDE.md` (18 invariants + naming taxonomy)
+//! Architectural canon: see `CLAUDE.md` (21 invariants + naming taxonomy)
 //! and `docs/architecture/overview.md`.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]

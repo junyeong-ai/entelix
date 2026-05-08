@@ -46,6 +46,7 @@ pub mod cost;
 pub mod error;
 pub mod events;
 pub mod extensions;
+pub mod identity;
 pub mod ir;
 pub mod llm_facing;
 pub mod output_validator;

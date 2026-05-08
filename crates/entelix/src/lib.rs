@@ -190,10 +190,10 @@ pub use entelix_prompt::{
     PromptTemplate, PromptValue, PromptVars, SharedExampleSelector,
 };
 pub use entelix_runnable::{
-    AnyRunnable, AnyRunnableHandle, BoxStream, Configured, DEFAULT_PARSER_RETRIES, DebugEvent,
-    Fallback, FixingOutputParser, JsonOutputParser, Mapping, RetryParser, Retrying, Runnable,
-    RunnableEvent, RunnableExt, RunnableLambda, RunnableParallel, RunnablePassthrough,
-    RunnableRouter, RunnableSequence, StreamChunk, StreamMode, Timed, ToolToRunnableAdapter, erase,
+    AnyRunnable, AnyRunnableHandle, BoxStream, Configured, DebugEvent, Fallback, JsonOutputParser,
+    Mapping, Retrying, Runnable, RunnableEvent, RunnableExt, RunnableLambda, RunnableParallel,
+    RunnablePassthrough, RunnableRouter, RunnableSequence, StreamChunk, StreamMode, Timed,
+    ToolToRunnableAdapter, erase,
 };
 #[cfg(feature = "server")]
 #[cfg_attr(docsrs, doc(cfg(feature = "server")))]

@@ -95,9 +95,7 @@ pub trait RunnableExt<I, O>: Runnable<I, O> + Sized + 'static {
 | `ChatModel<C, T>` (codec + transport bundle) | `Vec<Message>` | `Message` | `entelix-core` |
 | `PromptTemplate` | `HashMap<&str, Value>` | `String` | `entelix-prompt` |
 | `ChatPromptTemplate` | `HashMap<&str, Value>` | `Vec<Message>` | `entelix-prompt` |
-| `JsonOutputParser<T: DeserializeOwned>` | `String` | `T` | `entelix-runnable::parser` |
-| `RetryParser<P>` | `String` | `<P as Runnable>::O` | `entelix-runnable::parser` |
-| `FixingOutputParser<P, F>` | `String` | `<P as Runnable>::O` | `entelix-runnable::parser` |
+| `JsonOutputParser<T: DeserializeOwned>` | `Message` | `T` | `entelix-runnable::parser` |
 | `Tool` (via `ToolToRunnableAdapter`) | `serde_json::Value` | `serde_json::Value` | `entelix-core::tools` |
 | `SchemaTool` (via `SchemaToolAdapter`) | `T::Input` | `T::Output` | `entelix-tools` |
 | `Retriever` (via `RetrieverToRunnableAdapter`) | `String` | `Vec<Document>` | `entelix-memory` |

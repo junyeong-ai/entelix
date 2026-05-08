@@ -8,7 +8,7 @@ Composition contract (invariant 7). `Runnable<I, O>` + LCEL `.pipe()` connector 
 - **`RunnableExt` extension trait** — fluent adapters returning concrete `Runnable<I, O>` types so chains stay zero-cost in the steady state. `pipe(next)` / `with_retry(policy)` / `with_fallbacks(others)` / `map(fn)` / `with_config(fn)` / `with_timeout(duration)` / `stream_with(...)`.
 - **Composition primitives** — `RunnableLambda` / `RunnableSequence` / `RunnableParallel` / `RunnableRouter` / `RunnablePassthrough` (LangChain LCEL parity).
 - **`AnyRunnable` + `AnyRunnableHandle` + `erase`** — type-erased counterpart for dynamic dispatch (F12 mitigation). `invoke_any(Value, ctx) → Result<Value>`. Pays JSON ser/deser cost — typed `Runnable` for hot paths.
-- **Parsers** — `JsonOutputParser<T: DeserializeOwned>` + `RetryParser<P>` + `FixingOutputParser<P, F>`. Parsers are also `Runnable<Message, T>` — chainable via `.pipe()`.
+- **Parsers** — `JsonOutputParser<T: DeserializeOwned>`. Parsers are also `Runnable<Message, T>` — chainable via `.pipe()`. Validation retries route through `entelix-core::OutputValidator<O>` + `ChatModelConfig::validation_retries`, not parser-level loops (invariant 20).
 - **Streaming** — `StreamChunk<O>` + `RunnableEvent` + `StreamMode::{Values, Updates, Messages, Debug, Events}` (LangGraph parity). `BoxStream<'static, Result<StreamChunk<O>>>`.
 - **Adapters** — `Configured<R, F>` (per-call ctx mutation), `Mapping<R, F>` (output transform), `Retrying<R>`, `Fallback<R>`, `Timed<R>`, `ToolToRunnableAdapter` (defined in this crate's `adapter` module; bridges `entelix_core::tools::Tool` into `Runnable<Value, Value>`), `DebugEvent` for observability tap.
 
@@ -18,7 +18,7 @@ Composition contract (invariant 7). `Runnable<I, O>` + LCEL `.pipe()` connector 
 - **`Runnable::stream` default impl** — single-shot wrap of `invoke` as a one-element stream. Implementors override only when streaming has true semantic value (token deltas, intermediate state events).
 - **No `'static` requirement on the input/output beyond `Send + 'static`** — generic over any `I: Send + 'static, O: Send + 'static` so tuple-typed parallel outputs and trait-object inputs both compose.
 - **`pipe` is the universal connector** — new combinators that don't compose through `.pipe()` are reviewer-rejected. Helpers like `Mapping` / `RunnablePassthrough` exist precisely to fit the `.pipe()` shape.
-- **Cancellation surface** — every async path takes `&ExecutionContext`. Long retry loops poll `ctx.is_cancelled()` (CLAUDE.md §"Cancellation"). `RetryParser` + `FixingOutputParser` already poll between attempts.
+- **Cancellation surface** — every async path takes `&ExecutionContext`. Long-running adapters (`Retrying`, `Fallback`, `Timed`) poll `ctx.is_cancelled()` between attempts (CLAUDE.md §"Cancellation").
 
 ## Forbidden
 

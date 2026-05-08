@@ -61,7 +61,7 @@ Detail: `docs/architecture/managed-agents.md`.
 | LCEL `\|` pipe | `.pipe()` method (or `pipe!` macro) |
 | ChatModel | `entelix-core::ChatModel` (Codec + Transport, Runnable<Vec<Message>, Message>) |
 | Prompt | `entelix-prompt::PromptTemplate`, `ChatPromptTemplate` |
-| OutputParser | `entelix-runnable::Parser` impls (Json, JsonSchema, Retry, Fixing) |
+| OutputParser | `entelix-runnable::JsonOutputParser` (validation retries route through `entelix-core::OutputValidator` + `ChatModelConfig::validation_retries`, invariant 20) |
 | Tool | `entelix-core::Tool` + `ToolToRunnableAdapter` |
 
 Detail: `docs/architecture/runnable-and-lcel.md`.

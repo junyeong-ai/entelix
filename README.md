@@ -177,7 +177,7 @@ entelix-cloud            — Bedrock (SigV4) / Vertex (gcp_auth) / Foundry (AAD)
 entelix-policy           — TenantPolicy, RateLimiter, PiiRedactor, CostMeter, QuotaLimiter, PolicyLayer
 entelix-otel             — OpenTelemetry GenAI semconv tower::Layer + cache token telemetry + agent root span
 entelix-server           — axum HTTP + 5-mode SSE + tenant middleware
-entelix-agents           — ReAct, Supervisor, Hierarchical, Chat recipes + Subagent (F7 mitigation)
+entelix-agents           — ReAct, Supervisor, Hierarchical, Chat recipes + Subagent
 ```
 
 `entelix-core` depends on no other entelix crate. The DAG is enforced at workspace level.
@@ -187,11 +187,6 @@ The facade `entelix` crate gates optional sub-crates behind feature flags so you
 ## Examples
 
 Working examples under [`crates/entelix/examples/`](crates/entelix/examples/) — quickstart through end-to-end production workflow, covering LCEL composition, StateGraph control flow (`16_state_merge_pipeline` shows `derive(StateMerge)` + `add_contributing_node` + `add_send_edges` end-to-end), HITL graph interrupts (`04_hitl`) and HITL tool-dispatch approval pause-and-resume (`18_tool_approval`), memory, multi-agent supervisor / hierarchical recipes, every streaming mode, every codec × transport pair, MCP per-tenant isolation, MCP sampling via `ChatModelSamplingProvider` (`17_mcp_sampling_provider`), and the axum `AgentRouterBuilder`.
-
-## Migrating from another SDK?
-
-- [`docs/migrations/langgraph-python.md`](docs/migrations/langgraph-python.md) — Python LangGraph users
-- [`docs/migrations/rig.md`](docs/migrations/rig.md) — `rig` Rust users
 
 ## What entelix is NOT
 
@@ -210,14 +205,10 @@ Working examples under [`crates/entelix/examples/`](crates/entelix/examples/) �
 
 ## Reading order
 
-1. [`docs/architecture/overview.md`](docs/architecture/overview.md) — big picture
-2. [`docs/architecture/state-graph.md`](docs/architecture/state-graph.md) — LangGraph parity
-3. [`docs/architecture/runnable-and-lcel.md`](docs/architecture/runnable-and-lcel.md) — LangChain parity
-4. [`docs/architecture/session-and-memory.md`](docs/architecture/session-and-memory.md) — three-tier state
-5. [`docs/architecture/managed-agents.md`](docs/architecture/managed-agents.md) — Anthropic shape
-6. [`docs/adr/`](docs/adr/) — architecture decision records
-7. [`docs/public-api/`](docs/public-api/) — frozen 1.0-candidate per-crate API baselines (facade excluded by design)
-8. [`docs/migrations/`](docs/migrations/) — porting guides
+1. [`CLAUDE.md`](CLAUDE.md) — invariants, lock ordering, error conventions, managed-agent shape
+2. [`docs/architecture/principles.md`](docs/architecture/principles.md) — living design contract
+3. Per-crate `crates/<name>/CLAUDE.md` — surface, crate-local rules, forbidden patterns
+4. [`docs/public-api/`](docs/public-api/) — frozen 1.0-candidate per-crate API baselines (facade excluded by design)
 
 ## License
 

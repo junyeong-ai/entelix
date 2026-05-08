@@ -22,10 +22,10 @@ Axum integration. `AgentRouterBuilder` produces an `axum::Router` exposing the c
 ## Forbidden
 
 - A handler that pulls credentials out of `ExecutionContext` (invariant 10). Auth middleware lives ahead of the agent dispatch; tokens are never embedded in `ctx`.
-- A `*Service` type in this crate that does NOT impl `tower::Service` (per  / `scripts/check-naming.sh`).
+- A `*Service` type in this crate that does NOT impl `tower::Service` (`cargo xtask naming`).
 - Caching agent state on the router struct — invariant 1 (session is event SSoT) requires every request reload from `SessionLog`.
 - Adding a new variant to `BuildError` that the request handlers can also reach (it would re-collapse the audience-channel split). If both surfaces need it, the variant belongs on `ServerError`.
 
 ## References
 
-- `docs/architecture/managed-agents.md` — Session/Harness/Hand decoupling on the HTTP boundary.
+- Root `CLAUDE.md` §"Anthropic managed-agent shape" — Session/Harness/Hand decoupling on the HTTP boundary.

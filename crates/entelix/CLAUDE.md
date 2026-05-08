@@ -13,10 +13,10 @@ Re-export crate. The 90% surface every consumer constructs: `entelix::ChatModel`
 ## Crate-local rules
 
 - **Every feature-gated re-export carries `#[cfg_attr(docsrs, doc(cfg(feature = "X")))]` next to its `#[cfg(feature = "X")]`** — docs.rs surfaces "Available on **feature** `X` only" badges only when both pair.
-- **Feature pass-through is mandatory** — facade `postgres` feature MUST enable underlying `entelix-persistence/postgres`. `scripts/check-feature-matrix.sh` catches the regression where `dep:entelix-persistence` enabled but `entelix-persistence/postgres` forgotten.
+- **Feature pass-through is mandatory** — facade `postgres` feature MUST enable underlying `entelix-persistence/postgres`. `cargo xtask feature-matrix` catches the regression where `dep:entelix-persistence` enabled but `entelix-persistence/postgres` forgotten.
 - **Re-export ordering** — within each `pub use entelix_X::{.}` block, items are case-sensitive ASCII-sorted (rustfmt default). PascalCase types appear before snake_case functions because uppercase letters sort before lowercase in ASCII. Don't manually reorder — `cargo fmt` enforces.
 - **Alias to disambiguate naming collisions** — `MCP_PROTOCOL_VERSION as MCP_PROTOCOL_VERSION`, `SERVER_DEFAULT_TENANT_HEADER as SERVER_DEFAULT_TENANT_HEADER`, `OPENAI_EMBEDDINGS_BASE_URL as OPENAI_EMBEDDINGS_BASE_URL`. Same-named constants from different crates carry a prefix at the facade level.
-- **No baseline** — `entelix` is intentionally excluded from `scripts/check-public-api.sh` (the underlying crates carry the surface contract; the facade just re-exports). `check-public-api` script's success message reflects this ("facade excluded by design").
+- **No baseline** — `entelix` is intentionally excluded from `cargo xtask public-api` (the underlying crates carry the surface contract; the facade just re-exports).
 
 ## Forbidden
 
@@ -26,5 +26,5 @@ Re-export crate. The 90% surface every consumer constructs: `entelix::ChatModel`
 
 ## References
 
-- `scripts/check-feature-matrix.sh` — feature isolation regression gate.
-- `scripts/check-dead-deps.sh` — workspace dependency hygiene.
+- `cargo xtask feature-matrix` — feature isolation regression gate.
+- `cargo xtask dead-deps` — workspace dependency hygiene.

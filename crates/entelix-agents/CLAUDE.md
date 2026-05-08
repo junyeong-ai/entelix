@@ -15,8 +15,8 @@ Production agent SDK on top of `entelix-runnable` + `entelix-graph`. Recipes (Re
 ## Crate-local rules
 
 - **`SubagentBuilder::restrict_to` strict, `filter` graceful** — typo in `restrict_to` returns `Error::Config` at `build()`; predicate filter accepts empty result (pure-orchestration shape). The asymmetry is regression-locked. `build()` also rejects empty `name` or `description` so operators fail-fast instead of shipping an empty tool name to the LLM.
-- **Sub-agent dispatch emits `record_sub_agent_invoked`** on the parent's `AuditSink` (invariant 18). Sub-agents NEVER bypass the parent registry's layer stack — `scripts/check-managed-shape.sh` fails the PR.
-- **Recipe routers MUST return typed `SupervisorDecision`**, not stringly-typed sentinels. Probability literals (`0.X`) in recipe routing are forbidden (`scripts/check-magic-constants.sh`, invariant 17).
+- **Sub-agent dispatch emits `record_sub_agent_invoked`** on the parent's `AuditSink` (invariant 18). Sub-agents NEVER bypass the parent registry's layer stack — `cargo xtask managed-shape` fails the PR.
+- **Recipe routers MUST return typed `SupervisorDecision`**, not stringly-typed sentinels. Probability literals (`0.X`) in recipe routing are forbidden (`cargo xtask magic-constants`, invariant 17).
 - **`Agent::execute_stream`** opens its own root span; consumers compose with `tower::Layer<S>` (e.g. `OtelLayer`, `PolicyLayer`) on the underlying `ChatModel`, not on the agent itself.
 
 ## Forbidden
@@ -27,4 +27,4 @@ Production agent SDK on top of `entelix-runnable` + `entelix-graph`. Recipes (Re
 
 ## References
 
-- F7 mitigation — sub-agent permission narrowing.
+- Root `CLAUDE.md` §"Anthropic managed-agent shape" — sub-agent permission narrowing through `restrict_to` / `filter`.

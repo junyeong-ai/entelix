@@ -22,5 +22,3 @@ LangChain-style prompt templating. `PromptTemplate` (string-output) + `ChatPromp
 - A template that mutates state across calls — breaks `Send + Sync` and the stateless contract.
 - An `ExampleSelector` impl that returns mutable refs — examples are owned values, immutable post-construction.
 
-
-- `docs/architecture/runnable-and-lcel.md` — `ChatPromptTemplate` as the canonical entry into an LCEL pipeline.

@@ -5,8 +5,6 @@ paths:
 
 # Naming taxonomy
 
-Canonical source: `docs/adr/0010-naming-taxonomy.md`.
-
 ## Type suffix — fixed semantics
 
 | Suffix | Meaning | Example |
@@ -112,11 +110,10 @@ Async-by-default: most entelix APIs are `async`. Use `_async` suffix only when a
 
 These are the **only** authorized exceptions to `with_*`. Do not introduce new verb prefixes (`define_*`, `attach_*`, `mount_*`). If unsure, reach for `with_` / `add_` / `set_` / `register` in that order. Selection verbs (`restrict_to` / `filter`) are reserved for builders that produce *narrowed views* of an existing parent set.
 
-Canonical: ADR-0010 §"Builder verb-prefix exception".
 
 ## `ctx` parameter ordering — split convention
 
-Two conventions, both intentional. Don't reorder a method's `ctx` without an ADR amendment.
+Two conventions, both intentional. Don't reorder a method's `ctx` without amending this rule and the affected trait deliberately.
 
 - **ctx-first** — memory and persistence backends. Reads as "for this context, do X with Y": `Store`, `VectorStore`, `SemanticMemory(Backend)`, `BufferMemory`, `EntityMemory`, `SummaryMemory`, `GraphMemory`, `Checkpointer`, `SessionLog`. Shape: `(&self, ctx, scope, payload...)` where scope is `namespace` / `thread_id` / `doc_id`.
 - **ctx-last** — computation and dispatch. Primary input dominates; ctx is the ambient request envelope: `Tool::execute(input, ctx)`, `Embedder::embed(text, ctx)`, `Retriever::retrieve(query, ctx)`, `Reranker::rerank(query, candidates, top_k, ctx)`, `Runnable::invoke(input, ctx)`. Observer/decision traits also follow this shape: `Approver::decide(request, ctx)`, `AgentObserver::pre_turn(state, ctx)`.
@@ -124,7 +121,6 @@ Two conventions, both intentional. Don't reorder a method's `ctx` without an ADR
 - **No ctx** — `AgentEventSink::send(event)`. Events carry their own correlation fields, so sinks observe the event without the ambient request.
 - **Purpose-built context** — `ConsolidationPolicy::should_consolidate(&ConsolidationContext)`. When a trait's decision inputs don't fit `ExecutionContext`, give it its own `*Context` type instead of forcing the split.
 
-Canonical: ADR-0010 §"Parameter ordering — `ctx` placement".
 
 ## Module names
 
@@ -133,9 +129,9 @@ Canonical: ADR-0010 §"Parameter ordering — `ctx` placement".
 
 ## Feature flags
 
-- One lowercase word: `mcp`, `postgres`, `otel`, `aws`, `gcp`, `azure`, `policy`, `server`
-- No dashes/underscores
-- `full` aggregates everything
+- One lowercase word, no dashes/underscores.
+- `full` aggregates everything.
+- Canonical list lives in the facade `crates/entelix/Cargo.toml` — never enumerate elsewhere.
 
 ## Constants
 
@@ -155,14 +151,6 @@ Canonical: ADR-0010 §"Parameter ordering — `ctx` placement".
 - Workspace: `entelix-{role}` (kebab-case, single role word)
 - External companions (1.1+): `entelix-{role}-{detail}` — e.g. `entelix-embedder-openai`
 
-## Self-check before commit (`cargo xtask naming` runs this in CI)
+## Enforcement
 
-```bash
-# forbidden suffixes
-rg 'pub (struct|enum|trait) \w+(Engine|Wrapper|Handler|Helper|Util)\b' crates/
-
-# get_X accessor
-rg 'fn get_\w+\(&self' crates/
-```
-
-Both must return zero hits.
+`cargo xtask naming` runs the typed-AST visitor in CI. Forbidden suffixes, `get_*` accessors, builder verb-prefix violations, and `ctx`-position drift all fail the gate.

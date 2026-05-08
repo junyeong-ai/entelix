@@ -26,5 +26,4 @@ Event-sourced session state (invariant 1 — session is event SSoT). `SessionGra
 
 ## References
 
-- F1 mitigation — session-as-event-SSoT, no message cache.
-- Anthropic managed-agents — Session/Harness/Hand decoupling (`docs/architecture/managed-agents.md`).
+- Root `CLAUDE.md` invariant 1 (session-as-event-SSoT) + §"Anthropic managed-agent shape" (Session/Harness/Hand decoupling).

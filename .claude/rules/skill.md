@@ -6,8 +6,6 @@ paths:
 
 # Skills with progressive disclosure
 
-Canonical source: `docs/adr/0027-skills-progressive-disclosure.md`.
-
 ## 3-tier disclosure model
 
 | Tier | Loaded when | Content | Token cost |
@@ -38,7 +36,7 @@ No `triggers()` method. Keyword/pattern auto-activation is brittle (false positi
 - `SkillRegistry::register(skill)` — duplicate name → `Error::Config`
 - `SkillRegistry::get(name)` — exact lookup
 - `SkillRegistry::summaries()` — stable-sorted by name
-- `SkillRegistry::filter(allowed)` — F7: narrowing only, never widening
+- `SkillRegistry::filter(allowed)` — narrowing only, never widening
 
 ## Sub-agents
 

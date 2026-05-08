@@ -14,7 +14,7 @@ Postgres + Redis backends for `Checkpointer` (entelix-graph) + `Store` (entelix-
 ## Crate-local rules
 
 - **Row-level security mandatory on every Postgres backend**. Each table has a `tenant_id` column + `FORCE ROW LEVEL SECURITY` + `tenant_isolation` policy. Every query runs inside a transaction wrapped by `set_tenant_session(tenant_id)` so the policy actually fires. Removing the wrap is an instant-reject review comment.
-- **Distributed lock is mandatory for cross-pod safety** (CLAUDE.md §"Lock ordering"). `with_session_lock` is the only sanctioned mutation path when the same `thread_id` may be racing on multiple pods. Skipping it because "this deployment is single-pod" is a F8 reintroduction.
+- **Distributed lock is mandatory for cross-pod safety** (CLAUDE.md §"Lock ordering"). `with_session_lock` is the only sanctioned mutation path when the same `thread_id` may be racing on multiple pods. Skipping it because "this deployment is single-pod" reintroduces the cross-pod thread-id race.
 - **Backend isolation tests at the persistence layer** (invariant 13). `tests/postgres_namespace_collision.rs` + `tests/redis_isolation.rs` exercise multi-tenant collision under the real backend (testcontainers). In-memory mock tests do not satisfy this invariant.
 - **Schema version on every persisted shape** — `SessionSchemaVersion` is stamped on every event row. A missing version is a hard error, not a "default to current" silent migration (invariant 15 — no silent fallback).
 - **`PostgresPersistence::builder` returns `Result<Self>` from `connect()`, not from `build()`** — connection failure is the failure mode, builder validation is infallible.
@@ -26,6 +26,3 @@ Postgres + Redis backends for `Checkpointer` (entelix-graph) + `Store` (entelix-
 - Caching `tenant_id` on the connection beyond the transaction scope — connection pool reuse would leak the previous request's tenant context.
 - An `[entelix-persistence]` direct dependency from any sub-crate other than the facade — every other crate pulls the relevant trait through `entelix-graph` / `entelix-memory` / `entelix-session`.
 
-## References
-
-- F8 mitigation — distributed lock for cross-pod thread-id mutation.

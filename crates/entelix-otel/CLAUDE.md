@@ -24,5 +24,5 @@ OpenTelemetry GenAI semconv coverage. Tracing-driven design — the layer never 
 
 ## References
 
-- F4 mitigation — transactional cost emission.
+- Root `CLAUDE.md` invariant 12 — transactional cost emission.
 - OpenTelemetry GenAI semconv: <https://github.com/open-telemetry/semantic-conventions/tree/main/docs/gen-ai>

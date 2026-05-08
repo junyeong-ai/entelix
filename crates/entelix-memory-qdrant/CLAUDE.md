@@ -18,7 +18,7 @@ Companion crate. Concrete `VectorStore` impl backed by qdrant gRPC — productio
 ## Forbidden
 
 - A search/upsert path that omits the `namespace_key` filter — cross-tenant vector retrieval, security boundary break.
-- Per-call client construction — defeats the connection pool (similar to F10 mitigation for `Embedder`).
+- Per-call client construction — defeats the connection pool (same rule the `Embedder` pool follows).
 
 
 - `entelix-memory` CLAUDE.md — namespace as security boundary, mandatory `tenant_id` (invariant 11).

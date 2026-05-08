@@ -5,9 +5,9 @@ Control-flow contract (invariant 8). LangGraph parity surface.
 ## Surface
 
 - **`StateGraph<S>`** — typed state, builder methods: `add_node` (full state) / `add_node_with(name, runnable, merger)` (delta + bespoke merger) / `add_contributing_node` (declarative per-field merge via `S: StateMerge`) / `add_edge` / `add_conditional_edges` / `add_send_edges` (parallel fan-out, joins via `S::merge`) / `set_entry_point` / `set_finish_point`. Verb prefixes follow the naming exception (`add_*` for collection inserts, `set_*` for named role).
-- **`CompiledGraph<S>`** — `Runnable<S, S>` impl (`invoke` / `stream`) + `resume(ctx)` / `resume_with(command, ctx)` / `resume_from(checkpoint_id, ctx)`. Enforces `recursion_limit` (default 25 — F6 mitigation) and emits `GraphRecursionError` on overflow.
+- **`CompiledGraph<S>`** — `Runnable<S, S>` impl (`invoke` / `stream`) + `resume(ctx)` / `resume_with(command, ctx)` / `resume_from(checkpoint_id, ctx)`. Enforces `recursion_limit` (default 25) and emits `GraphRecursionError` on overflow.
 - **`Reducer<T>` trait** — pure state-merge function. Built-ins: `Replace`, `Append`, `MergeMap`, `Max`. `add_node_with` lets a node return a typed delta merged through the reducer.
-- **`Checkpointer<S>` trait** + `InMemoryCheckpointer<S>` — write-after-each-node persistence. `CheckpointGranularity::{PerNode (default), Off}` (F8). Postgres / Redis impls live in `entelix-persistence`.
+- **`Checkpointer<S>` trait** + `InMemoryCheckpointer<S>` — write-after-each-node persistence. `CheckpointGranularity::{PerNode (default), Off}`. Postgres / Redis impls live in `entelix-persistence`.
 - **HITL** — `interrupt(payload)` raises `Error::Interrupted`; caller resumes with `CompiledGraph::resume_with(Command, &ctx)` where `Command<S>` is `Resume` / `Update(S)` / `GoTo(node)` / `ApproveTool { tool_use_id, decision }` ( typed approval primitive). `interrupt_before(nodes)` / `interrupt_after(nodes)` schedule pauses without code-level interrupts.
 
 ## Crate-local rules
@@ -22,5 +22,5 @@ Control-flow contract (invariant 8). LangGraph parity surface.
 
 - Ad-hoc `loop { … if done { break } }` user code in agent recipes — model it as `StateGraph` with conditional edge to `END` (invariant 8).
 - Holding any lock across `.await` inside a node (lock ordering rule).
-- Skipping `recursion_limit` because "this graph won't loop". F6 was reintroduced before; it stays guarded.
+- Skipping `recursion_limit` because "this graph won't loop" — the cap is the only safety against cyclic dispatch.
 

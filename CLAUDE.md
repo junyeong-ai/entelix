@@ -78,7 +78,7 @@ Every async API that may run > 100ms accepts `tokio_util::sync::CancellationToke
 
 ## Naming
 
-Reference: `.claude/rules/naming.md` (mirrors `docs/adr/0010-naming-taxonomy.md`). Type-suffix table (`*Codec`, `*Transport`, `*Provider`, …), the `Runnable<Verb>` composition prefix, builder verb-prefix exception (`with_*` / `add_*` / `set_*` / `register`), and the ctx-first / ctx-last parameter-ordering split all live there. Forbidden suffixes (`*Engine`, `*Wrapper`, `*Handler`, `*Helper`, `*Util`) and `get_xxx` accessors are reviewer-rejected; `cargo xtask naming` enforces a subset.
+Reference: `.claude/rules/naming.md`. Type-suffix table (`*Codec`, `*Transport`, `*Provider`, …), the `Runnable<Verb>` composition prefix, builder verb-prefix exception (`with_*` / `add_*` / `set_*` / `register`), and the ctx-first / ctx-last parameter-ordering split all live there. Forbidden suffixes (`*Engine`, `*Wrapper`, `*Handler`, `*Helper`, `*Util`) and `get_xxx` accessors are reviewer-rejected; `cargo xtask naming` enforces a subset.
 
 ## Anthropic managed-agent shape — non-negotiable
 
@@ -99,9 +99,8 @@ DAG root: `entelix-core` (depends on no other entelix crate). Sub-crate `CLAUDE.
 
 Key references:
 
-- Logical-flaw register → retrospective ADRs in `docs/adr/` document each mitigation; reviewer rejects PRs reintroducing any.
+- Architecture principles → `docs/architecture/principles.md` (living contract — domain neutrality, state model, provider surface, lifecycle).
 - Feature flags → facade `crates/entelix/Cargo.toml` is the **single source of truth**; `full` aggregates everything. Never enumerate the list elsewhere — that drifts.
-- Architecture decisions → `docs/adr/`.
 - Public-API baselines → `docs/public-api/<crate>.txt` (drift gate).
 
 ## Commands
@@ -117,8 +116,8 @@ cargo test --workspace --all-features
 # Run every static-analysable invariant in canonical CI order
 cargo xtask invariants
 
-# Or per-invariant — each subcommand maps to one CLAUDE.md invariant or
-# ADR. Implementations live in xtask/src/invariants/<name>.rs as typed-AST
+# Or per-invariant — each subcommand maps to one CLAUDE.md invariant.
+# Implementations live in xtask/src/invariants/<name>.rs as typed-AST
 # visitors over `syn::File` and `toml_edit::DocumentMut`.
 cargo xtask no-fs                    # invariant 9
 cargo xtask managed-shape            # invariants 1, 2, 4, 10
@@ -137,7 +136,7 @@ cargo xtask supply-chain             # cargo audit (RustSec) + cargo deny
 cargo xtask feature-matrix           # each facade feature compiles alone
 cargo xtask public-api               # per-crate public-API drift baseline
 
-# Refreeze public-API baselines after a deliberate, ADR-documented change
+# Refreeze public-API baselines after a deliberate API change
 cargo xtask freeze-public-api [<crate>...]
 
 # Live integration (requires API keys, opt-in)

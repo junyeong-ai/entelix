@@ -4,7 +4,7 @@ Native Model Context Protocol client. JSON-RPC 2.0 over MCP streamable-http.
 
 ## Surface
 
-- **`McpManager`** — register servers, dispatch `tools/call`, `resources/{list,read}`, `prompts/{list,get}`, `completion/complete`, `notifications/roots/list_changed`. Per-tenant connection pool keyed by `(TenantId, ServerName)` (F9 mitigation; invariant 11).
+- **`McpManager`** — register servers, dispatch `tools/call`, `resources/{list,read}`, `prompts/{list,get}`, `completion/complete`, `notifications/roots/list_changed`. Per-tenant connection pool keyed by `(TenantId, ServerName)` (invariant 11).
 - **`McpServerConfig`** — HTTP-only by design. `with_roots_provider` / `with_sampling_provider` / `with_elicitation_provider` opt the server into the corresponding server-initiated channel.
 - **`McpClient` trait** + `HttpMcpClient` — production transport. `Mcp-Session-Id` sticky session + background SSE listener for server-initiated requests. Tests inject deterministic mocks.
 - **`McpToolAdapter`** — implements `entelix_core::tools::Tool` so MCP-published tools plug into agents.

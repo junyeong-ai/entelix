@@ -4,7 +4,7 @@ Tier-3 cross-thread persistent knowledge. Trait surface + zero-dependency refere
 
 ## Surface
 
-- **`Namespace`** — `Namespace::new(tenant_id)` (mandatory non-empty `tenant_id`, runtime-asserted) + `with_scope(segment)` builder for nested scopes. No constructor exists that omits `tenant_id` (invariant 11 / F2 mitigation).
+- **`Namespace`** — `Namespace::new(tenant_id)` (mandatory non-empty `tenant_id`, runtime-asserted) + `with_scope(segment)` builder for nested scopes. No constructor exists that omits `tenant_id` (invariant 11).
 - **`Store<V>` trait** — KV with TTL (`PutOptions { expires_at }`). Methods take `(&self, ctx, namespace, …)` (ctx-first per naming taxonomy).
 - **`VectorStore` trait** — vector + metadata storage. `add` / `search_filtered` keyed on `Namespace`. Reference: `InMemoryVectorStore` (brute-force cosine, namespace-isolated).
 - **`Embedder` trait** + `MeteredEmbedder<E>` — `Arc<Self>` constraint (F10 — pool-shared, no per-call client construction). `MeteredEmbedder` records `gen_ai.embedding.cost` only on `Ok` (invariant 12).

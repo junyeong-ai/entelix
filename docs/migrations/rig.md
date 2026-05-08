@@ -233,10 +233,11 @@ to watch the tool-calling loop tick by tick. See
    MCP. Each is a separate crate behind a feature flag — opt in as
    your deployment grows.
 6. **For RAG / knowledge-graph patterns**: pick one of the five
-   memory tiers (`SemanticMemory<E, V>` for vector search,
-   `EpisodicMemory<E, V>` for time-ordered traces,
-   `GraphMemory<N, E>` for typed relationships) and wire the
-   matching backend (`entelix-memory-pgvector`, `entelix-memory-qdrant`,
+   memory patterns over `Store<V>` (`SemanticMemory<E, V>` for
+   vector search, `EpisodicMemory<E, V>` for time-ordered traces)
+   or the `GraphMemory<N, E>` tier (typed relationships, separate
+   trait — not a `Store` pattern) and wire the matching backend
+   (`entelix-memory-pgvector`, `entelix-memory-qdrant`,
    `entelix-graphmemory-pg`).
 
 ## See also

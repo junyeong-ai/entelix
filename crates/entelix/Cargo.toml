@@ -61,6 +61,7 @@ entelix-server = { workspace = true, optional = true }
 async-trait = { workspace = true }
 axum = { workspace = true }
 bytes = { workspace = true }
+chrono = { workspace = true }
 entelix-core = { workspace = true }
 entelix-mcp = { workspace = true }
 entelix-mcp-chatmodel = { workspace = true }

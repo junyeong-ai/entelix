@@ -13,12 +13,19 @@
 
 mod effect;
 mod metadata;
+mod progress;
 mod registry;
 mod scope;
 mod tool;
+mod toolset;
 
 pub use effect::{RetryHint, ToolEffect};
 pub use metadata::ToolMetadata;
+pub use progress::{
+    CurrentToolInvocation, ToolProgress, ToolProgressSink, ToolProgressSinkHandle,
+    ToolProgressStatus,
+};
 pub use registry::ToolRegistry;
 pub use scope::{ScopedToolLayer, ScopedToolService, ToolDispatchScope};
 pub use tool::Tool;
+pub use toolset::Toolset;

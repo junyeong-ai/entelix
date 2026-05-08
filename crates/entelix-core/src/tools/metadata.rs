@@ -11,6 +11,7 @@ use std::time::Duration;
 
 use serde_json::Value;
 
+use crate::ir::ToolSpec;
 use crate::tools::effect::{RetryHint, ToolEffect};
 
 /// Declarative description of a tool.
@@ -104,6 +105,20 @@ impl ToolMetadata {
     pub const fn with_effect(mut self, effect: ToolEffect) -> Self {
         self.effect = effect;
         self
+    }
+
+    /// Project this metadata into the wire-shaped [`ToolSpec`]
+    /// codecs encode for the model. Inspection helper used by
+    /// [`crate::Toolset::tool_specs`] and capability manifests.
+    /// `cache_control` defaults to `None` — operators that need a
+    /// per-tool cache directive set it on the `ToolSpec` itself.
+    #[must_use]
+    pub fn to_tool_spec(&self) -> ToolSpec {
+        ToolSpec::function(
+            self.name.clone(),
+            self.description.clone(),
+            self.input_schema.clone(),
+        )
     }
 
     /// Mark the tool idempotent — repeat calls with the same input

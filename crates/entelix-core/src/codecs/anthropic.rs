@@ -94,7 +94,9 @@ impl Codec for AnthropicMessagesCodec {
 
     fn encode(&self, request: &ModelRequest) -> Result<EncodedRequest> {
         let (body, warnings) = build_body(request, false)?;
-        finalize_request(&body, warnings)
+        let mut encoded = finalize_request(&body, warnings)?;
+        apply_anthropic_beta_header(&mut encoded, request)?;
+        Ok(encoded)
     }
 
     fn encode_streaming(&self, request: &ModelRequest) -> Result<EncodedRequest> {
@@ -104,6 +106,7 @@ impl Codec for AnthropicMessagesCodec {
             http::header::ACCEPT,
             http::HeaderValue::from_static("text/event-stream"),
         );
+        apply_anthropic_beta_header(&mut encoded, request)?;
         Ok(encoded.into_streaming())
     }
 
@@ -256,6 +259,32 @@ fn build_body(request: &ModelRequest, streaming: bool) -> Result<(Value, Vec<Mod
     }
     apply_provider_extensions(request, &mut body, &mut warnings);
     Ok((Value::Object(body), warnings))
+}
+
+/// Merge [`crate::ir::AnthropicExt::betas`] into the
+/// `anthropic-beta` HTTP header. The Anthropic Messages API
+/// documents one comma-separated value per request; the codec
+/// emits no header when the operator's beta list is empty.
+fn apply_anthropic_beta_header(
+    encoded: &mut EncodedRequest,
+    request: &ModelRequest,
+) -> Result<()> {
+    let Some(anthropic) = &request.provider_extensions.anthropic else {
+        return Ok(());
+    };
+    if anthropic.betas.is_empty() {
+        return Ok(());
+    }
+    let value = anthropic.betas.join(",");
+    let header = http::HeaderValue::from_str(&value).map_err(|_| {
+        crate::Error::invalid_request(
+            "AnthropicExt::betas: each entry must contain only visible ASCII",
+        )
+    })?;
+    encoded
+        .headers
+        .insert(http::HeaderName::from_static("anthropic-beta"), header);
+    Ok(())
 }
 
 /// Read [`crate::ir::AnthropicExt`] and merge each set field into the

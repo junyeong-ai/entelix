@@ -1261,9 +1261,11 @@ impl core::marker::UnsafeUnpin for entelix_core::ir::ToolResultContent
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ToolResultContent
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ToolResultContent
 #[non_exhaustive] pub struct entelix_core::ir::AnthropicExt
+pub entelix_core::ir::AnthropicExt::betas: alloc::vec::Vec<alloc::string::String>
 pub entelix_core::ir::AnthropicExt::disable_parallel_tool_use: core::option::Option<bool>
 pub entelix_core::ir::AnthropicExt::user_id: core::option::Option<alloc::string::String>
 impl entelix_core::ir::AnthropicExt
+pub fn entelix_core::ir::AnthropicExt::with_betas<I, S>(self, betas: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::Into<alloc::string::String>
 pub const fn entelix_core::ir::AnthropicExt::with_disable_parallel_tool_use(self, disable: bool) -> Self
 pub fn entelix_core::ir::AnthropicExt::with_user_id(self, user_id: impl core::convert::Into<alloc::string::String>) -> Self
 impl core::clone::Clone for entelix_core::ir::AnthropicExt

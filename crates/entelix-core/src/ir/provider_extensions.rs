@@ -121,6 +121,13 @@ pub struct AnthropicExt {
     /// Operator pseudonymous id, not a PII identifier.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub user_id: Option<String>,
+    /// `anthropic-beta` HTTP header values — comma-joined and sent
+    /// as a single header so beta capabilities (extended thinking,
+    /// computer-use updates, prompt-caching variants, …) gate at
+    /// the transport layer per Anthropic's documented opt-in.
+    /// Empty vec means no beta header is sent.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub betas: Vec<String>,
 }
 
 impl AnthropicExt {
@@ -135,6 +142,19 @@ impl AnthropicExt {
     #[must_use]
     pub fn with_user_id(mut self, user_id: impl Into<String>) -> Self {
         self.user_id = Some(user_id.into());
+        self
+    }
+
+    /// Replace the `anthropic-beta` opt-in list. Each element rides
+    /// as one comma-separated value in the single `anthropic-beta`
+    /// header the Anthropic Messages API documents.
+    #[must_use]
+    pub fn with_betas<I, S>(mut self, betas: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.betas = betas.into_iter().map(Into::into).collect();
         self
     }
 }

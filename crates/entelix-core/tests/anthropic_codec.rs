@@ -702,3 +702,70 @@ fn decode_keeps_document_citation_when_index_is_present() {
         response.content
     );
 }
+
+#[test]
+fn anthropic_ext_betas_emit_comma_joined_header() {
+    use entelix_core::ir::{AnthropicExt, ProviderExtensions};
+    let codec = AnthropicMessagesCodec::new();
+    let req = ModelRequest {
+        model: "claude-opus-4-7".into(),
+        messages: vec![Message::user("hi")],
+        provider_extensions: ProviderExtensions::default().with_anthropic(
+            AnthropicExt::default().with_betas(["prompt-caching-2024-07-31", "computer-use-2025-01-24"]),
+        ),
+        max_tokens: Some(64),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    let beta = encoded
+        .headers
+        .get("anthropic-beta")
+        .expect("anthropic-beta header must be present");
+    assert_eq!(
+        beta.to_str().unwrap(),
+        "prompt-caching-2024-07-31,computer-use-2025-01-24"
+    );
+}
+
+#[test]
+fn anthropic_ext_betas_empty_emits_no_header() {
+    use entelix_core::ir::{AnthropicExt, ProviderExtensions};
+    let codec = AnthropicMessagesCodec::new();
+    let req = ModelRequest {
+        model: "claude-opus-4-7".into(),
+        messages: vec![Message::user("hi")],
+        provider_extensions: ProviderExtensions::default()
+            .with_anthropic(AnthropicExt::default().with_user_id("op-3")),
+        max_tokens: Some(64),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    assert!(
+        !encoded.headers.contains_key("anthropic-beta"),
+        "no betas configured ⇒ no anthropic-beta header"
+    );
+}
+
+#[test]
+fn anthropic_ext_betas_streaming_path_carries_header() {
+    use entelix_core::ir::{AnthropicExt, ProviderExtensions};
+    let codec = AnthropicMessagesCodec::new();
+    let req = ModelRequest {
+        model: "claude-opus-4-7".into(),
+        messages: vec![Message::user("hi")],
+        provider_extensions: ProviderExtensions::default()
+            .with_anthropic(AnthropicExt::default().with_betas(["interleaved-thinking-2025-05-14"])),
+        max_tokens: Some(64),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode_streaming(&req).unwrap();
+    assert!(encoded.streaming);
+    assert_eq!(
+        encoded.headers.get("anthropic-beta").unwrap().to_str().unwrap(),
+        "interleaved-thinking-2025-05-14",
+    );
+    assert_eq!(
+        encoded.headers.get(http::header::ACCEPT).unwrap().to_str().unwrap(),
+        "text/event-stream",
+    );
+}

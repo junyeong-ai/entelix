@@ -14,7 +14,7 @@ Re-export crate. The 90% surface every consumer constructs: `entelix::ChatModel`
 
 - **Every feature-gated re-export carries `#[cfg_attr(docsrs, doc(cfg(feature = "X")))]` next to its `#[cfg(feature = "X")]`** — docs.rs surfaces "Available on **feature** `X` only" badges only when both pair.
 - **Feature pass-through is mandatory** — facade `postgres` feature MUST enable underlying `entelix-persistence/postgres`. `scripts/check-feature-matrix.sh` catches the regression where `dep:entelix-persistence` enabled but `entelix-persistence/postgres` forgotten.
-- **Re-export ordering** — within each `pub use entelix_X::{...}` block, items are case-sensitive ASCII-sorted (rustfmt default). PascalCase types appear before snake_case functions because uppercase letters sort before lowercase in ASCII. Don't manually reorder — `cargo fmt` enforces.
+- **Re-export ordering** — within each `pub use entelix_X::{.}` block, items are case-sensitive ASCII-sorted (rustfmt default). PascalCase types appear before snake_case functions because uppercase letters sort before lowercase in ASCII. Don't manually reorder — `cargo fmt` enforces.
 - **Alias to disambiguate naming collisions** — `MCP_PROTOCOL_VERSION as MCP_PROTOCOL_VERSION`, `SERVER_DEFAULT_TENANT_HEADER as SERVER_DEFAULT_TENANT_HEADER`, `OPENAI_EMBEDDINGS_BASE_URL as OPENAI_EMBEDDINGS_BASE_URL`. Same-named constants from different crates carry a prefix at the facade level.
 - **No baseline** — `entelix` is intentionally excluded from `scripts/check-public-api.sh` (the underlying crates carry the surface contract; the facade just re-exports). `check-public-api` script's success message reflects this ("facade excluded by design").
 
@@ -26,6 +26,5 @@ Re-export crate. The 90% surface every consumer constructs: `entelix::ChatModel`
 
 ## References
 
-- ADR-0064 — 1.0 release charter (facade as the canonical surface contract).
 - `scripts/check-feature-matrix.sh` — feature isolation regression gate.
 - `scripts/check-dead-deps.sh` — workspace dependency hygiene.

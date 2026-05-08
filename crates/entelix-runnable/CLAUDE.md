@@ -5,7 +5,7 @@ Composition contract (invariant 7). `Runnable<I, O>` + LCEL `.pipe()` connector 
 ## Surface
 
 - **`Runnable<I, O>` trait** — `invoke(input, ctx) → Result<O>` + `stream(input, mode, ctx) → BoxStream<StreamChunk<O>>` + optional `name()`. ctx-last per naming taxonomy.
-- **`RunnableExt` extension trait** — fluent adapters returning concrete `Runnable<I, O>` types so chains stay zero-cost in the steady state. `pipe(next)` / `with_retry(policy)` / `with_fallbacks(others)` / `map(fn)` / `with_config(fn)` / `with_timeout(duration)` / `stream_with(...)`.
+- **`RunnableExt` extension trait** — fluent adapters returning concrete `Runnable<I, O>` types so chains stay zero-cost in the steady state. `pipe(next)` / `with_retry(policy)` / `with_fallbacks(others)` / `map(fn)` / `with_config(fn)` / `with_timeout(duration)` / `stream_with(.)`.
 - **Composition primitives** — `RunnableLambda` / `RunnableSequence` / `RunnableParallel` / `RunnableRouter` / `RunnablePassthrough` (LangChain LCEL parity).
 - **`AnyRunnable` + `AnyRunnableHandle` + `erase`** — type-erased counterpart for dynamic dispatch (F12 mitigation). `invoke_any(Value, ctx) → Result<Value>`. Pays JSON ser/deser cost — typed `Runnable` for hot paths.
 - **Parsers** — `JsonOutputParser<T: DeserializeOwned>`. Parsers are also `Runnable<Message, T>` — chainable via `.pipe()`. Validation retries route through `entelix-core::OutputValidator<O>` + `ChatModelConfig::validation_retries`, not parser-level loops (invariant 20).
@@ -26,9 +26,3 @@ Composition contract (invariant 7). `Runnable<I, O>` + LCEL `.pipe()` connector 
 - `unwrap()` / `expect()` in any adapter's `invoke` / `stream` — bubble through `Result<O, Error>`.
 - Holding any lock across a user-supplied `Runnable::invoke` future (CLAUDE.md §"Lock ordering"). Lock guards drop before `.await`.
 
-## References
-
-- ADR-0006 — Runnable + StateGraph 1.0 spine.
-- ADR-0010 — naming taxonomy (`Runnable<Verb>` composition prefix).
-- ADR-0011 — `Tool` / `Runnable` adapter boundary (`ToolToRunnableAdapter`).
-- ADR-0028 — retry / fallback policy externalisation.

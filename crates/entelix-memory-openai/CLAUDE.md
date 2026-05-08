@@ -4,7 +4,7 @@ Companion crate. Concrete `Embedder` impl for OpenAI's Embeddings API (`text-emb
 
 ## Surface
 
-- **`OpenAiEmbedder`** + **`OpenAiEmbedderBuilder`** — `with_api_key(...)` / `with_model(...)` / `with_base_url(...)` / `build() -> Result<Self>`. Pool-shared via `Arc<Self>` (F10 — never per-call client construction).
+- **`OpenAiEmbedder`** + **`OpenAiEmbedderBuilder`** — `with_api_key(.)` / `with_model(.)` / `with_base_url(.)` / `build() -> Result<Self>`. Pool-shared via `Arc<Self>` (F10 — never per-call client construction).
 - **Constants** — `TEXT_EMBEDDING_3_SMALL` / `TEXT_EMBEDDING_3_LARGE` model identifiers + their `*_DIMENSION` companion constants. `DEFAULT_BASE_URL` for OpenAI's hosted endpoint.
 - **`OpenAiEmbedderError`** — typed error wrapping HTTP status, vendor message, and serde failures. `#[non_exhaustive]`.
 
@@ -20,7 +20,5 @@ Companion crate. Concrete `Embedder` impl for OpenAI's Embeddings API (`text-emb
 - Per-call `reqwest::Client::new()` construction — defeats the connection pool, F10 violation.
 - Bypassing `gen_ai.embedding.cost` emission on the `Ok` branch (invariant 12 — cost is transactional, only on success).
 
-## References
 
-- ADR-0008 — companion crate pattern (concrete `Embedder` lives here, never in `entelix-memory`).
 - F10 mitigation — pooled embedder, no per-call client construction.

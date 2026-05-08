@@ -18,8 +18,5 @@ Companion crate (vendor-neutral). Bridges the MCP `sampling/createMessage` serve
 - Mutating the wrapped `ChatModel` between calls — overrides flow through the per-call clone.
 - Dropping `model_preferences` silently — at least the `tracing::debug!` must fire so operators can audit which advisory hints arrived.
 
-## References
 
-- ADR-0054 — MCP `sampling/createMessage` server-initiated channel.
-- ADR-0060 — this companion's design (operator-side `SamplingProvider` for the canonical agent + sampling sharing).
 - `crates/entelix/examples/17_mcp_sampling_provider.rs` — integration demo.

@@ -13,7 +13,7 @@ Axum integration. `AgentRouterBuilder` produces an `axum::Router` exposing the c
 ## Crate-local rules
 
 - **Tenant routing matches the configured `TenantMode`** — `Default` keeps `ExecutionContext::tenant_id()` at `DEFAULT_TENANT_ID`; `RequiredHeader(name)` extracts from the named header and rejects missing / non-UTF-8 / whitespace-only with a typed 4xx (invariant 11). There is no silent fall-through from strict to default.
-- **`Error::Interrupted` maps to `202 Accepted`** — graph node requested HITL; the response body carries the `payload` for the operator to drive the resume call. Per ADR-0028.
+- **`Error::Interrupted` maps to `202 Accepted`** — graph node requested HITL; the response body carries the `payload` for the operator to drive the resume call. Per.
 - **No request-time agent registration** — the runnable is wired at builder time. Replacing it post-build requires a fresh `AgentRouterBuilder` instance. Avoids the F11 race window.
 - **SSE backpressure honours `tower_http::limit::ResponseBodyLimitLayer`** — operators wire it explicitly per deployment policy. Server crate doesn't pick a default cap.
 - **No filesystem / shell** (invariant 9) — server is a thin axum integration, never exposes its own sandbox.
@@ -22,11 +22,10 @@ Axum integration. `AgentRouterBuilder` produces an `axum::Router` exposing the c
 ## Forbidden
 
 - A handler that pulls credentials out of `ExecutionContext` (invariant 10). Auth middleware lives ahead of the agent dispatch; tokens are never embedded in `ctx`.
-- A `*Service` type in this crate that does NOT impl `tower::Service` (per ADR-0010 / `scripts/check-naming.sh`).
+- A `*Service` type in this crate that does NOT impl `tower::Service` (per  / `scripts/check-naming.sh`).
 - Caching agent state on the router struct — invariant 1 (session is event SSoT) requires every request reload from `SessionLog`.
 - Adding a new variant to `BuildError` that the request handlers can also reach (it would re-collapse the audience-channel split). If both surfaces need it, the variant belongs on `ServerError`.
 
 ## References
 
-- ADR-0028 — interrupt semantics + resume API.
 - `docs/architecture/managed-agents.md` — Session/Harness/Hand decoupling on the HTTP boundary.

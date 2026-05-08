@@ -5,17 +5,17 @@ Event-sourced session state (invariant 1 — session is event SSoT). `SessionGra
 ## Surface
 
 - **`SessionGraph`** — append-only event log. `append(event)` / `events_since(cursor)` / `current_branch_messages()` / `events_for_node(node_id)` / `fork(parent_node)`.
-- **`GraphEvent` enum** — `UserMessage`, `AssistantMessage`, `ThinkingDelta`, `ToolCall`, `ToolResult`, `Warning`, `RateLimit`, `BranchCreated`, `CheckpointMarker`, `Cancelled`, `Interrupt`, `Error`, plus the ADR-0037 audit-channel variants `SubAgentInvoked` / `AgentHandoff` / `Resumed` / `MemoryRecall` / `UsageLimitExceeded`. Full field list in `crates/entelix-session/src/event.rs`.
+- **`GraphEvent` enum** — `UserMessage`, `AssistantMessage`, `ThinkingDelta`, `ToolCall`, `ToolResult`, `Warning`, `RateLimit`, `BranchCreated`, `CheckpointMarker`, `Cancelled`, `Interrupt`, `Error`, plus the  audit-channel variants `SubAgentInvoked` / `AgentHandoff` / `Resumed` / `MemoryRecall` / `UsageLimitExceeded`. Full field list in `crates/entelix-session/src/event.rs`.
 - **`SessionLog` trait** — backend-agnostic persistence for `GraphEvent`. `append_event(thread_id, event)` / `load_since(thread_id, cursor)` / `archive_threads(watermark)`. Reference impl: `InMemorySessionLog` (test/dev). Production: `PostgresSessionLog` / `RedisSessionLog` in `entelix-persistence`.
-- **`SessionAuditSink`** — fire-and-forget `AuditSink` adapter that maps `record_*` calls onto `SessionLog::append` of the corresponding `GraphEvent` variant (ADR-0037, invariant 18). Sync `&self` so emit sites stay `.await`-free.
-- **`Compactor` trait** + **`CompactedHistory`** + **`HeadDropCompactor`** — type-enforced conversation compaction (invariant 21, ADR-0092 + ADR-0095). `tool_call` / `tool_result` pair invariant is structurally impossible to violate: `ToolPair` fields are private; the only construction path is `CompactedHistory::group(events)`; external `Compactor` impls drop or pass through `ToolPair`s and rebuild via `CompactedHistory::from_turns(turns)`. `HeadDropCompactor` ships as the reference "drop oldest until fits" strategy.
+- **`SessionAuditSink`** — fire-and-forget `AuditSink` adapter that maps `record_*` calls onto `SessionLog::append` of the corresponding `GraphEvent` variant (invariant 18). Sync `&self` so emit sites stay `.await`-free.
+- **`Compactor` trait** + **`CompactedHistory`** + **`HeadDropCompactor`** — type-enforced conversation compaction (invariant 21,  + ). `tool_call` / `tool_result` pair invariant is structurally impossible to violate: `ToolPair` fields are private; the only construction path is `CompactedHistory::group(events)`; external `Compactor` impls drop or pass through `ToolPair`s and rebuild via `CompactedHistory::from_turns(turns)`. `HeadDropCompactor` ships as the reference "drop oldest until fits" strategy.
 
 ## Crate-local rules
 
 - **No message cache anywhere** — derived state (current branch, conversation messages) is recomputed from the event log on demand. A field like `cached_messages: Vec<Message>` on `SessionGraph` violates invariant 1 and is an instant-reject review comment.
 - **Append-only contract** — `SessionGraph::events` is `Vec<GraphEvent>`, never mutated in place after append. Branching is a new event (`BranchCreate { parent_node }`), not a vector mutation.
 - **Backend isolation tests at the persistence layer** (invariant 13) — `tests/namespace_isolation.rs` covers `InMemorySessionLog`. Production backends (`PostgresSessionLog`, `RedisSessionLog`) carry their own collision suites in `entelix-persistence/tests/`.
-- **`SessionAuditSink` failures land in `tracing::warn!` and never propagate** — the audit channel is one-way by contract (ADR-0037). A failure to persist an audit event must NOT abort the request that triggered it.
+- **`SessionAuditSink` failures land in `tracing::warn!` and never propagate** — the audit channel is one-way by contract. A failure to persist an audit event must NOT abort the request that triggered it.
 - **Archival watermark is operator-driven** — `archive_threads(watermark)` is the only thread-removal path. Per-event delete does not exist (an event is permanent until the whole thread is archived).
 
 ## Forbidden
@@ -26,7 +26,5 @@ Event-sourced session state (invariant 1 — session is event SSoT). `SessionGra
 
 ## References
 
-- ADR-0037 — `AuditSink` typed channel + `SessionAuditSink` adapter.
-- ADR-0039 — `Namespace::parse` (audit-key reversibility for `MemoryRecall::namespace_key`).
 - F1 mitigation — session-as-event-SSoT, no message cache.
 - Anthropic managed-agents — Session/Harness/Hand decoupling (`docs/architecture/managed-agents.md`).

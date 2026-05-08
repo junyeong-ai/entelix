@@ -13,7 +13,7 @@ Postgres + Redis backends for `Checkpointer` (entelix-graph) + `Store` (entelix-
 
 ## Crate-local rules
 
-- **Row-level security mandatory on every Postgres backend** (ADR-0041). Each table has a `tenant_id` column + `FORCE ROW LEVEL SECURITY` + `tenant_isolation` policy. Every query runs inside a transaction wrapped by `set_tenant_session(tenant_id)` so the policy actually fires. Removing the wrap is an instant-reject review comment.
+- **Row-level security mandatory on every Postgres backend**. Each table has a `tenant_id` column + `FORCE ROW LEVEL SECURITY` + `tenant_isolation` policy. Every query runs inside a transaction wrapped by `set_tenant_session(tenant_id)` so the policy actually fires. Removing the wrap is an instant-reject review comment.
 - **Distributed lock is mandatory for cross-pod safety** (CLAUDE.md §"Lock ordering"). `with_session_lock` is the only sanctioned mutation path when the same `thread_id` may be racing on multiple pods. Skipping it because "this deployment is single-pod" is a F8 reintroduction.
 - **Backend isolation tests at the persistence layer** (invariant 13). `tests/postgres_namespace_collision.rs` + `tests/redis_isolation.rs` exercise multi-tenant collision under the real backend (testcontainers). In-memory mock tests do not satisfy this invariant.
 - **Schema version on every persisted shape** — `SessionSchemaVersion` is stamped on every event row. A missing version is a hard error, not a "default to current" silent migration (invariant 15 — no silent fallback).
@@ -28,7 +28,4 @@ Postgres + Redis backends for `Checkpointer` (entelix-graph) + `Store` (entelix-
 
 ## References
 
-- ADR-0041 — Postgres row-level security (`set_tenant_session` + `tenant_isolation` policy).
-- ADR-0044 — pgvector RLS extension (companion-family uniformity).
-- ADR-0064 — 1.0 release charter (`postgres` / `redis` are facade features that pass-through to this crate's features).
 - F8 mitigation — distributed lock for cross-pod thread-id mutation.

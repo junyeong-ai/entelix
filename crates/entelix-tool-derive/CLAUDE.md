@@ -4,7 +4,7 @@ Proc-macro crate. Holds the `#[tool]` attribute that generates typed-input tool 
 
 ## Surface
 
-- **`#[tool]`** — function-attribute macro. Applied to an `async fn` whose signature is `async fn name(ctx: &AgentContext<()>, ...args) -> Result<O>` (ctx optional). Generates: an `Input` struct (`Deserialize + JsonSchema` over the param list), a unit struct named after the function in `PascalCase`, and an `entelix_tools::SchemaTool` impl that deserialises, dispatches to the original fn, and returns the typed `O`. The original function stays callable in user code; the tool struct is the agent-side surface.
+- **`#[tool]`** — function-attribute macro. Applied to an `async fn` whose signature is `async fn name(ctx: &AgentContext<()>,.args) -> Result<O>` (ctx optional). Generates: an `Input` struct (`Deserialize + JsonSchema` over the param list), a unit struct named after the function in `PascalCase`, and an `entelix_tools::SchemaTool` impl that deserialises, dispatches to the original fn, and returns the typed `O`. The original function stays callable in user code; the tool struct is the agent-side surface.
 
 ## Crate-local rules
 
@@ -19,8 +19,5 @@ Proc-macro crate. Holds the `#[tool]` attribute that generates typed-input tool 
 - A generated path that does not start with `::` (the leading-colons fully-qualified path is the proc-macro hygiene fix that prevents user-side shadowing of `entelix_core` / `entelix_tools`).
 - A new attribute argument (effect, retry, version, …) without a corresponding `SchemaTool` accessor and an `entelix-tool-derive/tests/` test.
 
-## References
 
-- ADR-0087 — `#[tool]` attribute macro contract.
-- ADR-0011 — `Tool` / `Runnable` adapter boundary; `SchemaTool` is the typed-input sibling that this macro generates impls for.
 - `crates/entelix-graph-derive/CLAUDE.md` — companion proc-macro crate using the same authoring conventions.

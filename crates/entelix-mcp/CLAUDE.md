@@ -8,7 +8,7 @@ Native Model Context Protocol client. JSON-RPC 2.0 over MCP streamable-http.
 - **`McpServerConfig`** — HTTP-only by design. `with_roots_provider` / `with_sampling_provider` / `with_elicitation_provider` opt the server into the corresponding server-initiated channel.
 - **`McpClient` trait** + `HttpMcpClient` — production transport. `Mcp-Session-Id` sticky session + background SSE listener for server-initiated requests. Tests inject deterministic mocks.
 - **`McpToolAdapter`** — implements `entelix_core::tools::Tool` so MCP-published tools plug into agents.
-- **Server-initiated channel providers** — `RootsProvider` (`roots/list`, `StaticRootsProvider` reference impl + `McpRoot`), `SamplingProvider` (`sampling/createMessage`, ADR-0054), `ElicitationProvider` (`elicitation/create`, ADR-0053). One provider per server, per channel.
+- **Server-initiated channel providers** — `RootsProvider` (`roots/list`, `StaticRootsProvider` reference impl + `McpRoot`), `SamplingProvider` (`sampling/createMessage`, ), `ElicitationProvider` (`elicitation/create`, ). One provider per server, per channel.
 
 ## Crate-local rules
 
@@ -24,9 +24,3 @@ Native Model Context Protocol client. JSON-RPC 2.0 over MCP streamable-http.
 - Per-server-only pool key (drops invariant 11).
 - Hard-coded protocol version: bump `protocol::PROTOCOL_VERSION` in lockstep with the spec revision; do not fall back silently.
 
-## References
-
-- ADR-0004 — native JSON-RPC client (no rmcp dependency), MCP 1.5 streamable-http.
-- ADR-0017 — tenant_id strengthening that gives the pool key its second component.
-- ADR-0053 — `ElicitationProvider` (server-initiated `elicitation/create`).
-- ADR-0054 — `SamplingProvider` (server-initiated `sampling/createMessage`).

@@ -1,6 +1,6 @@
 # entelix-memory
 
-Tier-3 cross-thread persistent knowledge. Trait surface + zero-dependency reference impls. Concrete vendor-backed impls ship as companion crates (ADR-0008).
+Tier-3 cross-thread persistent knowledge. Trait surface + zero-dependency reference impls. Concrete vendor-backed impls ship as companion crates.
 
 ## Surface
 
@@ -10,7 +10,7 @@ Tier-3 cross-thread persistent knowledge. Trait surface + zero-dependency refere
 - **`Embedder` trait** + `MeteredEmbedder<E>` — `Arc<Self>` constraint (F10 — pool-shared, no per-call client construction). `MeteredEmbedder` records `gen_ai.embedding.cost` only on `Ok` (invariant 12).
 - **`Retriever` trait** + `Reranker` trait + `MmrReranker` — diversity-aware retrieval composition.
 - **Memory patterns** — `BufferMemory`, `SummaryMemory`, `EntityMemory`, `SemanticMemory<E, V>`, `EpisodicMemory<V>`, `ConsolidatingBufferMemory` (LangChain-style facades over `Store<V>`).
-- **`GraphMemory<N, E>` trait** + `InMemoryGraphMemory<N, E>` — typed-node + timestamped-edge knowledge graph (BFS traversal, shortest-path). Postgres-backed `PgGraphMemory` companion (ADR-0042) folds traversal into a single `WITH RECURSIVE` round-trip.
+- **`GraphMemory<N, E>` trait** + `InMemoryGraphMemory<N, E>` — typed-node + timestamped-edge knowledge graph (BFS traversal, shortest-path). Postgres-backed `PgGraphMemory` companion folds traversal into a single `WITH RECURSIVE` round-trip.
 
 ## Companion crates (1.0)
 
@@ -36,8 +36,3 @@ Companion-crate pattern: live in `entelix-memory-<vendor>`, depend on `entelix-m
 - Vector store impl whose filter projection drops the namespace anchor "for performance" — namespace is the security boundary, not a hint.
 - New companion concrete impls in `entelix-memory` itself — they go in `entelix-memory-<vendor>`.
 
-## References
-
-- ADR-0007 — memory trait surface.
-- ADR-0008 — companion crate pattern (concrete impls).
-- ADR-0017 — tenant_id strengthening.

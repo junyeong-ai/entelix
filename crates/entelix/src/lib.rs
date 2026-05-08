@@ -128,7 +128,8 @@ pub use entelix_memory::{
     InMemoryVectorStore, MeteredEmbedder, MmrReranker, Namespace, NamespacePrefix,
     NeverConsolidate, NodeId, OnMessageCount, OnTokenBudget, PolicyExtras, PutOptions,
     RerankedDocument, Reranker, RetrievalQuery, Retriever, SemanticMemory, SemanticMemoryBackend,
-    Store, Summarizer, SummaryMemory, VectorFilter, VectorStore,
+    Store, Summarizer, SummaryMemory, VectorFilter, VectorStore, first_non_finite_vector_value,
+    validate_vector_shape,
 };
 #[cfg(feature = "embedders-openai")]
 #[cfg_attr(docsrs, doc(cfg(feature = "embedders-openai")))]

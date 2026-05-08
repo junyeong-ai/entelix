@@ -312,21 +312,27 @@ const fn part_kind(part: &ContentPart) -> &'static str {
 /// the JSON-RPC error shape MCP servers expect (the dispatcher in
 /// `entelix-mcp` translates `McpError::JsonRpc { code, message }`
 /// into the wire `error.code` slot).
+///
+/// The wire `error.message` flows to the MCP client (often an LLM)
+/// through the JSON-RPC envelope; per invariant 16 the message is
+/// composed only from the `entelix_core::Error::for_llm()` rendering
+/// (operator-only diagnostics — source chains, vendor status codes,
+/// raw provider messages — never enter this channel). Operator
+/// observability continues through `tracing::error!`.
 fn map_chat_error(err: entelix_core::Error) -> McpError {
-    use entelix_core::Error;
-    match err {
-        Error::Provider { ref message, .. } => McpError::JsonRpc {
-            code: -32603,
-            message: format!("MCP sampling provider failure: {message}"),
-        },
-        Error::InvalidRequest(_) | Error::Config(_) | Error::Auth(_) => McpError::JsonRpc {
-            code: -32602,
-            message: format!("MCP sampling: invalid request — {err}"),
-        },
-        other => McpError::JsonRpc {
-            code: -32603,
-            message: format!("MCP sampling: chat-model error — {other}"),
-        },
+    use entelix_core::{Error, LlmRenderable};
+    let code = match &err {
+        Error::InvalidRequest(_) | Error::Config(_) | Error::Auth(_) => -32602,
+        _ => -32603,
+    };
+    tracing::error!(
+        target: "entelix.mcp.sampling",
+        error = %err,
+        "MCP sampling chat-model failure",
+    );
+    McpError::JsonRpc {
+        code,
+        message: format!("MCP sampling: {}", err.for_llm().into_inner()),
     }
 }
 
@@ -413,5 +419,56 @@ mod tests {
         }];
         let c = first_emittable_content(&parts);
         assert!(matches!(c, SamplingContent::Text { ref text } if text.is_empty()));
+    }
+
+    /// Pin invariant 16 on the sampling-error wire path: the
+    /// `error.message` carried back to the MCP client (often an LLM)
+    /// composes only from the LLM-safe rendering of `Error`.
+    /// Operator-only diagnostics — vendor messages, source chains,
+    /// underlying auth detail — never surface.
+    #[test]
+    fn map_chat_error_strips_provider_message() {
+        let err = entelix_core::Error::provider_http(503, "vendor returned reasoning-token bucket overflow");
+        let mapped = map_chat_error(err);
+        let McpError::JsonRpc { code, message } = mapped else {
+            panic!("expected JsonRpc variant");
+        };
+        assert_eq!(code, -32603);
+        assert_eq!(message, "MCP sampling: upstream model error");
+        assert!(!message.contains("503"));
+        assert!(!message.contains("reasoning-token"));
+        assert!(!message.contains("vendor"));
+    }
+
+    #[test]
+    fn map_chat_error_strips_auth_detail() {
+        let err = entelix_core::Error::Auth(entelix_core::auth::AuthError::missing_from(
+            "ANTHROPIC_API_KEY environment variable absent — operator install hint",
+        ));
+        let mapped = map_chat_error(err);
+        let McpError::JsonRpc { code, message } = mapped else {
+            panic!("expected JsonRpc variant");
+        };
+        assert_eq!(code, -32602);
+        assert_eq!(message, "MCP sampling: authentication failed");
+        assert!(!message.contains("ANTHROPIC_API_KEY"));
+        assert!(!message.contains("operator install hint"));
+    }
+
+    #[test]
+    fn map_chat_error_strips_invalid_request_inner() {
+        let err = entelix_core::Error::invalid_request("internal: tenant_id=t-private-001 missing");
+        let mapped = map_chat_error(err);
+        let McpError::JsonRpc { code, message } = mapped else {
+            panic!("expected JsonRpc variant");
+        };
+        assert_eq!(code, -32602);
+        // InvalidRequest renders verbatim — caller is expected to
+        // pass already-LLM-safe messages, but the rendering still
+        // routes through `LlmRenderable` and never adds vendor
+        // framing.
+        assert!(message.starts_with("MCP sampling: invalid input:"));
+        assert!(!message.contains("provider"));
+        assert!(!message.contains("vendor"));
     }
 }

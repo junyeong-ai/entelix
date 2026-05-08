@@ -138,6 +138,8 @@ impl core::fmt::Debug for entelix_mcp::McpError
 pub fn entelix_mcp::McpError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for entelix_mcp::McpError
 pub fn entelix_mcp::McpError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::llm_facing::LlmRenderable<alloc::string::String> for entelix_mcp::McpError
+pub fn entelix_mcp::McpError::render_for_llm(&self) -> alloc::string::String
 impl core::marker::Freeze for entelix_mcp::McpError
 impl core::marker::Send for entelix_mcp::McpError
 impl core::marker::Sync for entelix_mcp::McpError

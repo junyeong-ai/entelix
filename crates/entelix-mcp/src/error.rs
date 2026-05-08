@@ -162,3 +162,29 @@ impl From<McpError> for Error {
         }
     }
 }
+
+impl entelix_core::LlmRenderable<String> for McpError {
+    /// Short, model-actionable rendering. Operator diagnostics
+    /// (transport source chains, tenant identifiers, raw vendor
+    /// messages, malformed-response bodies) never enter this
+    /// channel — they continue to flow through `Display` / source
+    /// chains / tracing.
+    fn render_for_llm(&self) -> String {
+        match self {
+            Self::Network { .. } => "MCP transport failure".to_owned(),
+            Self::JsonRpc { code, .. } => format!("MCP server returned error code {code}"),
+            Self::MalformedResponse { .. } => "MCP malformed response".to_owned(),
+            Self::UnknownServer { server, .. } => {
+                format!("MCP server '{server}' not registered")
+            }
+            Self::Config(_) => "MCP misconfigured".to_owned(),
+            Self::Unreachable { server, .. } => {
+                format!("MCP server '{server}' unreachable")
+            }
+            Self::ResourceBounded { kind, .. } => {
+                format!("MCP listener bound exceeded ({kind})")
+            }
+            Self::Serde(_) => "MCP payload could not be serialised".to_owned(),
+        }
+    }
+}

@@ -14,7 +14,7 @@
 //! primitive is `tower::ServiceBuilder`.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-core/1.0.0-rc.2")]
+#![doc(html_root_url = "https://docs.rs/entelix-core/0.1.0")]
 #![deny(missing_docs)]
 // Tower-style middleware modules use long opening doc paragraphs to
 // explain composition semantics; trait-method `&str` returns satisfy

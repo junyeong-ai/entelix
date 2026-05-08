@@ -17,7 +17,7 @@
 //! [`Subagent`].
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-agents/1.0.0-rc.2")]
+#![doc(html_root_url = "https://docs.rs/entelix-agents/0.1.0")]
 #![deny(missing_docs)]
 // Doc-prose lints fire on legitimate proper nouns (ReAct,
 // AgentBuilder, LangGraph) and on long opening paragraphs that

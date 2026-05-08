@@ -20,7 +20,7 @@
 //! - `stream_with(input, mode, ctx)` — convenience streaming entry
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-runnable/1.0.0-rc.2")]
+#![doc(html_root_url = "https://docs.rs/entelix-runnable/0.1.0")]
 #![deny(missing_docs)]
 
 mod adapter;

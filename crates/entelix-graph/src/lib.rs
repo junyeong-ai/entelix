@@ -16,7 +16,7 @@
 //! pause-and-continue.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-graph/1.0.0-rc.2")]
+#![doc(html_root_url = "https://docs.rs/entelix-graph/0.1.0")]
 #![deny(missing_docs)]
 // Doc prose for Reducer/Dispatch references LangGraph by name and
 // uses long opening paragraphs that explain the parity intent;

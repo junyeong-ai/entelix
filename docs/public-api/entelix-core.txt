@@ -745,6 +745,8 @@ impl core::marker::Unpin for entelix_core::extensions::Extensions
 impl core::marker::UnsafeUnpin for entelix_core::extensions::Extensions
 impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::extensions::Extensions
 impl !core::panic::unwind_safe::UnwindSafe for entelix_core::extensions::Extensions
+pub mod entelix_core::identity
+pub fn entelix_core::identity::validate_config_identifier(surface: &str, field: &str, value: &str) -> entelix_core::error::Result<()>
 pub mod entelix_core::ir
 #[non_exhaustive] pub enum entelix_core::ir::CacheTtl
 pub entelix_core::ir::CacheTtl::FiveMinutes
@@ -2537,6 +2539,47 @@ impl core::marker::Unpin for entelix_core::tools::ToolEffect
 impl core::marker::UnsafeUnpin for entelix_core::tools::ToolEffect
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::tools::ToolEffect
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::tools::ToolEffect
+#[non_exhaustive] pub enum entelix_core::tools::ToolProgressStatus
+pub entelix_core::tools::ToolProgressStatus::Completed
+pub entelix_core::tools::ToolProgressStatus::Failed
+pub entelix_core::tools::ToolProgressStatus::Running
+pub entelix_core::tools::ToolProgressStatus::Started
+impl core::clone::Clone for entelix_core::tools::ToolProgressStatus
+pub fn entelix_core::tools::ToolProgressStatus::clone(&self) -> entelix_core::tools::ToolProgressStatus
+impl core::cmp::Eq for entelix_core::tools::ToolProgressStatus
+impl core::cmp::PartialEq for entelix_core::tools::ToolProgressStatus
+pub fn entelix_core::tools::ToolProgressStatus::eq(&self, other: &entelix_core::tools::ToolProgressStatus) -> bool
+impl core::fmt::Debug for entelix_core::tools::ToolProgressStatus
+pub fn entelix_core::tools::ToolProgressStatus::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_core::tools::ToolProgressStatus
+impl serde_core::ser::Serialize for entelix_core::tools::ToolProgressStatus
+pub fn entelix_core::tools::ToolProgressStatus::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::tools::ToolProgressStatus
+pub fn entelix_core::tools::ToolProgressStatus::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::tools::ToolProgressStatus
+impl core::marker::Send for entelix_core::tools::ToolProgressStatus
+impl core::marker::Sync for entelix_core::tools::ToolProgressStatus
+impl core::marker::Unpin for entelix_core::tools::ToolProgressStatus
+impl core::marker::UnsafeUnpin for entelix_core::tools::ToolProgressStatus
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::tools::ToolProgressStatus
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::tools::ToolProgressStatus
+pub struct entelix_core::tools::CurrentToolInvocation
+impl entelix_core::tools::CurrentToolInvocation
+pub fn entelix_core::tools::CurrentToolInvocation::duration_ms(&self) -> u64
+pub fn entelix_core::tools::CurrentToolInvocation::new(tool_use_id: impl core::convert::Into<alloc::string::String>, tool_name: impl core::convert::Into<alloc::string::String>) -> entelix_core::error::Result<Self>
+pub fn entelix_core::tools::CurrentToolInvocation::tool_name(&self) -> &str
+pub fn entelix_core::tools::CurrentToolInvocation::tool_use_id(&self) -> &str
+impl core::clone::Clone for entelix_core::tools::CurrentToolInvocation
+pub fn entelix_core::tools::CurrentToolInvocation::clone(&self) -> entelix_core::tools::CurrentToolInvocation
+impl core::fmt::Debug for entelix_core::tools::CurrentToolInvocation
+pub fn entelix_core::tools::CurrentToolInvocation::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_core::tools::CurrentToolInvocation
+impl core::marker::Send for entelix_core::tools::CurrentToolInvocation
+impl core::marker::Sync for entelix_core::tools::CurrentToolInvocation
+impl core::marker::Unpin for entelix_core::tools::CurrentToolInvocation
+impl core::marker::UnsafeUnpin for entelix_core::tools::CurrentToolInvocation
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::tools::CurrentToolInvocation
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::tools::CurrentToolInvocation
 #[non_exhaustive] pub struct entelix_core::tools::RetryHint
 pub entelix_core::tools::RetryHint::initial_backoff: core::time::Duration
 pub entelix_core::tools::RetryHint::max_attempts: u32
@@ -2609,6 +2652,7 @@ pub entelix_core::tools::ToolMetadata::typical_duration: core::option::Option<co
 pub entelix_core::tools::ToolMetadata::version: core::option::Option<alloc::string::String>
 impl entelix_core::tools::ToolMetadata
 pub fn entelix_core::tools::ToolMetadata::function(name: impl core::convert::Into<alloc::string::String>, description: impl core::convert::Into<alloc::string::String>, input_schema: serde_json::value::Value) -> Self
+pub fn entelix_core::tools::ToolMetadata::to_tool_spec(&self) -> entelix_core::ir::ToolSpec
 pub const fn entelix_core::tools::ToolMetadata::with_effect(self, effect: entelix_core::tools::ToolEffect) -> Self
 pub const fn entelix_core::tools::ToolMetadata::with_idempotent(self, idempotent: bool) -> Self
 pub fn entelix_core::tools::ToolMetadata::with_output_schema(self, schema: serde_json::value::Value) -> Self
@@ -2626,6 +2670,46 @@ impl core::marker::Unpin for entelix_core::tools::ToolMetadata
 impl core::marker::UnsafeUnpin for entelix_core::tools::ToolMetadata
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::tools::ToolMetadata
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::tools::ToolMetadata
+#[non_exhaustive] pub struct entelix_core::tools::ToolProgress
+pub entelix_core::tools::ToolProgress::duration_ms: u64
+pub entelix_core::tools::ToolProgress::metadata: serde_json::value::Value
+pub entelix_core::tools::ToolProgress::run_id: alloc::string::String
+pub entelix_core::tools::ToolProgress::status: entelix_core::tools::ToolProgressStatus
+pub entelix_core::tools::ToolProgress::step: alloc::string::String
+pub entelix_core::tools::ToolProgress::tool_name: alloc::string::String
+pub entelix_core::tools::ToolProgress::tool_use_id: alloc::string::String
+impl core::clone::Clone for entelix_core::tools::ToolProgress
+pub fn entelix_core::tools::ToolProgress::clone(&self) -> entelix_core::tools::ToolProgress
+impl core::cmp::PartialEq for entelix_core::tools::ToolProgress
+pub fn entelix_core::tools::ToolProgress::eq(&self, other: &entelix_core::tools::ToolProgress) -> bool
+impl core::fmt::Debug for entelix_core::tools::ToolProgress
+pub fn entelix_core::tools::ToolProgress::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_core::tools::ToolProgress
+impl serde_core::ser::Serialize for entelix_core::tools::ToolProgress
+pub fn entelix_core::tools::ToolProgress::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::tools::ToolProgress
+pub fn entelix_core::tools::ToolProgress::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::tools::ToolProgress
+impl core::marker::Send for entelix_core::tools::ToolProgress
+impl core::marker::Sync for entelix_core::tools::ToolProgress
+impl core::marker::Unpin for entelix_core::tools::ToolProgress
+impl core::marker::UnsafeUnpin for entelix_core::tools::ToolProgress
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::tools::ToolProgress
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::tools::ToolProgress
+pub struct entelix_core::tools::ToolProgressSinkHandle
+impl entelix_core::tools::ToolProgressSinkHandle
+pub fn entelix_core::tools::ToolProgressSinkHandle::from_arc(sink: alloc::sync::Arc<dyn entelix_core::tools::ToolProgressSink>) -> Self
+pub fn entelix_core::tools::ToolProgressSinkHandle::inner(&self) -> &alloc::sync::Arc<dyn entelix_core::tools::ToolProgressSink>
+pub fn entelix_core::tools::ToolProgressSinkHandle::new<S>(sink: S) -> Self where S: entelix_core::tools::ToolProgressSink
+impl core::clone::Clone for entelix_core::tools::ToolProgressSinkHandle
+pub fn entelix_core::tools::ToolProgressSinkHandle::clone(&self) -> entelix_core::tools::ToolProgressSinkHandle
+impl core::marker::Freeze for entelix_core::tools::ToolProgressSinkHandle
+impl core::marker::Send for entelix_core::tools::ToolProgressSinkHandle
+impl core::marker::Sync for entelix_core::tools::ToolProgressSinkHandle
+impl core::marker::Unpin for entelix_core::tools::ToolProgressSinkHandle
+impl core::marker::UnsafeUnpin for entelix_core::tools::ToolProgressSinkHandle
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::tools::ToolProgressSinkHandle
+impl !core::panic::unwind_safe::UnwindSafe for entelix_core::tools::ToolProgressSinkHandle
 pub struct entelix_core::tools::ToolRegistry<D>
 impl entelix_core::ToolRegistry<()>
 pub fn entelix_core::ToolRegistry<()>::new() -> Self
@@ -2655,11 +2739,37 @@ impl<D> core::marker::Unpin for entelix_core::ToolRegistry<D> where D: core::mar
 impl<D> core::marker::UnsafeUnpin for entelix_core::ToolRegistry<D> where D: core::marker::UnsafeUnpin
 impl<D> !core::panic::unwind_safe::RefUnwindSafe for entelix_core::ToolRegistry<D>
 impl<D> !core::panic::unwind_safe::UnwindSafe for entelix_core::ToolRegistry<D>
+pub struct entelix_core::tools::Toolset<D> where D: core::marker::Send + core::marker::Sync + 'static
+impl<D> entelix_core::tools::Toolset<D> where D: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::tools::Toolset<D>::install_into(&self, registry: entelix_core::ToolRegistry<D>) -> entelix_core::error::Result<entelix_core::ToolRegistry<D>>
+impl<D> entelix_core::tools::Toolset<D> where D: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::tools::Toolset<D>::get(&self, name: &str) -> core::option::Option<&alloc::sync::Arc<dyn entelix_core::Tool<D>>>
+pub fn entelix_core::tools::Toolset<D>::id(&self) -> &str
+pub fn entelix_core::tools::Toolset<D>::is_empty(&self) -> bool
+pub fn entelix_core::tools::Toolset<D>::len(&self) -> usize
+pub fn entelix_core::tools::Toolset<D>::names(&self) -> impl core::iter::traits::iterator::Iterator<Item = &str>
+pub fn entelix_core::tools::Toolset<D>::new(id: impl core::convert::Into<alloc::string::String>) -> entelix_core::error::Result<Self>
+pub fn entelix_core::tools::Toolset<D>::register(self, tool: alloc::sync::Arc<dyn entelix_core::Tool<D>>) -> entelix_core::error::Result<Self>
+pub fn entelix_core::tools::Toolset<D>::restricted_to(&self, allowed: &[&str]) -> entelix_core::error::Result<Self>
+pub fn entelix_core::tools::Toolset<D>::tool_specs(&self) -> alloc::vec::Vec<entelix_core::ir::ToolSpec>
+impl<D> core::clone::Clone for entelix_core::tools::Toolset<D> where D: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::tools::Toolset<D>::clone(&self) -> Self
+impl<D> core::fmt::Debug for entelix_core::tools::Toolset<D> where D: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::tools::Toolset<D>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<D> core::marker::Freeze for entelix_core::tools::Toolset<D>
+impl<D> core::marker::Send for entelix_core::tools::Toolset<D>
+impl<D> core::marker::Sync for entelix_core::tools::Toolset<D>
+impl<D> core::marker::Unpin for entelix_core::tools::Toolset<D>
+impl<D> core::marker::UnsafeUnpin for entelix_core::tools::Toolset<D>
+impl<D> !core::panic::unwind_safe::RefUnwindSafe for entelix_core::tools::Toolset<D>
+impl<D> !core::panic::unwind_safe::UnwindSafe for entelix_core::tools::Toolset<D>
 pub trait entelix_core::tools::Tool<D> where D: core::marker::Send + core::marker::Sync + 'static: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::tools::Tool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::agent_context::AgentContext<D>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn entelix_core::tools::Tool::metadata(&self) -> &entelix_core::tools::ToolMetadata
 pub trait entelix_core::tools::ToolDispatchScope: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::tools::ToolDispatchScope::wrap(&self, ctx: entelix_core::context::ExecutionContext, fut: futures_core::future::BoxFuture<'static, entelix_core::error::Result<serde_json::value::Value>>) -> futures_core::future::BoxFuture<'static, entelix_core::error::Result<serde_json::value::Value>>
+pub trait entelix_core::tools::ToolProgressSink: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::tools::ToolProgressSink::record_progress<'life0, 'async_trait>(&'life0 self, progress: entelix_core::tools::ToolProgress) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 pub mod entelix_core::transports
 pub struct entelix_core::transports::DefaultRetryClassifier
 impl core::clone::Clone for entelix_core::transports::DefaultRetryClassifier

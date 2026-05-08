@@ -42,7 +42,7 @@
 //!   fall-through to the default tenant.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-server/1.0.0-rc.2")]
+#![doc(html_root_url = "https://docs.rs/entelix-server/0.1.0")]
 #![deny(missing_docs)]
 #![allow(
     clippy::doc_markdown,

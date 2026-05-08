@@ -114,10 +114,8 @@ async fn no_span_is_active_outside_execute() {
     // scoping it to the `run_inner` future.
     let span = tracing::Span::current();
     assert!(
-        span.metadata().is_none()
-            || span
-                .metadata()
-                .is_some_and(|m| m.name() != "entelix.agent.run"),
+        span.metadata()
+            .is_none_or(|m| m.name() != "entelix.agent.run"),
         "no `entelix.agent.run` span outside of execute"
     );
 }

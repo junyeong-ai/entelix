@@ -44,7 +44,7 @@ impl TokenRefresher<u64> for CountingRefresher {
 
 #[tokio::test]
 async fn single_flight_collapses_concurrent_misses_to_one_refresh() {
-    let refresher = Arc::new(CountingRefresher::new(Duration::from_secs(60)));
+    let refresher = Arc::new(CountingRefresher::new(Duration::from_mins(1)));
     let token = Arc::new(CachedTokenProvider::with_refresh_buffer(
         refresher.clone(),
         Duration::from_secs(5),
@@ -64,7 +64,7 @@ async fn single_flight_collapses_concurrent_misses_to_one_refresh() {
 
 #[tokio::test]
 async fn cache_hit_skips_refresh_within_buffer_window() {
-    let refresher = Arc::new(CountingRefresher::new(Duration::from_secs(60)));
+    let refresher = Arc::new(CountingRefresher::new(Duration::from_mins(1)));
     let token =
         CachedTokenProvider::with_refresh_buffer(refresher.clone(), Duration::from_millis(100));
 
@@ -89,7 +89,7 @@ async fn refresh_when_within_buffer_of_expiry() {
 
 #[tokio::test]
 async fn invalidate_forces_next_call_to_refresh() {
-    let refresher = Arc::new(CountingRefresher::new(Duration::from_secs(60)));
+    let refresher = Arc::new(CountingRefresher::new(Duration::from_mins(1)));
     let token =
         CachedTokenProvider::with_refresh_buffer(refresher.clone(), Duration::from_millis(100));
 

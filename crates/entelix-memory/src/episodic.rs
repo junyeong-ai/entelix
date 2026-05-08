@@ -422,7 +422,7 @@ mod tests {
             .await
             .unwrap();
         let removed = mem
-            .prune_older_than(&ctx, Duration::from_secs(60))
+            .prune_older_than(&ctx, Duration::from_mins(1))
             .await
             .unwrap();
         assert_eq!(removed, 1);

@@ -151,7 +151,9 @@ impl Tool for SandboxedWriteFileTool {
     async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
         let parsed: WriteInput = serde_json::from_value(input).map_err(ToolError::from)?;
         let bytes = parsed.content.as_bytes();
-        self.sandbox.write_file(&parsed.path, bytes, ctx.core()).await?;
+        self.sandbox
+            .write_file(&parsed.path, bytes, ctx.core())
+            .await?;
         // Lean LLM-facing payload — bare confirmation. The model
         // already knows the path it wrote to and the content it
         // sent; echoing those is token waste (ADR-0024 §7).

@@ -31,8 +31,8 @@ use async_trait::async_trait;
 use serde_json::{Value, json};
 
 use entelix_agents::Subagent;
-use entelix_core::ExecutionContext;
 use entelix_core::AgentContext;
+use entelix_core::ExecutionContext;
 use entelix_core::Result;
 use entelix_core::ir::Message;
 use entelix_core::tools::{Tool, ToolMetadata};
@@ -87,7 +87,10 @@ fn restrict_to_rejects_typo_at_build_time() {
     // `Error::Config` rather than producing a sub-agent that
     // silently can't reach the tool the operator intended.
     let parent = parent_with(&["alpha", "beta"]);
-    let err = Subagent::builder(StubModel, &parent, "test_subagent", "test description").restrict_to(&["alpha", "ghost"]).build().unwrap_err();
+    let err = Subagent::builder(StubModel, &parent, "test_subagent", "test description")
+        .restrict_to(&["alpha", "ghost"])
+        .build()
+        .unwrap_err();
     let rendered = format!("{err}");
     assert!(
         rendered.contains("ghost") && rendered.contains("not in registry"),
@@ -103,7 +106,10 @@ fn restrict_to_dedup_handles_duplicate_names_correctly() {
     // swapped to Vec-based comparison would surface as either an
     // inflated tool_count or a spurious "already-registered" error.
     let parent = parent_with(&["alpha", "beta"]);
-    let sub = Subagent::builder(StubModel, &parent, "test_subagent", "test description").restrict_to(&["alpha", "alpha"]).build().unwrap();
+    let sub = Subagent::builder(StubModel, &parent, "test_subagent", "test description")
+        .restrict_to(&["alpha", "alpha"])
+        .build()
+        .unwrap();
     assert_eq!(sub.tool_count(), 1);
 }
 
@@ -162,7 +168,10 @@ fn filter_empty_result_is_valid_pure_orchestration_subagent() {
     // erroring on empty filter would break legitimate
     // pure-orchestration sub-agent shapes.
     let parent = parent_with(&["alpha", "beta"]);
-    let sub = Subagent::builder(StubModel, &parent, "test_subagent", "test description").filter(|_| false).build().unwrap();
+    let sub = Subagent::builder(StubModel, &parent, "test_subagent", "test description")
+        .filter(|_| false)
+        .build()
+        .unwrap();
     assert_eq!(sub.tool_count(), 0);
 }
 

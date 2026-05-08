@@ -122,7 +122,7 @@ where
         let response = chat
             .complete_full(messages, &ctx)
             .await
-            .map_err(map_chat_error)?;
+            .map_err(|err| map_chat_error(&err))?;
         Ok(model_response_to_sampling(&response))
     }
 }
@@ -319,9 +319,9 @@ const fn part_kind(part: &ContentPart) -> &'static str {
 /// (operator-only diagnostics — source chains, vendor status codes,
 /// raw provider messages — never enter this channel). Operator
 /// observability continues through `tracing::error!`.
-fn map_chat_error(err: entelix_core::Error) -> McpError {
+fn map_chat_error(err: &entelix_core::Error) -> McpError {
     use entelix_core::{Error, LlmRenderable};
-    let code = match &err {
+    let code = match err {
         Error::InvalidRequest(_) | Error::Config(_) | Error::Auth(_) => -32602,
         _ => -32603,
     };
@@ -428,8 +428,11 @@ mod tests {
     /// underlying auth detail — never surface.
     #[test]
     fn map_chat_error_strips_provider_message() {
-        let err = entelix_core::Error::provider_http(503, "vendor returned reasoning-token bucket overflow");
-        let mapped = map_chat_error(err);
+        let err = entelix_core::Error::provider_http(
+            503,
+            "vendor returned reasoning-token bucket overflow",
+        );
+        let mapped = map_chat_error(&err);
         let McpError::JsonRpc { code, message } = mapped else {
             panic!("expected JsonRpc variant");
         };
@@ -445,7 +448,7 @@ mod tests {
         let err = entelix_core::Error::Auth(entelix_core::auth::AuthError::missing_from(
             "ANTHROPIC_API_KEY environment variable absent — operator install hint",
         ));
-        let mapped = map_chat_error(err);
+        let mapped = map_chat_error(&err);
         let McpError::JsonRpc { code, message } = mapped else {
             panic!("expected JsonRpc variant");
         };
@@ -458,7 +461,7 @@ mod tests {
     #[test]
     fn map_chat_error_strips_invalid_request_inner() {
         let err = entelix_core::Error::invalid_request("internal: tenant_id=t-private-001 missing");
-        let mapped = map_chat_error(err);
+        let mapped = map_chat_error(&err);
         let McpError::JsonRpc { code, message } = mapped else {
             panic!("expected JsonRpc variant");
         };

@@ -301,9 +301,7 @@ fn group_into_turns(events: &[GraphEvent]) -> Result<Vec<Turn>> {
                     .rev()
                     .find(|t| matches!(t, Turn::Assistant { .. }))
                     .ok_or_else(|| {
-                        Error::config(
-                            "Compactor: ToolResult appeared before any AssistantMessage",
-                        )
+                        Error::config("Compactor: ToolResult appeared before any AssistantMessage")
                     })?;
                 if let Turn::Assistant { tools, .. } = host {
                     tools.push(pair);
@@ -446,7 +444,10 @@ mod tests {
         ];
         let err = HeadDropCompactor.compact(&events, 1024).unwrap_err();
         let msg = err.to_string();
-        assert!(msg.contains("orphan"), "diagnostic must name the unmatched id: {msg}");
+        assert!(
+            msg.contains("orphan"),
+            "diagnostic must name the unmatched id: {msg}"
+        );
     }
 
     #[test]

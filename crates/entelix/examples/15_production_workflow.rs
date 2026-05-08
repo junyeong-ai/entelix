@@ -140,7 +140,7 @@ async fn main() -> Result<()> {
     // a long-running deployment calls `prune_older_than` on a cron
     // and the store stays bounded.
     let pruned = entities
-        .prune_older_than(&ctx, Duration::from_secs(86_400))
+        .prune_older_than(&ctx, Duration::from_mins(1440))
         .await?;
     println!("entity records pruned by 24h TTL: {pruned}");
 

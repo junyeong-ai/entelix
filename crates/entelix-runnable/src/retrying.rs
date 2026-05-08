@@ -74,16 +74,13 @@ fn seed_from_time() -> u64 {
     static COUNTER: AtomicU64 = AtomicU64::new(0);
     // u128 nanoseconds wraps once every ~584 years at u64; truncation
     // is fine — we only need uncorrelated low-order bits for jitter.
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| {
-            let n = d.as_nanos();
-            #[allow(clippy::cast_possible_truncation)]
-            {
-                n as u64
-            }
-        })
-        .unwrap_or(0);
+    let nanos = SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| {
+        let n = d.as_nanos();
+        #[allow(clippy::cast_possible_truncation)]
+        {
+            n as u64
+        }
+    });
     let bump = COUNTER.fetch_add(1, Ordering::Relaxed);
     nanos ^ bump
 }

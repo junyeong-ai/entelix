@@ -46,7 +46,7 @@ impl TokenRefresher<SecretString> for StaticRefresher {
         self.calls.fetch_add(1, Ordering::SeqCst);
         Ok(TokenSnapshot {
             value: SecretString::from(self.token.clone()),
-            expires_at: Instant::now() + Duration::from_secs(3600),
+            expires_at: Instant::now() + Duration::from_mins(60),
         })
     }
 }
@@ -157,7 +157,7 @@ impl TokenRefresher<SecretString> for BlockingRefresher {
         tokio::time::sleep(Duration::from_secs(30)).await;
         Ok(TokenSnapshot {
             value: SecretString::from("never-arrives".to_owned()),
-            expires_at: Instant::now() + Duration::from_secs(3600),
+            expires_at: Instant::now() + Duration::from_mins(60),
         })
     }
 }

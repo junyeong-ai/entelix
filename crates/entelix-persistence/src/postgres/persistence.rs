@@ -11,7 +11,7 @@ use crate::error::{PersistenceError, PersistenceResult};
 
 // Defaults documented on the corresponding builder methods.
 const DEFAULT_ACQUIRE_TIMEOUT: Duration = Duration::from_secs(10);
-const DEFAULT_IDLE_TIMEOUT: Duration = Duration::from_secs(300);
+const DEFAULT_IDLE_TIMEOUT: Duration = Duration::from_mins(5);
 const DEFAULT_MAX_CONNECTIONS: u32 = 16;
 
 /// Postgres-backed persistence bundle. Cheap to clone — the pool is

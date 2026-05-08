@@ -752,7 +752,7 @@ async fn prune_older_than_drops_stale_edges_at_db_layer() {
         .unwrap();
 
     let removed = graph
-        .prune_older_than(&ctx, &ns, std::time::Duration::from_secs(60))
+        .prune_older_than(&ctx, &ns, std::time::Duration::from_mins(1))
         .await
         .unwrap();
     assert_eq!(removed, 1);

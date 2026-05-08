@@ -22,9 +22,9 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use entelix_agents::{Agent, AgentEvent, AgentObserver, CaptureSink, create_react_agent};
+use entelix_core::AgentContext;
 use entelix_core::ToolRegistry;
 use entelix_core::context::ExecutionContext;
-use entelix_core::AgentContext;
 use entelix_core::error::Result;
 use entelix_core::ir::{ContentPart, Message, Role};
 use entelix_core::tools::{Tool, ToolMetadata};

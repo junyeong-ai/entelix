@@ -103,9 +103,7 @@ impl Transport for EmptyTransport {
 
 #[tokio::test]
 async fn stream_typed_resolves_completion_to_typed_value() {
-    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![
-        r#"{"answer":"42","score":7}"#,
-    ]));
+    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![r#"{"answer":"42","score":7}"#]));
     let model = ChatModel::from_arc(codec, std::sync::Arc::new(EmptyTransport), "test");
     let ctx = ExecutionContext::new();
 
@@ -126,7 +124,13 @@ async fn stream_typed_resolves_completion_to_typed_value() {
     drop(stream);
 
     let value: Reply = typed_stream.completion.await.unwrap();
-    assert_eq!(value, Reply { answer: "42".to_owned(), score: 7 });
+    assert_eq!(
+        value,
+        Reply {
+            answer: "42".to_owned(),
+            score: 7
+        }
+    );
 }
 
 #[tokio::test]
@@ -135,9 +139,7 @@ async fn stream_typed_schema_mismatch_surfaces_serde_error() {
     // Error::Serde when the model's reply doesn't match the schema.
     // Unlike complete_typed, no retry — the consumer already
     // received deltas, re-invoking would emit a divergent stream.
-    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![
-        r#"{"not_the_schema": true}"#,
-    ]));
+    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![r#"{"not_the_schema": true}"#]));
     let model = ChatModel::from_arc(codec, std::sync::Arc::new(EmptyTransport), "test")
         .with_validation_retries(2); // ignored on stream_typed by design
     let ctx = ExecutionContext::new();
@@ -171,9 +173,7 @@ async fn stream_typed_emits_deltas_through_stream_field() {
     // the model produces tokens.
     use entelix_core::stream::StreamDelta;
 
-    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![
-        r#"{"answer":"hi","score":1}"#,
-    ]));
+    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![r#"{"answer":"hi","score":1}"#]));
     let model = ChatModel::from_arc(codec, std::sync::Arc::new(EmptyTransport), "test");
     let ctx = ExecutionContext::new();
 
@@ -204,5 +204,11 @@ async fn stream_typed_emits_deltas_through_stream_field() {
     assert_eq!(text, r#"{"answer":"hi","score":1}"#);
 
     let value: Reply = typed_stream.completion.await.unwrap();
-    assert_eq!(value, Reply { answer: "hi".to_owned(), score: 1 });
+    assert_eq!(
+        value,
+        Reply {
+            answer: "hi".to_owned(),
+            score: 1
+        }
+    );
 }

@@ -114,7 +114,10 @@ async fn schema_mismatch_with_zero_retries_surfaces_serde_error() {
     let model = ChatModel::from_arc(codec.clone(), std::sync::Arc::new(EmptyTransport), "test");
     let ctx = ExecutionContext::new();
     let err = model
-        .complete_typed::<Reply>(vec![Message::new(Role::User, vec![ContentPart::text("ask")])], &ctx)
+        .complete_typed::<Reply>(
+            vec![Message::new(Role::User, vec![ContentPart::text("ask")])],
+            &ctx,
+        )
         .await
         .unwrap_err();
     assert!(matches!(err, entelix_core::Error::Serde(_)), "got: {err:?}");
@@ -131,10 +134,19 @@ async fn schema_mismatch_with_retries_recovers_when_second_attempt_valid() {
         .with_validation_retries(2);
     let ctx = ExecutionContext::new();
     let out: Reply = model
-        .complete_typed(vec![Message::new(Role::User, vec![ContentPart::text("ask")])], &ctx)
+        .complete_typed(
+            vec![Message::new(Role::User, vec![ContentPart::text("ask")])],
+            &ctx,
+        )
         .await
         .unwrap();
-    assert_eq!(out, Reply { answer: "42".to_owned(), score: 7 });
+    assert_eq!(
+        out,
+        Reply {
+            answer: "42".to_owned(),
+            score: 7
+        }
+    );
     assert_eq!(codec.call_count(), 2);
 }
 
@@ -149,7 +161,10 @@ async fn schema_mismatch_retries_exhausted_surfaces_final_serde_error() {
         .with_validation_retries(2);
     let ctx = ExecutionContext::new();
     let err = model
-        .complete_typed::<Reply>(vec![Message::new(Role::User, vec![ContentPart::text("ask")])], &ctx)
+        .complete_typed::<Reply>(
+            vec![Message::new(Role::User, vec![ContentPart::text("ask")])],
+            &ctx,
+        )
         .await
         .unwrap_err();
     assert!(matches!(err, entelix_core::Error::Serde(_)), "got: {err:?}");
@@ -160,9 +175,7 @@ async fn schema_mismatch_retries_exhausted_surfaces_final_serde_error() {
 
 #[tokio::test]
 async fn validator_accepts_first_response_with_zero_retries() {
-    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![
-        r#"{"answer":"yes","score":50}"#,
-    ]));
+    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![r#"{"answer":"yes","score":50}"#]));
     let model = ChatModel::from_arc(codec.clone(), std::sync::Arc::new(EmptyTransport), "test");
     let ctx = ExecutionContext::new();
     let out: Reply = model
@@ -172,17 +185,20 @@ async fn validator_accepts_first_response_with_zero_retries() {
                 if out.score <= 100 {
                     Ok(())
                 } else {
-                    Err(Error::model_retry(
-                        "score too high".to_owned().for_llm(),
-                        0,
-                    ))
+                    Err(Error::model_retry("score too high".to_owned().for_llm(), 0))
                 }
             },
             &ctx,
         )
         .await
         .unwrap();
-    assert_eq!(out, Reply { answer: "yes".to_owned(), score: 50 });
+    assert_eq!(
+        out,
+        Reply {
+            answer: "yes".to_owned(),
+            score: 50
+        }
+    );
     assert_eq!(codec.call_count(), 1);
 }
 
@@ -214,8 +230,18 @@ async fn validator_rejection_triggers_retry_within_budget() {
         )
         .await
         .unwrap();
-    assert_eq!(out, Reply { answer: "yes".to_owned(), score: 42 });
-    assert_eq!(codec.call_count(), 2, "validator triggered exactly one retry");
+    assert_eq!(
+        out,
+        Reply {
+            answer: "yes".to_owned(),
+            score: 42
+        }
+    );
+    assert_eq!(
+        codec.call_count(),
+        2,
+        "validator triggered exactly one retry"
+    );
 }
 
 #[tokio::test]
@@ -253,9 +279,7 @@ async fn validator_persistent_rejection_exhausts_budget_and_surfaces_model_retry
 
 #[tokio::test]
 async fn validator_non_model_retry_error_bubbles_unchanged() {
-    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![
-        r#"{"answer":"x","score":50}"#,
-    ]));
+    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![r#"{"answer":"x","score":50}"#]));
     let model = ChatModel::from_arc(codec.clone(), std::sync::Arc::new(EmptyTransport), "test")
         .with_validation_retries(3); // budget unused — non-retry error
     let ctx = ExecutionContext::new();

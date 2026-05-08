@@ -3,7 +3,12 @@
 //! Each test pins a piece of the wire format. Catches accidental drift
 //! before it reaches a real provider call.
 
-#![allow(clippy::unwrap_used, clippy::indexing_slicing, clippy::too_many_lines)]
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::indexing_slicing,
+    clippy::too_many_lines
+)]
 
 use entelix_core::codecs::{AnthropicMessagesCodec, Codec};
 use entelix_core::ir::{
@@ -711,7 +716,8 @@ fn anthropic_ext_betas_emit_comma_joined_header() {
         model: "claude-opus-4-7".into(),
         messages: vec![Message::user("hi")],
         provider_extensions: ProviderExtensions::default().with_anthropic(
-            AnthropicExt::default().with_betas(["prompt-caching-2024-07-31", "computer-use-2025-01-24"]),
+            AnthropicExt::default()
+                .with_betas(["prompt-caching-2024-07-31", "computer-use-2025-01-24"]),
         ),
         max_tokens: Some(64),
         ..ModelRequest::default()
@@ -753,19 +759,30 @@ fn anthropic_ext_betas_streaming_path_carries_header() {
     let req = ModelRequest {
         model: "claude-opus-4-7".into(),
         messages: vec![Message::user("hi")],
-        provider_extensions: ProviderExtensions::default()
-            .with_anthropic(AnthropicExt::default().with_betas(["interleaved-thinking-2025-05-14"])),
+        provider_extensions: ProviderExtensions::default().with_anthropic(
+            AnthropicExt::default().with_betas(["interleaved-thinking-2025-05-14"]),
+        ),
         max_tokens: Some(64),
         ..ModelRequest::default()
     };
     let encoded = codec.encode_streaming(&req).unwrap();
     assert!(encoded.streaming);
     assert_eq!(
-        encoded.headers.get("anthropic-beta").unwrap().to_str().unwrap(),
+        encoded
+            .headers
+            .get("anthropic-beta")
+            .unwrap()
+            .to_str()
+            .unwrap(),
         "interleaved-thinking-2025-05-14",
     );
     assert_eq!(
-        encoded.headers.get(http::header::ACCEPT).unwrap().to_str().unwrap(),
+        encoded
+            .headers
+            .get(http::header::ACCEPT)
+            .unwrap()
+            .to_str()
+            .unwrap(),
         "text/event-stream",
     );
 }

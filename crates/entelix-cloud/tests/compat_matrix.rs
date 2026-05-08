@@ -43,7 +43,7 @@ impl TokenRefresher<SecretString> for StaticTokenRefresher {
     async fn refresh(&self) -> Result<TokenSnapshot<SecretString>, CloudError> {
         Ok(TokenSnapshot {
             value: SecretString::from(self.0.clone()),
-            expires_at: Instant::now() + Duration::from_secs(3600),
+            expires_at: Instant::now() + Duration::from_mins(60),
         })
     }
 }

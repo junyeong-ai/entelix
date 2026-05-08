@@ -811,7 +811,7 @@ where
                 timestamp: e.timestamp,
             })
             .collect();
-        out.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+        out.sort_by_key(|hop| hop.timestamp);
         Ok(out)
     }
 
@@ -1304,7 +1304,7 @@ mod tests {
             .await
             .unwrap();
         let removed = g
-            .prune_older_than(&ctx, &ns(), std::time::Duration::from_secs(60))
+            .prune_older_than(&ctx, &ns(), std::time::Duration::from_mins(1))
             .await
             .unwrap();
         assert_eq!(removed, 1);

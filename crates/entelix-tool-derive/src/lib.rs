@@ -68,8 +68,8 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{
     Attribute, Expr, ExprLit, FnArg, GenericArgument, Ident, ItemFn, Lit, LitStr, Meta, Pat,
-    PatType, PathArguments, ReturnType, Token, Type, Visibility, parse::Parse,
-    parse::ParseStream, parse_macro_input, punctuated::Punctuated, spanned::Spanned,
+    PatType, PathArguments, ReturnType, Token, Type, Visibility, parse::Parse, parse::ParseStream,
+    parse_macro_input, punctuated::Punctuated, spanned::Spanned,
 };
 
 /// Optional metadata captured from `#[tool(...)]` attribute args.
@@ -140,10 +140,7 @@ fn parse_str_lit(expr: &Expr) -> syn::Result<LitStr> {
         Expr::Lit(ExprLit {
             lit: Lit::Str(s), ..
         }) => Ok(s.clone()),
-        _ => Err(syn::Error::new(
-            expr.span(),
-            "expected a string literal",
-        )),
+        _ => Err(syn::Error::new(expr.span(), "expected a string literal")),
     }
 }
 

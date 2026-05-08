@@ -29,8 +29,8 @@
     clippy::doc_markdown
 )]
 
-use entelix::{AgentContext, ExecutionContext};
 use entelix::tools::Tool;
+use entelix::{AgentContext, ExecutionContext};
 use entelix::{McpManager, McpServerConfig, McpToolAdapter, TenantId};
 use serde_json::json;
 use wiremock::matchers::method;

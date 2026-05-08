@@ -427,7 +427,7 @@ mod tests {
     #[tokio::test]
     async fn cached_provider_serves_from_cache_within_ttl() {
         let (inner, calls) = CountingProvider::ok("tok-1");
-        let cached = CachedCredentialProvider::new(inner, Duration::from_secs(60));
+        let cached = CachedCredentialProvider::new(inner, Duration::from_mins(1));
         let _ = cached.resolve().await.unwrap();
         let _ = cached.resolve().await.unwrap();
         let _ = cached.resolve().await.unwrap();

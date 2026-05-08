@@ -8,9 +8,9 @@
 
 use std::sync::Arc;
 
+use entelix_core::AgentContext;
 use entelix_core::context::ExecutionContext;
 use entelix_core::error::Result;
-use entelix_core::AgentContext;
 use entelix_core::tools::ToolRegistry;
 use entelix_tool_derive::tool;
 use entelix_tools::SchemaToolExt;
@@ -44,7 +44,12 @@ async fn negate(value: i64) -> Result<i64> {
 async fn dispatch_string_round_trip() -> Result<()> {
     let registry = ToolRegistry::new().register(Arc::new(Echo.into_adapter()))?;
     let out = registry
-        .dispatch("call_1", "echo", json!({"message": "hi"}), &ExecutionContext::new())
+        .dispatch(
+            "call_1",
+            "echo",
+            json!({"message": "hi"}),
+            &ExecutionContext::new(),
+        )
         .await?;
     assert_eq!(out, json!("hi"));
     Ok(())
@@ -54,7 +59,12 @@ async fn dispatch_string_round_trip() -> Result<()> {
 async fn dispatch_typed_input_with_ctx() -> Result<()> {
     let registry = ToolRegistry::new().register(Arc::new(Add.into_adapter()))?;
     let out = registry
-        .dispatch("call_1", "add", json!({"a": 7, "b": 5}), &ExecutionContext::new())
+        .dispatch(
+            "call_1",
+            "add",
+            json!({"a": 7, "b": 5}),
+            &ExecutionContext::new(),
+        )
         .await?;
     assert_eq!(out, json!(12));
     Ok(())
@@ -64,7 +74,12 @@ async fn dispatch_typed_input_with_ctx() -> Result<()> {
 async fn dispatch_ctxless_tool() -> Result<()> {
     let registry = ToolRegistry::new().register(Arc::new(Negate.into_adapter()))?;
     let out = registry
-        .dispatch("call_1", "negate", json!({"value": 9}), &ExecutionContext::new())
+        .dispatch(
+            "call_1",
+            "negate",
+            json!({"value": 9}),
+            &ExecutionContext::new(),
+        )
         .await?;
     assert_eq!(out, json!(-9));
     Ok(())

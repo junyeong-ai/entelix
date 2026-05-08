@@ -37,10 +37,7 @@ pub struct CalculatorOutput {
 #[tool(effect = "ReadOnly", idempotent)]
 /// Evaluate an arithmetic expression. Supports `+ - * / ^`, unary minus, and parentheses; no variables or named functions. Returns the `f64` result.
 #[allow(clippy::unused_async)] // `#[tool]` requires `async fn`; the body has no `.await` because the parser is synchronous.
-pub async fn calculator(
-    _ctx: &AgentContext<()>,
-    expression: String,
-) -> Result<CalculatorOutput> {
+pub async fn calculator(_ctx: &AgentContext<()>, expression: String) -> Result<CalculatorOutput> {
     let result = evaluate(&expression).map_err(ToolError::Calculator)?;
     Ok(CalculatorOutput { expression, result })
 }

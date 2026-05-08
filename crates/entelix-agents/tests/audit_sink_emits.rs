@@ -16,7 +16,9 @@ use entelix_agents::{
 };
 use entelix_core::ir::{ContentPart, Message, Role};
 use entelix_core::tools::Tool;
-use entelix_core::{AgentContext, AuditSink, AuditSinkHandle, ExecutionContext, Result, ToolRegistry};
+use entelix_core::{
+    AgentContext, AuditSink, AuditSinkHandle, ExecutionContext, Result, ToolRegistry,
+};
 use entelix_runnable::{Runnable, RunnableLambda};
 
 #[derive(Default)]

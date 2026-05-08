@@ -265,10 +265,7 @@ fn build_body(request: &ModelRequest, streaming: bool) -> Result<(Value, Vec<Mod
 /// `anthropic-beta` HTTP header. The Anthropic Messages API
 /// documents one comma-separated value per request; the codec
 /// emits no header when the operator's beta list is empty.
-fn apply_anthropic_beta_header(
-    encoded: &mut EncodedRequest,
-    request: &ModelRequest,
-) -> Result<()> {
+fn apply_anthropic_beta_header(encoded: &mut EncodedRequest, request: &ModelRequest) -> Result<()> {
     let Some(anthropic) = &request.provider_extensions.anthropic else {
         return Ok(());
     };

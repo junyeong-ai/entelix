@@ -628,7 +628,7 @@ mod tests {
         manager.list_tools(&ctx, "fs").await.unwrap();
         assert_eq!(manager.pool_size(), 1);
         // Anything 0 seconds idle stays in.
-        let evicted = manager.prune_idle(Duration::from_secs(60));
+        let evicted = manager.prune_idle(Duration::from_mins(1));
         assert_eq!(evicted, 0);
         assert_eq!(manager.pool_size(), 1);
     }

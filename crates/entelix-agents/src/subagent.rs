@@ -260,9 +260,7 @@ where
     /// sub-agent is read-only override via [`SubagentTool::with_effect`].
     pub fn into_tool(self) -> Result<SubagentTool> {
         let Self {
-            name,
-            description,
-            ..
+            name, description, ..
         } = &self;
         let name = name.clone();
         let description = description.clone();
@@ -330,12 +328,7 @@ impl<'a, M> SubagentBuilder<'a, M>
 where
     M: Runnable<Vec<Message>, Message> + 'static,
 {
-    fn new(
-        model: M,
-        parent_registry: &'a ToolRegistry,
-        name: String,
-        description: String,
-    ) -> Self {
+    fn new(model: M, parent_registry: &'a ToolRegistry, name: String, description: String) -> Self {
         Self {
             model,
             parent_registry,
@@ -397,11 +390,7 @@ where
     /// `allowed` name is absent from `parent_skills`, build returns
     /// [`entelix_core::Error::Config`].
     #[must_use]
-    pub fn with_skills(
-        mut self,
-        parent_skills: &'a SkillRegistry,
-        allowed: &[&str],
-    ) -> Self {
+    pub fn with_skills(mut self, parent_skills: &'a SkillRegistry, allowed: &[&str]) -> Self {
         let owned: Vec<String> = allowed.iter().map(|s| (*s).to_owned()).collect();
         self.skills_request = Some((parent_skills, owned));
         self

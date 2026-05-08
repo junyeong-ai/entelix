@@ -54,12 +54,24 @@ async fn main() -> Result<()> {
     let t_minus_2 = now - day * 2;
     let t_minus_1 = now - day;
 
-    memory.append_at(&ctx, evt("ingest", "started"), t_minus_8).await?;
-    memory.append_at(&ctx, evt("ingest", "complete"), t_minus_8).await?;
-    memory.append_at(&ctx, evt("classify", "started"), t_minus_4).await?;
-    memory.append_at(&ctx, evt("classify", "complete"), t_minus_3).await?;
-    memory.append_at(&ctx, evt("publish", "started"), t_minus_2).await?;
-    memory.append_at(&ctx, evt("publish", "complete"), t_minus_1).await?;
+    memory
+        .append_at(&ctx, evt("ingest", "started"), t_minus_8)
+        .await?;
+    memory
+        .append_at(&ctx, evt("ingest", "complete"), t_minus_8)
+        .await?;
+    memory
+        .append_at(&ctx, evt("classify", "started"), t_minus_4)
+        .await?;
+    memory
+        .append_at(&ctx, evt("classify", "complete"), t_minus_3)
+        .await?;
+    memory
+        .append_at(&ctx, evt("publish", "started"), t_minus_2)
+        .await?;
+    memory
+        .append_at(&ctx, evt("publish", "complete"), t_minus_1)
+        .await?;
 
     println!("=== total episodes ===");
     println!("  {}", memory.count(&ctx).await?);
@@ -83,7 +95,7 @@ async fn main() -> Result<()> {
     // four within the last week. Result is deterministic because
     // every fixture is anchored to `now`.
     let pruned = memory
-        .prune_older_than(&ctx, std::time::Duration::from_secs(7 * 24 * 3_600))
+        .prune_older_than(&ctx, std::time::Duration::from_mins(10_080))
         .await?;
     println!("\n=== prune_older_than(7 days) ===");
     println!("  pruned: {pruned}");

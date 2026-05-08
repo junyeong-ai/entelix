@@ -18,8 +18,8 @@ use serde_json::{Value, json};
 use tower::{Layer, Service};
 
 use entelix_agents::Subagent;
-use entelix_core::ExecutionContext;
 use entelix_core::AgentContext;
+use entelix_core::ExecutionContext;
 use entelix_core::Result;
 use entelix_core::ir::Message;
 use entelix_core::service::{BoxedToolService, ToolInvocation};
@@ -140,7 +140,10 @@ async fn subagent_inherits_parent_layer_stack_for_every_dispatch() {
 
     // Sub-agent narrows to {alpha} and inherits the parent's layer
     // stack via `ToolRegistry::restricted_to` (managed-agent contract).
-    let sub = Subagent::builder(StubModel, &parent, "test_subagent", "test description").restrict_to(&["alpha"]).build().unwrap();
+    let sub = Subagent::builder(StubModel, &parent, "test_subagent", "test description")
+        .restrict_to(&["alpha"])
+        .build()
+        .unwrap();
     assert_eq!(sub.tool_count(), 1);
 
     // Dispatch through the sub-agent's narrowed registry must
@@ -195,7 +198,10 @@ async fn narrowed_registry_rejects_tools_outside_the_filter() {
         .register(Arc::new(EchoTool::new("beta")) as Arc<dyn Tool>)
         .unwrap();
 
-    let sub = Subagent::builder(StubModel, &parent, "test_subagent", "test description").restrict_to(&["alpha"]).build().unwrap();
+    let sub = Subagent::builder(StubModel, &parent, "test_subagent", "test description")
+        .restrict_to(&["alpha"])
+        .build()
+        .unwrap();
     let err = sub
         .tool_registry()
         .dispatch("call_s", "beta", json!({}), &ExecutionContext::new())

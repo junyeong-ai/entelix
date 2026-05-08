@@ -150,7 +150,7 @@ pub struct ChannelApproverConfig {
 impl Default for ChannelApproverConfig {
     fn default() -> Self {
         Self {
-            timeout: std::time::Duration::from_secs(300),
+            timeout: std::time::Duration::from_mins(5),
         }
     }
 }

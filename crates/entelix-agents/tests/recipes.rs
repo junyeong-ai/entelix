@@ -409,8 +409,10 @@ async fn subagent_restrict_to_rejects_unknown_tool_name() -> Result<()> {
     let parent_registry =
         ToolRegistry::new().register(Arc::new(OnlyDouble::new()) as Arc<dyn Tool>)?;
     let (model, _) = MockModel::new(vec![assistant_text("noop")]);
-    let err =
-        Subagent::builder(model, &parent_registry, "test_subagent", "test description").restrict_to(&["double", "ghost-tool"]).build().unwrap_err();
+    let err = Subagent::builder(model, &parent_registry, "test_subagent", "test description")
+        .restrict_to(&["double", "ghost-tool"])
+        .build()
+        .unwrap_err();
     let msg = format!("{err}");
     assert!(
         msg.contains("ghost-tool"),
@@ -523,10 +525,7 @@ async fn handoff_payload_injects_into_next_agent_messages() -> Result<()> {
         }
     });
 
-    let graph = create_supervisor_agent(
-        router,
-        vec![AgentEntry::new("receiver", receiver)],
-    )?;
+    let graph = create_supervisor_agent(router, vec![AgentEntry::new("receiver", receiver)])?;
     let final_state = graph
         .invoke(SupervisorState::from_user("plan"), &ExecutionContext::new())
         .await?;
@@ -568,10 +567,7 @@ async fn handoff_to_unknown_agent_finishes() -> Result<()> {
             serde_json::json!({"x": 1}),
         ))
     });
-    let graph = create_supervisor_agent(
-        router,
-        vec![AgentEntry::new("receiver", receiver)],
-    )?;
+    let graph = create_supervisor_agent(router, vec![AgentEntry::new("receiver", receiver)])?;
     let final_state = graph
         .invoke(SupervisorState::from_user("plan"), &ExecutionContext::new())
         .await?;

@@ -206,6 +206,11 @@ missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 must_use_candidate = "allow"
 return_self_not_must_use = "allow"
+# `Duration::from_hours` / `from_days` are unstable on stable Rust
+# 1.95 (`duration_constructors` feature gate). Until they stabilise,
+# `from_secs` / `from_mins` is the only portable option even when the
+# nursery lint suggests the larger unit.
+duration_suboptimal_units = "allow"
 # Hard rules
 unwrap_used = "warn"
 expect_used = "warn"

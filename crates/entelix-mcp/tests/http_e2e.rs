@@ -21,8 +21,8 @@
 
 use std::collections::BTreeMap;
 
-use entelix_core::TenantId;
 use entelix_core::AgentContext;
+use entelix_core::TenantId;
 use entelix_core::context::ExecutionContext;
 use entelix_mcp::{
     HttpMcpClient, McpClient, McpClientState, McpCompletionArgument, McpCompletionReference,
@@ -243,8 +243,7 @@ async fn manager_routes_tool_call_through_adapter() {
     // Empty prefix is rejected silently — the adapter keeps its
     // current namespace name. Programmer-error guard rather than
     // a configuration choice.
-    let empty =
-        McpToolAdapter::new(manager.clone(), "mock", tools[0].clone()).with_prefix("");
+    let empty = McpToolAdapter::new(manager.clone(), "mock", tools[0].clone()).with_prefix("");
     assert_eq!(empty.metadata().name, "mcp:mock:echo");
 
     // Last-call wins between with_unqualified_name and with_prefix.

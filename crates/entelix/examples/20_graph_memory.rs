@@ -65,7 +65,9 @@ async fn main() -> Result<()> {
         .await?;
 
     // ── 1) Neighbours: one-hop outgoing ─────────────────────────
-    let alice_out = graph.neighbors(&ctx, &ns, &alice, Direction::Outgoing).await?;
+    let alice_out = graph
+        .neighbors(&ctx, &ns, &alice, Direction::Outgoing)
+        .await?;
     println!("=== one-hop outgoing from Alice ===");
     for (_id, target, edge) in &alice_out {
         let target_name = graph.node(&ctx, &ns, target).await?.unwrap_or_default();
@@ -88,14 +90,14 @@ async fn main() -> Result<()> {
         .find_path(&ctx, &ns, &alice, &dave, Direction::Outgoing, 5)
         .await?;
     println!("\n=== shortest outgoing path Alice → Dave ===");
-    print_path(graph.as_ref(), &ctx, &ns, &path).await?;
+    print_path(graph.as_ref(), &ctx, &ns, path.as_deref()).await?;
 
     // ── 4) No-path case: Dave → Alice (graph is a DAG outgoing) ─
     let no_path = graph
         .find_path(&ctx, &ns, &dave, &alice, Direction::Outgoing, 5)
         .await?;
     println!("\n=== outgoing path Dave → Alice (none expected) ===");
-    print_path(graph.as_ref(), &ctx, &ns, &no_path).await?;
+    print_path(graph.as_ref(), &ctx, &ns, no_path.as_deref()).await?;
 
     // Same query with `Direction::Both` resolves through the
     // `reports_to` chain in reverse plus the `knows` edge.
@@ -103,7 +105,7 @@ async fn main() -> Result<()> {
         .find_path(&ctx, &ns, &dave, &alice, Direction::Both, 5)
         .await?;
     println!("\n=== undirected path Dave → Alice ===");
-    print_path(graph.as_ref(), &ctx, &ns, &undirected).await?;
+    print_path(graph.as_ref(), &ctx, &ns, undirected.as_deref()).await?;
 
     Ok(())
 }
@@ -112,11 +114,11 @@ async fn print_path(
     graph: &dyn GraphMemory<String, String>,
     ctx: &ExecutionContext,
     ns: &Namespace,
-    path: &Option<Vec<entelix::GraphHop<String>>>,
+    path: Option<&[entelix::GraphHop<String>]>,
 ) -> Result<()> {
     match path {
         None => println!("  (no path within depth cap)"),
-        Some(hops) if hops.is_empty() => println!("  (already at destination)"),
+        Some([]) => println!("  (already at destination)"),
         Some(hops) => {
             for hop in hops {
                 let from = node_name(graph, ctx, ns, &hop.from).await?;

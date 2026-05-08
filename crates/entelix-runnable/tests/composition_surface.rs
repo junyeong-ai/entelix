@@ -181,7 +181,7 @@ async fn with_config_does_not_mutate_caller_context() {
 #[tokio::test]
 async fn with_timeout_returns_deadline_exceeded_when_inner_is_slow() {
     let slow = RunnableLambda::new(|_input: (), _ctx| async move {
-        tokio::time::sleep(Duration::from_secs(60)).await;
+        tokio::time::sleep(Duration::from_mins(1)).await;
         Ok::<_, _>(())
     });
     let bounded = slow.with_timeout(Duration::from_millis(20));
@@ -203,10 +203,10 @@ async fn with_timeout_passes_through_when_inner_completes_in_time() {
 #[tokio::test]
 async fn with_timeout_honours_caller_cancellation_over_timeout() {
     let slow = RunnableLambda::new(|_input: (), _ctx| async move {
-        tokio::time::sleep(Duration::from_secs(60)).await;
+        tokio::time::sleep(Duration::from_mins(1)).await;
         Ok::<_, _>(())
     });
-    let bounded = slow.with_timeout(Duration::from_secs(60));
+    let bounded = slow.with_timeout(Duration::from_mins(1));
     let token = entelix_core::cancellation::CancellationToken::new();
     let ctx = ExecutionContext::with_cancellation(token.clone());
     let handle = tokio::spawn(async move { bounded.invoke((), &ctx).await });

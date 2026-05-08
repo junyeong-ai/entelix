@@ -840,7 +840,9 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
                 Err(err) => return Err(err),
             };
 
-            let Some(hint) = retry_hint else { unreachable!() };
+            let Some(hint) = retry_hint else {
+                unreachable!()
+            };
             attempt += 1;
             conversation.push(Message::new(
                 crate::ir::Role::Assistant,
@@ -1032,7 +1034,10 @@ impl<O> std::fmt::Debug for TypedModelStream<O> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TypedModelStream")
             .field("stream", &"<BoxDeltaStream>")
-            .field("completion", &format_args!("<BoxFuture<Result<{}>>>", std::any::type_name::<O>()))
+            .field(
+                "completion",
+                &format_args!("<BoxFuture<Result<{}>>>", std::any::type_name::<O>()),
+            )
             .finish()
     }
 }

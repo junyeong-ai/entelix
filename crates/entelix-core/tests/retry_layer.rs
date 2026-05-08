@@ -192,8 +192,8 @@ async fn cancellation_short_circuits_retry_loop() {
             .with_max_attempts(10)
             // Long backoff so cancellation has time to fire mid-sleep.
             .with_backoff(ExponentialBackoff::new(
-                Duration::from_secs(60),
-                Duration::from_secs(60),
+                Duration::from_mins(1),
+                Duration::from_mins(1),
             )),
     )
     .layer(svc);

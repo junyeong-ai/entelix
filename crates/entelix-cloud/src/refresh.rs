@@ -26,7 +26,7 @@ use crate::CloudError;
 /// thrash short-TTL credentials" — most cloud providers issue
 /// 60-min tokens, so a 5-min buffer leaves ~92% of the lifetime in
 /// the fast path.
-pub const DEFAULT_REFRESH_BUFFER: Duration = Duration::from_secs(300);
+pub const DEFAULT_REFRESH_BUFFER: Duration = Duration::from_mins(5);
 
 /// Source-of-truth that yields a fresh `T` plus its absolute expiry
 /// time when called.

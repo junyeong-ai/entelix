@@ -419,7 +419,7 @@ mod tests {
 
     #[test]
     fn with_deadline_delegates_to_core() {
-        let deadline = Instant::now() + std::time::Duration::from_secs(60);
+        let deadline = Instant::now() + std::time::Duration::from_mins(1);
         let ctx = AgentContext::default().with_deadline(deadline);
         assert_eq!(ctx.deadline(), Some(deadline));
         assert_eq!(ctx.core().deadline(), Some(deadline));

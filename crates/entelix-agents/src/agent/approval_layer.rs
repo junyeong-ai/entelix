@@ -326,8 +326,8 @@ where
 mod tests {
     use std::sync::atomic::{AtomicUsize, Ordering};
 
-    use entelix_core::ExecutionContext;
     use entelix_core::AgentContext;
+    use entelix_core::ExecutionContext;
     use entelix_core::tools::{Tool, ToolMetadata, ToolRegistry};
     use serde_json::json;
 

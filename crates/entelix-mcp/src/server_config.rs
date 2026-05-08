@@ -56,7 +56,7 @@ pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 /// Default idle TTL for cached MCP clients. Operators schedule
 /// [`crate::McpManager::prune_idle`] (typically on a `tokio::time::interval`)
 /// to evict clients whose last use exceeded this threshold.
-pub const DEFAULT_IDLE_TTL: Duration = Duration::from_secs(300);
+pub const DEFAULT_IDLE_TTL: Duration = Duration::from_mins(5);
 
 /// Default cap on a single SSE frame's accumulated byte length — 1 MiB.
 ///

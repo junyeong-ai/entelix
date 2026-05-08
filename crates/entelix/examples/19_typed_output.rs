@@ -145,8 +145,8 @@ async fn main() -> Result<()> {
         r#"{"oops": "wrong shape"}"#,
         r#"{"answer":"yes","confidence":80}"#,
     ]));
-    let model = ChatModel::from_arc(codec, Arc::new(EmptyTransport), "stub")
-        .with_validation_retries(1);
+    let model =
+        ChatModel::from_arc(codec, Arc::new(EmptyTransport), "stub").with_validation_retries(1);
 
     let reply: Reply = model.complete_typed(messages.clone(), &ctx).await?;
     println!("  parsed: {reply:?}");
@@ -162,8 +162,8 @@ async fn main() -> Result<()> {
         r#"{"answer":"maybe","confidence":150}"#, // out-of-range
         r#"{"answer":"maybe","confidence":60}"#,  // valid
     ]));
-    let model = ChatModel::from_arc(codec, Arc::new(EmptyTransport), "stub")
-        .with_validation_retries(1);
+    let model =
+        ChatModel::from_arc(codec, Arc::new(EmptyTransport), "stub").with_validation_retries(1);
 
     let reply: Reply = model
         .complete_typed_validated(
@@ -173,8 +173,7 @@ async fn main() -> Result<()> {
                     Ok(())
                 } else {
                     Err(Error::model_retry(
-                        format!("confidence={} is out of range (0-100)", out.confidence)
-                            .for_llm(),
+                        format!("confidence={} is out of range (0-100)", out.confidence).for_llm(),
                         0,
                     ))
                 }
@@ -191,7 +190,9 @@ async fn main() -> Result<()> {
     // payload is available on the completion future once the stream
     // drains.
     println!("\n=== (3) stream_typed::<Reply> ===");
-    let codec = Arc::new(ScriptedCodec::new(vec![r#"{"answer":"yes","confidence":95}"#]));
+    let codec = Arc::new(ScriptedCodec::new(vec![
+        r#"{"answer":"yes","confidence":95}"#,
+    ]));
     let model = ChatModel::from_arc(codec, Arc::new(EmptyTransport), "stub");
 
     let typed_stream = model.stream_typed::<Reply>(messages, &ctx).await?;

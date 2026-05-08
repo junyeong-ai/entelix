@@ -88,7 +88,12 @@ struct CountingLayer {
 impl CountingLayer {
     fn new() -> (Self, Arc<AtomicUsize>) {
         let fires = Arc::new(AtomicUsize::new(0));
-        (Self { fires: Arc::clone(&fires) }, fires)
+        (
+            Self {
+                fires: Arc::clone(&fires),
+            },
+            fires,
+        )
     }
 }
 
@@ -145,8 +150,16 @@ async fn d_free_layer_wraps_typed_deps_registry() {
         .await
         .unwrap();
 
-    assert_eq!(fires.load(Ordering::SeqCst), 1, "layer must fire on dispatch");
-    assert_eq!(counter.load(Ordering::SeqCst), 1, "deps must reach leaf execution");
+    assert_eq!(
+        fires.load(Ordering::SeqCst),
+        1,
+        "layer must fire on dispatch"
+    );
+    assert_eq!(
+        counter.load(Ordering::SeqCst),
+        1,
+        "deps must reach leaf execution"
+    );
     assert_eq!(
         result,
         json!({"label": "tenant-alpha", "count": 1}),

@@ -14,8 +14,8 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use entelix_agents::{Agent, AgentEvent, CaptureSink, ToolEventLayer};
-use entelix_core::context::ExecutionContext;
 use entelix_core::AgentContext;
+use entelix_core::context::ExecutionContext;
 use entelix_core::error::{Error, Result};
 use entelix_core::tools::{Tool, ToolMetadata, ToolRegistry};
 use entelix_runnable::{Runnable, RunnableLambda};

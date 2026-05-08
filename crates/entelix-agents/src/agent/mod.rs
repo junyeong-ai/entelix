@@ -50,6 +50,7 @@ mod observer;
 mod result;
 mod sink;
 mod tool_event_layer;
+mod tool_hook_layer;
 
 use std::sync::Arc;
 
@@ -73,6 +74,9 @@ pub use self::observer::{AgentObserver, DynObserver};
 pub use self::result::AgentRunResult;
 pub use self::sink::{AgentEventSink, BroadcastSink, CaptureSink, ChannelSink, DroppingSink};
 pub use self::tool_event_layer::{ToolEventLayer, ToolEventService};
+pub use self::tool_hook_layer::{
+    ToolHook, ToolHookDecision, ToolHookLayer, ToolHookRegistry, ToolHookRequest, ToolHookService,
+};
 
 /// Production agent runtime.
 ///

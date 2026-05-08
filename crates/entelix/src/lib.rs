@@ -65,6 +65,7 @@ pub use entelix_agents::{
     RunnableToSummarizerAdapter, Subagent, SubagentBuilder, SubagentMetadata, SubagentTool,
     SupervisorDecision, SupervisorState,
     ToolApprovalEventSink, ToolApprovalEventSinkHandle, ToolEventLayer, ToolEventService,
+    ToolHook, ToolHookDecision, ToolHookLayer, ToolHookRegistry, ToolHookRequest, ToolHookService,
     build_chat_graph, build_react_graph, build_supervisor_graph, create_chat_agent,
     create_react_agent, create_supervisor_agent, team_from_supervisor,
 };

@@ -3,8 +3,7 @@
 # Rust 1.94, Edition 2024, resolver v3.
 # Lockstep workspace — every member crate carries the same version on
 # crates.io. All dependencies pinned at workspace root; members inherit
-# via `dep = { workspace = true }`. See ADR-0064 for the release
-# charter and the canonical member list below.
+# via `dep = { workspace = true }`. The canonical member list is below.
 
 [workspace]
 resolver = "3"
@@ -225,7 +224,7 @@ print_stderr = "deny"
 # whole class statically; deny across the workspace.
 await_holding_lock = "deny"
 await_holding_refcell_ref = "deny"
-# Naming consistency (ADR-0010)
+# Naming consistency (`.claude/rules/naming.md`)
 similar_names = "warn"
 struct_excessive_bools = "warn"
 

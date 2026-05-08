@@ -10,3 +10,8 @@ Cargo.lock.bak
 .env.local
 *.log
 /coverage
+
+# Claude Code runtime files (locks, history, settings.local.json, ...) —
+# only the path-scoped rules under `.claude/rules/` are versioned.
+.claude/*
+!.claude/rules/

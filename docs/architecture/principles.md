@@ -140,10 +140,12 @@ companion crates.
 
 ## Documentation Policy
 
-- Keep `docs/architecture` as the current canonical design.
-- Keep `docs/migrations` only while it helps real users move from established
-  SDKs.
+- Keep this file as the living design contract. Anything that is not a current
+  rule does not belong here.
+- Per-crate `crates/<name>/CLAUDE.md` files carry the local surface, crate-local
+  rules, and forbidden patterns for each sub-crate.
 - Keep `docs/public-api` because it is a CI baseline, not prose.
 - Do not reintroduce per-slice retrospectives, roadmap fragments, or deferred
   historical plans as source-of-truth documentation. Current behaviour belongs
-  in architecture docs, tests, invariants, and public API baselines.
+  in `CLAUDE.md`, this file, sub-crate `CLAUDE.md` files, tests, invariants,
+  and public API baselines.

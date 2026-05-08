@@ -74,6 +74,15 @@ impl SupervisorDecision {
     }
 
     /// Convenience constructor for typed handoff with a payload.
+    ///
+    /// Reach for this when the supervisor's routing logic produces
+    /// structured context the next agent should see — research
+    /// summary, classification verdict, escalation reason — and
+    /// returning `Agent(name)` would force that context to round-
+    /// trip through the model's natural-language channel. The
+    /// dispatch loop injects `payload` as the receiving agent's
+    /// leading `system` message; the operator owns model-safety of
+    /// the payload contents (invariant 16).
     pub fn handoff(agent: impl Into<String>, payload: serde_json::Value) -> Self {
         Self::Handoff {
             agent: agent.into(),

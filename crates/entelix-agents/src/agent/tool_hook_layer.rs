@@ -89,6 +89,15 @@ impl ToolHookRequest {
 #[async_trait]
 pub trait ToolHook: Send + Sync + 'static {
     /// Called before the inner tool service runs.
+    ///
+    /// Reach for this to enforce per-tool input policy —
+    /// pattern-match on `request.tool_name` (one inline `if`,
+    /// no registry-side matcher needed), then return `Continue`
+    /// to pass through, `ReplaceInput(scrubbed)` to rewrite the
+    /// JSON the tool sees, or `Reject { reason }` to short-circuit
+    /// with `Error::InvalidRequest`. Pre-hooks compose: the
+    /// registry runs them in registered order and threads the
+    /// (potentially replaced) input through each one.
     async fn before_tool(
         &self,
         _request: &ToolHookRequest,

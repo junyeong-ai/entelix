@@ -18,6 +18,10 @@ pub fn first_non_finite_vector_value(vector: &[f32]) -> Option<(usize, f32)> {
 
 /// Validate vector dimension and finite values for vector-store calls.
 ///
+/// Reach for this on the caller-input boundary of every
+/// `VectorStore` impl (`add` / `search` / `update`) so all
+/// backends reject the same two malformations — wrong dimension
+/// and non-finite element — with identical error wording.
 /// Returns [`Error::InvalidRequest`] because vectors passed into a
 /// [`crate::VectorStore`] are caller input at the store boundary.
 pub fn validate_vector_shape(

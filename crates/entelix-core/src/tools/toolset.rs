@@ -110,9 +110,13 @@ where
 
     /// Append one tool to the set.
     ///
-    /// Duplicate names are rejected. A toolset with ambiguous names
-    /// cannot be installed safely because later restriction and
-    /// approval policies address tools by exact name.
+    /// Reach for this when assembling a reusable bundle the operator
+    /// installs into multiple `ToolRegistry<D>` instances —
+    /// `Toolset::new("support").register(tool_a)?.register(tool_b)?
+    /// .install_into(registry)?` is the canonical capability-bundle
+    /// path. Duplicate names are rejected: a toolset with ambiguous
+    /// names cannot be installed safely because later restriction
+    /// and approval policies address tools by exact name.
     pub fn register(mut self, tool: Arc<dyn Tool<D>>) -> Result<Self> {
         validate_metadata("Toolset::register", tool.metadata())?;
         let name = tool.metadata().name.clone();

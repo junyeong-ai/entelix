@@ -111,9 +111,22 @@ fn validated_progress_identifier(
 }
 
 /// Consumer of explicit tool-progress updates.
+///
+/// Operators wire one `ToolProgressSink` impl into the
+/// `ExecutionContext` (a UI dashboard, an OTel event stream, a
+/// log channel) and tools running long enough to warrant inflight
+/// status report through it. Distinct from `AgentEvent::ToolInvoked`
+/// — that fires once per dispatch lifecycle; progress fires
+/// repeatedly *during* one dispatch.
 #[async_trait]
 pub trait ToolProgressSink: Send + Sync + 'static {
     /// Record one progress update.
+    ///
+    /// Tools call this indirectly via the `ToolProgressSinkHandle`
+    /// they pull off `ExecutionContext::extension`; sinks observe
+    /// the `(name, tool_use_id)` identity through
+    /// [`ToolProgress::invocation`] when the dispatch path attaches
+    /// it.
     async fn record_progress(&self, progress: ToolProgress) -> Result<()>;
 }
 

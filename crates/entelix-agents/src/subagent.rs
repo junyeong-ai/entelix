@@ -435,6 +435,13 @@ where
         let skills = match skills_request {
             None => SkillRegistry::new(),
             Some((parent_skills, allowed)) => {
+                for name in &allowed {
+                    entelix_core::identity::validate_config_identifier(
+                        "SubagentBuilder::with_skills",
+                        "skill name",
+                        name,
+                    )?;
+                }
                 let missing: Vec<&str> = allowed
                     .iter()
                     .map(String::as_str)

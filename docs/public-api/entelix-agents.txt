@@ -108,6 +108,25 @@ impl core::marker::Unpin for entelix_agents::SupervisorDecision
 impl core::marker::UnsafeUnpin for entelix_agents::SupervisorDecision
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_agents::SupervisorDecision
 impl core::panic::unwind_safe::UnwindSafe for entelix_agents::SupervisorDecision
+#[non_exhaustive] pub enum entelix_agents::ToolHookDecision
+pub entelix_agents::ToolHookDecision::Continue
+pub entelix_agents::ToolHookDecision::Reject
+pub entelix_agents::ToolHookDecision::Reject::reason: alloc::string::String
+pub entelix_agents::ToolHookDecision::ReplaceInput(serde_json::value::Value)
+impl core::clone::Clone for entelix_agents::ToolHookDecision
+pub fn entelix_agents::ToolHookDecision::clone(&self) -> entelix_agents::ToolHookDecision
+impl core::cmp::PartialEq for entelix_agents::ToolHookDecision
+pub fn entelix_agents::ToolHookDecision::eq(&self, other: &entelix_agents::ToolHookDecision) -> bool
+impl core::fmt::Debug for entelix_agents::ToolHookDecision
+pub fn entelix_agents::ToolHookDecision::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_agents::ToolHookDecision
+impl core::marker::Freeze for entelix_agents::ToolHookDecision
+impl core::marker::Send for entelix_agents::ToolHookDecision
+impl core::marker::Sync for entelix_agents::ToolHookDecision
+impl core::marker::Unpin for entelix_agents::ToolHookDecision
+impl core::marker::UnsafeUnpin for entelix_agents::ToolHookDecision
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_agents::ToolHookDecision
+impl core::panic::unwind_safe::UnwindSafe for entelix_agents::ToolHookDecision
 pub struct entelix_agents::Agent<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
 impl<S> entelix_agents::Agent<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_agents::Agent<S>::approver(&self) -> core::option::Option<&alloc::sync::Arc<dyn entelix_agents::Approver>>
@@ -574,6 +593,75 @@ impl<S, Inner> core::marker::Unpin for entelix_agents::ToolEventService<S, Inner
 impl<S, Inner> core::marker::UnsafeUnpin for entelix_agents::ToolEventService<S, Inner> where Inner: core::marker::UnsafeUnpin
 impl<S, Inner> !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::ToolEventService<S, Inner>
 impl<S, Inner> !core::panic::unwind_safe::UnwindSafe for entelix_agents::ToolEventService<S, Inner>
+pub struct entelix_agents::ToolHookLayer
+impl entelix_agents::ToolHookLayer
+pub const fn entelix_agents::ToolHookLayer::hooks(&self) -> &entelix_agents::ToolHookRegistry
+pub const fn entelix_agents::ToolHookLayer::new(hooks: entelix_agents::ToolHookRegistry) -> Self
+impl core::clone::Clone for entelix_agents::ToolHookLayer
+pub fn entelix_agents::ToolHookLayer::clone(&self) -> entelix_agents::ToolHookLayer
+impl core::default::Default for entelix_agents::ToolHookLayer
+pub fn entelix_agents::ToolHookLayer::default() -> entelix_agents::ToolHookLayer
+impl<Inner> tower_layer::Layer<Inner> for entelix_agents::ToolHookLayer
+pub type entelix_agents::ToolHookLayer::Service = entelix_agents::ToolHookService<Inner>
+pub fn entelix_agents::ToolHookLayer::layer(&self, inner: Inner) -> Self::Service
+impl core::marker::Freeze for entelix_agents::ToolHookLayer
+impl core::marker::Send for entelix_agents::ToolHookLayer
+impl core::marker::Sync for entelix_agents::ToolHookLayer
+impl core::marker::Unpin for entelix_agents::ToolHookLayer
+impl core::marker::UnsafeUnpin for entelix_agents::ToolHookLayer
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::ToolHookLayer
+impl !core::panic::unwind_safe::UnwindSafe for entelix_agents::ToolHookLayer
+pub struct entelix_agents::ToolHookRegistry
+impl entelix_agents::ToolHookRegistry
+pub fn entelix_agents::ToolHookRegistry::is_empty(&self) -> bool
+pub fn entelix_agents::ToolHookRegistry::len(&self) -> usize
+pub fn entelix_agents::ToolHookRegistry::new() -> Self
+pub fn entelix_agents::ToolHookRegistry::register<H>(self, hook: H) -> Self where H: entelix_agents::ToolHook
+pub fn entelix_agents::ToolHookRegistry::register_arc(self, hook: alloc::sync::Arc<dyn entelix_agents::ToolHook>) -> Self
+impl core::clone::Clone for entelix_agents::ToolHookRegistry
+pub fn entelix_agents::ToolHookRegistry::clone(&self) -> entelix_agents::ToolHookRegistry
+impl core::default::Default for entelix_agents::ToolHookRegistry
+pub fn entelix_agents::ToolHookRegistry::default() -> entelix_agents::ToolHookRegistry
+impl core::marker::Freeze for entelix_agents::ToolHookRegistry
+impl core::marker::Send for entelix_agents::ToolHookRegistry
+impl core::marker::Sync for entelix_agents::ToolHookRegistry
+impl core::marker::Unpin for entelix_agents::ToolHookRegistry
+impl core::marker::UnsafeUnpin for entelix_agents::ToolHookRegistry
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::ToolHookRegistry
+impl !core::panic::unwind_safe::UnwindSafe for entelix_agents::ToolHookRegistry
+#[non_exhaustive] pub struct entelix_agents::ToolHookRequest
+pub entelix_agents::ToolHookRequest::input: serde_json::value::Value
+pub entelix_agents::ToolHookRequest::run_id: core::option::Option<alloc::string::String>
+pub entelix_agents::ToolHookRequest::tool_name: alloc::string::String
+pub entelix_agents::ToolHookRequest::tool_use_id: alloc::string::String
+pub entelix_agents::ToolHookRequest::tool_version: core::option::Option<alloc::string::String>
+impl core::clone::Clone for entelix_agents::ToolHookRequest
+pub fn entelix_agents::ToolHookRequest::clone(&self) -> entelix_agents::ToolHookRequest
+impl core::fmt::Debug for entelix_agents::ToolHookRequest
+pub fn entelix_agents::ToolHookRequest::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_agents::ToolHookRequest
+impl core::marker::Send for entelix_agents::ToolHookRequest
+impl core::marker::Sync for entelix_agents::ToolHookRequest
+impl core::marker::Unpin for entelix_agents::ToolHookRequest
+impl core::marker::UnsafeUnpin for entelix_agents::ToolHookRequest
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_agents::ToolHookRequest
+impl core::panic::unwind_safe::UnwindSafe for entelix_agents::ToolHookRequest
+pub struct entelix_agents::ToolHookService<Inner>
+impl<Inner: core::clone::Clone> core::clone::Clone for entelix_agents::ToolHookService<Inner>
+pub fn entelix_agents::ToolHookService<Inner>::clone(&self) -> Self
+impl<Inner> tower_service::Service<entelix_core::service::ToolInvocation> for entelix_agents::ToolHookService<Inner> where Inner: tower_service::Service<entelix_core::service::ToolInvocation, Response = serde_json::value::Value, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <Inner as tower_service::Service>::Future: core::marker::Send + 'static
+pub type entelix_agents::ToolHookService<Inner>::Error = entelix_core::error::Error
+pub type entelix_agents::ToolHookService<Inner>::Future = core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::result::Result<serde_json::value::Value, entelix_core::error::Error>> + core::marker::Send)>>
+pub type entelix_agents::ToolHookService<Inner>::Response = serde_json::value::Value
+pub fn entelix_agents::ToolHookService<Inner>::call(&mut self, invocation: entelix_core::service::ToolInvocation) -> Self::Future
+pub fn entelix_agents::ToolHookService<Inner>::poll_ready(&mut self, cx: &mut core::task::wake::Context<'_>) -> core::task::poll::Poll<entelix_core::error::Result<()>>
+impl<Inner> core::marker::Freeze for entelix_agents::ToolHookService<Inner> where Inner: core::marker::Freeze
+impl<Inner> core::marker::Send for entelix_agents::ToolHookService<Inner> where Inner: core::marker::Send
+impl<Inner> core::marker::Sync for entelix_agents::ToolHookService<Inner> where Inner: core::marker::Sync
+impl<Inner> core::marker::Unpin for entelix_agents::ToolHookService<Inner> where Inner: core::marker::Unpin
+impl<Inner> core::marker::UnsafeUnpin for entelix_agents::ToolHookService<Inner> where Inner: core::marker::UnsafeUnpin
+impl<Inner> !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::ToolHookService<Inner>
+impl<Inner> !core::panic::unwind_safe::UnwindSafe for entelix_agents::ToolHookService<Inner>
 pub trait entelix_agents::AgentEventSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static: core::marker::Send + core::marker::Sync
 pub fn entelix_agents::AgentEventSink::send<'life0, 'async_trait>(&'life0 self, event: entelix_agents::AgentEvent<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 impl<S> entelix_agents::AgentEventSink<S> for entelix_agents::BroadcastSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
@@ -598,6 +686,10 @@ pub fn entelix_agents::ChannelApprover::decide<'life0, 'life1, 'life2, 'async_tr
 pub trait entelix_agents::ToolApprovalEventSink: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_agents::ToolApprovalEventSink::record_approved<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, run_id: &'life1 str, tool_use_id: &'life2 str, tool: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = ()> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
 pub fn entelix_agents::ToolApprovalEventSink::record_denied<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, run_id: &'life1 str, tool_use_id: &'life2 str, tool: &'life3 str, reason: &'life4 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = ()> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub trait entelix_agents::ToolHook: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::ToolHook::after_tool<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _request: &'life1 entelix_agents::ToolHookRequest, _output: &'life2 serde_json::value::Value, _ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_agents::ToolHook::before_tool<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _request: &'life1 entelix_agents::ToolHookRequest, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_agents::ToolHookDecision>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_agents::ToolHook::on_tool_error<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _request: &'life1 entelix_agents::ToolHookRequest, _error: &'life2 entelix_core::error::Error, _ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
 pub fn entelix_agents::build_chat_graph<M>(model: M, system: impl core::convert::Into<alloc::string::String>) -> entelix_core::error::Result<entelix_graph::compiled::CompiledGraph<entelix_agents::ChatState>> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
 pub fn entelix_agents::build_react_graph<M>(model: M, tools: entelix_core::tools::registry::ToolRegistry) -> entelix_core::error::Result<entelix_graph::compiled::CompiledGraph<entelix_agents::ReActState>> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
 pub fn entelix_agents::build_supervisor_graph<R>(router: R, agents: alloc::vec::Vec<entelix_agents::AgentEntry>) -> entelix_core::error::Result<entelix_graph::compiled::CompiledGraph<entelix_agents::SupervisorState>> where R: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_agents::SupervisorDecision> + 'static

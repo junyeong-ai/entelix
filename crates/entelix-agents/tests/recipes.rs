@@ -487,3 +487,96 @@ async fn subagent_tool_with_effect_overrides_default() -> Result<()> {
     );
     Ok(())
 }
+
+#[tokio::test]
+async fn handoff_payload_injects_into_next_agent_messages() -> Result<()> {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    // Capture every message the receiver sees so we can assert the
+    // handoff payload landed as the leading `system` content.
+    let receiver_seen: Arc<Mutex<Vec<Message>>> = Arc::new(Mutex::new(Vec::new()));
+    let receiver_seen_inner = receiver_seen.clone();
+    let receiver = RunnableLambda::new(move |msgs: Vec<Message>, _ctx| {
+        let seen = receiver_seen_inner.clone();
+        async move {
+            seen.lock().unwrap().extend(msgs);
+            Ok::<_, _>(Message::assistant("ack"))
+        }
+    });
+
+    // First turn: supervisor hands off to `receiver` with a typed
+    // payload. Second turn: supervisor finishes.
+    let counter = Arc::new(AtomicUsize::new(0));
+    let counter_inner = counter.clone();
+    let router = RunnableLambda::new(move |_msgs: Vec<Message>, _ctx| {
+        let counter = counter_inner.clone();
+        async move {
+            let n = counter.fetch_add(1, Ordering::SeqCst);
+            Ok::<_, _>(if n == 0 {
+                SupervisorDecision::handoff(
+                    "receiver",
+                    serde_json::json!({"summary": "3 sources", "confidence": 0.92}),
+                )
+            } else {
+                SupervisorDecision::Finish
+            })
+        }
+    });
+
+    let graph = create_supervisor_agent(
+        router,
+        vec![AgentEntry::new("receiver", receiver)],
+    )?;
+    let final_state = graph
+        .invoke(SupervisorState::from_user("plan"), &ExecutionContext::new())
+        .await?;
+    assert_eq!(final_state.last_speaker.as_deref(), Some("receiver"));
+
+    let seen = receiver_seen.lock().unwrap().clone();
+    let system_msgs: Vec<&Message> = seen
+        .iter()
+        .filter(|m| matches!(m.role, Role::System))
+        .collect();
+    assert_eq!(
+        system_msgs.len(),
+        1,
+        "receiver should see exactly one handoff system message"
+    );
+    let body: String = system_msgs[0]
+        .content
+        .iter()
+        .filter_map(|p| match p {
+            ContentPart::Text { text, .. } => Some(text.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert!(body.starts_with("Handoff payload:"), "got: {body}");
+    assert!(body.contains("\"summary\""), "got: {body}");
+    assert!(body.contains("\"3 sources\""), "got: {body}");
+    assert!(body.contains("\"confidence\""), "got: {body}");
+    Ok(())
+}
+
+#[tokio::test]
+async fn handoff_to_unknown_agent_finishes() -> Result<()> {
+    let receiver = RunnableLambda::new(|_msgs: Vec<Message>, _ctx| async move {
+        Ok::<_, _>(Message::assistant("never"))
+    });
+    let router = RunnableLambda::new(|_msgs: Vec<Message>, _ctx| async move {
+        Ok::<_, _>(SupervisorDecision::handoff(
+            "missing-agent",
+            serde_json::json!({"x": 1}),
+        ))
+    });
+    let graph = create_supervisor_agent(
+        router,
+        vec![AgentEntry::new("receiver", receiver)],
+    )?;
+    let final_state = graph
+        .invoke(SupervisorState::from_user("plan"), &ExecutionContext::new())
+        .await?;
+    // Routes to FINISH like an unknown `Agent(...)` — graph terminates
+    // without dispatching to the missing receiver.
+    assert!(final_state.last_speaker.is_none());
+    Ok(())
+}

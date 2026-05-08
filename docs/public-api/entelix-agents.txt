@@ -84,8 +84,13 @@ impl core::panic::unwind_safe::UnwindSafe for entelix_agents::ExecutionMode
 #[non_exhaustive] pub enum entelix_agents::SupervisorDecision
 pub entelix_agents::SupervisorDecision::Agent(alloc::string::String)
 pub entelix_agents::SupervisorDecision::Finish
+pub entelix_agents::SupervisorDecision::Handoff
+pub entelix_agents::SupervisorDecision::Handoff::agent: alloc::string::String
+pub entelix_agents::SupervisorDecision::Handoff::payload: serde_json::value::Value
 impl entelix_agents::SupervisorDecision
 pub fn entelix_agents::SupervisorDecision::agent(name: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_agents::SupervisorDecision::agent_name(&self) -> core::option::Option<&str>
+pub fn entelix_agents::SupervisorDecision::handoff(agent: impl core::convert::Into<alloc::string::String>, payload: serde_json::value::Value) -> Self
 impl core::clone::Clone for entelix_agents::SupervisorDecision
 pub fn entelix_agents::SupervisorDecision::clone(&self) -> entelix_agents::SupervisorDecision
 impl core::cmp::Eq for entelix_agents::SupervisorDecision
@@ -597,7 +602,6 @@ pub fn entelix_agents::build_chat_graph<M>(model: M, system: impl core::convert:
 pub fn entelix_agents::build_react_graph<M>(model: M, tools: entelix_core::tools::registry::ToolRegistry) -> entelix_core::error::Result<entelix_graph::compiled::CompiledGraph<entelix_agents::ReActState>> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
 pub fn entelix_agents::build_supervisor_graph<R>(router: R, agents: alloc::vec::Vec<entelix_agents::AgentEntry>) -> entelix_core::error::Result<entelix_graph::compiled::CompiledGraph<entelix_agents::SupervisorState>> where R: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_agents::SupervisorDecision> + 'static
 pub fn entelix_agents::create_chat_agent<M>(model: M, system: impl core::convert::Into<alloc::string::String>) -> entelix_core::error::Result<entelix_agents::Agent<entelix_agents::ChatState>> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
-pub fn entelix_agents::create_hierarchical_agent<R>(router: R, teams: alloc::vec::Vec<entelix_agents::AgentEntry>) -> entelix_core::error::Result<entelix_agents::Agent<entelix_agents::SupervisorState>> where R: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_agents::SupervisorDecision> + 'static
 pub fn entelix_agents::create_react_agent<M>(model: M, tools: entelix_core::tools::registry::ToolRegistry) -> entelix_core::error::Result<entelix_agents::Agent<entelix_agents::ReActState>> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
 pub fn entelix_agents::create_supervisor_agent<R>(router: R, agents: alloc::vec::Vec<entelix_agents::AgentEntry>) -> entelix_core::error::Result<entelix_agents::Agent<entelix_agents::SupervisorState>> where R: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_agents::SupervisorDecision> + 'static
 pub fn entelix_agents::team_from_supervisor(team: entelix_agents::Agent<entelix_agents::SupervisorState>) -> impl entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message>

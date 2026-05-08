@@ -46,12 +46,51 @@ pub enum SupervisorDecision {
     /// Terminate the conversation. The supervisor returns the
     /// final `SupervisorState` to its caller.
     Finish,
+    /// Route the next turn to the named sub-agent **and** inject a
+    /// typed `payload` (research summary, classification result,
+    /// escalation reason, …) as a `system` message visible to the
+    /// receiving agent. Same routing rules as
+    /// [`Self::Agent`] — unknown names trip a `tracing::warn!` and
+    /// finish the run rather than dead-ending. Mirrors OpenAI
+    /// Agents' `Handoff(input_type, on_handoff)` pattern: the
+    /// supervisor speaks structured context to the next agent
+    /// without round-tripping through the model's natural-language
+    /// channel.
+    Handoff {
+        /// Registered `AgentEntry::name`.
+        agent: String,
+        /// JSON payload injected as the next agent's leading
+        /// `system` message. Operators are responsible for
+        /// keeping payloads model-safe (the channel is LLM-facing
+        /// per invariant 16).
+        payload: serde_json::Value,
+    },
 }
 
 impl SupervisorDecision {
     /// Convenience constructor for the common case.
     pub fn agent(name: impl Into<String>) -> Self {
         Self::Agent(name.into())
+    }
+
+    /// Convenience constructor for typed handoff with a payload.
+    pub fn handoff(agent: impl Into<String>, payload: serde_json::Value) -> Self {
+        Self::Handoff {
+            agent: agent.into(),
+            payload,
+        }
+    }
+
+    /// Name of the receiving agent, or `None` for [`Self::Finish`].
+    /// Both [`Self::Agent`] and [`Self::Handoff`] route to a
+    /// registered `AgentEntry::name`.
+    #[must_use]
+    pub fn agent_name(&self) -> Option<&str> {
+        match self {
+            Self::Agent(name) => Some(name),
+            Self::Handoff { agent, .. } => Some(agent),
+            Self::Finish => None,
+        }
     }
 }
 
@@ -117,7 +156,10 @@ where
                 // (from, to) pair on every routed turn; `Finish` does
                 // not produce a handoff (the run terminates rather
                 // than transferring control to another named agent).
-                if let SupervisorDecision::Agent(name) = &decision
+                // `Agent` and `Handoff` share the same audit shape —
+                // the payload, when present, rides separately into
+                // the receiving agent's leading `system` message.
+                if let Some(name) = decision.agent_name()
                     && let Some(handle) = ctx.audit_sink()
                 {
                     handle
@@ -158,6 +200,19 @@ where
                 let agent = agent.clone();
                 let label = label.clone();
                 async move {
+                    // Drain any handoff payload the supervisor staged
+                    // on this turn into a leading `system` message
+                    // so the receiving agent sees it before its own
+                    // turn. Agent / Finish carry no payload.
+                    if let Some(SupervisorDecision::Handoff { payload, .. }) =
+                        state.next_speaker.take()
+                    {
+                        let rendered = serde_json::to_string_pretty(&payload)
+                            .unwrap_or_else(|_| payload.to_string());
+                        state
+                            .messages
+                            .push(Message::system(format!("Handoff payload:\n{rendered}")));
+                    }
                     let reply = agent.invoke(state.messages.clone(), &ctx).await?;
                     state.messages.push(reply);
                     state.last_speaker = Some(label.clone());
@@ -173,23 +228,23 @@ where
 
     graph = graph.add_conditional_edges(
         "supervisor",
-        move |state: &SupervisorState| match &state.next_speaker {
-            Some(SupervisorDecision::Agent(name)) if known_names.contains(name) => name.clone(),
+        move |state: &SupervisorState| match state.next_speaker.as_ref().and_then(SupervisorDecision::agent_name) {
+            Some(name) if known_names.contains(name) => name.to_owned(),
             // Either no decision yet (unreachable from the
             // supervisor node, which always sets one) or an
             // unknown-agent name (caller bug). Routing to FINISH
             // surfaces graph completion rather than a dead-end
             // deadlock; the unknown-name branch additionally trips
             // a tracing event so the operator sees what happened.
-            Some(SupervisorDecision::Agent(name)) => {
+            Some(name) => {
                 tracing::warn!(
                     target: "entelix.agents.supervisor",
                     unknown_agent = %name,
-                    "supervisor router emitted Agent({name}) but no AgentEntry by that name; finishing"
+                    "supervisor router emitted decision routing to '{name}' but no AgentEntry by that name; finishing"
                 );
                 FINISH_KEY.to_owned()
             }
-            Some(SupervisorDecision::Finish) | None => FINISH_KEY.to_owned(),
+            None => FINISH_KEY.to_owned(),
         },
         conditional_mapping,
     );

@@ -5,12 +5,12 @@ Production agent SDK on top of `entelix-runnable` + `entelix-graph`. Recipes (Re
 ## Surface
 
 - **`Agent<S>`** + **`AgentBuilder<S>`** — runtime entity wrapping any `Runnable<S, S>` with `AgentEventSink`, optional `Approver` (HITL gate), `ExecutionMode::{Auto, Supervised}` (`Supervised` requires an `Approver` — `build` returns `Error::Config` otherwise), and `Vec<Arc<dyn AgentObserver<S>>>`. `Agent::execute` opens the `entelix.agent.run` OTel span (ADR-0057).
-- **Recipes** — `create_react_agent` / `create_supervisor_agent` / `create_hierarchical_agent` / `create_chat_agent`. Each returns a ready-to-stream `Agent<StateType>` so the common patterns are one call.
+- **Recipes** — `create_react_agent` / `create_supervisor_agent` / `create_chat_agent`. Each returns a ready-to-stream `Agent<StateType>` so the common patterns are one call. Nested-supervisor topologies wire `team_from_supervisor` into a parent `create_supervisor_agent`.
 - **`Subagent::builder(model, &parent_registry, name, description)`** — returns a `SubagentBuilder` that narrows the parent `ToolRegistry` through `restrict_to(&[…])` / `filter(predicate)` selection verbs and accepts `with_skills` / `with_sink` / `with_approver` configuration. `build()` finalises into a `Subagent` whose identity (`name()` / `description()` / `metadata()`) is inspectable before the `into_tool()` conversion exposes it as a parent-side `Tool`. Layer factory rides over by `Arc` (ADR-0035, invariant 7). ADR-0089 + ADR-0093.
 - **`AgentEventSink` trait** + `BroadcastSink` / `CaptureSink` / `ChannelSink` / `DroppingSink` — fan-out for `AgentEvent<S>`.
 - **`AgentObserver` trait** + `DynObserver` adapter — `pre_turn` / `on_complete` lifecycle hooks (ctx-last per naming taxonomy).
 - **`Approver` trait** + `AlwaysApprove` / `ChannelApprover` — `decide(&request, ctx)` for HITL gating.
-- **`SupervisorDecision { Agent(String), Finish }`** — replaces the prior `String` + `SUPERVISOR_FINISH` sentinel pairing (ADR-0034, invariant 17). `team_from_supervisor` builds a hierarchical fan-out.
+- **`SupervisorDecision { Agent(String), Finish, Handoff { agent, payload } }`** — replaces the prior `String` + `SUPERVISOR_FINISH` sentinel pairing (ADR-0034, invariant 17). `Handoff` carries a JSON payload the supervisor dispatch injects as the next agent's leading `system` message (typed context transfer without round-tripping through the model). `team_from_supervisor` builds a nested-supervisor topology.
 
 ## Crate-local rules
 

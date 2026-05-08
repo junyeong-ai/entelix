@@ -38,6 +38,7 @@ mod semantic;
 mod store;
 mod summary;
 mod traits;
+mod vector;
 
 pub use buffer::{BufferMemory, PolicyExtras};
 pub use consolidating::{ConsolidatingBufferMemory, Summarizer};
@@ -58,3 +59,4 @@ pub use traits::{
     Document, DocumentId, Embedder, Embedding, EmbeddingUsage, IdentityReranker, RerankedDocument,
     Reranker, RetrievalQuery, Retriever, VectorFilter, VectorStore,
 };
+pub use vector::{first_non_finite_vector_value, validate_vector_shape};

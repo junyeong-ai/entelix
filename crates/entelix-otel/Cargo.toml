@@ -10,6 +10,7 @@ documentation.workspace = true
 description = "entelix observability — full OpenTelemetry GenAI semconv span builders, metrics, log bridge"
 keywords.workspace = true
 categories.workspace = true
+readme.workspace = true
 
 [lints]
 workspace = true

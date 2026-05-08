@@ -10,6 +10,7 @@ documentation.workspace = true
 description = "entelix DAG root — IR, codecs, transports, Tool trait + ToolRegistry, auth, ExecutionContext, ModelInvocation/ToolInvocation Service spine, StreamAggregator"
 keywords.workspace = true
 categories.workspace = true
+readme.workspace = true
 
 [lints]
 workspace = true

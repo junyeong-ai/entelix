@@ -10,6 +10,7 @@ documentation.workspace = true
 description = "entelix multi-tenant primitives — TenantPolicy, RateLimiter, PiiRedactor, CostMeter, QuotaLimiter"
 keywords.workspace = true
 categories.workspace = true
+readme.workspace = true
 
 [lints]
 workspace = true

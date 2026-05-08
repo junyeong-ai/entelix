@@ -10,6 +10,7 @@ documentation.workspace = true
 description = "entelix concrete VectorStore — qdrant-client gRPC backend"
 keywords.workspace = true
 categories.workspace = true
+readme.workspace = true
 
 [lints]
 workspace = true

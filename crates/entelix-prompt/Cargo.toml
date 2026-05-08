@@ -10,6 +10,7 @@ documentation.workspace = true
 description = "entelix prompt primitives — PromptTemplate, ChatPromptTemplate, MessagesPlaceholder, FewShot, ExampleSelector"
 keywords.workspace = true
 categories.workspace = true
+readme.workspace = true
 
 [lints]
 workspace = true

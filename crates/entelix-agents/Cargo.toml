@@ -10,6 +10,7 @@ documentation.workspace = true
 description = "entelix pre-built agent recipes — ReAct, Supervisor, Hierarchical, Chat (LangGraph create_react_agent parity)"
 keywords.workspace = true
 categories.workspace = true
+readme.workspace = true
 
 [lints]
 workspace = true

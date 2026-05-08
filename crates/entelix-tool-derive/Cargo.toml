@@ -10,6 +10,7 @@ documentation.workspace = true
 description = "entelix proc-macro — #[tool] attribute for typed-input tool authoring on top of entelix-tools::SchemaTool"
 keywords.workspace = true
 categories.workspace = true
+readme.workspace = true
 
 [lints]
 workspace = true

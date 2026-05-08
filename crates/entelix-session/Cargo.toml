@@ -10,6 +10,7 @@ documentation.workspace = true
 description = "entelix session — SessionGraph (event log), GraphEvent, fork, archival watermark"
 keywords.workspace = true
 categories.workspace = true
+readme.workspace = true
 
 [lints]
 workspace = true

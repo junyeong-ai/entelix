@@ -10,6 +10,7 @@ documentation.workspace = true
 description = "entelix concrete OpenAI-backed Embedder — text-embedding-3-{small,large} over HTTPS"
 keywords.workspace = true
 categories.workspace = true
+readme.workspace = true
 
 [lints]
 workspace = true

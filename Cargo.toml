@@ -57,6 +57,7 @@ homepage = "https://github.com/junyeong-ai/entelix"
 documentation = "https://docs.rs/entelix"
 keywords = ["ai", "agent", "llm", "graph", "runtime"]
 categories = ["api-bindings", "asynchronous"]
+readme = "README.md"
 
 # ─────────────────────────────────────────────────────────────────────────
 # [workspace.dependencies] — pinned 2026-04-26 (latest stable)

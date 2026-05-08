@@ -10,6 +10,7 @@ documentation.workspace = true
 description = "entelix concrete GraphMemory — sqlx + Postgres backend (nodes + typed timestamped edges)"
 keywords.workspace = true
 categories.workspace = true
+readme.workspace = true
 
 [lints]
 workspace = true

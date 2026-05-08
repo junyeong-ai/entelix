@@ -10,6 +10,7 @@ documentation.workspace = true
 description = "entelix — web-service-native Rust agentic AI SDK (facade re-export crate)"
 keywords.workspace = true
 categories.workspace = true
+readme.workspace = true
 
 [lints]
 workspace = true

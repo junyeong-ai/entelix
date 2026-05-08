@@ -1,4 +1,4 @@
-//! ADR-0010 naming taxonomy enforcement. Five rules:
+//! naming taxonomy enforcement. Five rules:
 //!
 //!  1. **Forbidden suffixes** on `pub struct/enum/trait`:
 //!     `*Engine` / `*Wrapper` / `*Handler` / `*Helper` / `*Util`.
@@ -115,7 +115,7 @@ pub(crate) fn run() -> Result<()> {
     }
 
     report(
-        "naming (ADR-0010)",
+        "naming",
         violations,
         "Replacement guide:\n\
          *Engine    → say what it does (OrchestrationLoop, RetryStrategy)\n\
@@ -261,7 +261,7 @@ fn check_method(
             line,
             col,
             format!(
-                "`{name}` — ADR-0010 forbids `get_*` accessors; use the bare name (`{}`)",
+                "`{name}` — forbids `get_*` accessors; use the bare name (`{}`)",
                 &name[4..]
             ),
         ));
@@ -310,7 +310,7 @@ fn is_builder_verb_prefix(name: &str) -> bool {
         // describe *which subset* the builder selects, not a
         // configuration value, so the `with_*` prefix would read
         // worse (`with_restriction` / `with_predicate` are vague).
-        // The convention is documented in ADR-0010.
+        // The convention is documented in
         || name == "restrict_to"
         || name == "filter"
 }

@@ -1,9 +1,8 @@
-//! Live operator-facing docs (README, PLAN, docs/architecture, docs/migrations)
-//! reference the facade path (`entelix::Type`) rather than the underlying
-//! crate path (`entelix_core::Type`). Historical retrospectives in
-//! `docs/adr/`, `CHANGELOG.md`, and per-crate `CLAUDE.md` are intentionally
-//! exempt — they pin past type names or document the underlying crate's own
-//! surface.
+//! Live operator-facing docs (README, PLAN, docs/architecture) reference the
+//! facade path (`entelix::Type`) rather than the underlying crate path
+//! (`entelix_core::Type`). `CHANGELOG.md` and per-crate `CLAUDE.md` are
+//! intentionally exempt — they pin past type names or document the underlying
+//! crate's own surface.
 
 use anyhow::Result;
 use walkdir::WalkDir;
@@ -42,14 +41,12 @@ pub(crate) fn run() -> Result<()> {
             files.push(p);
         }
     }
-    for sub in ["docs/architecture", "docs/migrations"] {
-        for entry in WalkDir::new(root.join(sub))
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-        {
-            if entry.path().extension().and_then(|s| s.to_str()) == Some("md") {
-                files.push(entry.path().to_path_buf());
-            }
+    for entry in WalkDir::new(root.join("docs/architecture"))
+        .into_iter()
+        .filter_map(std::result::Result::ok)
+    {
+        if entry.path().extension().and_then(|s| s.to_str()) == Some("md") {
+            files.push(entry.path().to_path_buf());
         }
     }
 
@@ -77,10 +74,10 @@ pub(crate) fn run() -> Result<()> {
     report(
         "doc-canonical-paths",
         violations,
-        "README, docs/architecture/, docs/migrations/ are user-facing canonical\n\
-         references — facade paths only. Replace each `entelix_<crate>::Type`\n\
-         with `entelix::Type`. If the type is genuinely missing from the\n\
-         facade, add the re-export to `crates/entelix/src/lib.rs` first and\n\
-         let `cargo xtask facade-completeness` confirm. ADR-0064.",
+        "README and docs/architecture/ are user-facing canonical references —\n\
+         facade paths only. Replace each `entelix_<crate>::Type` with\n\
+         `entelix::Type`. If the type is genuinely missing from the facade,\n\
+         add the re-export to `crates/entelix/src/lib.rs` first and let\n\
+         `cargo xtask facade-completeness` confirm.",
     )
 }

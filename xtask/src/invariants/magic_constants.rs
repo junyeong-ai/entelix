@@ -1,4 +1,4 @@
-//! Invariant 17 — heuristic policy externalisation (ADR-0034). Forbids
+//! Invariant 17 — heuristic policy externalisation. Forbids
 //! probability-shaped float literals (`0.X`) in heuristic-prone code paths.
 //! These literals are policy decisions (jitter ratios, MMR lambdas,
 //! retry-multiplier fractions, summarisation thresholds) and belong on
@@ -47,7 +47,7 @@ pub(crate) fn run() -> Result<()> {
     report(
         "magic-constants (invariant 17)",
         violations,
-        "ADR-0034 — move the literal onto a `*Policy` struct the operator can\n\
+        "Move the literal onto a `*Policy` struct the operator can\n\
          override. Existing patterns: `RetryPolicy`, `MmrPolicy`,\n\
          `ConsolidationPolicy`. Genuinely safe literals (e.g. an exact ratio\n\
          fixed by a vendor wire format) carry an inline marker:\n\

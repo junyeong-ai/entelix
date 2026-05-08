@@ -1,4 +1,4 @@
-//! Invariant 15 — silent fallback prohibition (ADR-0032). In the codec,
+//! Invariant 15 — silent fallback prohibition. In the codec,
 //! transport, and cost-meter hot zones, every `.unwrap_or*` site requires
 //! an audited `// silent-fallback-ok: <reason>` marker on the same line.
 //!
@@ -47,7 +47,7 @@ pub(crate) fn run() -> Result<()> {
     report(
         "silent-fallback (invariant 15)",
         violations,
-        "ADR-0032 — surface every information-loss event through a typed\n\
+        "Invariant 15 — surface every information-loss event through a typed\n\
          channel (`ModelWarning::LossyEncode { field, detail }` or\n\
          `StopReason::Other { raw }`). Default-injecting a value\n\
          (`max_tokens.unwrap_or(4096)`, `cache_rate.unwrap_or(input/10)`) is\n\

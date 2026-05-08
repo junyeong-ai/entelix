@@ -1,4 +1,4 @@
-//! Anthropic managed-agent shape — invariants 1, 2, 4, 10 + ADR-0035.
+//! Anthropic managed-agent shape — invariants 1, 2, 4, 10 +
 //! Each rule is a single AST predicate, executed only against the file it
 //! targets.
 
@@ -20,15 +20,14 @@ pub(crate) fn run() -> Result<()> {
     inv1_session_event_field(&root, &mut violations)?;
     // ── Invariant 4 — Tool trait must expose `execute` ──
     inv4_tool_execute(&root, &mut violations)?;
-    // ── ADR-0035 — Subagent must not construct fresh ToolRegistry ──
+    // ── — Subagent must not construct fresh ToolRegistry ──
     adr35_subagent_layer_inheritance(&root, &mut violations)?;
 
     report(
-        "managed-shape (invariants 1, 2, 4, 10 + ADR-0035)",
+        "managed-shape (invariants 1, 2, 4, 10)",
         violations,
         "Anthropic managed-agent shape is non-negotiable. See CLAUDE.md\n\
-         §\"Anthropic managed-agent shape\" + docs/architecture/managed-agents.md\n\
-         + ADR-0005 + ADR-0035.",
+         §\"Anthropic managed-agent shape\".",
     )
 }
 
@@ -268,7 +267,7 @@ impl<'ast, 'v> Visit<'ast> for ToolRegistryNewVisitor<'v> {
                     self.file.clone(),
                     line,
                     col,
-                    "`ToolRegistry::new` in subagent.rs — drops parent layer stack (ADR-0035). \
+                    "`ToolRegistry::new` in subagent.rs — drops parent layer stack. \
                      Use parent_registry.with_only(allowed) or .filter(predicate)",
                 ));
             }

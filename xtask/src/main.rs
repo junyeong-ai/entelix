@@ -4,7 +4,7 @@
 //! typed `syn` / `toml_edit` ASTs (no regex over source) so the patterns
 //! `pub async fn`, trait-default methods, fully-qualified `std::fs::read(...)`
 //! calls, and `include_str!` macros are all caught — failure modes the prior
-//! shell scripts could not see. Per-visitor scope and rationale: ADR-0073.
+//! shell scripts could not see. Per-visitor scope and rationale:
 //!
 //! Each subcommand exits `0` on clean and `1` on at least one violation,
 //! prints `path:line:col` plus actionable remediation, and is invoked
@@ -52,10 +52,10 @@ enum Cmd {
     /// hot paths. Every site requires a `// magic-ok: <reason>` marker.
     MagicConstants,
 
-    /// Invariants 1, 2, 4, 10 + ADR-0035 — managed-agent shape.
+    /// Invariants 1, 2, 4, 10 + — managed-agent shape.
     ManagedShape,
 
-    /// ADR-0010 naming taxonomy — forbidden suffixes, `get_*`, `with_*(&self)`,
+    /// naming taxonomy — forbidden suffixes, `get_*`, `with_*(&self)`,
     /// builder verb-prefix, ctx parameter ordering. Catches `pub async fn`
     /// and trait-default methods the prior regex missed.
     Naming,

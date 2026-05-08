@@ -1,7 +1,7 @@
 //! Per-crate public-API drift gate. Compares the live `cargo public-api`
 //! output against `docs/public-api/<crate>.txt`. The companion
 //! `cargo xtask freeze-public-api [<crate>...]` regenerates baselines after
-//! a deliberate, ADR-documented API change.
+//! a deliberate API change.
 
 use std::process::Command;
 

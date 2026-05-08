@@ -22,7 +22,7 @@ publish = false
 # `cargo xtask <invariant>` — workspace invariant enforcement.
 # Single binary that loads every Rust source / Cargo manifest into
 # typed AST (syn / toml_edit) and runs deterministic visitors. See
-# ADR-0073 for the per-visitor scope and rationale.
+# for the per-visitor scope and rationale.
 
 # xtask is a CLI tool, not a published library. The workspace's
 # pedantic/nursery clippy regime targets production crates; this binary

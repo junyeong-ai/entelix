@@ -72,7 +72,7 @@ pub(crate) fn report(invariant: &str, violations: Vec<Violation>, remediation: &
 }
 
 /// All `.rs` files under `crates/`. Skips `target/` and `tests/` directories
-/// (per ADR-0010 — invariant gates apply to first-party production code).
+/// ( — invariant gates apply to first-party production code).
 pub(crate) fn rust_source_files(repo_root: &Path) -> Vec<PathBuf> {
     let crates = repo_root.join("crates");
     let mut out = Vec::new();

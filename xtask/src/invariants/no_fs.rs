@@ -6,7 +6,7 @@
 //!      `std::process::Command::new(...)`, `tokio::fs::write(...)`.
 //!   3. Compile-time fs macros — `include_str!`, `include_bytes!`.
 //!
-//! ADR-0003. Companion `cargo deny` `bans` section guards the dep graph
+//! Companion `cargo deny` `bans` section guards the dep graph
 //! against `landlock` / `seatbelt` / `tree-sitter` even transitively.
 
 use anyhow::Result;
@@ -48,7 +48,7 @@ pub(crate) fn run() -> Result<()> {
     report(
         "no-fs (invariant 9)",
         violations,
-        "ADR-0003 + invariant 9 — entelix is web-service-native. No filesystem,\n\
+        "Invariant 9 — entelix is web-service-native. No filesystem,\n\
          no shell, no local sandbox. Replace `std::fs` reads with HTTP / Store /\n\
          user-supplied bytes; replace `std::process` shell-outs with first-class\n\
          tools or MCP servers; replace `include_str!` / `include_bytes!` with\n\

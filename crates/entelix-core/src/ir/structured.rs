@@ -1,6 +1,6 @@
 //! `ResponseFormat` — vendor-agnostic structured-output IR.
 //!
-//! Per ADR-0024 §5: enters IR because OpenAI Chat / OpenAI
+//! Per: enters IR because OpenAI Chat / OpenAI
 //! Responses / Gemini all natively support a JSON-Schema-shaped
 //! response constraint. Anthropic does not natively, so codecs
 //! synthesize a tool-use shim and emit
@@ -13,7 +13,7 @@
 //! Full JSON Schema validation is deferred to the codec encode
 //! path where it has access to the vendor's validation rules
 //! (some vendors require strict mode, draft 2020-12, etc.). Per
-//! ADR-0024 §heuristic-risk: callers receive an `Err` at
+//!: callers receive an `Err` at
 //! construction for the obvious failures, not at first-call time.
 
 use serde::{Deserialize, Serialize};
@@ -84,9 +84,9 @@ impl JsonSchemaSpec {
 /// - `Auto` — codec picks per-vendor at codec-construction time
 ///   (NOT per request — per-request resolution would let the same
 ///   logical request resolve differently across replays, breaking
-///   the SessionGraph event log's deterministic-replay guarantee
-///   per ADR-0001 §"events SSoT"). The picked strategy is what
-///   `Codec::auto_output_strategy(model)` returns.
+///   the SessionGraph event log's deterministic-replay guarantee).
+///   The picked strategy is what `Codec::auto_output_strategy(model)`
+///   returns.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
@@ -162,7 +162,7 @@ impl ResponseFormat {
 
     /// Validate the schema against the strict-mode constraints
     /// shared across `OpenAI` (Chat + Responses) and Anthropic
-    /// native structured outputs (ADR-0031). Returns the offending
+    /// native structured outputs. Returns the offending
     /// field path on failure so codecs can attach an actionable
     /// `LossyEncode` warning.
     ///

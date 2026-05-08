@@ -54,7 +54,7 @@ pub struct ToolHookRequest {
     pub tool_use_id: String,
     /// Tool name.
     pub tool_name: String,
-    /// Optional tool version from [`entelix_core::ToolMetadata`].
+    /// Optional tool version from [`entelix_core::tools::ToolMetadata`].
     pub tool_version: Option<String>,
     /// JSON input visible to this hook.
     pub input: Value,

@@ -124,9 +124,8 @@ pub trait ToolProgressSink: Send + Sync + 'static {
     ///
     /// Tools call this indirectly via the `ToolProgressSinkHandle`
     /// they pull off `ExecutionContext::extension`; sinks observe
-    /// the `(name, tool_use_id)` identity through
-    /// [`ToolProgress::invocation`] when the dispatch path attaches
-    /// it.
+    /// the `(tool_name, tool_use_id)` identity carried on the
+    /// emitted [`ToolProgress`] when the dispatch path attaches it.
     async fn record_progress(&self, progress: ToolProgress) -> Result<()>;
 }
 

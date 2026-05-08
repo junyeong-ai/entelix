@@ -109,7 +109,7 @@ impl ToolMetadata {
 
     /// Project this metadata into the wire-shaped [`ToolSpec`]
     /// codecs encode for the model. Inspection helper used by
-    /// [`crate::Toolset::tool_specs`] and capability manifests.
+    /// [`crate::tools::Toolset::tool_specs`] and capability manifests.
     /// `cache_control` defaults to `None` — operators that need a
     /// per-tool cache directive set it on the `ToolSpec` itself.
     #[must_use]

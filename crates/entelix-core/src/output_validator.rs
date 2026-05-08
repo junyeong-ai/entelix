@@ -7,7 +7,7 @@
 //! [`crate::Error::ModelRetry`] with a corrective hint. The chat model's
 //! retry loop catches the variant, reflects the hint to the model
 //! as a user message (mirror of the schema-mismatch retry path,
-//! ADR-0090), and re-invokes within the configured
+//!), and re-invokes within the configured
 //! [`ChatModelConfig::validation_retries`](crate::ChatModelConfig::validation_retries)
 //! budget.
 //!

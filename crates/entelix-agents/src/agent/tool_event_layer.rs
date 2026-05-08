@@ -4,9 +4,8 @@
 //! `AgentEventSink`.
 //!
 //! Wired by recipes alongside the rest of the tool registry. The
-//! agent runtime itself never auto-installs this layer (ADR-0029
-//! §"operator-explicit wiring"); recipe code reads as one explicit
-//! line:
+//! agent runtime itself never auto-installs this layer; recipe
+//! code reads as one explicit line:
 //!
 //! ```ignore
 //! let registry = ToolRegistry::new()

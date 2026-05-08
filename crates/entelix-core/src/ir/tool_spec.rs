@@ -15,7 +15,7 @@ use crate::ir::cache::CacheControl;
 /// both — even built-ins surface a description so recipes can reason
 /// about them uniformly.
 ///
-/// `cache_control` (ADR-0031) marks the tool declaration itself as
+/// `cache_control` marks the tool declaration itself as
 /// cacheable on vendors that support per-block caching of tool
 /// definitions (Anthropic, Bedrock-on-Anthropic). Stable tool
 /// catalogues amortise their declaration tokens across calls.
@@ -27,7 +27,7 @@ pub struct ToolSpec {
     pub description: String,
     /// What kind of tool this is — function, web search, computer use, etc.
     pub kind: ToolKind,
-    /// Cache directive for the tool declaration itself (ADR-0031).
+    /// Cache directive for the tool declaration itself.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cache_control: Option<CacheControl>,
 }

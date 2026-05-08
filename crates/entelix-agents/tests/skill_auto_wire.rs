@@ -1,7 +1,7 @@
 //! `Subagent::with_skills` auto-installs the three LLM-facing skill
 //! tools (`list_skills` / `activate_skill` / `read_skill_resource`)
 //! into the resulting Agent's tool registry, so the model can reach
-//! the parent's filtered skill subset (ADR-0027 §"Auto-wire").
+//! the parent's filtered skill subset.
 
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 

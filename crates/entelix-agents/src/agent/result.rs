@@ -25,8 +25,8 @@
 //! side-channel state (vector store writes, summary persistence)
 //! whose dispatches may themselves consume budget through layered
 //! `ChatModel` calls; freezing the snapshot ahead of that point
-//! reflects exactly the agent run's own cost. ADR-0080 documents
-//! the budget; ADR-0081 documents this envelope.
+//! reflects exactly the agent run's own cost. documents
+//! the budget; documents this envelope.
 
 use entelix_core::UsageSnapshot;
 

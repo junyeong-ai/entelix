@@ -1,5 +1,5 @@
 //! Sparse codec×transport compatibility matrix — type-level
-//! verification that the documented `~10` valid pairings (ADR-0018)
+//! verification that the documented `~10` valid pairings
 //! all instantiate `ChatModel<C, T>` cleanly. Pairings the matrix
 //! marks invalid (e.g. OpenAiChat × BedrockTransport) are
 //! intentionally absent — vendors don't ship those models on those

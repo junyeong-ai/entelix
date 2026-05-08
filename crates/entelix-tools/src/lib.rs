@@ -21,11 +21,11 @@
 //! - [`SearchProvider`] (trait) + [`SearchTool`] — adapter for
 //!   external search APIs (Brave / Tavily / Perplexity / …).
 //!   Concrete providers are deferred to 1.1 (same trait-only policy
-//!   as ADR-0008 for `Embedder`).
+//!   as for `Embedder`).
 //! - [`sandboxed`] — `SandboxedShellTool` / `SandboxedCodeTool` /
 //!   `SandboxedReadFileTool` / `SandboxedWriteFileTool` /
 //!   `SandboxedListDirTool` — shell + filesystem tools that
-//!   delegate to a `Sandbox` backend. ADR-0024 §3.
+//!   delegate to a `Sandbox` backend.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc(html_root_url = "https://docs.rs/entelix-tools/1.0.0-rc.2")]

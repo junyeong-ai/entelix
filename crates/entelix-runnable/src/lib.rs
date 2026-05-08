@@ -12,7 +12,7 @@
 //! at the explicit `erase()` boundary. The standard adapters:
 //!
 //! - `pipe(next)` — sequence two runnables
-//! - `with_retry(policy)` — retry transient errors (ADR-0028)
+//! - `with_retry(policy)` — retry transient errors
 //! - `with_fallbacks(others)` — ordered fallbacks on transient errors
 //! - `map(fn)` — pure synchronous output transform
 //! - `with_config(fn)` — branch-local `ExecutionContext` mutation

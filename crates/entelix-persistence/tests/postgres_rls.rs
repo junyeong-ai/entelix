@@ -1,5 +1,5 @@
 //! Postgres row-level-security regression — proves the
-//! `tenant_isolation` policy installed by migration v2 (ADR-0041)
+//! `tenant_isolation` policy installed by migration v2
 //! actually rejects cross-tenant access at the database layer.
 //!
 //! The default test container's `postgres` role is `SUPERUSER`,

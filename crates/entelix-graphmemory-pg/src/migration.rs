@@ -18,7 +18,7 @@
 //!    stay O(log n).
 //! 3. `ALTER TABLE … ENABLE ROW LEVEL SECURITY` +
 //!    `FORCE ROW LEVEL SECURITY` on both tables (mirrors the
-//!    `entelix-persistence` treatment from ADR-0041 for invariant
+//!    `entelix-persistence` treatment from for invariant
 //!    11 defense in depth).
 //! 4. `CREATE POLICY tenant_isolation` — single policy spanning
 //!    `USING` (reads) + `WITH CHECK` (writes), gating on

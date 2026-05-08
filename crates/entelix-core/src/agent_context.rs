@@ -12,7 +12,7 @@
 //! reason to know `D`. Forcing `D` through every layer factory
 //! leads to generic explosion. `AgentContext<D>` is the type the
 //! `Tool` and validator surfaces see; [`AgentContext::core`] is
-//! what layers see (ADR-0084).
+//! what layers see.
 //!
 //! Invariant 4 (Hand contract) and invariant 10 (no operator-side
 //! handles via dynamic context) together require a typed slot that
@@ -66,7 +66,7 @@ use crate::tenant_id::TenantId;
 /// `AgentContext<D>` flows into the `Tool` and validator surfaces.
 /// Layers consume [`ExecutionContext`] only, reached via
 /// [`Self::core`]; this keeps the layer ecosystem (`tower::Service`
-/// spine) D-free and avoids generic explosion. ADR-0084.
+/// spine) D-free and avoids generic explosion.
 ///
 /// Cloning a context with `D: Clone` is shallow: the inner
 /// [`ExecutionContext`] clones cheaply (`Arc` refcounts on tenant

@@ -197,7 +197,7 @@ impl<D: Clone + Send + Sync + 'static> ToolRegistry<D> {
         }
     }
 
-    /// Append a tool. Per ADR-0010, `*Registry` types are
+    /// Append a tool. Per, `*Registry` types are
     /// **init-time, append-only**: this method returns
     /// [`Error::Config`] if `tool.metadata().name` collides with an
     /// already-registered tool. Silent overwrite at registry
@@ -208,7 +208,7 @@ impl<D: Clone + Send + Sync + 'static> ToolRegistry<D> {
         if self.by_name.contains_key(&name) {
             return Err(Error::config(format!(
                 "ToolRegistry::register: tool '{name}' is already registered \
-                 (registry is append-only — see ADR-0010)"
+                 (registry is append-only — see)"
             )));
         }
         self.by_name.insert(name, tool);

@@ -13,7 +13,7 @@
 //! ## Cost discipline
 //!
 //! `max_tokens = 16` against `gpt-4o-mini`. Per-run cost well
-//! under $0.001. See `docs/live-api-verification.md`.
+//! under $0.001.
 
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::doc_markdown)]
 

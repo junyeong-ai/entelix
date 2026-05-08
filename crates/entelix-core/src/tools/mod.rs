@@ -3,11 +3,11 @@
 //! `ScopedToolLayer` (operator hook for ambient request-scope
 //! state, e.g. tokio task-locals seeding RLS settings).
 //!
-//! See ADR-0011 for the rationale that `Tool` does not extend
+//! See for the rationale that `Tool` does not extend
 //! `Runnable`. Tool dispatch composes through `tower::Layer<S>` —
 //! `PolicyLayer`, `OtelLayer`, retry middleware all hang off the
 //! `Service<ToolInvocation>` shape, never via a back-channel hook.
-//! See ADR-0068 for `ToolDispatchScope` — the operator-supplied
+//! See for `ToolDispatchScope` — the operator-supplied
 //! future-wrapper that lets tools observe task-local ambient state
 //! the SDK cannot supply through `ExecutionContext` directly.
 

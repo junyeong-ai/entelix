@@ -1,7 +1,7 @@
 //! `SemanticMemory<E, V>` — generic composition of `Embedder` +
 //! `VectorStore` scoped to one `Namespace`.
 //!
-//! Per ADR-0008, no concrete `Embedder` / `VectorStore` impls ship in
+//! Per, no concrete `Embedder` / `VectorStore` impls ship in
 //! 1.0. This type is the user-facing entry point: pair any embedder with
 //! any vector store and the search shape is uniform.
 

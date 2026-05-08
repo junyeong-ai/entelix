@@ -1,5 +1,5 @@
 //! `ToolToRunnableAdapter` — bridges the `Tool` trait into the `Runnable`
-//! composition contract per ADR-0011.
+//! composition contract.
 //!
 //! `Tool` lives in `entelix-core` (DAG root) and does not extend `Runnable`.
 //! When a user wants to drop a tool into a `.pipe()` chain, they wrap it

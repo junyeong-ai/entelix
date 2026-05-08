@@ -101,7 +101,7 @@ where
                             // re-runs this same node with the operator's
                             // decision threaded through
                             // `Command::ApproveTool { tool_use_id, decision }`
-                            // on `CompiledGraph::resume_with` (ADR-0072).
+                            // on `CompiledGraph::resume_with`.
                             Err(Error::Interrupted { payload }) => {
                                 return Err(Error::Interrupted { payload });
                             }

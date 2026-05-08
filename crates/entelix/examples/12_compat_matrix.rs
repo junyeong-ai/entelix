@@ -1,5 +1,5 @@
 //! `12_compat_matrix` — sparse codec×transport pairing matrix
-//! (ADR-0018).
+//!.
 //!
 //! Build: `cargo build --example 12_compat_matrix -p entelix --features=full`
 //! Run:   `cargo run   --example 12_compat_matrix -p entelix --features=full`
@@ -236,6 +236,6 @@ fn main() -> Result<()> {
         &request,
     );
 
-    println!("\n   10 valid (codec, transport) pairs — see ADR-0018.");
+    println!("\n   10 valid (codec, transport) pairs — see");
     Ok(())
 }

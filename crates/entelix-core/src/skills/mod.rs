@@ -1,5 +1,5 @@
 //! Skills — packaged, progressively-disclosed agent capabilities
-//! (ADR-0027).
+//!.
 //!
 //! A [`Skill`] bundles four things: a stable identifier, a one-line
 //! description, an instructions body, and a set of named resources.

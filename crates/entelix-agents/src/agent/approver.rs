@@ -15,7 +15,7 @@
 //!   [`oneshot`] in [`ChannelApprover`]). External resolution
 //!   translates to `entelix_graph::Command::ApproveTool {
 //!   tool_use_id, decision }` on `CompiledGraph::resume_with` —
-//!   see ADR-0072 for the typed-Command resume flow.
+//!   see for the typed-Command resume flow.
 //!
 //! Two production-shape concretes ship in this slice:
 //!

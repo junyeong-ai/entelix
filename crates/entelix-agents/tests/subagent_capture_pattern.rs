@@ -177,7 +177,7 @@ fn filter_empty_result_is_valid_pure_orchestration_subagent() {
 
 #[test]
 fn metadata_inspect_without_consume() {
-    // Slice 111 / ADR-0093: identity is set at builder construction
+    // Slice 111 /: identity is set at builder construction
     // and is inspectable on the built `Subagent` via
     // `name()` / `description()` / `metadata()` *before* the
     // `into_tool()` conversion that consumes self. This is the

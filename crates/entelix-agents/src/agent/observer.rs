@@ -74,7 +74,7 @@ where
     /// Observer errors raised from `on_error` are logged via
     /// `tracing::warn!` and dropped — they do **not** replace the
     /// original runnable error. The contract mirrors the audit
-    /// channel (invariant 18, ADR-0037): failure-path observability
+    /// channel (invariant 18): failure-path observability
     /// is one-way and never disturbs the failure that's already
     /// in flight.
     async fn on_error(&self, _error: &Error, _ctx: &ExecutionContext) -> Result<()> {

@@ -564,7 +564,7 @@ fn anthropic_thinking_emits_top_level_thinking_object_for_explicit_budget_models
     use entelix_core::ir::ReasoningEffort;
     // Sonnet accepts either adaptive or explicit budget; on
     // `Medium` the codec emits `{enabled, budget_tokens: 4096}` per
-    // ADR-0078. Opus 4.7 maps the same effort onto an adaptive
+    // Opus 4.7 maps the same effort onto an adaptive
     // object — that path is exercised by the dedicated
     // `anthropic_opus_4_7_*_adaptive_*` tests.
     let codec = AnthropicMessagesCodec::new();

@@ -17,7 +17,7 @@ use crate::skills::resource::SkillResource;
 /// changes per call (e.g., a sandbox connection's open file handle)
 /// belongs in the backing service, not the `Skill` itself.
 ///
-/// See ADR-0027 for the three-tier disclosure model.
+/// See for the three-tier disclosure model.
 #[async_trait]
 pub trait Skill: Send + Sync + std::fmt::Debug {
     /// Stable kebab-case identifier. Must be unique within a

@@ -6,7 +6,7 @@
 //! [`ToolPair`]. But the seal initially extended too far —
 //! [`CompactedHistory`]'s `turns` field was private with no public
 //! constructor, so an external `Compactor` had no way to return a
-//! value. ADR-0095 added [`CompactedHistory::group`] +
+//! value. added [`CompactedHistory::group`] +
 //! [`CompactedHistory::from_turns`] to restore extensibility while
 //! keeping the pair invariant sealed at the [`ToolPair`] level.
 //!

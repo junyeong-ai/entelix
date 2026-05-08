@@ -5,7 +5,7 @@
 //! Document`) so codecs can route on a single shape regardless of media
 //! type. `CitationSource` is the lean common subset every vendor returns
 //! for grounding outputs — vendor-specific positioning stays out of IR
-//! per the 2-codec rule (ADR-0024 §5).
+//! per the 2-codec rule.
 
 use serde::{Deserialize, Serialize};
 

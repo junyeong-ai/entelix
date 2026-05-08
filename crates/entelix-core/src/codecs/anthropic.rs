@@ -442,7 +442,7 @@ fn encode_anthropic_structured_output(
 /// resolver readable as the cross-vendor `OutputStrategy` enum
 /// gains future variants — Clippy's `match_same_arms` would have
 /// us merge the identity arms but that hides the explicit
-/// per-variant intent (ADR-0079).
+/// per-variant intent.
 #[allow(clippy::match_same_arms)]
 const fn resolve_output_strategy(strategy: OutputStrategy, _model: &str) -> OutputStrategy {
     match strategy {
@@ -467,7 +467,7 @@ fn is_anthropic_adaptive_only(model: &str) -> bool {
 }
 
 /// Translate the cross-vendor [`ReasoningEffort`] knob onto the
-/// Anthropic Messages API `thinking` field. Per ADR-0078:
+/// Anthropic Messages API `thinking` field. Per:
 ///
 /// - `Off` → `{type:"disabled"}`
 /// - `Minimal` → `{type:"adaptive", effort:"low"}` (LossyEncode —

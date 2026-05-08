@@ -348,7 +348,7 @@ fn is_gemini_25_flash(model: &str) -> bool {
 }
 
 /// Translate the cross-vendor [`ReasoningEffort`] knob onto
-/// Gemini's `generationConfig.thinkingConfig`. Per ADR-0078:
+/// Gemini's `generationConfig.thinkingConfig`. Per:
 ///
 /// 2.5 (`thinkingBudget` integer):
 /// - `Off` → `0` (Flash only — Pro emits LossyEncode → `512`)

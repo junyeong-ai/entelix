@@ -128,7 +128,7 @@ pub enum Error {
     /// Distinct from [`Self::Provider`] so retry classifiers can
     /// short-circuit (a budget breach does not retry) and from
     /// [`Self::InvalidRequest`] so dashboards see the budget
-    /// signal as a first-class category. ADR-0080.
+    /// signal as a first-class category.
     #[error("run budget exceeded on {axis} axis: observed {observed}, limit {limit}")]
     UsageLimitExceeded {
         /// Which budget axis breached its cap.

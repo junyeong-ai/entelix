@@ -1,5 +1,5 @@
 //! Concrete `Skill` implementations and the three LLM-facing tools
-//! that drive progressive disclosure (ADR-0027).
+//! that drive progressive disclosure.
 //!
 //! ## Skills
 //!
@@ -45,7 +45,7 @@ pub use tools::{ActivateSkillTool, ListSkillsTool, ReadSkillResourceTool};
 ///
 /// Recipes that accept both a `ToolRegistry` and a `SkillRegistry`
 /// call this helper to surface the skills to the model — the agent
-/// runtime itself does not auto-wire (per ADR-0027 §"Sub-agent
+/// runtime itself does not auto-wire ( §"Sub-agent
 /// filtering"; the per-recipe call is the explicit opt-in).
 ///
 /// Returns `Error::Config` from the underlying `ToolRegistry::register`

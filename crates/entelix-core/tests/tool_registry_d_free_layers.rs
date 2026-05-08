@@ -1,6 +1,5 @@
 //! Pin **invariant 19** — the tool dispatch layer ecosystem stays
-//! `D`-free regardless of operator-supplied deps. ADR-0084 + ADR-0085
-//! + ADR-0089.
+//! `D`-free regardless of operator-supplied deps. //! +
 //!
 //! The registry holds a typed `D` clone and threads it into the leaf
 //! `Tool<D>::execute` via `AgentContext<D>`. Layers, however, consume

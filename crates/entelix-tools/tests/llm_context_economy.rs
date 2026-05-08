@@ -68,7 +68,7 @@ fn error_render_for_llm_invalid_request_keeps_caller_message() {
 /// `entelix-core`, so this crate (`entelix-tools`) cannot fabricate
 /// a carrier from a raw string. The only path to one is
 /// `LlmRenderable::for_llm` on a value that implements the trait,
-/// which is the structural guarantee invariant 16 / ADR-0076 codify.
+/// which is the structural guarantee invariant 16 / codify.
 ///
 /// This test does not invoke any forbidden API — it documents the
 /// boundary by exercising the only legal construction path. A
@@ -77,7 +77,7 @@ fn error_render_for_llm_invalid_request_keeps_caller_message() {
 /// caught by `cargo xtask public-api` baselines, by the
 /// `pub(crate)` visibility check at compile time in any external
 /// consumer that tries to call `RenderedForLlm::new`, and by the
-/// reviewer reading ADR-0076 §"Sealing".
+/// reviewer reading
 #[test]
 fn rendered_for_llm_only_constructible_via_for_llm_trait_default() {
     use entelix_core::{Error, LlmRenderable, RenderedForLlm};

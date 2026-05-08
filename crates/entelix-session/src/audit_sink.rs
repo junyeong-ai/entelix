@@ -5,7 +5,7 @@
 //! `entelix-core`) and `SessionLog` (persistence shape pinned here)
 //! lets emitters in `entelix-tools`, `entelix-graph`, `entelix-agents`
 //! depend only on `entelix-core` while still landing their events
-//! in the durable Tier-2 log. See ADR-0037.
+//! in the durable Tier-2 log. See
 
 use std::sync::Arc;
 

@@ -66,7 +66,7 @@ impl McpRoot {
 
 /// Async source-of-truth for the roots a server may discover via
 /// `roots/list`. Mirrors the `*Provider` taxonomy
-/// (ADR-0010) — async, single-purpose, replaceable.
+/// — async, single-purpose, replaceable.
 ///
 /// Operators wire one provider per server through
 /// [`crate::McpServerConfig::with_roots_provider`]. Servers that

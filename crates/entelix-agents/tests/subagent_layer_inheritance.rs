@@ -1,5 +1,5 @@
 //! Sub-agent layer-stack inheritance — invariant gate for the
-//! managed-agent "Brain passes hand" contract (ADR-0035).
+//! managed-agent "Brain passes hand" contract.
 //!
 //! Every layer attached to the parent's [`ToolRegistry`] must apply
 //! transparently to dispatches issued through a [`Subagent`]
@@ -215,7 +215,7 @@ async fn narrowed_registry_rejects_tools_outside_the_filter() {
 
 #[tokio::test]
 async fn subagent_with_approver_attaches_approval_layer() {
-    // ADR-0070 mirror: `Subagent::with_approver(approver) +
+    // mirror: `Subagent::with_approver(approver) +
     // into_react_agent()` must wire `ApprovalLayer` into the
     // sub-agent's tool registry — every dispatch the sub-agent
     // issues must pass through `Approver::decide`. A regression

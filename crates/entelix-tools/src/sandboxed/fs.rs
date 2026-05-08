@@ -85,7 +85,7 @@ impl Tool for SandboxedReadFileTool {
                 String::from_utf8_lossy(prefix),
             )
         });
-        // Lean LLM-facing payload: `content` only (ADR-0024 §7).
+        // Lean LLM-facing payload: `content` only.
         // `bytes_read` would be observability noise on the model's
         // next turn — sinks observe size via the tool's OTel span.
         Ok(json!({"content": content}))
@@ -156,7 +156,7 @@ impl Tool for SandboxedWriteFileTool {
             .await?;
         // Lean LLM-facing payload — bare confirmation. The model
         // already knows the path it wrote to and the content it
-        // sent; echoing those is token waste (ADR-0024 §7).
+        // sent; echoing those is token waste.
         Ok(json!({"ok": true}))
     }
 }
@@ -213,7 +213,7 @@ impl Tool for SandboxedListDirTool {
         let parsed: PathInput = serde_json::from_value(input).map_err(ToolError::from)?;
         let entries = self.sandbox.list_dir(&parsed.path, ctx.core()).await?;
         // Lean LLM-facing payload — just the entries; the model
-        // already knows the path it queried (ADR-0024 §7).
+        // already knows the path it queried.
         Ok(json!({"entries": entries}))
     }
 }

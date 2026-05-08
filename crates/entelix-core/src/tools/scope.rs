@@ -20,7 +20,7 @@
 //! a [`ScopedToolLayer`], and attach it to a `ToolRegistry` via
 //! [`crate::tools::ToolRegistry::layer`]. Sub-agents that narrow
 //! the parent registry through `restricted_to` / `filter` inherit
-//! the layer stack by `Arc` (ADR-0035) — the wrap fires for every
+//! the layer stack by `Arc` — the wrap fires for every
 //! sub-agent dispatch automatically.
 //!
 //! ## Composition with other layers
@@ -270,7 +270,7 @@ mod tests {
 
     #[tokio::test]
     async fn scope_wrap_inherited_by_narrowed_view() {
-        // Sub-agent narrowing pattern (ADR-0035) shares the layer
+        // Sub-agent narrowing pattern shares the layer
         // factory by Arc — a scope attached to the parent must
         // fire on every narrowed-view dispatch as well.
         let wraps = Arc::new(AtomicUsize::new(0));

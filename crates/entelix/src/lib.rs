@@ -15,7 +15,7 @@
 //! observability, the HTTP server, and agent recipes.
 //!
 //! Architectural canon: see `CLAUDE.md` (21 invariants + naming taxonomy)
-//! and `docs/architecture/overview.md`.
+//! and `docs/architecture/principles.md`.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc(html_root_url = "https://docs.rs/entelix/1.0.0-rc.2")]

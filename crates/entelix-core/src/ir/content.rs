@@ -17,7 +17,7 @@ use crate::ir::source::{CitationSource, MediaSource};
 /// emitting native wire shape or a `LossyEncode` warning for each.
 ///
 /// Every input-side variant carries an
-/// `Option<CacheControl>` field (per ADR-0031) — operators mark a
+/// `Option<CacheControl>` field () — operators mark a
 /// block as cached and codecs that support per-block caching
 /// (Anthropic, Bedrock-on-Anthropic) emit the directive natively.
 /// Other codecs emit `LossyEncode`. The `ToolUse` variant — the

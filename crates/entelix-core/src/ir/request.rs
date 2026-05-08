@@ -52,14 +52,14 @@ pub struct ModelRequest {
     /// `responseJsonSchema`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub response_format: Option<ResponseFormat>,
-    /// Prompt-cache routing key (ADR-0031). When set, codecs that
+    /// Prompt-cache routing key. When set, codecs that
     /// expose a `prompt_cache_key`-style field (OpenAI Chat,
     /// OpenAI Responses) emit it so the vendor's auto-cache routes
     /// related requests into the same bucket. Other codecs emit
     /// `LossyEncode`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cache_key: Option<String>,
-    /// Server-side cached-content reference (ADR-0031). When set,
+    /// Server-side cached-content reference. When set,
     /// codecs that accept it (Gemini's `cachedContent` request
     /// field) emit it; the value is a vendor-minted resource name
     /// (e.g. `cachedContents/<id>`) typically returned by a prior

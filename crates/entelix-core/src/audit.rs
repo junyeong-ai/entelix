@@ -61,7 +61,7 @@ pub trait AuditSink: Send + Sync + 'static {
     /// `entelix-tools` / `entelix-graph` emit sites stay free of
     /// the `UsageLimitAxis` import. `limit` and `observed` carry
     /// the raw counter values for compliance / billing audits that
-    /// need to attribute breaches per-tenant per-run (ADR-0083).
+    /// need to attribute breaches per-tenant per-run.
     fn record_usage_limit_exceeded(&self, axis: &str, limit: u64, observed: u64);
 }
 

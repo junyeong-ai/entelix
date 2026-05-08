@@ -34,7 +34,7 @@
 //! is the bridge that adapts any `Arc<dyn AgentEventSink<S>>` into
 //! the type-erased shape.
 //!
-//! ## `AwaitExternal` pause-and-resume (ADR-0071)
+//! ## `AwaitExternal` pause-and-resume
 //!
 //! When `Approver::decide` returns `ApprovalDecision::AwaitExternal`,
 //! the layer raises `Error::Interrupted { payload }` with a

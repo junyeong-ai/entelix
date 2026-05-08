@@ -83,7 +83,7 @@ pub struct ChatModelConfig {
     /// reflect the parse error to the model and re-prompt up to
     /// `validation_retries` times before bubbling
     /// [`Error::Serde`]. Default `0` (no retry); operators opt in
-    /// per ADR-0090. Distinct from [`crate::Error::Provider`]'s
+    ///. Distinct from [`crate::Error::Provider`]'s
     /// transport retries (handled by `RetryService`).
     validation_retries: u32,
 }
@@ -670,7 +670,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
     /// JSON-Schema vs forced tool call) is the codec's
     /// [`Codec::auto_output_strategy`] for the configured model
     /// when [`crate::ir::OutputStrategy::Auto`] is selected — see
-    /// [`crate::ir::OutputStrategy`] and ADR-0079 for the cross-vendor mapping.
+    /// [`crate::ir::OutputStrategy`] and for the cross-vendor mapping.
     /// Operators that need to override the strategy build their
     /// own [`ResponseFormat`] via
     /// [`ResponseFormat::with_strategy`] and attach it to the
@@ -963,7 +963,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
             // Surface the contract divergence — operators wiring
             // with_validation_retries on a ChatModel and then calling
             // stream_typed almost certainly expect the retry loop to
-            // also cover the streaming path. ADR-0096 records the
+            // also cover the streaming path. records the
             // design decision (no-retry on streaming because deltas
             // were already surfaced to the consumer); a debug log
             // makes the silent ignore visible at run time.
@@ -972,7 +972,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
                 "ChatModel::stream_typed ignores validation_retries — \
                  streaming + retry would emit a divergent second stream \
                  over already-surfaced deltas. Use complete_typed for \
-                 the unified retry budget. ADR-0096."
+                 the unified retry budget."
             );
         }
         let schema_value = serde_json::to_value(schemars::schema_for!(O)).map_err(Error::Serde)?;

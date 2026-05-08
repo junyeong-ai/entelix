@@ -1,6 +1,6 @@
 //! `ListSkillsTool`, `ActivateSkillTool`, `ReadSkillResourceTool` —
 //! the three LLM-facing tools that drive progressive disclosure
-//! (ADR-0027 §"Three built-in tools").
+//!.
 
 use async_trait::async_trait;
 use serde::Deserialize;

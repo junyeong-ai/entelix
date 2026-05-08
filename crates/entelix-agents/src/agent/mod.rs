@@ -33,7 +33,7 @@
 //! across the boundary. Recursive sub-agent dispatch follows the
 //! same pattern as any other `Runnable` composition.
 //!
-//! ## Information density (ADR-0024 §7)
+//! ## Information density
 //!
 //! Events emitted to the sink carry the full observability surface
 //! (ids, durations, classifications). The agent's own re-feed path
@@ -127,7 +127,7 @@ where
     /// observer at the appropriate lifecycle point, then emits
     /// either `Complete{run_id, state}` or `Failed{run_id, error}`
     /// on the sink — every run produces exactly one terminal event
-    /// (ADR-0029).
+    ///.
     ///
     /// The `run_id` is inherited from `ctx.run_id()` when present,
     /// otherwise a fresh UUID v7 is generated and propagated to the
@@ -252,7 +252,7 @@ where
     /// per-run consumption without consumers having to harvest
     /// the envelope return value. Runs without a budget keep the
     /// fields `Empty`; the `tracing-opentelemetry` bridge omits
-    /// empty fields from the exported span attributes (ADR-0082).
+    /// empty fields from the exported span attributes.
     fn run_span(&self, run_id: &str, ctx: &ExecutionContext) -> tracing::Span {
         tracing::info_span!(
             target: "gen_ai",
@@ -278,7 +278,7 @@ where
     /// observer dispatches may themselves consume budget through
     /// downstream `ChatModel` calls (memory consolidation, summary
     /// writes), and the envelope must reflect the agent run only
-    /// (ADR-0081 frozen-pre-observer attribution).
+    ///.
     async fn run_inner(
         &self,
         input: S,
@@ -301,7 +301,7 @@ where
                         // dropped (with a tracing warn) so they don't
                         // replace the original error in flight.
                         // Mirrors the audit-sink contract from
-                        // invariant 18 / ADR-0037.
+                        // invariant 18 /
                         if let Err(observer_err) = observer.on_error(&err, ctx).await {
                             tracing::warn!(
                                 observer = %observer.name(),

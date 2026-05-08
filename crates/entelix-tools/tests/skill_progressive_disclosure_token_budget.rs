@@ -1,4 +1,4 @@
-//! Forcing function for ADR-0027's progressive-disclosure budget.
+//! Forcing function for's progressive-disclosure budget.
 //!
 //! For one skill with bulky T2 instructions and a bulky T3 resource,
 //! assert each tier's LLM-facing payload size grows only when the

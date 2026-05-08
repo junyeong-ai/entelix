@@ -55,7 +55,7 @@
 //!   `SchemaTool` manually.
 //! - Custom tool name overrides — rename the function.
 //! - Effect / retry-hint annotations — implement `SchemaTool`
-//!   manually until 1.x adds attribute arguments. ADR-0087.
+//!   manually until 1.x adds attribute arguments.
 //! - Typed `D` (non-`()`) deps — first cut targets `Tool<()>`;
 //!   typed-deps macro support lands when `ToolRegistry<D>` (slice
 //!   103) settles the call shape.

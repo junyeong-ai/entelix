@@ -3,7 +3,7 @@
 //! Concrete [`entelix_memory::VectorStore`] implementation backed by
 //! the qdrant 1.5+ gRPC API.
 //!
-//! Companion to the trait-only [`entelix_memory`] crate (ADR-0008):
+//! Companion to the trait-only [`entelix_memory`] crate:
 //! vendor-SDK dependencies (`qdrant-client` plus its tonic / prost
 //! transitive tree) live here so users who plug their own
 //! `VectorStore` pay nothing in compile time.

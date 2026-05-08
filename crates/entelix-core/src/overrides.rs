@@ -15,7 +15,7 @@
 //! `RunOverrides` flows through
 //! [`crate::context::ExecutionContext::extension`] so the operator's
 //! choice is one method call away on the call site and the layered
-//! `tower::Service` stack picks it up automatically. See ADR-0069.
+//! `tower::Service` stack picks it up automatically. See
 //!
 //! ## Wiring
 //!

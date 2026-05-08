@@ -10,7 +10,7 @@
 //!   `AwaitExternal` via the underlying graph's
 //!   `interrupt(payload)` until the operator drives a decision
 //!   through the approver's reply channel — a single state
-//!   machine, no parallel runtime (ADR-0024 §6).
+//!   machine, no parallel runtime.
 //!
 //! Marked `#[non_exhaustive]` so future modes (e.g. `Plan` —
 //! produce a plan transcript without executing) are not breaking

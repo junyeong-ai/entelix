@@ -14,7 +14,7 @@
 //! rather than relying on each backend to remember to add a `WHERE
 //! tenant_id = ...` clause. `ThreadKey::from_ctx(ctx)` is the
 //! canonical builder; it requires `ctx.thread_id()` to be set
-//! (`ctx.tenant_id()` is always present per ADR-0017).
+//! (`ctx.tenant_id()` is always present).
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -169,7 +169,7 @@ where
 /// Implementors may evict, replace, or reallocate stored values inside
 /// internal locks. `S::drop` therefore **must not block** — no
 /// `block_on`, no synchronous IO, no lock acquisition. Spawn a
-/// detached task or use a non-blocking sink instead. See ADR-0006
+/// detached task or use a non-blocking sink instead. See
 /// §"Amendment 2026-04-30 — State drop semantics".
 #[async_trait]
 pub trait Checkpointer<S>: Send + Sync + 'static

@@ -7,9 +7,7 @@
 //! Run:   `cargo run   --example 17_mcp_sampling_provider -p entelix --features mcp,mcp-chatmodel`
 //!
 //! Demonstrates the operator-side wiring of MCP sampling
-//! (ADR-0054 trait surface, ADR-0060 ChatModel bridge):
-//!
-//! 1. A stub `Codec` + `Transport` stand in for a real LLM. The
+//!//! 1. A stub `Codec` + `Transport` stand in for a real LLM. The
 //!    stub echoes the last user message as the assistant reply so
 //!    the example runs deterministically without any API key.
 //! 2. `ChatModel::new(codec, transport, model)` builds the chat

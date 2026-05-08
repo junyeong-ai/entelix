@@ -1,4 +1,4 @@
-//! ADR-0082 regression — `Agent::execute` mirrors the frozen
+//! regression — `Agent::execute` mirrors the frozen
 //! `RunBudget` snapshot onto the `entelix.agent.run` span as five
 //! `gen_ai.usage.*` / `entelix.usage.*` attributes. Runs without a
 //! budget leave the fields as `tracing::field::Empty`, which the

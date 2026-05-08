@@ -102,7 +102,7 @@ impl<N, E> PgGraphMemory<N, E> {
     // invariant 15), and (b) these are admin/migration concerns the
     // *operator* runs, not the *agent*. Callers that hold a concrete
     // `PgGraphMemory<N, E>` reach for these directly; trait-erased
-    // call sites do not see them. ADR-0065.
+    // call sites do not see them.
 
     /// Paginated node-id enumeration, ascending by id (UUID v7
     /// mint-time order). Operator-side admin / migration path.

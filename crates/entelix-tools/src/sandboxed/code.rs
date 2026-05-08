@@ -152,7 +152,7 @@ impl Tool for SandboxedCodeTool {
         };
         let output = self.sandbox.run_code(spec, ctx.core()).await?;
         // Lean LLM-facing payload — see SandboxedShellTool for the
-        // success/failure split rationale (ADR-0024 §7).
+        // success/failure split rationale.
         if output.succeeded() {
             Ok(json!({"stdout": output.stdout_lossy()}))
         } else {

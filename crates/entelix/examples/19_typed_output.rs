@@ -5,8 +5,7 @@
 //! Build: `cargo build --example 19_typed_output -p entelix`
 //! Run:   `cargo run   --example 19_typed_output -p entelix`
 //!
-//! Demonstrates three complementary entry points (ADR-0090 +
-//! ADR-0091 + ADR-0096):
+//! Demonstrates three complementary entry points:
 //!
 //! 1. `complete_typed::<Reply>` — one-shot typed parsing. The
 //!    response is decoded into the operator's `Reply` struct via

@@ -1,5 +1,5 @@
 //! `ToolToRunnableAdapter` integration test — proves a `Tool` composes into
-//! a `.pipe()` chain (closing the ADR-0011 promise).
+//! a `.pipe()` chain (closing the promise).
 
 #![allow(
     clippy::unwrap_used,

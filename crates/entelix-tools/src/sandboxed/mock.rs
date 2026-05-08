@@ -220,7 +220,7 @@ mod tests {
             .await
             .unwrap();
         // Lean success payload: stdout only, no exit_code or
-        // duration metadata (ADR-0024 §7).
+        // duration metadata.
         assert!(out["stdout"].as_str().unwrap().contains("file_a"));
         assert!(out.get("duration_ms").is_none());
         assert!(out.get("exit_code").is_none());

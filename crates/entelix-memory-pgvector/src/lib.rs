@@ -3,7 +3,7 @@
 //! Concrete [`entelix_memory::VectorStore`] implementation backed by
 //! Postgres + the pgvector extension.
 //!
-//! Companion to the trait-only [`entelix_memory`] crate (ADR-0008):
+//! Companion to the trait-only [`entelix_memory`] crate:
 //! sqlx + pgvector specifics live here so users who plug their own
 //! `VectorStore` pay nothing in compile time.
 //!

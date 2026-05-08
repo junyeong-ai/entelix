@@ -147,7 +147,7 @@ pub enum GraphEvent {
     /// scopes the audit trail; this event ties the parent's
     /// position to the child's `sub_thread_id` so a replay can walk
     /// from parent to child without keying on heuristic timing.
-    /// Managed-agent shape (ADR-0035) — every `Subagent::execute`
+    /// Managed-agent shape — every `Subagent::execute`
     /// call surfaces here as the canonical "brain passes hand"
     /// audit boundary.
     SubAgentInvoked {
@@ -213,7 +213,7 @@ pub enum GraphEvent {
     /// per-run; the operator-facing `Error` continues to flow
     /// through the typed dispatch return as well, so the audit
     /// channel's role here is the durable record, not the only
-    /// breach signal (ADR-0083).
+    /// breach signal.
     UsageLimitExceeded {
         /// Axis that breached — `"requests"`, `"input_tokens"`,
         /// `"output_tokens"`, `"total_tokens"`, or `"tool_calls"`.

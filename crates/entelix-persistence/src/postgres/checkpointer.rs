@@ -256,7 +256,7 @@ mod tests {
     /// or a corrupted backup) cannot construct a tenantless
     /// `Checkpoint` whose RLS-filter comparison would then run
     /// against `''` and silently widen the result set
-    /// (invariant 11 / ADR-0074).
+    /// (invariant 11 /).
     #[test]
     fn try_into_checkpoint_rejects_empty_persisted_tenant_id() {
         let row = CheckpointRow {

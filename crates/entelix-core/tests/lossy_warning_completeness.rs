@@ -5,7 +5,7 @@
 //! variant *or* emits exactly one `LossyEncode` warning naming the
 //! variant's IR path. **Silent loss fails the test.**
 //!
-//! The matrix here is the truth table for ADR-0026; updating IR variants
+//! The matrix here is the truth table for; updating IR variants
 //! or codec native support without updating this test is rejected by CI.
 
 #![allow(clippy::unwrap_used, clippy::expect_used)]

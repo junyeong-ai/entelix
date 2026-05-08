@@ -7,7 +7,7 @@
 //! the user-level mental model expects: knowledge stored as an
 //! evolving entity-relationship graph, queryable by traversal.
 //!
-//! Trait + reference impl pattern (ADR-0008): the trait is the
+//! Trait + reference impl pattern: the trait is the
 //! contract any backend honours (Neo4j, ArangoDB, in-Postgres
 //! recursive CTE, …), and [`InMemoryGraphMemory`] is the embedded
 //! reference impl — hand-rolled with `BTreeMap` adjacency lists, no
@@ -315,7 +315,7 @@ where
 
     /// Drop one edge by id. Idempotent — deleting an absent
     /// edge succeeds. Required — backends that don't support
-    /// edge deletion are degenerate; ADR-0046 closed the
+    /// edge deletion are degenerate; closed the
     /// CRUD-completeness gap.
     async fn delete_edge(
         &self,

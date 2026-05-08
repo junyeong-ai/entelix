@@ -324,7 +324,7 @@ async fn interrupt_after_pauses_after_node_completes() -> Result<()> {
 async fn approve_tool_command_attaches_pending_approval_decisions() -> Result<()> {
     // Verify `Command::ApproveTool` writes the operator's decision
     // into the resumed dispatch's ctx via `PendingApprovalDecisions`
-    // (ADR-0072). A node that reads the extension must observe the
+    //. A node that reads the extension must observe the
     // decision after resume.
     use entelix_core::{ApprovalDecision, PendingApprovalDecisions};
 

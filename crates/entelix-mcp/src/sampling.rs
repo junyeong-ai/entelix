@@ -206,7 +206,7 @@ pub struct SamplingResponse {
 }
 
 /// Async source-of-truth for sampling completions. Mirrors
-/// the `*Provider` taxonomy (ADR-0010) — async, single-purpose,
+/// the `*Provider` taxonomy — async, single-purpose,
 /// replaceable.
 ///
 /// Operators wire one provider per server through

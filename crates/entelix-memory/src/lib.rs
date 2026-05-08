@@ -6,7 +6,7 @@
 //! patterns: `BufferMemory`, `SummaryMemory`, `EntityMemory`,
 //! `SemanticMemory<E, V>`, `EpisodicMemory<V>`. Concrete `Embedder` /
 //! `VectorStore` / `Retriever` impls ship in companion crates
-//! (ADR-0008).
+//!.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc(html_root_url = "https://docs.rs/entelix-memory/1.0.0-rc.2")]

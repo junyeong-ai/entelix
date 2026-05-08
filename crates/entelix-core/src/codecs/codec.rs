@@ -97,7 +97,7 @@ pub trait Codec: Send + Sync + 'static {
     /// dispatch shape for `model`. Called once at codec-construction
     /// time per request — never per-delta or per-retry, so the
     /// resolved strategy is part of the SessionGraph event log's
-    /// deterministic-replay surface (ADR-0001 §"events SSoT").
+    /// deterministic-replay surface.
     ///
     /// Default returns [`OutputStrategy::Native`] — most codecs ship
     /// vendor-native structured output (OpenAI Responses

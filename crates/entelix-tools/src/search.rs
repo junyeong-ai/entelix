@@ -2,7 +2,7 @@
 //!
 //! Concrete providers (Brave / Tavily / Perplexity / SerpAPI / …)
 //! are deferred to 1.1 — same trait-only policy as
-//! [`entelix_memory::Embedder`] (ADR-0008). Operators wire whatever
+//! [`entelix_memory::Embedder`]. Operators wire whatever
 //! provider matches their compliance/cost stance and the SDK stays
 //! out of the credentials game.
 //!

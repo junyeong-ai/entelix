@@ -395,7 +395,7 @@ async fn wake_update_replaces_checkpointed_state() {
 
 #[tokio::test]
 async fn wake_approve_tool_attaches_pending_decisions_extension() {
-    // Regression for ADR-0072: server `/wake` exposes the typed
+    // Regression for: server `/wake` exposes the typed
     // `ApproveTool` resume primitive. The runnable inspects the
     // ctx-extension to verify the decision threaded through.
     use entelix_core::approval::{ApprovalDecision, PendingApprovalDecisions};

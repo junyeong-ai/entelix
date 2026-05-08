@@ -5,7 +5,7 @@
 //!
 //! `ChatModel` itself is defined in `entelix-core` (it depends only on
 //! `Codec` + `Transport`). This module lives here because
-//! `entelix-runnable` owns the `Runnable` trait — see ADR-0011.
+//! `entelix-runnable` owns the `Runnable` trait — see
 
 use entelix_core::chat::ChatModel;
 use entelix_core::codecs::Codec;

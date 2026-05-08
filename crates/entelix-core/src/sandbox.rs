@@ -1,6 +1,6 @@
 //! `Sandbox` — sandbox-agnostic isolated execution environment.
 //!
-//! Per ADR-0024 §3 (invariant 9 reinterpretation): first-party
+//! Per (invariant 9 reinterpretation): first-party
 //! crates touch zero `std::fs` / `std::process`; **all** filesystem
 //! and shell intent flows through this trait. The trait is
 //! `entelix-core` 1st-class so [`crate::tools::Tool`] adapters can

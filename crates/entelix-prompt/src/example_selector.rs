@@ -10,7 +10,7 @@
 //!   rendered length fits a configurable character cap.
 //!
 //! A semantic selector (embedding-similarity) is deferred to 1.1 alongside
-//! concrete `Embedder` impls (ADR-0008).
+//! concrete `Embedder` impls.
 
 use std::collections::HashMap;
 use std::sync::Arc;

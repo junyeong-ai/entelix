@@ -8,7 +8,7 @@
 //! - [`McpManager`] — register servers, dispatch tool calls + roots
 //!   notifications. Pool is keyed by `(TenantId, ServerName)` so
 //!   cross-tenant data leakage is structurally impossible (F9
-//!   mitigation; invariant 11 strengthening per ADR-0017).
+//!   mitigation; invariant 11 strengthening).
 //! - [`McpServerConfig`] — HTTP-only by design (invariant 9 forbids
 //!   process spawn). Operators wanting stdio MCP servers wrap them
 //!   externally and expose an HTTP endpoint.

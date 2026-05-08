@@ -1,6 +1,6 @@
 //! `Embedder`, `Retriever`, `VectorStore` traits + `Document`.
 //!
-//! Per ADR-0008, entelix 1.0 ships only the traits. Concrete impls
+//! Per, entelix 1.0 ships only the traits. Concrete impls
 //! (`OpenAI`/Voyage/Cohere embedders, qdrant/lancedb vector stores,
 //! BM25 retrievers) land in 1.1 companion crates.
 

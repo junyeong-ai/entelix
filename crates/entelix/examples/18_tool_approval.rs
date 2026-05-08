@@ -8,9 +8,9 @@
 //!
 //! 1. `Approver::decide` returns
 //!    [`ApprovalDecision::AwaitExternal`] for a high-stakes tool
-//!    call. `ApprovalLayer` (ADR-0070) raises
+//!    call. `ApprovalLayer` raises
 //!    `Error::Interrupted { payload }` with a structured
-//!    `kind = "approval_pending"` (ADR-0071/0072) so the agent
+//!    `kind = "approval_pending"` so the agent
 //!    run pauses cleanly and the operator gets the pending
 //!    dispatch context for out-of-band review.
 //!
@@ -117,7 +117,7 @@ impl Approver for AlwaysAwaitExternal {
 #[tokio::main]
 async fn main() -> Result<()> {
     // ── Setup: registry with the sensitive-action tool, gated by
-    //    the always-await approver via ApprovalLayer (ADR-0070).
+    //    the always-await approver via ApprovalLayer.
     let approver: Arc<dyn Approver> = Arc::new(AlwaysAwaitExternal);
     let registry = ToolRegistry::new()
         .layer(ApprovalLayer::new(Arc::clone(&approver)))

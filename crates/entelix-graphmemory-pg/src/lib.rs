@@ -4,7 +4,7 @@
 //! Postgres (no extension required) — typed nodes + typed,
 //! timestamped edges keyed by `entelix_memory::Namespace`.
 //!
-//! Companion to the trait-only [`entelix_memory`] crate (ADR-0008):
+//! Companion to the trait-only [`entelix_memory`] crate:
 //! sqlx specifics live here so users who plug their own
 //! `GraphMemory` pay nothing in compile time.
 //!
@@ -28,7 +28,7 @@
 //! the B-tree index that anchor relies on.
 //!
 //! Defense-in-depth via Postgres row-level security (analogous to
-//! ADR-0041's treatment of the `entelix-persistence` tables) is
+//!'s treatment of the `entelix-persistence` tables) is
 //! reserved for a follow-up slice — operators that need it today
 //! enable it externally with a policy that consults
 //! `current_setting('entelix.tenant_id', true)` against the

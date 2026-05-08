@@ -9,9 +9,9 @@
 //! `D` defaults to `()` so deps-less tools stay `Tool` without an
 //! annotation. Tools that need typed operator-side handles (DB
 //! pool, HTTP client, tenant config) declare `Tool<MyDeps>` and
-//! reach for them via `ctx.deps()`. ADR-0084 + ADR-0085.
+//! reach for them via `ctx.deps()`. .
 //!
-//! Per ADR-0011, `Tool` does NOT extend `Runnable`. The
+//! Per, `Tool` does NOT extend `Runnable`. The
 //! `entelix-runnable::adapter::ToolToRunnableAdapter` provides the
 //! bridge when composition (`.pipe()`) is needed.
 

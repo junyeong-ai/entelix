@@ -1,5 +1,5 @@
 //! Regression tests for `complete_typed<O>` schema-mismatch retry
-//! loop (slice 106 / ADR-0090). Operator wires
+//! loop (slice 106 /). Operator wires
 //! `with_validation_retries(n)` on the chat model; schema-mismatch
 //! `Error::Serde` failures reflect the parse diagnostic to the
 //! model as a corrective user message and re-invoke up to `n`

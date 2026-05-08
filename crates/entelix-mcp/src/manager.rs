@@ -7,7 +7,7 @@
 //!   independent clients. Tenant A's bearer token is structurally
 //!   unable to leak into tenant B's call because the pool entries
 //!   are different `Arc<dyn McpClient>`s. (Invariant 11
-//!   strengthening; see ADR-0017.)
+//!   strengthening; see)
 //!
 //! - **Lazy provisioning** (Anthropic managed-agent shape) — the
 //!   builder records [`McpServerConfig`]s but never opens a

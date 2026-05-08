@@ -1,6 +1,6 @@
 //! `CacheControl` IR expansion coverage — per-block, per-tool,
 //! plus the `cache_key` and `cached_content` request-level fields
-//! (ADR-0031).
+//!.
 //!
 //! Verifies that:
 //!

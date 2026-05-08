@@ -537,7 +537,7 @@ where
             // requests a per-node write. Off skips writes entirely
             // even with a checkpointer bound (useful for ephemeral
             // graphs that share a backend with persistent ones).
-            // tenant_id always present per ADR-0017.
+            // tenant_id always present.
             let granularity_writes = matches!(
                 self.checkpoint_granularity,
                 crate::state_graph::CheckpointGranularity::PerNode

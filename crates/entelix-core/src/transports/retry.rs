@@ -128,13 +128,13 @@ impl RetryDecision {
 /// would catch it, but a future variant inserted between
 /// `Provider` and the wildcard could accidentally be classified
 /// retryable; the explicit arm pins budget breach as terminal
-/// regardless of what new variants land (ADR-0082).
+/// regardless of what new variants land.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct DefaultRetryClassifier;
 
 impl RetryClassifier for DefaultRetryClassifier {
     // The explicit `UsageLimitExceeded` arm is intentional defence
-    // (ADR-0082): the wildcard below would absorb the variant
+    //: the wildcard below would absorb the variant
     // identically today, but a future variant inserted between
     // `Provider` and the wildcard could accidentally land budget
     // breach on the retry path. Clippy's `match_same_arms` lint
@@ -544,7 +544,7 @@ mod tests {
         // changing the outcome. Explicit arm pins the
         // classification so a future variant inserted between
         // `Provider` and the wildcard cannot accidentally land
-        // budget breach on the retry path (ADR-0082).
+        // budget breach on the retry path.
         use crate::run_budget::UsageLimitAxis;
         let c = DefaultRetryClassifier;
         let err = Error::UsageLimitExceeded {

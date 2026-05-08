@@ -94,6 +94,5 @@ Live tests cost money. Bound them:
 - Set `max_tokens` low (50–200).
 - Run only on demand, not in CI loops.
 
-Dashboards built from `gen_ai.usage.cost` (see
-`docs/observability/`) surface the spend per test if you forward
-traces during the run.
+Dashboards built from `gen_ai.usage.cost` surface the spend per
+test if you forward traces during the run.

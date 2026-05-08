@@ -42,7 +42,7 @@
 //! the error branch, otherwise a network failure would still
 //! drain the budget). A budget breach surfaces as
 //! [`crate::Error::UsageLimitExceeded`] with the breaching axis
-//! and observed value. ADR-0080.
+//! and observed value.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};

@@ -1,7 +1,7 @@
 //! Strict-mode preflight + native structured-output wire-shape
 //! coverage.
 //!
-//! Per ADR-0024 §5 + ADR-0031, structured outputs ride native
+//! Per +, structured outputs ride native
 //! vendor channels on every codec that supports them (Anthropic
 //! `output_config.format`, Bedrock-routed Anthropic
 //! `additionalModelRequestFields.output_config`, Gemini

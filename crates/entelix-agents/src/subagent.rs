@@ -198,7 +198,7 @@ where
     /// — when [`SubagentBuilder::with_skills`] was called — the
     /// three LLM-facing skill tools (`list_skills`, `activate_skill`,
     /// `read_skill_resource`) backed by the inherited skill registry.
-    /// See ADR-0027 §"Auto-wire" and ADR-0035
+    /// See and
     /// §"Sub-agent layer-stack inheritance". Sub-agents with no
     /// `with_skills` call build the registry without skill tools,
     /// matching their declared authority.
@@ -225,7 +225,7 @@ where
         // When an approver is configured, wrap the (skills-augmented)
         // registry with `ApprovalLayer` so every tool dispatch this
         // sub-agent issues passes through `Approver::decide` first.
-        // Mirrors `ReActAgentBuilder::build` (ADR-0070) — operators
+        // Mirrors `ReActAgentBuilder::build` — operators
         // get HITL from `Subagent::with_approver(approver)` alone,
         // no extra registry wiring step.
         let registry = match &approver {
@@ -467,7 +467,7 @@ where
 /// final assistant text under `{"output": "..."}`. The full message
 /// trail is reachable via the agent's event sink — observability
 /// stays on the audit channel rather than the LLM-facing payload
-/// (ADR-0024 §7 lean-output rule).
+///.
 pub struct SubagentTool {
     inner: crate::agent::Agent<ReActState>,
     metadata: ToolMetadata,
@@ -542,7 +542,7 @@ impl Tool for SubagentTool {
         let child_ctx = ctx.core().clone().with_thread_id(sub_thread_id);
         let initial = ReActState::from_user(task);
         let final_state = self.inner.invoke(initial, &child_ctx).await?;
-        // Surface only the terminal assistant text — see ADR-0024 §7
+        // Surface only the terminal assistant text — see
         // for the lean-output rationale. The full transcript is
         // available to the parent's event sink via the agent's
         // lifecycle events.

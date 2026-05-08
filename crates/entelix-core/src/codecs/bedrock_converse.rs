@@ -363,7 +363,7 @@ fn is_bedrock_anthropic_adaptive_only(model: &str) -> bool {
 
 /// Translate the cross-vendor [`ReasoningEffort`] knob onto the
 /// Bedrock Converse `additionalModelRequestFields.thinking`
-/// passthrough. Reuses the Anthropic mapping (per ADR-0078) for
+/// passthrough. Reuses the Anthropic mapping () for
 /// Anthropic-family models on Bedrock; non-Anthropic models emit
 /// `LossyEncode` and drop the knob.
 fn encode_bedrock_thinking(

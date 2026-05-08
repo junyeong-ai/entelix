@@ -1,5 +1,5 @@
 //! Property-based regression for `Namespace::render` ↔ `Namespace::parse`
-//! invertibility (ADR-0039).
+//! invertibility.
 //!
 //! The unit-test suite in `src/namespace.rs` covers hand-picked cases —
 //! empty scope segments, segments containing the `:` delimiter, segments

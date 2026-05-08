@@ -1,4 +1,4 @@
-//! Sandbox-backed `Tool` adapters per ADR-0024 §3.
+//! Sandbox-backed `Tool` adapters.
 //!
 //! All tool execution that needs filesystem or shell access flows
 //! through [`entelix_core::sandbox::Sandbox`] — none of this module

@@ -257,7 +257,7 @@ mod tests {
     /// `PersistenceError::Backend("invalid persisted tenant_id …")`
     /// rather than constructing a tenantless `Checkpoint` whose
     /// downstream key comparison would silently mis-route
-    /// (invariant 11 / ADR-0074).
+    /// (invariant 11 /).
     #[test]
     fn unwrap_envelope_rejects_empty_persisted_tenant_id() {
         let envelope = serde_json::json!({

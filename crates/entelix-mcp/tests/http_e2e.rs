@@ -235,7 +235,7 @@ async fn manager_routes_tool_call_through_adapter() {
 
     // Custom prefix — operator integrating entelix-managed agents
     // with a wider tool catalogue that already namespaces by team
-    // / surface. ADR-0097.
+    // / surface.
     let custom =
         McpToolAdapter::new(manager.clone(), "mock", tools[0].clone()).with_prefix("platform");
     assert_eq!(custom.metadata().name, "platform:mock:echo");

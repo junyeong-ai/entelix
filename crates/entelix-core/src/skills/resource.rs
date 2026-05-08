@@ -25,7 +25,7 @@ pub trait SkillResource: Send + Sync + std::fmt::Debug {
 ///
 /// Text resources are returned in full to the LLM; binary resources
 /// surface as metadata only at the tool-result boundary
-/// ([`crate::skills`] §"Three built-in tools" in ADR-0027). Embedding
+/// ([`crate::skills`] §"Three built-in tools" in). Embedding
 /// raw bytes in conversation context would consume tens of thousands
 /// of tokens for medium-sized assets — the metadata-only LLM-facing
 /// shape preserves the cost discipline progressive disclosure exists

@@ -89,7 +89,7 @@ pub(crate) async fn bootstrap(
 /// Enable + FORCE ROW LEVEL SECURITY on `table` and install the
 /// `tenant_isolation` policy (USING + WITH CHECK on
 /// `current_setting('entelix.tenant_id', true)`). Mirrors the
-/// `entelix-graphmemory-pg` treatment from ADR-0043 — companion-
+/// `entelix-graphmemory-pg` treatment from — companion-
 /// crate RLS pattern (defense in depth for invariant #11).
 ///
 /// Idempotent: `ENABLE` and `FORCE` are no-ops on already-enabled

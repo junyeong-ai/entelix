@@ -1,6 +1,6 @@
 //! Integration tests for [`CacheControl`] on [`SystemBlock`] and
 //! [`ResponseFormat`] on [`ModelRequest`]. Verifies per-codec
-//! native handling vs `LossyEncode` warning emission per ADR-0024 §5.
+//! native handling vs `LossyEncode` warning emission.
 
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 
@@ -204,7 +204,7 @@ fn anthropic_native_response_format_emits_output_config() {
     let request = ModelRequest {
         model: "claude-opus-4-7".into(),
         messages: vec![Message::user("hi")],
-        // Per ADR-0079 the Anthropic auto resolver picks `Tool`
+        // Per the Anthropic auto resolver picks `Tool`
         // (forced-tool is the more mature surface). This test
         // exercises the explicit `Native` path; the auto path is
         // covered by the dedicated forced-tool dispatch tests.
@@ -254,7 +254,7 @@ fn bedrock_native_response_format_routes_through_additional_model_request_fields
     let request = ModelRequest {
         model: "anthropic.claude-opus-4".into(),
         messages: vec![Message::user("hi")],
-        // Bedrock-Anthropic auto-resolves to `Tool` per ADR-0079;
+        // Bedrock-Anthropic auto-resolves to `Tool`;
         // the native passthrough is covered here explicitly.
         response_format: Some(ResponseFormat::strict(schema).with_strategy(OutputStrategy::Native)),
         ..ModelRequest::default()

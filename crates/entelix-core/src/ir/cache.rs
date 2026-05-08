@@ -1,10 +1,10 @@
 //! Prompt-cache control — vendor-agnostic IR knob.
 //!
-//! Per ADR-0024 §5: a vendor knob enters IR only when 2+ shipping
+//! Per: a vendor knob enters IR only when 2+ shipping
 //! codecs natively support it. Cache control qualifies — Anthropic
 //! Messages and Bedrock Converse (for Claude models) both expose it
 //! natively. Codecs that don't support it emit
-//! [`crate::ir::ModelWarning::LossyEncode`] per ADR-0006 — silent
+//! [`crate::ir::ModelWarning::LossyEncode`] — silent
 //! drop is forbidden.
 //!
 //! ## TTL choices

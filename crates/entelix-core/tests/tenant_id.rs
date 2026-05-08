@@ -1,5 +1,5 @@
 //! `ExecutionContext::tenant_id` defaults + override (invariant 11
-//! strengthening per ADR-0017).
+//! strengthening).
 
 use entelix_core::{DEFAULT_TENANT_ID, ExecutionContext, TenantId};
 

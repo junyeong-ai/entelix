@@ -12,7 +12,7 @@
 //!    exposes the standard `/v1/threads/{id}/...` HTTP surface.
 //! 3. Hit the service through `tower::ServiceExt::oneshot` — no
 //!    socket, no real HTTP server. The response carries the
-//!    `tenant_id` extracted from the request header (ADR-0017),
+//!    `tenant_id` extracted from the request header,
 //!    proving multi-tenant header propagation works end-to-end.
 //!
 //! Production swap-ins (one-line each):

@@ -9,7 +9,7 @@
 //!   correlation; `OTel` sinks stamp it onto `entelix.run_id` span
 //!   attributes without the agent itself reading the field.
 //!
-//! ## Lifecycle contract (ADR-0029)
+//! ## Lifecycle contract
 //!
 //! Every run emits `Started{run_id}` and exactly one of
 //! `Complete{run_id, ...}` or `Failed{run_id, ...}` with the same

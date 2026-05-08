@@ -1,6 +1,6 @@
 //! Tenant-scoped session-variable helper for the RLS-enforced
 //! `graph_nodes` + `graph_edges` tables (invariant #11 defense
-//! in depth, mirroring ADR-0041's treatment of the
+//! in depth, mirroring's treatment of the
 //! `entelix-persistence` tables).
 //!
 //! Every tenant-scoped query opens a transaction, calls

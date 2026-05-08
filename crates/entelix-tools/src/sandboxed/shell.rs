@@ -115,7 +115,7 @@ impl Tool for SandboxedShellTool {
         };
         let output = self.sandbox.run_command(spec, ctx.core()).await?;
 
-        // Lean LLM-facing payload (ADR-0024 §7):
+        // Lean LLM-facing payload:
         // - Success: stdout text only — the model reasons over output.
         // - Failure: exit_code + stderr + stdout — the model needs the
         //   error class to recover.

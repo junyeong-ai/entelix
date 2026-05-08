@@ -1,6 +1,6 @@
 //! Tenant-scoped session-variable helper for the RLS-enforced
 //! `entelix_vectors` table (invariant #11 defense in depth,
-//! mirroring ADR-0041 + ADR-0043's treatment of the
+//! mirroring 's treatment of the
 //! `entelix-persistence` and `entelix-graphmemory-pg` tables).
 //!
 //! Every tenant-scoped query opens a transaction, calls
@@ -11,8 +11,8 @@
 //! connections that return to the pool carry no leftover state.
 //!
 //! Per-companion replication of the helper (rather than a
-//! centralised crate) is deliberate (ADR-0043): `entelix-memory`
-//! is sqlx-free by ADR-0008, and inventing a new utility crate
+//! centralised crate) is deliberate: `entelix-memory`
+//! is sqlx-free by, and inventing a new utility crate
 //! for one helper is over-engineered. The 6-line function is
 //! trivial and identical across companions.
 

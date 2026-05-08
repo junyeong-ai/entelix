@@ -34,7 +34,7 @@ file for the full walkthrough.
 | 09 | `09_multi_codec.rs` | Same `Vec<Message>` through every shipped codec | (default) |
 | 10 | `10_streaming.rs` | Token-level `StreamMode::Messages` from a fake SSE source | (default) |
 | 11 | `11_durable_session.rs` | Pod-kill / resume — invariant 2 (stateless harness) | (default) |
-| 12 | `12_compat_matrix.rs` | Sparse codec×transport pairing matrix (ADR-0018) | `aws`, `gcp`, `azure` |
+| 12 | `12_compat_matrix.rs` | Sparse codec×transport pairing matrix | `aws`, `gcp`, `azure` |
 | 13 | `13_mcp_tools.rs` | MCP-published tool through the `Tool` adapter, F9 tenant pool isolation | `mcp` |
 | 14 | `14_serve_agent.rs` | `AgentRouterBuilder` HTTP server end-to-end | `server` |
 | 15 | `15_production_workflow.rs` | Composed end-to-end agent workflow with policy/observability | `policy` |

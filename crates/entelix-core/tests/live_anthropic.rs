@@ -20,8 +20,6 @@
 //! cents-per-thousand range; expected cost per run is well under
 //! $0.001.
 //!
-//! See `docs/live-api-verification.md` for the full vendor matrix.
-//!
 //! ## What is verified
 //!
 //! 1. The codec encodes a minimal `ModelRequest` to bytes the

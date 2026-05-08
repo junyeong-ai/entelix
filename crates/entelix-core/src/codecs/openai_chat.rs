@@ -204,7 +204,7 @@ fn apply_provider_extensions(
         // Responses API only. Emit the typed loss so operators
         // routing the same request across both endpoints see the
         // miss instead of debugging a silently-ignored field
-        // (invariant 6, ADR-0078).
+        // (invariant 6).
         warnings.push(ModelWarning::LossyEncode {
             field: "reasoning_effort".into(),
             detail: "OpenAI Chat Completions has no reasoning / thinking knob — drop the field; \
@@ -318,7 +318,7 @@ fn encode_messages(request: &ModelRequest, warnings: &mut Vec<ModelWarning>) -> 
         // OpenAI Chat has no native per-block cache directive —
         // concat block text into a single system message and emit
         // LossyEncode when any block was cached so callers see the
-        // capability mismatch (ADR-0006 / ADR-0024 §5).
+        // capability mismatch).
         if request.system.any_cached() {
             warnings.push(ModelWarning::LossyEncode {
                 field: "system.cache_control".into(),

@@ -5,6 +5,16 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      run-live:
+        description: "Run --ignored live integration tests against vendor APIs."
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
 
 env:
   CARGO_TERM_COLOR: always
@@ -19,16 +29,17 @@ concurrency:
 jobs:
   # ── Fast pre-flight: fmt + every static-analysable invariant ───────────────
   # `cargo xtask invariants` runs every gate that doesn't require network or
-  # heavy cargo subprocesses. Each gate is a typed-AST visitor — see ADR-0073
-  # and `xtask/src/invariants/` for the per-invariant predicates.
+  # heavy cargo subprocesses. Each gate is a typed-AST visitor; see
+  # `xtask/src/invariants/` for the per-invariant predicates.
   preflight:
     name: preflight (fmt + invariants)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Rust toolchain (rustfmt only)
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.94.0
         with:
           components: rustfmt
 
@@ -48,14 +59,17 @@ jobs:
     name: supply-chain (cargo audit + cargo deny)
     needs: preflight
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@1.94.0
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ubuntu-latest
       - name: Install cargo-audit + cargo-deny
-        run: cargo install cargo-audit cargo-deny --locked --quiet
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit,cargo-deny
       - name: cargo xtask supply-chain
         run: cargo xtask supply-chain
 
@@ -64,15 +78,16 @@ jobs:
     name: build (${{ matrix.os }})
     needs: preflight
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.94.0
         with:
           components: clippy
 
@@ -93,7 +108,7 @@ jobs:
       # declaration, Cargo silently skips the example; without it,
       # the build fails with E0432 unresolved import. The
       # `--all-features` build above can't catch this — every gate
-      # is satisfied by accident. ADR-0094.
+      # is satisfied by accident.
       - name: cargo build --examples -p entelix (no-features regression gate)
         run: cargo build --examples -p entelix
 
@@ -105,9 +120,10 @@ jobs:
     name: docs (rustdoc -D warnings)
     needs: preflight
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@1.94.0
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ubuntu-latest
@@ -121,9 +137,10 @@ jobs:
     name: feature-matrix (each facade feature compiles alone)
     needs: preflight
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@1.94.0
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ubuntu-latest
@@ -135,30 +152,35 @@ jobs:
     name: public-API drift
     needs: preflight
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@1.94.0
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ubuntu-latest
       - name: Install cargo-public-api
-        run: cargo install cargo-public-api --locked --quiet
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-public-api
       - name: cargo xtask public-api
         run: cargo xtask public-api
 
   # ── Live integration tests (opt-in; requires API keys) ─────────────────────
-  # Triggered only on workflow_dispatch or when the commit message contains
-  # `[live]`. Costs real money — `--ignored` tests hit the live vendor APIs.
+  # Triggered only when `workflow_dispatch` is invoked with `run-live: true`,
+  # or when a commit message contains `[live]`. Costs real money — `--ignored`
+  # tests hit the live vendor APIs.
   live:
     name: live integration (--ignored)
     if: >
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run-live) ||
       contains(github.event.head_commit.message, '[live]')
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@1.94.0
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ubuntu-latest

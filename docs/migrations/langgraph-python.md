@@ -375,7 +375,7 @@ the layer ecosystem, which stays `D`-free.
 |---|---|
 | `create_react_agent(model, tools)` | `create_react_agent(model, tools)?` |
 | `create_supervisor(...)` | `create_supervisor_agent(router, agents)?` |
-| (no exact equivalent) | `create_hierarchical_agent(router, teams)?` |
+| Nested supervisor (supervisor of supervisors) | `create_supervisor_agent` over teams adapted with `team_from_supervisor` |
 
 ## HTTP server
 

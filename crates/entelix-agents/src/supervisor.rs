@@ -220,3 +220,31 @@ where
         .with_runnable(compiled)
         .build()
 }
+
+/// Adapt a supervisor [`Agent<SupervisorState>`] into a
+/// `Runnable<Vec<Message>, Message>` so it can be embedded as one
+/// `AgentEntry` inside a parent supervisor — the nested-supervisor
+/// pattern.
+///
+/// The adapter feeds the parent's conversation into the nested
+/// supervisor's own state, runs it to completion, and returns the
+/// last message — typically the final assistant reply.
+pub fn team_from_supervisor(team: Agent<SupervisorState>) -> impl Runnable<Vec<Message>, Message> {
+    let team = Arc::new(team);
+    RunnableLambda::new(move |messages: Vec<Message>, ctx: ExecutionContext| {
+        let team = team.clone();
+        async move {
+            let state = SupervisorState {
+                messages,
+                last_speaker: None,
+                next_speaker: None,
+            };
+            let final_state = team.execute(state, &ctx).await?.into_state();
+            final_state.messages.last().cloned().ok_or_else(|| {
+                Error::invalid_request(
+                    "team_from_supervisor: team finished with empty conversation",
+                )
+            })
+        }
+    })
+}

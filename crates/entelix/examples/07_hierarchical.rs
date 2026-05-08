@@ -15,7 +15,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use entelix::ir::{Message, Role};
 use entelix::{
     AgentEntry, ExecutionContext, Result, Runnable, RunnableLambda, SupervisorDecision,
-    SupervisorState, create_hierarchical_agent, create_supervisor_agent, team_from_supervisor,
+    SupervisorState, create_supervisor_agent, team_from_supervisor,
 };
 
 fn one_shot_router(allow: &'static str) -> RunnableLambda<Vec<Message>, SupervisorDecision> {
@@ -68,7 +68,7 @@ async fn main() -> Result<()> {
         }
     });
 
-    let graph = create_hierarchical_agent(
+    let graph = create_supervisor_agent(
         top_router,
         vec![
             AgentEntry::new("research-team", team_from_supervisor(research_team)),

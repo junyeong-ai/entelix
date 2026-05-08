@@ -15,8 +15,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use async_trait::async_trait;
 use entelix_agents::{
     AgentEntry, ChatState, ReActAgentBuilder, ReActState, Subagent, SubagentTool,
-    SupervisorDecision, SupervisorState, create_chat_agent, create_hierarchical_agent,
-    create_react_agent, create_supervisor_agent, team_from_supervisor,
+    SupervisorDecision, SupervisorState, create_chat_agent, create_react_agent,
+    create_supervisor_agent, team_from_supervisor,
 };
 use entelix_core::ir::{ContentPart, Message, Role};
 use entelix_core::tools::{Tool, ToolMetadata};
@@ -270,7 +270,7 @@ async fn hierarchical_routes_via_team_supervisors() -> Result<()> {
         }
     });
 
-    let graph = create_hierarchical_agent(
+    let graph = create_supervisor_agent(
         top_router,
         vec![AgentEntry::new("research-team", team_runnable)],
     )?;

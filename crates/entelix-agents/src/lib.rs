@@ -8,9 +8,10 @@
 //!   lifecycle observers. The production-facing surface every
 //!   consumer constructs.
 //! - **Recipes** — [`create_react_agent`], [`create_supervisor_agent`],
-//!   [`create_hierarchical_agent`], [`create_chat_agent`]. Each
-//!   returns a ready-to-stream `Agent<StateType>` so common
-//!   patterns are a single call.
+//!   [`create_chat_agent`]. Each returns a ready-to-stream
+//!   `Agent<StateType>` so common patterns are a single call.
+//!   Nested-supervisor topologies wire a [`team_from_supervisor`]
+//!   adapter into a parent [`create_supervisor_agent`].
 //!
 //! Sub-agent permissions follow F7 (default-filtered hand) via
 //! [`Subagent`].
@@ -33,7 +34,6 @@
 
 pub(crate) mod agent;
 mod chat_agent;
-mod hierarchical;
 mod react_agent;
 mod state;
 mod subagent;
@@ -48,11 +48,11 @@ pub use agent::{
     ToolEventLayer, ToolEventService,
 };
 pub use chat_agent::{build_chat_graph, create_chat_agent};
-pub use hierarchical::{create_hierarchical_agent, team_from_supervisor};
 pub use react_agent::{ReActAgentBuilder, build_react_graph, create_react_agent};
 pub use state::{ChatState, ReActState, SupervisorState};
 pub use subagent::{Subagent, SubagentBuilder, SubagentMetadata, SubagentTool};
 pub use summarizer::RunnableToSummarizerAdapter;
 pub use supervisor::{
     AgentEntry, SupervisorDecision, build_supervisor_graph, create_supervisor_agent,
+    team_from_supervisor,
 };

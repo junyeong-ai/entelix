@@ -66,7 +66,7 @@ pub use entelix_agents::{
     SupervisorDecision, SupervisorState,
     ToolApprovalEventSink, ToolApprovalEventSinkHandle, ToolEventLayer, ToolEventService,
     build_chat_graph, build_react_graph, build_supervisor_graph, create_chat_agent,
-    create_hierarchical_agent, create_react_agent, create_supervisor_agent, team_from_supervisor,
+    create_react_agent, create_supervisor_agent, team_from_supervisor,
 };
 pub use entelix_cloud::CloudError;
 #[cfg(feature = "aws")]

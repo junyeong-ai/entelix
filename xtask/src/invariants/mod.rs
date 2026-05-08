@@ -4,6 +4,7 @@
 pub(crate) mod dead_deps;
 pub(crate) mod doc_canonical_paths;
 pub(crate) mod facade_completeness;
+pub(crate) mod facade_curation;
 pub(crate) mod feature_matrix;
 pub(crate) mod lock_ordering;
 pub(crate) mod magic_constants;

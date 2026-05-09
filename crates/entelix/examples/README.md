@@ -1,8 +1,8 @@
 # entelix — examples catalogue
 
-Twenty-one runnable, deterministic examples. None hit a real LLM — every
-example uses an in-process model stub or a pre-canned wire response so it
-runs in CI without API keys. Read the source and the doc-comment in each
+Runnable, deterministic examples. None hit a real LLM — every example
+uses an in-process model stub or a pre-canned wire response so it runs
+in CI without API keys. Read the source and the doc-comment in each
 file for the full walkthrough.
 
 ## Reading order
@@ -35,7 +35,7 @@ file for the full walkthrough.
 | 10 | `10_streaming.rs` | Token-level `StreamMode::Messages` from a fake SSE source | (default) |
 | 11 | `11_durable_session.rs` | Pod-kill / resume — invariant 2 (stateless harness) | (default) |
 | 12 | `12_compat_matrix.rs` | Sparse codec×transport pairing matrix | `aws`, `gcp`, `azure` |
-| 13 | `13_mcp_tools.rs` | MCP-published tool through the `Tool` adapter, F9 tenant pool isolation | `mcp` |
+| 13 | `13_mcp_tools.rs` | MCP-published tool through the `Tool` adapter, per-tenant pool isolation | `mcp` |
 | 14 | `14_serve_agent.rs` | `AgentRouterBuilder` HTTP server end-to-end | `server` |
 | 15 | `15_production_workflow.rs` | Composed end-to-end agent workflow with policy/observability | `policy` |
 | 16 | `16_state_merge_pipeline.rs` | `#[derive(StateMerge)]` per-field reducers + parallel fan-out + contribution nodes | (default) |
@@ -44,6 +44,9 @@ file for the full walkthrough.
 | 19 | `19_typed_output.rs` | `complete_typed` / `complete_typed_validated` / `stream_typed` (invariant 20) | (default) |
 | 20 | `20_graph_memory.rs` | `GraphMemory<N, E>` — `add_node` / `add_edge` / `neighbors` / BFS `traverse` / `find_path` | (default) |
 | 21 | `21_episodic_memory.rs` | `EpisodicMemory<V>` — `append_at` / `recent` / `range` / `since` / `prune_older_than` | (default) |
+| 22 | `22_agent_with_observer.rs` | Headline `Agent::builder()` + `AgentObserver` + `CaptureSink` lifecycle observation | (default) |
+| 23 | `23_typed_tool_macro.rs` | `#[tool]` proc-macro typed-input tool authoring + dispatch | (default) |
+| 24 | `24_file_id_attachments.rs` | `MediaSource::FileId` for large-attachment workflows (Anthropic Files / OpenAI Files / Gemini cached_content) | (default) |
 
 ## Running
 

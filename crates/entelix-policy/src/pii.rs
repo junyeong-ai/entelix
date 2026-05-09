@@ -23,7 +23,7 @@ use crate::error::{PolicyError, PolicyResult};
 /// payloads (input + output). `PolicyLayer` wires this trait into
 /// both `Service<ModelInvocation>` and `Service<ToolInvocation>`.
 #[async_trait]
-pub trait PiiRedactor: Send + Sync {
+pub trait PiiRedactor: Send + Sync + 'static {
     /// Scrub the outbound request in-place. Walks every text content
     /// part of every message and rewrites matching substrings with
     /// the configured replacement.

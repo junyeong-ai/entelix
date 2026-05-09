@@ -38,6 +38,21 @@ use crate::error::Result;
 
 /// Sandbox-agnostic isolated execution environment.
 ///
+/// ## Production impl status (1.0)
+///
+/// **BYO at 1.0** — no first-party production sandbox companion
+/// ships in the 1.0 release. Operators implement `Sandbox` against
+/// their chosen backend (E2B microVM, Modal container, Fly.io
+/// firecracker, Lambda, K8s job, …); the SDK ships only a
+/// `MockSandbox` (`entelix-tools::sandboxed`) for tests and a
+/// reference for the trait shape.
+///
+/// Companion crates (`entelix-sandbox-e2b`, `entelix-sandbox-modal`,
+/// `entelix-sandbox-fly`, `entelix-sandbox-lambda`,
+/// `entelix-sandbox-k8s-job`) are planned post-1.0 once a stable
+/// vendor choice consolidates. Shipping a placeholder companion at
+/// 1.0 would violate invariant 14 (no production-shaped fakes).
+///
 /// Implementations should be cheap to clone — the canonical handle
 /// is `Arc<dyn Sandbox>` so multiple tools can share one connection
 /// pool / authentication context. Methods are async because most
@@ -48,7 +63,7 @@ use crate::error::Result;
 /// deadlines, and tenant scope propagate uniformly into the
 /// backend. Backends that ignore `ctx` violate Invariant 3.
 #[async_trait]
-pub trait Sandbox: Send + Sync {
+pub trait Sandbox: Send + Sync + 'static {
     /// Backend identifier surfaced in OTel attributes
     /// (`entelix.sandbox.backend`). Examples: `"e2b"`, `"modal"`,
     /// `"fly-machines"`, `"k8s-job"`. Stable across releases.

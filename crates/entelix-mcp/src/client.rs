@@ -67,7 +67,7 @@ const SESSION_ID_HEADER: &str = "mcp-session-id";
 
 /// Backend-agnostic MCP client surface.
 #[async_trait]
-pub trait McpClient: Send + Sync {
+pub trait McpClient: Send + Sync + 'static {
     /// Drive the client through `initialize` →
     /// `notifications/initialized` → `tools/list`. Idempotent: if the
     /// underlying state is already [`McpClientState::Ready`] this

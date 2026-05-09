@@ -110,7 +110,7 @@ impl ApprovalRequest {
 /// ways. The SDK does not enforce idempotency at runtime — it is a
 /// load-bearing contract operators must honour.
 #[async_trait]
-pub trait Approver: Send + Sync {
+pub trait Approver: Send + Sync + 'static {
     /// Decide what to do with the pending tool call. Returning
     /// `Err` aborts the agent.
     async fn decide(

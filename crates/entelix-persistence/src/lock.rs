@@ -30,7 +30,7 @@ use crate::error::{PersistenceError, PersistenceResult};
 /// scope. The trait itself does not take a context —
 /// [`with_session_lock`] is the composition point.
 #[async_trait]
-pub trait DistributedLock: Send + Sync {
+pub trait DistributedLock: Send + Sync + 'static {
     /// Try once to acquire `key` with the given `ttl`. Returns
     /// `Ok(Some(guard))` on success, `Ok(None)` when the key is
     /// currently held by another holder, and `Err(_)` for backend

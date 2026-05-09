@@ -46,7 +46,7 @@ use crate::event::GraphEvent;
 /// pattern that `entelix_graph::Checkpointer` uses (Invariant 11 /
 /// F2).
 #[async_trait]
-pub trait SessionLog: Send + Sync {
+pub trait SessionLog: Send + Sync + 'static {
     /// Append `events` for `key`. Returns the highest ordinal
     /// assigned (1-based, so an empty log becomes ordinal 1 after
     /// appending the first event).

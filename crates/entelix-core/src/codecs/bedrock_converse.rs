@@ -229,22 +229,6 @@ fn build_body(request: &ModelRequest) -> Result<(Value, Vec<ModelWarning>)> {
     if let Some(format) = &request.response_format {
         encode_bedrock_structured_output(format, &request.model, &mut body, &mut warnings)?;
     }
-    if request.cache_key.is_some() {
-        warnings.push(ModelWarning::LossyEncode {
-            field: "cache_key".into(),
-            detail: "Bedrock Converse has no `prompt_cache_key`-style routing field; \
-                     `cachePoint` markers are the native caching channel"
-                .into(),
-        });
-    }
-    if request.cached_content.is_some() {
-        warnings.push(ModelWarning::LossyEncode {
-            field: "cached_content".into(),
-            detail: "Bedrock Converse has no Gemini-style `cachedContents` reference; \
-                     `cachePoint` markers are the native caching channel"
-                .into(),
-        });
-    }
     if let Some(effort) = &request.reasoning_effort {
         encode_bedrock_thinking(&request.model, effort, &mut body, &mut warnings);
     }
@@ -518,17 +502,36 @@ fn apply_provider_extensions(
                 .into(),
         });
     }
-    // Anthropic-on-Bedrock: a subset of `AnthropicExt` rides through
-    // `additionalModelRequestFields`, the rest is genuinely
-    // unreachable on the Converse wire.
-    if let Some(anthropic) = &ext.anthropic
-        && anthropic.user_id.is_some()
-    {
+    if let Some(user_id) = &request.end_user_id {
+        if is_bedrock_anthropic(&request.model) {
+            // Bedrock-Anthropic relays Anthropic's `metadata.user_id`
+            // through `additionalModelRequestFields`, mirroring direct
+            // Anthropic. Non-Anthropic Bedrock models (Llama, Nova,
+            // Mistral) lack the channel — fall through to LossyEncode.
+            let entry = body
+                .entry("additionalModelRequestFields")
+                .or_insert_with(|| Value::Object(Map::new()));
+            if let Some(map) = entry.as_object_mut() {
+                let metadata = map
+                    .entry("metadata")
+                    .or_insert_with(|| Value::Object(Map::new()));
+                if let Some(meta_map) = metadata.as_object_mut() {
+                    meta_map.insert("user_id".into(), Value::String(user_id.clone()));
+                }
+            }
+        } else {
+            warnings.push(ModelWarning::LossyEncode {
+                field: "end_user_id".into(),
+                detail: "Bedrock Converse non-Anthropic models have no per-request end-user \
+                         attribution channel — setting dropped"
+                    .into(),
+            });
+        }
+    }
+    if request.seed.is_some() {
         warnings.push(ModelWarning::LossyEncode {
-            field: "provider_extensions.anthropic.user_id".into(),
-            detail: "Bedrock Converse has no per-request user-id \
-                     metadata channel — setting dropped"
-                .into(),
+            field: "seed".into(),
+            detail: "Bedrock Converse has no deterministic-sampling knob — setting dropped".into(),
         });
     }
     if ext.openai_chat.is_some() {
@@ -1014,6 +1017,17 @@ fn decode_stop_reason(raw: &Value, warnings: &mut Vec<ModelWarning>) -> StopReas
         Some("tool_use") => StopReason::ToolUse,
         Some("guardrail_intervened" | "content_filtered") => StopReason::Refusal {
             reason: RefusalReason::Guardrail,
+        },
+        // Documented Converse stop reasons that don't map onto the
+        // cross-vendor IR variants — surface verbatim under
+        // `Other{raw}` so operators can branch on the typed tag
+        // without parsing the raw string from a warning channel.
+        Some(
+            raw @ ("malformed_model_output"
+            | "malformed_tool_use"
+            | "model_context_window_exceeded"),
+        ) => StopReason::Other {
+            raw: raw.to_owned(),
         },
         Some(other) => {
             warnings.push(ModelWarning::UnknownStopReason {

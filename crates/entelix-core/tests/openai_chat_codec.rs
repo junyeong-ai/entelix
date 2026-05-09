@@ -387,20 +387,80 @@ async fn decode_stream_emits_warnings_in_first() {
 // ── ProviderExtensions wire-up ─────────────────────────────────────────────
 
 #[test]
-fn openai_chat_ext_seed_and_user_thread_into_body() {
-    use entelix_core::ir::{OpenAiChatExt, ProviderExtensions};
+fn openai_chat_seed_and_end_user_id_thread_into_body() {
     let codec = OpenAiChatCodec::new();
     let req = ModelRequest {
         model: "gpt-4.1".into(),
         messages: vec![Message::user("hi")],
-        provider_extensions: ProviderExtensions::default()
-            .with_openai_chat(OpenAiChatExt::default().with_seed(42).with_user("op-3")),
+        seed: Some(42),
+        end_user_id: Some("op-3".into()),
         ..ModelRequest::default()
     };
     let encoded = codec.encode(&req).unwrap();
     let body = parse(&encoded.body);
     assert_eq!(body["seed"], 42);
     assert_eq!(body["user"], "op-3");
+}
+
+#[test]
+fn reasoning_effort_threads_into_body_on_o_series_models() {
+    // OpenAI Chat Completions accepts `reasoning_effort` natively
+    // on o-series + gpt-5 reasoning models.
+    use entelix_core::ir::ReasoningEffort;
+    let codec = OpenAiChatCodec::new();
+    for model in ["o1-mini", "o3", "o4-mini", "gpt-5-pro"] {
+        let req = ModelRequest {
+            model: model.into(),
+            messages: vec![Message::user("solve")],
+            reasoning_effort: Some(ReasoningEffort::High),
+            ..ModelRequest::default()
+        };
+        let encoded = codec.encode(&req).unwrap();
+        let body: serde_json::Value = serde_json::from_slice(&encoded.body).unwrap();
+        assert_eq!(
+            body["reasoning_effort"], "high",
+            "{model} must emit native reasoning_effort"
+        );
+        assert!(
+            encoded.warnings.iter().all(|w| !matches!(
+                w,
+                ModelWarning::LossyEncode { field, .. } if field == "reasoning_effort"
+            )),
+            "{model} must NOT emit LossyEncode for reasoning_effort"
+        );
+    }
+}
+
+#[test]
+fn reasoning_effort_emits_lossy_encode_on_non_reasoning_models() {
+    use entelix_core::ir::ReasoningEffort;
+    let codec = OpenAiChatCodec::new();
+    let req = ModelRequest {
+        model: "gpt-4.1".into(),
+        messages: vec![Message::user("hi")],
+        reasoning_effort: Some(ReasoningEffort::Medium),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    assert!(encoded.warnings.iter().any(|w| matches!(
+        w,
+        ModelWarning::LossyEncode { field, .. } if field == "reasoning_effort"
+    )));
+}
+
+#[test]
+fn service_tier_threads_into_body() {
+    use entelix_core::ir::{OpenAiChatExt, ProviderExtensions, ServiceTier};
+    let codec = OpenAiChatCodec::new();
+    let req = ModelRequest {
+        model: "gpt-4.1".into(),
+        messages: vec![Message::user("hi")],
+        provider_extensions: ProviderExtensions::default()
+            .with_openai_chat(OpenAiChatExt::default().with_service_tier(ServiceTier::Flex)),
+        ..ModelRequest::default()
+    };
+    let body = parse(&codec.encode(&req).unwrap().body);
+    assert_eq!(body["service_tier"], "flex");
 }
 
 #[test]
@@ -411,7 +471,7 @@ fn openai_chat_codec_warns_on_foreign_vendor_extension() {
         model: "gpt-4.1".into(),
         messages: vec![Message::user("hi")],
         provider_extensions: ProviderExtensions::default()
-            .with_anthropic(AnthropicExt::default().with_user_id("op-7")),
+            .with_anthropic(AnthropicExt::default().with_betas(["thinking-2025"])),
         ..ModelRequest::default()
     };
     let encoded = codec.encode(&req).unwrap();

@@ -156,7 +156,7 @@ fn rows() -> Vec<Row<'static>> {
         Row {
             label: "code_execution_tool",
             request: req_with_tool(ToolKind::CodeExecution),
-            native: &["anthropic-messages"],
+            native: &["anthropic-messages", "gemini"],
             field_hint: "tools[0]",
         },
         Row {

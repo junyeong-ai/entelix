@@ -179,6 +179,20 @@ pub trait Codec: Send + Sync + 'static {
     }
 }
 
+/// Wire literal for the OpenAI `service_tier` request field. Shared
+/// between `OpenAiChatCodec` and `OpenAiResponsesCodec` so the
+/// rendered string matches the documented enum exactly across both
+/// endpoints.
+pub fn service_tier_str(tier: crate::ir::ServiceTier) -> &'static str {
+    match tier {
+        crate::ir::ServiceTier::Auto => "auto",
+        crate::ir::ServiceTier::Default => "default",
+        crate::ir::ServiceTier::Flex => "flex",
+        crate::ir::ServiceTier::Priority => "priority",
+        crate::ir::ServiceTier::Scale => "scale",
+    }
+}
+
 /// Shared OpenAI-style rate-limit header parser. Used by both
 /// `OpenAiChatCodec` and `OpenAiResponsesCodec` because the
 /// `x-ratelimit-*` family is identical across the two endpoints.

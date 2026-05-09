@@ -89,6 +89,12 @@ fn apply_overrides(request: &mut ModelRequest, ctx: &ExecutionContext) {
         if let Some(parallel) = req.parallel_tool_calls() {
             request.parallel_tool_calls = Some(parallel);
         }
+        if let Some(user_id) = req.end_user_id() {
+            request.end_user_id = Some(user_id.to_owned());
+        }
+        if let Some(seed) = req.seed() {
+            request.seed = Some(seed);
+        }
     }
 }
 
@@ -210,7 +216,10 @@ impl ChatModelConfig {
     }
 
     /// Combine config with caller-supplied messages into a full
-    /// [`ModelRequest`].
+    /// [`ModelRequest`]. Only the fields the config carries are
+    /// projected; per-request knobs and provider extensions stay at
+    /// their `Default` (i.e. unset) and flow in via `RequestOverrides`
+    /// or direct `ExecutionContext::add_extension` instead.
     #[must_use]
     pub fn build_request(&self, messages: Vec<Message>) -> ModelRequest {
         ModelRequest {
@@ -224,12 +233,8 @@ impl ChatModelConfig {
             stop_sequences: self.stop_sequences.clone(),
             tools: self.tools.clone(),
             tool_choice: self.tool_choice.clone(),
-            parallel_tool_calls: None,
-            response_format: None,
-            cache_key: None,
-            cached_content: None,
             reasoning_effort: self.reasoning_effort.clone(),
-            provider_extensions: crate::ir::ProviderExtensions::default(),
+            ..ModelRequest::default()
         }
     }
 }

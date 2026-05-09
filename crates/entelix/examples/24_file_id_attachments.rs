@@ -19,11 +19,11 @@
 //!
 //! Per-vendor mapping for `FileId`:
 //!
-//! | Vendor          | Upload API                | Reference shape                   |
-//! |-----------------|---------------------------|-----------------------------------|
-//! | `Anthropic`     | Files API (`/v1/files`)   | `file_id` on `image` / `document` |
-//! | `OpenAI`        | Files API (`/v1/files`)   | `file_id` on `image_file`         |
-//! | `Gemini`        | `cachedContents` resource | `cached_content` on the request   |
+//! | Vendor          | Upload API                | Reference shape                          |
+//! |-----------------|---------------------------|------------------------------------------|
+//! | `Anthropic`     | Files API (`/v1/files`)   | `file_id` on `image` / `document`        |
+//! | `OpenAI`        | Files API (`/v1/files`)   | `file_id` on `image_file`                |
+//! | `Gemini`        | `cachedContents` resource | `cached_content` on `GeminiExt`          |
 //!
 //! In production the upload step uses the vendor's REST API or SDK
 //! and stamps the returned id onto the IR `ContentPart`. This
@@ -32,7 +32,7 @@
 
 #![allow(clippy::print_stdout)]
 
-use entelix::ir::{ContentPart, MediaSource, Message, Role};
+use entelix::ir::{ContentPart, GeminiExt, MediaSource, Message, ProviderExtensions, Role};
 
 #[tokio::main]
 async fn main() -> entelix::Result<()> {
@@ -74,16 +74,19 @@ async fn main() -> entelix::Result<()> {
         }
     }
 
-    // (3) Gemini-style cached-content reference rides on the
-    //     `ModelRequest::cached_content` field rather than per-part
-    //     — the vendor caches an entire conversational prefix
-    //     (system prompt + early turns), keyed by the operator's
-    //     prior `cachedContents.create` call. The codec emits the
-    //     id verbatim; non-Gemini codecs surface
-    //     `ModelWarning::LossyEncode`.
-    println!("\n=== Gemini cached_content (request-level) ===");
-    println!("ModelRequest.cached_content = Some({gemini_cached_content:?})");
-    println!("(non-Gemini codecs emit ModelWarning::LossyEncode for this field)");
+    // (3) Gemini-style cached-content reference rides on
+    //     `GeminiExt::cached_content` rather than per-part — the
+    //     vendor caches an entire conversational prefix (system
+    //     prompt + early turns), keyed by the operator's prior
+    //     `cachedContents.create` call. The Gemini codec emits the
+    //     id verbatim; placing this ext on a request routed to a
+    //     non-Gemini codec surfaces
+    //     `ModelWarning::ProviderExtensionIgnored { vendor: "gemini" }`.
+    let gemini_extensions = ProviderExtensions::default()
+        .with_gemini(GeminiExt::default().with_cached_content(gemini_cached_content));
+    println!("\n=== Gemini cached_content (per-vendor ext) ===");
+    println!("GeminiExt.cached_content = {gemini_cached_content:?}");
+    println!("ProviderExtensions: {gemini_extensions:?}");
 
     Ok(())
 }

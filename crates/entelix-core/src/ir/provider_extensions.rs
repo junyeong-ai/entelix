@@ -110,28 +110,18 @@ impl ProviderExtensions {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct AnthropicExt {
-    /// `metadata.user_id` — Anthropic stamps this on the request
-    /// for end-user attribution in their abuse-monitoring stack.
-    /// Operator pseudonymous id, not a PII identifier.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub user_id: Option<String>,
     /// `anthropic-beta` HTTP header values — comma-joined and sent
     /// as a single header so beta capabilities (extended thinking,
     /// computer-use updates, prompt-caching variants, …) gate at
     /// the transport layer per Anthropic's documented opt-in.
+    /// Anthropic-specific (no other vendor exposes a comparable
+    /// capability-gating header).
     /// Empty vec means no beta header is sent.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub betas: Vec<String>,
 }
 
 impl AnthropicExt {
-    /// Set the abuse-monitoring `user_id`.
-    #[must_use]
-    pub fn with_user_id(mut self, user_id: impl Into<String>) -> Self {
-        self.user_id = Some(user_id.into());
-        self
-    }
-
     /// Replace the `anthropic-beta` opt-in list. Each element rides
     /// as one comma-separated value in the single `anthropic-beta`
     /// header the Anthropic Messages API documents.
@@ -150,28 +140,35 @@ impl AnthropicExt {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct OpenAiChatExt {
-    /// Deterministic-generation seed. Same seed + same request →
-    /// same output (best-effort; OpenAI documents this as not
-    /// strictly guaranteed across model versions).
+    /// `prompt_cache_key` — routing key into OpenAI's auto-cache
+    /// bucket. Related requests sharing this key land in the same
+    /// cache shard for higher hit rate. OpenAI-specific (Anthropic
+    /// per-block `cache_control`, Gemini `cachedContent`, and
+    /// Bedrock `cachePoint` are different mechanisms with different
+    /// shapes). Mirrored on [`OpenAiResponsesExt::cache_key`].
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub seed: Option<i64>,
-    /// `user` — abuse-monitoring identifier. Stable per end-user
-    /// pseudonym; not PII.
+    pub cache_key: Option<String>,
+    /// `service_tier` — cost / latency routing for the request.
+    /// `Flex` halves cost in exchange for higher latency, `Priority`
+    /// reserves dedicated capacity for SLA-bound workflows, `Scale`
+    /// targets sustained high-throughput tenants. OpenAI-specific
+    /// (no other vendor exposes a comparable per-request routing
+    /// knob). Mirrored on [`OpenAiResponsesExt::service_tier`].
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub user: Option<String>,
+    pub service_tier: Option<ServiceTier>,
 }
 
 impl OpenAiChatExt {
-    /// Set the deterministic-generation seed.
+    /// Set the prompt-cache routing key.
     #[must_use]
-    pub const fn with_seed(mut self, seed: i64) -> Self {
-        self.seed = Some(seed);
+    pub fn with_cache_key(mut self, key: impl Into<String>) -> Self {
+        self.cache_key = Some(key.into());
         self
     }
-    /// Set the abuse-monitoring user identifier.
+    /// Set the service-tier routing.
     #[must_use]
-    pub fn with_user(mut self, user: impl Into<String>) -> Self {
-        self.user = Some(user.into());
+    pub const fn with_service_tier(mut self, tier: ServiceTier) -> Self {
+        self.service_tier = Some(tier);
         self
     }
 }
@@ -180,13 +177,14 @@ impl OpenAiChatExt {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct OpenAiResponsesExt {
-    /// Deterministic-generation seed (same semantics as
-    /// [`OpenAiChatExt::seed`]).
+    /// `prompt_cache_key` — routing key into OpenAI's auto-cache
+    /// bucket (same semantics as [`OpenAiChatExt::cache_key`]).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub seed: Option<i64>,
-    /// `user` — abuse-monitoring identifier.
+    pub cache_key: Option<String>,
+    /// `service_tier` — cost / latency routing (same semantics as
+    /// [`OpenAiChatExt::service_tier`]).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub user: Option<String>,
+    pub service_tier: Option<ServiceTier>,
     /// Reasoning summary verbosity for o-series models. When set,
     /// the codec emits `reasoning.summary: "<mode>"` at the
     /// Responses API request root, paired with the cross-vendor
@@ -199,16 +197,16 @@ pub struct OpenAiResponsesExt {
 }
 
 impl OpenAiResponsesExt {
-    /// Set the deterministic-generation seed.
+    /// Set the prompt-cache routing key.
     #[must_use]
-    pub const fn with_seed(mut self, seed: i64) -> Self {
-        self.seed = Some(seed);
+    pub fn with_cache_key(mut self, key: impl Into<String>) -> Self {
+        self.cache_key = Some(key.into());
         self
     }
-    /// Set the abuse-monitoring user identifier.
+    /// Set the service-tier routing.
     #[must_use]
-    pub fn with_user(mut self, user: impl Into<String>) -> Self {
-        self.user = Some(user.into());
+    pub const fn with_service_tier(mut self, tier: ServiceTier) -> Self {
+        self.service_tier = Some(tier);
         self
     }
     /// Set the reasoning summary verbosity. Pair with
@@ -220,6 +218,26 @@ impl OpenAiResponsesExt {
         self.reasoning_summary = Some(summary);
         self
     }
+}
+
+/// OpenAI service-tier routing — cost / latency knob shared by both
+/// Chat Completions and Responses APIs. OpenAI-specific (no other
+/// vendor exposes a comparable per-request routing channel).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[non_exhaustive]
+pub enum ServiceTier {
+    /// Vendor picks the tier (default behaviour when the field is
+    /// omitted; supplying `Auto` makes the choice explicit).
+    Auto,
+    /// Standard processing tier — vendor's default capacity pool.
+    Default,
+    /// Cheaper async tier with relaxed latency SLO (~50% cost cut).
+    Flex,
+    /// Reserved-capacity tier for latency-bound enterprise workflows.
+    Priority,
+    /// High-throughput sustained-traffic tier.
+    Scale,
 }
 
 /// Verbosity of the reasoning summary surfaced alongside the reply
@@ -246,12 +264,37 @@ pub struct GeminiExt {
     /// canonical names ride through (`HARM_CATEGORY_HATE_SPEECH`,
     /// `HARM_CATEGORY_HARASSMENT`, …). Operators that need broader
     /// coverage than [`crate::ir::SafetyCategory`] use this ext.
+    /// Gemini-specific (Anthropic / OpenAI / Bedrock expose
+    /// content-moderation through different surfaces — Anthropic
+    /// has no per-request override, OpenAI surfaces it as
+    /// `moderations` API responses, Bedrock surfaces it as
+    /// `BedrockExt::guardrail` with vendor-issued identifiers).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub safety_settings: Vec<GeminiSafetyOverride>,
     /// `candidateCount` — number of independent completions to
     /// generate. Defaults to vendor default (1) when unset.
+    /// Gemini-specific (Anthropic / OpenAI / Bedrock require N
+    /// separate requests to obtain N completions; only Gemini
+    /// batches them into one call).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub candidate_count: Option<u32>,
+    /// `cachedContent` — server-side cached-content reference. The
+    /// value is a vendor-minted resource name (e.g.
+    /// `cachedContents/<id>`) typically returned by a prior
+    /// `cachedContents.create` API call; the wire codec emits it
+    /// verbatim. Gemini-specific (Anthropic per-block
+    /// `cache_control`, OpenAI `prompt_cache_key`, and Bedrock
+    /// `cachePoint` are different mechanisms with different shapes).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cached_content: Option<String>,
+    /// `url_context` — opt into Gemini's built-in URL-fetch tool.
+    /// When enabled the codec emits `tools[].url_context: {}` so
+    /// the model can autonomously fetch and ground on URLs found
+    /// in the prompt (up to 20 per request, vendor-side cap).
+    /// Gemini-specific (no other vendor exposes a comparable
+    /// in-context URL-fetch primitive).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub url_context: Option<UrlContext>,
 }
 
 impl GeminiExt {
@@ -270,6 +313,33 @@ impl GeminiExt {
         self.candidate_count = Some(n);
         self
     }
+    /// Set the server-side cached-content reference.
+    #[must_use]
+    pub fn with_cached_content(mut self, name: impl Into<String>) -> Self {
+        self.cached_content = Some(name.into());
+        self
+    }
+    /// Enable Gemini's built-in `url_context` tool for the request.
+    #[must_use]
+    pub const fn with_url_context(mut self) -> Self {
+        self.url_context = Some(UrlContext::ENABLED);
+        self
+    }
+}
+
+/// Toggle marker for Gemini's built-in `url_context` tool. Constructed
+/// via [`UrlContext::ENABLED`] (or `Default`) — the wire shape is a
+/// parameterless `{}` object, so no runtime fields exist today; the
+/// struct is `#[non_exhaustive]` so a future Gemini release that
+/// surfaces options (max URLs, content filters, …) lands additively.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct UrlContext;
+
+impl UrlContext {
+    /// Single canonical instance — the tool is parameterless on the
+    /// wire today, so every enable site shares this value.
+    pub const ENABLED: Self = Self;
 }
 
 /// One Gemini safety-category override. Vendor names ride through
@@ -288,12 +358,18 @@ pub struct GeminiSafetyOverride {
 pub struct BedrockExt {
     /// Bedrock guardrail to enforce on the request. Carries the
     /// guardrail identifier and version Bedrock issued at
-    /// console-create time.
+    /// console-create time. Bedrock-specific (Anthropic /
+    /// OpenAI / Gemini have no equivalent operator-defined
+    /// per-request safety policy reference; safety is either
+    /// vendor-managed or surfaced as
+    /// [`GeminiExt::safety_settings`] inline overrides).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub guardrail: Option<BedrockGuardrail>,
     /// Performance-tier hint (`standard` / `optimized`). Bedrock
     /// uses this to route to a faster pool for latency-sensitive
     /// workflows where a fraction of model quality is acceptable.
+    /// Bedrock-specific (Anthropic / OpenAI / Gemini do not
+    /// expose a per-request latency-vs-quality routing knob).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub performance_config_tier: Option<String>,
 }
@@ -336,14 +412,8 @@ mod tests {
     #[test]
     fn builder_chain_attaches_each_vendor_ext() {
         let ext = ProviderExtensions::default()
-            .with_anthropic(AnthropicExt {
-                user_id: Some("op-1".into()),
-                ..Default::default()
-            })
-            .with_openai_chat(OpenAiChatExt {
-                seed: Some(42),
-                ..Default::default()
-            })
+            .with_anthropic(AnthropicExt::default().with_betas(["thinking-2025"]))
+            .with_openai_chat(OpenAiChatExt::default().with_cache_key("user-42"))
             .with_gemini(GeminiExt {
                 candidate_count: Some(2),
                 ..Default::default()
@@ -357,10 +427,13 @@ mod tests {
             });
         assert!(!ext.is_empty());
         assert_eq!(
-            ext.anthropic.as_ref().unwrap().user_id.as_deref(),
-            Some("op-1")
+            ext.anthropic.as_ref().unwrap().betas,
+            vec!["thinking-2025".to_owned()]
         );
-        assert_eq!(ext.openai_chat.as_ref().unwrap().seed, Some(42));
+        assert_eq!(
+            ext.openai_chat.as_ref().unwrap().cache_key.as_deref(),
+            Some("user-42")
+        );
         assert_eq!(ext.gemini.as_ref().unwrap().candidate_count, Some(2));
         assert_eq!(
             ext.bedrock
@@ -377,13 +450,15 @@ mod tests {
     #[test]
     fn provider_extensions_serde_round_trip() {
         let ext = ProviderExtensions::default()
-            .with_anthropic(AnthropicExt::default().with_user_id("op-9"))
+            .with_anthropic(AnthropicExt::default().with_betas(["computer-use-2025"]))
             .with_gemini(GeminiExt {
                 safety_settings: vec![GeminiSafetyOverride {
                     category: "HARM_CATEGORY_HATE_SPEECH".into(),
                     threshold: "BLOCK_LOW_AND_ABOVE".into(),
                 }],
                 candidate_count: None,
+                cached_content: None,
+                url_context: None,
             });
         let s = serde_json::to_string(&ext).unwrap();
         let back: ProviderExtensions = serde_json::from_str(&s).unwrap();

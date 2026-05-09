@@ -29,6 +29,7 @@ use serde_json::{Map, Value, json};
 
 use crate::codecs::codec::{
     BoxByteStream, BoxDeltaStream, Codec, EncodedRequest, extract_openai_rate_limit,
+    service_tier_str,
 };
 use crate::error::{Error, Result};
 use crate::ir::{
@@ -167,17 +168,6 @@ fn build_body(request: &ModelRequest, streaming: bool) -> Result<(Value, Vec<Mod
     if let Some(format) = &request.response_format {
         encode_openai_responses_structured_output(format, &mut body, &mut warnings)?;
     }
-    if let Some(key) = &request.cache_key {
-        body.insert("prompt_cache_key".into(), Value::String(key.clone()));
-    }
-    if request.cached_content.is_some() {
-        warnings.push(ModelWarning::LossyEncode {
-            field: "cached_content".into(),
-            detail: "OpenAI Responses has no `cachedContents` reference field; \
-                     use `cache_key` for routing into the auto-cache"
-                .into(),
-        });
-    }
     if streaming {
         body.insert("stream".into(), Value::Bool(true));
     }
@@ -202,12 +192,21 @@ fn apply_provider_extensions(
     if let Some(parallel) = request.parallel_tool_calls {
         body.insert("parallel_tool_calls".into(), json!(parallel));
     }
+    if let Some(seed) = request.seed {
+        body.insert("seed".into(), json!(seed));
+    }
+    if let Some(user) = &request.end_user_id {
+        body.insert("user".into(), Value::String(user.clone()));
+    }
     if let Some(openai_responses) = &ext.openai_responses {
-        if let Some(seed) = openai_responses.seed {
-            body.insert("seed".into(), json!(seed));
+        if let Some(key) = &openai_responses.cache_key {
+            body.insert("prompt_cache_key".into(), Value::String(key.clone()));
         }
-        if let Some(user) = &openai_responses.user {
-            body.insert("user".into(), Value::String(user.clone()));
+        if let Some(tier) = openai_responses.service_tier {
+            body.insert(
+                "service_tier".into(),
+                Value::String(service_tier_str(tier).into()),
+            );
         }
     }
     if let Some(effort) = &request.reasoning_effort {

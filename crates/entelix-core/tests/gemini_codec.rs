@@ -195,6 +195,88 @@ fn decode_text_response() {
 }
 
 #[test]
+fn code_execution_toolkind_emits_native_gemini_entry() {
+    use entelix_core::ir::{ToolKind, ToolSpec};
+    let codec = GeminiCodec::new();
+    let req = ModelRequest {
+        model: "gemini-2.5-pro".into(),
+        messages: vec![Message::user("compute")],
+        tools: vec![ToolSpec {
+            name: "code_execution".into(),
+            description: String::new(),
+            kind: ToolKind::CodeExecution,
+            cache_control: None,
+        }],
+        ..ModelRequest::default()
+    };
+    let body = parse(&codec.encode(&req).unwrap().body);
+    assert!(
+        body["tools"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|t| t.get("code_execution").is_some()),
+        "Gemini code_execution must emit native tool entry"
+    );
+}
+
+#[test]
+fn url_context_ext_appends_native_tool_entry() {
+    use entelix_core::ir::{GeminiExt, ProviderExtensions};
+    let codec = GeminiCodec::new();
+    let req = ModelRequest {
+        model: "gemini-2.5-pro".into(),
+        messages: vec![Message::user("read https://example.com")],
+        provider_extensions: ProviderExtensions::default()
+            .with_gemini(GeminiExt::default().with_url_context()),
+        ..ModelRequest::default()
+    };
+    let body = parse(&codec.encode(&req).unwrap().body);
+    assert!(
+        body["tools"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|t| t.get("url_context").is_some()),
+        "Gemini url_context ext must append native tool entry"
+    );
+}
+
+#[test]
+fn decode_thinking_usage_sums_into_output_tokens() {
+    // Cross-vendor invariant: `Usage::output_tokens` is the total
+    // billable output. Gemini bills thinking tokens at the output
+    // rate but reports them in a separate `thoughtsTokenCount`
+    // slice — the codec must combine them so a downstream
+    // CostMeter that does `output_tokens × output_per_1k` matches
+    // the vendor's invoice exactly. Reasoning tokens stay
+    // available as an informational sub-counter for thinking-only
+    // cost attribution.
+    let codec = GeminiCodec::new();
+    let body = json!({
+        "modelVersion": "gemini-2.5-pro",
+        "candidates": [{
+            "content": { "role": "model", "parts": [{ "text": "answer" }] },
+            "finishReason": "STOP"
+        }],
+        "usageMetadata": {
+            "promptTokenCount": 10,
+            "candidatesTokenCount": 100,
+            "thoughtsTokenCount": 400
+        }
+    });
+    let response = codec
+        .decode(body.to_string().as_bytes(), Vec::new())
+        .unwrap();
+    assert_eq!(response.usage.input_tokens, 10);
+    assert_eq!(
+        response.usage.output_tokens, 500,
+        "output_tokens must equal candidatesTokenCount + thoughtsTokenCount"
+    );
+    assert_eq!(response.usage.reasoning_tokens, 400);
+}
+
+#[test]
 fn decode_function_call_reconstructs_tool_use_id_from_name_and_index() {
     let codec = GeminiCodec::new();
     let body = json!({
@@ -371,7 +453,7 @@ fn gemini_codec_warns_on_foreign_vendor_extension() {
         model: "gemini-2.5-pro".into(),
         messages: vec![Message::user("hi")],
         provider_extensions: ProviderExtensions::default()
-            .with_openai_chat(OpenAiChatExt::default().with_seed(7)),
+            .with_openai_chat(OpenAiChatExt::default().with_cache_key("k")),
         ..ModelRequest::default()
     };
     let encoded = codec.encode(&req).unwrap();
@@ -386,6 +468,35 @@ fn gemini_codec_warns_on_foreign_vendor_extension() {
         "expected ProviderExtensionIgnored openai_chat, got: {:?}",
         encoded.warnings
     );
+}
+
+#[test]
+fn gemini_seed_threads_into_generation_config() {
+    let codec = GeminiCodec::new();
+    let req = ModelRequest {
+        model: "gemini-2.5-pro".into(),
+        messages: vec![Message::user("hi")],
+        seed: Some(123),
+        ..ModelRequest::default()
+    };
+    let body = parse(&codec.encode(&req).unwrap().body);
+    assert_eq!(body["generationConfig"]["seed"], 123);
+}
+
+#[test]
+fn gemini_end_user_id_emits_lossy_encode() {
+    let codec = GeminiCodec::new();
+    let req = ModelRequest {
+        model: "gemini-2.5-pro".into(),
+        messages: vec![Message::user("hi")],
+        end_user_id: Some("op-1".into()),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    assert!(encoded.warnings.iter().any(|w| matches!(
+        w,
+        ModelWarning::LossyEncode { field, .. } if field == "end_user_id"
+    )));
 }
 
 #[test]

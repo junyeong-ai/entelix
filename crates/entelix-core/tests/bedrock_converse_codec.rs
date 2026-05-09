@@ -217,6 +217,47 @@ fn decode_unknown_stop_reason_emits_warning() {
     assert!(!response.warnings.is_empty());
 }
 
+#[test]
+fn decode_documented_other_stop_reasons_round_trip_typed() {
+    // AWS Converse documents these stopReason values that don't map
+    // onto cross-vendor IR variants — the codec surfaces them
+    // verbatim under `Other{raw}` without emitting an unknown-reason
+    // warning (they're documented, just specialised).
+    let codec = BedrockConverseCodec::new();
+    for raw in [
+        "malformed_model_output",
+        "malformed_tool_use",
+        "model_context_window_exceeded",
+    ] {
+        let body = json!({
+            "output": {
+                "message": {
+                    "role": "assistant",
+                    "content": [{ "text": "" }]
+                }
+            },
+            "stopReason": raw,
+        });
+        let response = codec
+            .decode(body.to_string().as_bytes(), Vec::new())
+            .unwrap();
+        let StopReason::Other { raw: ref decoded } = response.stop_reason else {
+            panic!(
+                "{raw} must surface as StopReason::Other, got {:?}",
+                response.stop_reason
+            );
+        };
+        assert_eq!(decoded, raw);
+        assert!(
+            response
+                .warnings
+                .iter()
+                .all(|w| !matches!(w, ModelWarning::UnknownStopReason { .. })),
+            "{raw} must not emit UnknownStopReason — it's documented"
+        );
+    }
+}
+
 // ── ProviderExtensions wire-up ─────────────────────────────────────────────
 
 #[test]
@@ -290,14 +331,59 @@ fn bedrock_threads_anthropic_thinking_through_additional_model_request_fields() 
 }
 
 #[test]
-fn bedrock_emits_field_precise_lossy_for_anthropic_only_ext_fields() {
-    use entelix_core::ir::{AnthropicExt, ProviderExtensions};
+fn bedrock_anthropic_threads_end_user_id_through_metadata() {
+    // Anthropic-on-Bedrock relays `metadata.user_id` through
+    // `additionalModelRequestFields`, mirroring direct Anthropic.
     let codec = BedrockConverseCodec::new();
     let req = ModelRequest {
         model: "anthropic.claude-opus-4-7".into(),
         messages: vec![Message::user("hi")],
-        provider_extensions: ProviderExtensions::default()
-            .with_anthropic(AnthropicExt::default().with_user_id("op-1")),
+        end_user_id: Some("op-1".into()),
+        max_tokens: Some(1024),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    let body = parse(&encoded.body);
+    assert_eq!(
+        body["additionalModelRequestFields"]["metadata"]["user_id"],
+        "op-1"
+    );
+    assert!(
+        encoded.warnings.iter().all(|w| !matches!(
+            w,
+            ModelWarning::LossyEncode { field, .. } if field == "end_user_id"
+        )),
+        "Anthropic-on-Bedrock must NOT emit LossyEncode for end_user_id"
+    );
+}
+
+#[test]
+fn bedrock_non_anthropic_emits_lossy_for_end_user_id() {
+    let codec = BedrockConverseCodec::new();
+    let req = ModelRequest {
+        model: "us.amazon.nova-pro-v1:0".into(),
+        messages: vec![Message::user("hi")],
+        end_user_id: Some("op-1".into()),
+        max_tokens: Some(1024),
+        ..ModelRequest::default()
+    };
+    let warnings = codec.encode(&req).unwrap().warnings;
+    assert!(warnings.iter().any(|w| matches!(
+        w,
+        ModelWarning::LossyEncode { field, .. } if field == "end_user_id"
+    )));
+}
+
+#[test]
+fn bedrock_emits_field_precise_lossy_for_unsupported_ir_fields() {
+    // parallel_tool_calls + seed have no native Bedrock Converse
+    // channel on any model family — every operator setting them on
+    // Bedrock surfaces as LossyEncode regardless of model.
+    let codec = BedrockConverseCodec::new();
+    let req = ModelRequest {
+        model: "anthropic.claude-opus-4-7".into(),
+        messages: vec![Message::user("hi")],
+        seed: Some(7),
         parallel_tool_calls: Some(false),
         max_tokens: Some(1024),
         ..ModelRequest::default()
@@ -306,11 +392,10 @@ fn bedrock_emits_field_precise_lossy_for_anthropic_only_ext_fields() {
     let saw_parallel = warnings.iter().any(
         |w| matches!(w, ModelWarning::LossyEncode { field, .. } if field == "parallel_tool_calls"),
     );
-    let saw_user = warnings.iter().any(|w| {
-        matches!(w, ModelWarning::LossyEncode { field, .. }
-            if field == "provider_extensions.anthropic.user_id")
-    });
-    assert!(saw_parallel && saw_user, "{warnings:?}");
+    let saw_seed = warnings
+        .iter()
+        .any(|w| matches!(w, ModelWarning::LossyEncode { field, .. } if field == "seed"));
+    assert!(saw_parallel && saw_seed, "{warnings:?}");
 }
 
 #[test]

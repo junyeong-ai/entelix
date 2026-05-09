@@ -30,7 +30,7 @@ pub use content::{ContentPart, ToolResultContent};
 pub use message::{Message, Role};
 pub use provider_extensions::{
     AnthropicExt, BedrockExt, BedrockGuardrail, GeminiExt, GeminiSafetyOverride, OpenAiChatExt,
-    OpenAiResponsesExt, ProviderExtensions, ReasoningSummary,
+    OpenAiResponsesExt, ProviderExtensions, ReasoningSummary, ServiceTier, UrlContext,
 };
 pub use reasoning::ReasoningEffort;
 pub use request::ModelRequest;

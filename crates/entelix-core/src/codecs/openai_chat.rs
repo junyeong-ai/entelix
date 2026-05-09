@@ -29,12 +29,13 @@ use serde_json::{Map, Value, json};
 
 use crate::codecs::codec::{
     BoxByteStream, BoxDeltaStream, Codec, EncodedRequest, extract_openai_rate_limit,
+    service_tier_str,
 };
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
-    ModelWarning, OutputStrategy, RefusalReason, ResponseFormat, Role, StopReason, ToolChoice,
-    ToolKind, ToolResultContent, Usage,
+    ModelWarning, OutputStrategy, ReasoningEffort, RefusalReason, ResponseFormat, Role, StopReason,
+    ToolChoice, ToolKind, ToolResultContent, Usage,
 };
 use crate::rate_limit::RateLimitSnapshot;
 use crate::stream::StreamDelta;
@@ -166,18 +167,6 @@ fn build_body(request: &ModelRequest, streaming: bool) -> Result<(Value, Vec<Mod
     if let Some(format) = &request.response_format {
         encode_openai_chat_structured_output(format, &mut body, &mut warnings)?;
     }
-    if let Some(key) = &request.cache_key {
-        // OpenAI Chat Completions native prompt-cache routing key.
-        body.insert("prompt_cache_key".into(), Value::String(key.clone()));
-    }
-    if request.cached_content.is_some() {
-        warnings.push(ModelWarning::LossyEncode {
-            field: "cached_content".into(),
-            detail: "OpenAI Chat has no `cachedContents` reference field; \
-                     use `cache_key` for routing into the auto-cache"
-                .into(),
-        });
-    }
     if streaming {
         body.insert("stream".into(), Value::Bool(true));
         body.insert("stream_options".into(), json!({ "include_usage": true }));
@@ -199,27 +188,40 @@ fn apply_provider_extensions(
     if let Some(parallel) = request.parallel_tool_calls {
         body.insert("parallel_tool_calls".into(), json!(parallel));
     }
+    if let Some(seed) = request.seed {
+        body.insert("seed".into(), json!(seed));
+    }
+    if let Some(user) = &request.end_user_id {
+        body.insert("user".into(), Value::String(user.clone()));
+    }
     if let Some(openai_chat) = &ext.openai_chat {
-        if let Some(seed) = openai_chat.seed {
-            body.insert("seed".into(), json!(seed));
+        if let Some(key) = &openai_chat.cache_key {
+            body.insert("prompt_cache_key".into(), Value::String(key.clone()));
         }
-        if let Some(user) = &openai_chat.user {
-            body.insert("user".into(), Value::String(user.clone()));
+        if let Some(tier) = openai_chat.service_tier {
+            body.insert(
+                "service_tier".into(),
+                Value::String(service_tier_str(tier).into()),
+            );
         }
     }
-    if request.reasoning_effort.is_some() {
-        // The OpenAI Chat Completions API does not accept a
-        // reasoning / thinking knob — that surface lives on the
-        // Responses API only. Emit the typed loss so operators
-        // routing the same request across both endpoints see the
-        // miss instead of debugging a silently-ignored field
-        // (invariant 6).
-        warnings.push(ModelWarning::LossyEncode {
-            field: "reasoning_effort".into(),
-            detail: "OpenAI Chat Completions has no reasoning / thinking knob — drop the field; \
-                 use OpenAiResponsesCodec for o-series reasoning models"
-                .into(),
-        });
+    if let Some(effort) = &request.reasoning_effort {
+        // OpenAI Chat Completions accepts `reasoning_effort` as a
+        // top-level field on reasoning models (o1 / o3 / o4 / gpt-5);
+        // non-reasoning models silently ignore it on the wire, so
+        // emit the typed loss instead.
+        if is_openai_reasoning_model(&request.model) {
+            let effort_str = encode_chat_reasoning_effort(effort, warnings);
+            body.insert("reasoning_effort".into(), Value::String(effort_str));
+        } else {
+            warnings.push(ModelWarning::LossyEncode {
+                field: "reasoning_effort".into(),
+                detail: "OpenAI Chat Completions accepts `reasoning_effort` only on reasoning \
+                         models (o1 / o3 / o4 / gpt-5); current model is non-reasoning — \
+                         field dropped. Use OpenAiResponsesCodec for the full reasoning surface."
+                    .into(),
+            });
+        }
     }
     if ext.anthropic.is_some() {
         warnings.push(ModelWarning::ProviderExtensionIgnored {
@@ -240,6 +242,44 @@ fn apply_provider_extensions(
         warnings.push(ModelWarning::ProviderExtensionIgnored {
             vendor: "bedrock".into(),
         });
+    }
+}
+
+/// True for OpenAI reasoning model families that accept the
+/// top-level `reasoning_effort` field on Chat Completions: the
+/// o-series (`o1`, `o3`, `o4`) and the `gpt-5` family. Non-prefixed
+/// `gpt-4*` style models silently drop the field on the wire.
+fn is_openai_reasoning_model(model: &str) -> bool {
+    model.starts_with("o1")
+        || model.starts_with("o3")
+        || model.starts_with("o4")
+        || model.starts_with("gpt-5")
+}
+
+/// Map the cross-vendor [`ReasoningEffort`] onto the OpenAI Chat
+/// Completions `reasoning_effort` enum (`minimal` / `low` /
+/// `medium` / `high` / `none`). `Auto` snaps to `medium` with a
+/// `LossyEncode` so the operator sees the coercion;
+/// `VendorSpecific` passes the literal string through unchanged
+/// (escape hatch for future OpenAI bucket additions).
+fn encode_chat_reasoning_effort(
+    effort: &ReasoningEffort,
+    warnings: &mut Vec<ModelWarning>,
+) -> String {
+    match effort {
+        ReasoningEffort::Off => "none".to_owned(),
+        ReasoningEffort::Minimal => "minimal".to_owned(),
+        ReasoningEffort::Low => "low".to_owned(),
+        ReasoningEffort::Medium => "medium".to_owned(),
+        ReasoningEffort::High => "high".to_owned(),
+        ReasoningEffort::Auto => {
+            warnings.push(ModelWarning::LossyEncode {
+                field: "reasoning_effort".into(),
+                detail: "OpenAI Chat has no `Auto` bucket — snapped to `medium`".into(),
+            });
+            "medium".to_owned()
+        }
+        ReasoningEffort::VendorSpecific(literal) => literal.clone(),
     }
 }
 

@@ -8,10 +8,12 @@
 //!   classification step inside an agent otherwise pinned to an
 //!   expensive model, swap the system prompt for a triage variant,
 //!   or clamp graph recursion for an experimental run.
-//! - [`RequestOverrides`] — `ModelRequest`-shaped sampling knobs
-//!   (`temperature`, `top_p`, `max_tokens`, `stop_sequences`,
-//!   `reasoning_effort`, `tool_choice`, `response_format`). Vary the
-//!   sampling profile on a single call without rebuilding the
+//! - [`RequestOverrides`] — `ModelRequest`-shaped sampling and
+//!   attribution knobs (`temperature`, `top_p`, `top_k`,
+//!   `max_tokens`, `stop_sequences`, `reasoning_effort`,
+//!   `tool_choice`, `response_format`, `parallel_tool_calls`,
+//!   `end_user_id`, `seed`). Vary the sampling profile or the
+//!   per-end-user attribution on a single call without rebuilding the
 //!   `ChatModel`'s configured defaults.
 //!
 //! ## Why two types
@@ -153,6 +155,8 @@ pub struct RequestOverrides {
     tool_choice: Option<ToolChoice>,
     response_format: Option<ResponseFormat>,
     parallel_tool_calls: Option<bool>,
+    end_user_id: Option<String>,
+    seed: Option<i64>,
 }
 
 impl RequestOverrides {
@@ -235,6 +239,25 @@ impl RequestOverrides {
         self
     }
 
+    /// Override the pseudonymous end-user identifier for this call.
+    /// Routes onto each vendor's native attribution channel
+    /// (Anthropic `metadata.user_id`, OpenAI `user`); Gemini /
+    /// Bedrock surface as `LossyEncode`.
+    #[must_use]
+    pub fn with_end_user_id(mut self, user_id: impl Into<String>) -> Self {
+        self.end_user_id = Some(user_id.into());
+        self
+    }
+
+    /// Override the deterministic-generation seed for this call.
+    /// Native on OpenAI Chat / Responses + Gemini; Anthropic /
+    /// Bedrock surface as `LossyEncode`.
+    #[must_use]
+    pub const fn with_seed(mut self, seed: i64) -> Self {
+        self.seed = Some(seed);
+        self
+    }
+
     /// The temperature override if set.
     #[must_use]
     pub const fn temperature(&self) -> Option<f32> {
@@ -288,6 +311,18 @@ impl RequestOverrides {
     pub const fn parallel_tool_calls(&self) -> Option<bool> {
         self.parallel_tool_calls
     }
+
+    /// Borrow the end-user-id override if set.
+    #[must_use]
+    pub fn end_user_id(&self) -> Option<&str> {
+        self.end_user_id.as_deref()
+    }
+
+    /// The seed override if set.
+    #[must_use]
+    pub const fn seed(&self) -> Option<i64> {
+        self.seed
+    }
 }
 
 #[cfg(test)]
@@ -324,6 +359,8 @@ mod tests {
         assert!(r.reasoning_effort().is_none());
         assert!(r.tool_choice().is_none());
         assert!(r.response_format().is_none());
+        assert!(r.end_user_id().is_none());
+        assert!(r.seed().is_none());
     }
 
     #[test]
@@ -339,11 +376,15 @@ mod tests {
             .with_stop_sequences(vec!["</done>".into()])
             .with_reasoning_effort(ReasoningEffort::Low)
             .with_tool_choice(ToolChoice::Required)
-            .with_response_format(format);
+            .with_response_format(format)
+            .with_end_user_id("op-7")
+            .with_seed(42);
         assert_eq!(r.temperature(), Some(0.3));
         assert_eq!(r.top_p(), Some(0.9));
         assert_eq!(r.max_tokens(), Some(512));
         assert_eq!(r.stop_sequences(), Some(&["</done>".to_string()][..]));
+        assert_eq!(r.end_user_id(), Some("op-7"));
+        assert_eq!(r.seed(), Some(42));
         assert!(matches!(r.reasoning_effort(), Some(&ReasoningEffort::Low)));
         assert!(matches!(r.tool_choice(), Some(&ToolChoice::Required)));
         assert_eq!(r.response_format().expect("set").json_schema.name, "answer");

@@ -237,7 +237,9 @@ async fn request_overrides_patch_sampling_and_response_format() -> Result<()> {
                     serde_json::json!({"type": "object"}),
                 )
                 .unwrap(),
-            )),
+            ))
+            .with_end_user_id("op-7")
+            .with_seed(42),
     );
     model.complete(vec![Message::user("hi")], &ctx).await?;
 
@@ -256,6 +258,8 @@ async fn request_overrides_patch_sampling_and_response_format() -> Result<()> {
     ));
     let format = req.response_format.as_ref().expect("response_format set");
     assert_eq!(format.json_schema.name, "answer");
+    assert_eq!(req.end_user_id.as_deref(), Some("op-7"));
+    assert_eq!(req.seed, Some(42));
     Ok(())
 }
 

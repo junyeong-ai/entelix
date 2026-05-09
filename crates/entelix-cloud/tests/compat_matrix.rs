@@ -9,11 +9,18 @@
 //!
 //! | Codec ↓ \ Transport →    | Direct | Bedrock | Vertex | Foundry |
 //! |--------------------------|--------|---------|--------|---------|
-//! | AnthropicMessagesCodec   | ✓      | ✓       | ✓      | ✓       |
+//! | AnthropicMessagesCodec   | ✓      | ✓       | ·      | ✓       |
+//! | VertexAnthropicCodec     | ·      | ·       | ✓      | ·       |
 //! | OpenAiChatCodec          | ✓      | ·       | ·      | ✓       |
 //! | OpenAiResponsesCodec     | ✓      | ·       | ·      | ·       |
 //! | GeminiCodec              | ✓      | ·       | ✓      | ·       |
 //! | BedrockConverseCodec     | ·      | ✓       | ·      | ·       |
+//!
+//! Vertex AI hosts Anthropic Claude on a `:rawPredict` /
+//! `:streamRawPredict` endpoint with a vendor-specific
+//! `anthropic_version: "vertex-2023-10-16"` body field — the direct
+//! `AnthropicMessagesCodec` cannot drive that route, so the
+//! dedicated `VertexAnthropicCodec` carries the wire-shape rewrite.
 
 #![cfg(all(feature = "aws", feature = "gcp", feature = "azure"))]
 #![allow(clippy::unwrap_used, clippy::doc_markdown, dead_code)]
@@ -31,7 +38,7 @@ use entelix_core::ChatModel;
 use entelix_core::auth::ApiKeyProvider;
 use entelix_core::codecs::{
     AnthropicMessagesCodec, BedrockConverseCodec, GeminiCodec, OpenAiChatCodec,
-    OpenAiResponsesCodec,
+    OpenAiResponsesCodec, VertexAnthropicCodec,
 };
 use entelix_core::transports::DirectTransport;
 use secrecy::SecretString;
@@ -86,15 +93,23 @@ fn foundry() -> FoundryTransport {
 }
 
 #[test]
-fn anthropic_codec_pairs_with_all_four_transports() {
+fn anthropic_codec_pairs_with_direct_bedrock_and_foundry() {
+    // Vertex is intentionally absent — Vertex AI Anthropic uses a
+    // `:rawPredict` endpoint and a `vertex-2023-10-16` body marker
+    // that `AnthropicMessagesCodec` does not produce; the dedicated
+    // `VertexAnthropicCodec` covers that pairing.
     let _: ChatModel<_, _> =
         ChatModel::new(AnthropicMessagesCodec::new(), direct(), "claude-opus-4-7");
     let _: ChatModel<_, _> =
         ChatModel::new(AnthropicMessagesCodec::new(), bedrock(), "claude-opus-4-7");
     let _: ChatModel<_, _> =
-        ChatModel::new(AnthropicMessagesCodec::new(), vertex(), "claude-opus-4-7");
-    let _: ChatModel<_, _> =
         ChatModel::new(AnthropicMessagesCodec::new(), foundry(), "claude-opus-4-7");
+}
+
+#[test]
+fn vertex_anthropic_codec_pairs_with_vertex() {
+    let _: ChatModel<_, _> =
+        ChatModel::new(VertexAnthropicCodec::new(), vertex(), "claude-opus-4-7");
 }
 
 #[test]

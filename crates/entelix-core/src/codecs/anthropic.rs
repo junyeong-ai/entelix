@@ -244,22 +244,6 @@ fn build_body(request: &ModelRequest, streaming: bool) -> Result<(Value, Vec<Mod
     if let Some(format) = &request.response_format {
         encode_anthropic_structured_output(format, &request.model, &mut body, &mut warnings)?;
     }
-    if request.cache_key.is_some() {
-        warnings.push(ModelWarning::LossyEncode {
-            field: "cache_key".into(),
-            detail: "Anthropic Messages has no `prompt_cache_key`-style routing field; \
-                     per-block `cache_control` is the native caching channel"
-                .into(),
-        });
-    }
-    if request.cached_content.is_some() {
-        warnings.push(ModelWarning::LossyEncode {
-            field: "cached_content".into(),
-            detail: "Anthropic Messages has no Gemini-style `cachedContents` reference; \
-                     per-block `cache_control` is the native caching channel"
-                .into(),
-        });
-    }
     apply_provider_extensions(request, &mut body, &mut warnings);
     Ok((Value::Object(body), warnings))
 }
@@ -299,16 +283,30 @@ fn apply_provider_extensions(
     let ext = &request.provider_extensions;
     // IR `parallel_tool_calls` translates onto Anthropic's
     // `tool_choice.disable_parallel_tool_use` (inverted polarity).
-    // Anthropic only accepts the toggle inside a `tool_choice` block.
-    if let Some(parallel) = request.parallel_tool_calls
-        && let Some(tc) = body.get_mut("tool_choice").and_then(Value::as_object_mut)
-    {
-        tc.insert("disable_parallel_tool_use".into(), json!(!parallel));
+    // Anthropic only accepts the toggle inside a `tool_choice` block,
+    // which is only emitted when `tools` is non-empty. When the
+    // operator sets `parallel_tool_calls` with an empty tools list,
+    // surface the loss instead of silently discarding the knob.
+    if let Some(parallel) = request.parallel_tool_calls {
+        if let Some(tc) = body.get_mut("tool_choice").and_then(Value::as_object_mut) {
+            tc.insert("disable_parallel_tool_use".into(), json!(!parallel));
+        } else {
+            warnings.push(ModelWarning::LossyEncode {
+                field: "parallel_tool_calls".into(),
+                detail: "Anthropic encodes via tool_choice.disable_parallel_tool_use; \
+                         no tool_choice block (tools list empty) — knob discarded"
+                    .into(),
+            });
+        }
     }
-    if let Some(anthropic) = &ext.anthropic
-        && let Some(user_id) = &anthropic.user_id
-    {
+    if let Some(user_id) = &request.end_user_id {
         body.insert("metadata".into(), json!({"user_id": user_id}));
+    }
+    if request.seed.is_some() {
+        warnings.push(ModelWarning::LossyEncode {
+            field: "seed".into(),
+            detail: "Anthropic Messages has no deterministic-sampling knob — drop the field".into(),
+        });
     }
     if let Some(effort) = &request.reasoning_effort {
         encode_anthropic_thinking(&request.model, effort, body, warnings);

@@ -83,20 +83,30 @@ pub struct ModelRequest {
     /// `responseJsonSchema`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub response_format: Option<ResponseFormat>,
-    /// Prompt-cache routing key. When set, codecs that
-    /// expose a `prompt_cache_key`-style field (OpenAI Chat,
-    /// OpenAI Responses) emit it so the vendor's auto-cache routes
-    /// related requests into the same bucket. Other codecs emit
-    /// `LossyEncode`.
+    /// Pseudonymous end-user identifier — abuse-monitoring,
+    /// per-user rate-limit attribution, and audit trail. Vendor
+    /// pseudonym, never PII (no email / IP / real name).
+    ///
+    /// Codec mapping (native on Anthropic + OpenAI Chat + OpenAI
+    /// Responses — two distinct vendors, criterion satisfied):
+    /// - **Anthropic** — `metadata.user_id`.
+    /// - **OpenAI Chat** / **OpenAI Responses** — top-level `user`.
+    /// - **Gemini**, **Bedrock Converse** — `LossyEncode` (no
+    ///   native end-user attribution channel).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cache_key: Option<String>,
-    /// Server-side cached-content reference. When set,
-    /// codecs that accept it (Gemini's `cachedContent` request
-    /// field) emit it; the value is a vendor-minted resource name
-    /// (e.g. `cachedContents/<id>`) typically returned by a prior
-    /// `cachedContents` API call. Other codecs emit `LossyEncode`.
+    pub end_user_id: Option<String>,
+    /// Deterministic-generation seed. Same seed + same request →
+    /// same output, best-effort (vendors document this as not
+    /// strictly guaranteed across model versions).
+    ///
+    /// Codec mapping (native on OpenAI Chat + OpenAI Responses +
+    /// Gemini — two distinct vendors, criterion satisfied):
+    /// - **OpenAI Chat** / **OpenAI Responses** — top-level `seed`.
+    /// - **Gemini** — `generationConfig.seed`.
+    /// - **Anthropic**, **Bedrock Converse** — `LossyEncode` (no
+    ///   native deterministic-sampling knob).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cached_content: Option<String>,
+    pub seed: Option<i64>,
     /// Cross-vendor reasoning-effort knob. When `Some`, codecs
     /// translate onto their native wire shape per the mapping in
     /// [`ReasoningEffort`]'s module doc — `Off`/`Minimal`/`Low`/

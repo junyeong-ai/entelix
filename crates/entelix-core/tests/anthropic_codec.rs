@@ -561,6 +561,30 @@ fn parallel_tool_calls_true_emits_disable_false_on_anthropic() {
 }
 
 #[test]
+fn parallel_tool_calls_without_tools_emits_lossy_encode_on_anthropic() {
+    // Anthropic encodes parallel_tool_calls inside `tool_choice`,
+    // which only exists when `tools` is non-empty. Setting the knob
+    // with an empty tools list must surface as `LossyEncode` — not
+    // silently dropped (invariant 15).
+    let codec = AnthropicMessagesCodec::new();
+    let req = ModelRequest {
+        model: "claude-opus-4-7".into(),
+        messages: vec![Message::user("hi")],
+        parallel_tool_calls: Some(false),
+        max_tokens: Some(1024),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    assert!(
+        encoded.warnings.iter().any(|w| matches!(
+            w,
+            ModelWarning::LossyEncode { field, .. } if field == "parallel_tool_calls"
+        )),
+        "expected LossyEncode for parallel_tool_calls when tools list is empty"
+    );
+}
+
+#[test]
 fn top_k_passes_through_natively_on_anthropic() {
     let codec = AnthropicMessagesCodec::new();
     let req = ModelRequest {
@@ -583,20 +607,35 @@ fn top_k_passes_through_natively_on_anthropic() {
 }
 
 #[test]
-fn anthropic_ext_user_id_threads_into_metadata() {
-    use entelix_core::ir::{AnthropicExt, ProviderExtensions};
+fn anthropic_end_user_id_threads_into_metadata() {
     let codec = AnthropicMessagesCodec::new();
     let req = ModelRequest {
         model: "claude-opus-4-7".into(),
         messages: vec![Message::user("hi")],
-        provider_extensions: ProviderExtensions::default()
-            .with_anthropic(AnthropicExt::default().with_user_id("op-7")),
+        end_user_id: Some("op-7".into()),
         max_tokens: Some(1024),
         ..ModelRequest::default()
     };
     let encoded = codec.encode(&req).unwrap();
     let body = parse(&encoded.body);
     assert_eq!(body["metadata"]["user_id"], "op-7");
+}
+
+#[test]
+fn anthropic_seed_emits_lossy_encode() {
+    let codec = AnthropicMessagesCodec::new();
+    let req = ModelRequest {
+        model: "claude-opus-4-7".into(),
+        messages: vec![Message::user("hi")],
+        seed: Some(42),
+        max_tokens: Some(1024),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    assert!(encoded.warnings.iter().any(|w| matches!(
+        w,
+        ModelWarning::LossyEncode { field, .. } if field == "seed"
+    )));
 }
 
 #[test]
@@ -775,13 +814,11 @@ fn anthropic_ext_betas_emit_comma_joined_header() {
 
 #[test]
 fn anthropic_ext_betas_empty_emits_no_header() {
-    use entelix_core::ir::{AnthropicExt, ProviderExtensions};
     let codec = AnthropicMessagesCodec::new();
     let req = ModelRequest {
         model: "claude-opus-4-7".into(),
         messages: vec![Message::user("hi")],
-        provider_extensions: ProviderExtensions::default()
-            .with_anthropic(AnthropicExt::default().with_user_id("op-3")),
+        end_user_id: Some("op-3".into()),
         max_tokens: Some(64),
         ..ModelRequest::default()
     };

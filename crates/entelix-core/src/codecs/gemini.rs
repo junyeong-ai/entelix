@@ -181,20 +181,6 @@ fn build_body(request: &ModelRequest) -> Result<(Value, Vec<ModelWarning>)> {
             encode_tool_choice(&request.tool_choice),
         );
     }
-    if let Some(name) = &request.cached_content {
-        // Gemini native: server-side cached-content reference. The
-        // value is a `cachedContents/<id>` resource name minted by
-        // a prior `cachedContents` API call.
-        body.insert("cachedContent".into(), Value::String(name.clone()));
-    }
-    if request.cache_key.is_some() {
-        warnings.push(ModelWarning::LossyEncode {
-            field: "cache_key".into(),
-            detail: "Gemini has no `prompt_cache_key`-style routing field; \
-                     server-side `cachedContent` is the native caching channel"
-                .into(),
-        });
-    }
     apply_provider_extensions(request, &mut body, &mut warnings);
     Ok((Value::Object(body), warnings))
 }
@@ -242,6 +228,34 @@ fn apply_provider_extensions(
                 map.insert("candidateCount".into(), json!(n));
             }
         }
+        if let Some(name) = &gemini.cached_content {
+            body.insert("cachedContent".into(), Value::String(name.clone()));
+        }
+        if gemini.url_context.is_some() {
+            // Append the parameterless `url_context` tool to the
+            // request's tools array (allocate the array if it
+            // wasn't populated by `encode_tools`).
+            let entry = body
+                .entry("tools")
+                .or_insert_with(|| Value::Array(Vec::new()));
+            if let Some(arr) = entry.as_array_mut() {
+                arr.push(json!({ "url_context": {} }));
+            }
+        }
+    }
+    if let Some(seed) = request.seed {
+        let entry = body
+            .entry("generationConfig")
+            .or_insert_with(|| Value::Object(Map::new()));
+        if let Some(map) = entry.as_object_mut() {
+            map.insert("seed".into(), json!(seed));
+        }
+    }
+    if request.end_user_id.is_some() {
+        warnings.push(ModelWarning::LossyEncode {
+            field: "end_user_id".into(),
+            detail: "Gemini has no end-user attribution channel — drop the field".into(),
+        });
     }
     if ext.anthropic.is_some() {
         warnings.push(ModelWarning::ProviderExtensionIgnored {
@@ -715,20 +729,24 @@ fn encode_tools(tools: &[crate::ir::ToolSpec], warnings: &mut Vec<ModelWarning>)
                 // restrictions and use caps are not exposed on the wire.
                 tool_entries.push(json!({ "google_search": {} }));
             }
-            // Gemini ships function tools + google_search natively; the
+            ToolKind::CodeExecution => {
+                // Gemini's code_execution built-in: a sandboxed Python REPL
+                // the model invokes autonomously when a turn benefits from
+                // computation. Parameterless on the wire.
+                tool_entries.push(json!({ "code_execution": {} }));
+            }
             // Anthropic / OpenAI vendor built-ins have no Gemini equivalent.
             ToolKind::Computer { .. }
             | ToolKind::TextEditor
             | ToolKind::Bash
-            | ToolKind::CodeExecution
             | ToolKind::FileSearch { .. }
             | ToolKind::CodeInterpreter
             | ToolKind::ImageGeneration
             | ToolKind::McpConnector { .. }
             | ToolKind::Memory => warnings.push(ModelWarning::LossyEncode {
                 field: format!("tools[{idx}]"),
-                detail: "Gemini natively ships only google_search — other vendor \
-                         built-ins (computer, text_editor, file_search, …) have no \
+                detail: "Gemini natively ships google_search and code_execution — other \
+                         vendor built-ins (computer, text_editor, file_search, …) have no \
                          Gemini equivalent; tool dropped"
                     .into(),
             }),
@@ -910,12 +928,23 @@ fn decode_finish_reason(reason: Option<&str>, warnings: &mut Vec<ModelWarning>) 
 }
 
 fn decode_usage(usage: Option<&Value>) -> Usage {
+    // Cross-vendor `Usage::output_tokens` invariant — *total billable
+    // output*. Gemini reports the visible-token slice in
+    // `candidatesTokenCount` and bills thinking tokens separately
+    // (vendor docs: "response pricing is the sum of output tokens
+    // and thinking tokens"). OpenAI / Anthropic already include
+    // their reasoning slices inside `output_tokens` / `completion_tokens`,
+    // so the codec aligns Gemini to the same shape. `reasoning_tokens`
+    // remains as an informational sub-counter operators can isolate
+    // for thinking-only cost attribution.
+    let visible = u_field(usage, "candidatesTokenCount");
+    let thoughts = u_field(usage, "thoughtsTokenCount");
     Usage {
         input_tokens: u_field(usage, "promptTokenCount"),
-        output_tokens: u_field(usage, "candidatesTokenCount"),
+        output_tokens: visible.saturating_add(thoughts),
         cached_input_tokens: u_field(usage, "cachedContentTokenCount"),
         cache_creation_input_tokens: 0,
-        reasoning_tokens: u_field(usage, "thoughtsTokenCount"),
+        reasoning_tokens: thoughts,
         safety_ratings: Vec::new(),
     }
 }

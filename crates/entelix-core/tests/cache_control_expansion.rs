@@ -1,6 +1,5 @@
-//! `CacheControl` IR expansion coverage — per-block, per-tool,
-//! plus the `cache_key` and `cached_content` request-level fields
-//!.
+//! `CacheControl` IR expansion coverage — per-block, per-tool, plus
+//! the per-vendor cache routing knobs that ride on `*Ext`.
 //!
 //! Verifies that:
 //!
@@ -8,10 +7,9 @@
 //!   `cache_control: { type: "<ttl>" }` on the matching wire block.
 //! - Anthropic `ToolSpec.cache_control` attaches to the tool
 //!   declaration.
-//! - OpenAI Chat / Responses `cache_key` emits as `prompt_cache_key`.
-//! - Gemini `cached_content` emits as `cachedContent`.
-//! - Cross-cell mismatch emits a `LossyEncode` warning rather than
-//!   silent drop.
+//! - `OpenAiChatExt::cache_key` / `OpenAiResponsesExt::cache_key`
+//!   emit as `prompt_cache_key`.
+//! - `GeminiExt::cached_content` emits as `cachedContent`.
 
 #![allow(
     clippy::unwrap_used,
@@ -25,7 +23,8 @@ use entelix_core::codecs::{
     OpenAiResponsesCodec,
 };
 use entelix_core::ir::{
-    CacheControl, ContentPart, MediaSource, Message, ModelRequest, ModelWarning, Role, ToolSpec,
+    CacheControl, ContentPart, GeminiExt, MediaSource, Message, ModelRequest, ModelWarning,
+    OpenAiChatExt, OpenAiResponsesExt, ProviderExtensions, Role, ToolSpec,
 };
 use serde_json::Value;
 
@@ -126,7 +125,8 @@ fn openai_chat_cache_key_emits_prompt_cache_key() {
     let req = ModelRequest {
         model: "gpt-4.1".into(),
         messages: vec![Message::user("hi")],
-        cache_key: Some("user-42".into()),
+        provider_extensions: ProviderExtensions::default()
+            .with_openai_chat(OpenAiChatExt::default().with_cache_key("user-42")),
         ..ModelRequest::default()
     };
     let body = parse(&codec.encode(&req).unwrap().body);
@@ -139,7 +139,8 @@ fn openai_responses_cache_key_emits_prompt_cache_key() {
     let req = ModelRequest {
         model: "gpt-5".into(),
         messages: vec![Message::user("hi")],
-        cache_key: Some("session-9".into()),
+        provider_extensions: ProviderExtensions::default()
+            .with_openai_responses(OpenAiResponsesExt::default().with_cache_key("session-9")),
         ..ModelRequest::default()
     };
     let body = parse(&codec.encode(&req).unwrap().body);
@@ -152,7 +153,8 @@ fn gemini_cached_content_emits_native_field() {
     let req = ModelRequest {
         model: "gemini-2.5-pro".into(),
         messages: vec![Message::user("hi")],
-        cached_content: Some("cachedContents/abc123".into()),
+        provider_extensions: ProviderExtensions::default()
+            .with_gemini(GeminiExt::default().with_cached_content("cachedContents/abc123")),
         ..ModelRequest::default()
     };
     let body = parse(&codec.encode(&req).unwrap().body);
@@ -160,62 +162,41 @@ fn gemini_cached_content_emits_native_field() {
 }
 
 #[test]
-fn anthropic_emits_lossy_encode_for_cache_key_and_cached_content() {
+fn openai_chat_ext_on_anthropic_request_emits_provider_extension_ignored() {
+    // Cross-vendor ext placement (operator set OpenAI-only knob on
+    // a request routed to AnthropicMessagesCodec) surfaces through
+    // the typed `ProviderExtensionIgnored` channel — invariant 6.
     let codec = AnthropicMessagesCodec::new();
     let req = ModelRequest {
         model: "claude-opus-4-7".into(),
         messages: vec![Message::user("hi")],
-        cache_key: Some("ignored-on-anthropic".into()),
-        cached_content: Some("ignored-on-anthropic".into()),
         max_tokens: Some(1024),
+        provider_extensions: ProviderExtensions::default()
+            .with_openai_chat(OpenAiChatExt::default().with_cache_key("ignored")),
         ..ModelRequest::default()
     };
     let warnings = codec.encode(&req).unwrap().warnings;
-    assert!(lossy_for(&warnings, "cache_key"));
-    assert!(lossy_for(&warnings, "cached_content"));
+    assert!(warnings.iter().any(|w| matches!(
+        w,
+        ModelWarning::ProviderExtensionIgnored { vendor } if vendor == "openai_chat"
+    )));
 }
 
 #[test]
-fn openai_chat_emits_lossy_encode_for_cached_content() {
+fn gemini_ext_on_openai_request_emits_provider_extension_ignored() {
     let codec = OpenAiChatCodec::new();
     let req = ModelRequest {
         model: "gpt-4.1".into(),
         messages: vec![Message::user("hi")],
-        cached_content: Some("cachedContents/abc".into()),
+        provider_extensions: ProviderExtensions::default()
+            .with_gemini(GeminiExt::default().with_cached_content("cachedContents/abc")),
         ..ModelRequest::default()
     };
     let warnings = codec.encode(&req).unwrap().warnings;
-    assert!(lossy_for(&warnings, "cached_content"));
-    // cache_key is supported, no LossyEncode for it.
-    assert!(!lossy_for(&warnings, "cache_key"));
-}
-
-#[test]
-fn gemini_emits_lossy_encode_for_cache_key() {
-    let codec = GeminiCodec::new();
-    let req = ModelRequest {
-        model: "gemini-2.5-pro".into(),
-        messages: vec![Message::user("hi")],
-        cache_key: Some("ignored-on-gemini".into()),
-        ..ModelRequest::default()
-    };
-    let warnings = codec.encode(&req).unwrap().warnings;
-    assert!(lossy_for(&warnings, "cache_key"));
-}
-
-#[test]
-fn bedrock_emits_lossy_encode_for_cache_key_and_cached_content() {
-    let codec = BedrockConverseCodec::new();
-    let req = ModelRequest {
-        model: "anthropic.claude-opus-4".into(),
-        messages: vec![Message::user("hi")],
-        cache_key: Some("x".into()),
-        cached_content: Some("x".into()),
-        ..ModelRequest::default()
-    };
-    let warnings = codec.encode(&req).unwrap().warnings;
-    assert!(lossy_for(&warnings, "cache_key"));
-    assert!(lossy_for(&warnings, "cached_content"));
+    assert!(warnings.iter().any(|w| matches!(
+        w,
+        ModelWarning::ProviderExtensionIgnored { vendor } if vendor == "gemini"
+    )));
 }
 
 #[test]

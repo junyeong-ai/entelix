@@ -355,17 +355,13 @@ async fn decode_stream_tool_call_round_trips() {
 // ── ProviderExtensions wire-up ─────────────────────────────────────────────
 
 #[test]
-fn openai_responses_ext_seed_and_user_thread_into_body() {
-    use entelix_core::ir::{OpenAiResponsesExt, ProviderExtensions};
+fn openai_responses_seed_and_end_user_id_thread_into_body() {
     let codec = OpenAiResponsesCodec::new();
     let req = ModelRequest {
         model: "gpt-5".into(),
         messages: vec![Message::user("hi")],
-        provider_extensions: ProviderExtensions::default().with_openai_responses(
-            OpenAiResponsesExt::default()
-                .with_seed(99)
-                .with_user("op-9"),
-        ),
+        seed: Some(99),
+        end_user_id: Some("op-9".into()),
         ..ModelRequest::default()
     };
     let encoded = codec.encode(&req).unwrap();
@@ -407,6 +403,22 @@ fn openai_responses_ext_reasoning_summary_optional() {
     let body = parse(&codec.encode(&req).unwrap().body);
     assert_eq!(body["reasoning"]["effort"], "low");
     assert!(body["reasoning"].get("summary").is_none());
+}
+
+#[test]
+fn service_tier_threads_into_body() {
+    use entelix_core::ir::{OpenAiResponsesExt, ProviderExtensions, ServiceTier};
+    let codec = OpenAiResponsesCodec::new();
+    let req = ModelRequest {
+        model: "gpt-5".into(),
+        messages: vec![Message::user("hi")],
+        provider_extensions: ProviderExtensions::default().with_openai_responses(
+            OpenAiResponsesExt::default().with_service_tier(ServiceTier::Priority),
+        ),
+        ..ModelRequest::default()
+    };
+    let body = parse(&codec.encode(&req).unwrap().body);
+    assert_eq!(body["service_tier"], "priority");
 }
 
 #[test]

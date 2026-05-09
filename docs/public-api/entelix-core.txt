@@ -488,6 +488,33 @@ impl core::marker::Unpin for entelix_core::codecs::OpenAiResponsesCodec
 impl core::marker::UnsafeUnpin for entelix_core::codecs::OpenAiResponsesCodec
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::codecs::OpenAiResponsesCodec
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::codecs::OpenAiResponsesCodec
+pub struct entelix_core::codecs::VertexAnthropicCodec
+impl entelix_core::codecs::VertexAnthropicCodec
+pub const fn entelix_core::codecs::VertexAnthropicCodec::new() -> Self
+impl core::clone::Clone for entelix_core::codecs::VertexAnthropicCodec
+pub fn entelix_core::codecs::VertexAnthropicCodec::clone(&self) -> entelix_core::codecs::VertexAnthropicCodec
+impl core::default::Default for entelix_core::codecs::VertexAnthropicCodec
+pub fn entelix_core::codecs::VertexAnthropicCodec::default() -> entelix_core::codecs::VertexAnthropicCodec
+impl core::fmt::Debug for entelix_core::codecs::VertexAnthropicCodec
+pub fn entelix_core::codecs::VertexAnthropicCodec::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_core::codecs::VertexAnthropicCodec
+impl entelix_core::codecs::Codec for entelix_core::codecs::VertexAnthropicCodec
+pub fn entelix_core::codecs::VertexAnthropicCodec::auto_output_strategy(&self, model: &str) -> entelix_core::ir::OutputStrategy
+pub fn entelix_core::codecs::VertexAnthropicCodec::capabilities(&self, model: &str) -> entelix_core::ir::Capabilities
+pub fn entelix_core::codecs::VertexAnthropicCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
+pub fn entelix_core::codecs::VertexAnthropicCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
+pub fn entelix_core::codecs::VertexAnthropicCodec::encode(&self, request: &entelix_core::ir::ModelRequest) -> entelix_core::error::Result<entelix_core::codecs::EncodedRequest>
+pub fn entelix_core::codecs::VertexAnthropicCodec::encode_streaming(&self, request: &entelix_core::ir::ModelRequest) -> entelix_core::error::Result<entelix_core::codecs::EncodedRequest>
+pub fn entelix_core::codecs::VertexAnthropicCodec::extract_rate_limit(&self, headers: &http::header::map::HeaderMap) -> core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
+pub fn entelix_core::codecs::VertexAnthropicCodec::name(&self) -> &'static str
+impl core::marker::Freeze for entelix_core::codecs::VertexAnthropicCodec
+impl core::marker::Send for entelix_core::codecs::VertexAnthropicCodec
+impl core::marker::Sync for entelix_core::codecs::VertexAnthropicCodec
+impl core::marker::Unpin for entelix_core::codecs::VertexAnthropicCodec
+impl core::marker::UnsafeUnpin for entelix_core::codecs::VertexAnthropicCodec
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::codecs::VertexAnthropicCodec
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::codecs::VertexAnthropicCodec
+pub const entelix_core::codecs::VERTEX_ANTHROPIC_VERSION: &str
 pub trait entelix_core::codecs::Codec: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::codecs::Codec::auto_output_strategy(&self, _model: &str) -> entelix_core::ir::OutputStrategy
 pub fn entelix_core::codecs::Codec::capabilities(&self, model: &str) -> entelix_core::ir::Capabilities
@@ -542,7 +569,17 @@ pub fn entelix_core::codecs::OpenAiResponsesCodec::encode(&self, request: &entel
 pub fn entelix_core::codecs::OpenAiResponsesCodec::encode_streaming(&self, request: &entelix_core::ir::ModelRequest) -> entelix_core::error::Result<entelix_core::codecs::EncodedRequest>
 pub fn entelix_core::codecs::OpenAiResponsesCodec::extract_rate_limit(&self, headers: &http::header::map::HeaderMap) -> core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
 pub fn entelix_core::codecs::OpenAiResponsesCodec::name(&self) -> &'static str
+impl entelix_core::codecs::Codec for entelix_core::codecs::VertexAnthropicCodec
+pub fn entelix_core::codecs::VertexAnthropicCodec::auto_output_strategy(&self, model: &str) -> entelix_core::ir::OutputStrategy
+pub fn entelix_core::codecs::VertexAnthropicCodec::capabilities(&self, model: &str) -> entelix_core::ir::Capabilities
+pub fn entelix_core::codecs::VertexAnthropicCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
+pub fn entelix_core::codecs::VertexAnthropicCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
+pub fn entelix_core::codecs::VertexAnthropicCodec::encode(&self, request: &entelix_core::ir::ModelRequest) -> entelix_core::error::Result<entelix_core::codecs::EncodedRequest>
+pub fn entelix_core::codecs::VertexAnthropicCodec::encode_streaming(&self, request: &entelix_core::ir::ModelRequest) -> entelix_core::error::Result<entelix_core::codecs::EncodedRequest>
+pub fn entelix_core::codecs::VertexAnthropicCodec::extract_rate_limit(&self, headers: &http::header::map::HeaderMap) -> core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
+pub fn entelix_core::codecs::VertexAnthropicCodec::name(&self) -> &'static str
 pub fn entelix_core::codecs::extract_openai_rate_limit(headers: &http::header::map::HeaderMap) -> core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
+pub fn entelix_core::codecs::service_tier_str(tier: entelix_core::ir::ServiceTier) -> &'static str
 pub type entelix_core::codecs::BoxByteStream<'a> = core::pin::Pin<alloc::boxed::Box<(dyn futures_core::stream::Stream<Item = entelix_core::error::Result<bytes::bytes::Bytes>> + core::marker::Send + 'a)>>
 pub type entelix_core::codecs::BoxDeltaStream<'a> = core::pin::Pin<alloc::boxed::Box<(dyn futures_core::stream::Stream<Item = entelix_core::error::Result<entelix_core::stream::StreamDelta>> + core::marker::Send + 'a)>>
 pub mod entelix_core::context
@@ -1172,6 +1209,32 @@ impl core::marker::Unpin for entelix_core::ir::SafetyLevel
 impl core::marker::UnsafeUnpin for entelix_core::ir::SafetyLevel
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::SafetyLevel
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::SafetyLevel
+#[non_exhaustive] pub enum entelix_core::ir::ServiceTier
+pub entelix_core::ir::ServiceTier::Auto
+pub entelix_core::ir::ServiceTier::Default
+pub entelix_core::ir::ServiceTier::Flex
+pub entelix_core::ir::ServiceTier::Priority
+pub entelix_core::ir::ServiceTier::Scale
+impl core::clone::Clone for entelix_core::ir::ServiceTier
+pub fn entelix_core::ir::ServiceTier::clone(&self) -> entelix_core::ir::ServiceTier
+impl core::cmp::Eq for entelix_core::ir::ServiceTier
+impl core::cmp::PartialEq for entelix_core::ir::ServiceTier
+pub fn entelix_core::ir::ServiceTier::eq(&self, other: &entelix_core::ir::ServiceTier) -> bool
+impl core::fmt::Debug for entelix_core::ir::ServiceTier
+pub fn entelix_core::ir::ServiceTier::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_core::ir::ServiceTier
+impl core::marker::StructuralPartialEq for entelix_core::ir::ServiceTier
+impl serde_core::ser::Serialize for entelix_core::ir::ServiceTier
+pub fn entelix_core::ir::ServiceTier::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::ir::ServiceTier
+pub fn entelix_core::ir::ServiceTier::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::ir::ServiceTier
+impl core::marker::Send for entelix_core::ir::ServiceTier
+impl core::marker::Sync for entelix_core::ir::ServiceTier
+impl core::marker::Unpin for entelix_core::ir::ServiceTier
+impl core::marker::UnsafeUnpin for entelix_core::ir::ServiceTier
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ServiceTier
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ServiceTier
 #[non_exhaustive] pub enum entelix_core::ir::StopReason
 pub entelix_core::ir::StopReason::EndTurn
 pub entelix_core::ir::StopReason::MaxTokens
@@ -1316,10 +1379,8 @@ impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ToolResultCon
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ToolResultContent
 #[non_exhaustive] pub struct entelix_core::ir::AnthropicExt
 pub entelix_core::ir::AnthropicExt::betas: alloc::vec::Vec<alloc::string::String>
-pub entelix_core::ir::AnthropicExt::user_id: core::option::Option<alloc::string::String>
 impl entelix_core::ir::AnthropicExt
 pub fn entelix_core::ir::AnthropicExt::with_betas<I, S>(self, betas: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::Into<alloc::string::String>
-pub fn entelix_core::ir::AnthropicExt::with_user_id(self, user_id: impl core::convert::Into<alloc::string::String>) -> Self
 impl core::clone::Clone for entelix_core::ir::AnthropicExt
 pub fn entelix_core::ir::AnthropicExt::clone(&self) -> entelix_core::ir::AnthropicExt
 impl core::cmp::Eq for entelix_core::ir::AnthropicExt
@@ -1453,11 +1514,15 @@ impl core::marker::UnsafeUnpin for entelix_core::ir::Capabilities
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::Capabilities
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::Capabilities
 #[non_exhaustive] pub struct entelix_core::ir::GeminiExt
+pub entelix_core::ir::GeminiExt::cached_content: core::option::Option<alloc::string::String>
 pub entelix_core::ir::GeminiExt::candidate_count: core::option::Option<u32>
 pub entelix_core::ir::GeminiExt::safety_settings: alloc::vec::Vec<entelix_core::ir::GeminiSafetyOverride>
+pub entelix_core::ir::GeminiExt::url_context: core::option::Option<entelix_core::ir::UrlContext>
 impl entelix_core::ir::GeminiExt
+pub fn entelix_core::ir::GeminiExt::with_cached_content(self, name: impl core::convert::Into<alloc::string::String>) -> Self
 pub const fn entelix_core::ir::GeminiExt::with_candidate_count(self, n: u32) -> Self
 pub fn entelix_core::ir::GeminiExt::with_safety_override(self, category: &str, threshold: &str) -> Self
+pub const fn entelix_core::ir::GeminiExt::with_url_context(self) -> Self
 impl core::clone::Clone for entelix_core::ir::GeminiExt
 pub fn entelix_core::ir::GeminiExt::clone(&self) -> entelix_core::ir::GeminiExt
 impl core::cmp::Eq for entelix_core::ir::GeminiExt
@@ -1556,8 +1621,7 @@ impl core::marker::UnsafeUnpin for entelix_core::ir::Message
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::Message
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::Message
 pub struct entelix_core::ir::ModelRequest
-pub entelix_core::ir::ModelRequest::cache_key: core::option::Option<alloc::string::String>
-pub entelix_core::ir::ModelRequest::cached_content: core::option::Option<alloc::string::String>
+pub entelix_core::ir::ModelRequest::end_user_id: core::option::Option<alloc::string::String>
 pub entelix_core::ir::ModelRequest::max_tokens: core::option::Option<u32>
 pub entelix_core::ir::ModelRequest::messages: alloc::vec::Vec<entelix_core::ir::Message>
 pub entelix_core::ir::ModelRequest::model: alloc::string::String
@@ -1565,6 +1629,7 @@ pub entelix_core::ir::ModelRequest::parallel_tool_calls: core::option::Option<bo
 pub entelix_core::ir::ModelRequest::provider_extensions: entelix_core::ir::ProviderExtensions
 pub entelix_core::ir::ModelRequest::reasoning_effort: core::option::Option<entelix_core::ir::ReasoningEffort>
 pub entelix_core::ir::ModelRequest::response_format: core::option::Option<entelix_core::ir::ResponseFormat>
+pub entelix_core::ir::ModelRequest::seed: core::option::Option<i64>
 pub entelix_core::ir::ModelRequest::stop_sequences: alloc::vec::Vec<alloc::string::String>
 pub entelix_core::ir::ModelRequest::system: entelix_core::ir::SystemPrompt
 pub entelix_core::ir::ModelRequest::temperature: core::option::Option<f32>
@@ -1625,11 +1690,11 @@ impl core::marker::UnsafeUnpin for entelix_core::ir::ModelResponse
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ModelResponse
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ModelResponse
 #[non_exhaustive] pub struct entelix_core::ir::OpenAiChatExt
-pub entelix_core::ir::OpenAiChatExt::seed: core::option::Option<i64>
-pub entelix_core::ir::OpenAiChatExt::user: core::option::Option<alloc::string::String>
+pub entelix_core::ir::OpenAiChatExt::cache_key: core::option::Option<alloc::string::String>
+pub entelix_core::ir::OpenAiChatExt::service_tier: core::option::Option<entelix_core::ir::ServiceTier>
 impl entelix_core::ir::OpenAiChatExt
-pub const fn entelix_core::ir::OpenAiChatExt::with_seed(self, seed: i64) -> Self
-pub fn entelix_core::ir::OpenAiChatExt::with_user(self, user: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_core::ir::OpenAiChatExt::with_cache_key(self, key: impl core::convert::Into<alloc::string::String>) -> Self
+pub const fn entelix_core::ir::OpenAiChatExt::with_service_tier(self, tier: entelix_core::ir::ServiceTier) -> Self
 impl core::clone::Clone for entelix_core::ir::OpenAiChatExt
 pub fn entelix_core::ir::OpenAiChatExt::clone(&self) -> entelix_core::ir::OpenAiChatExt
 impl core::cmp::Eq for entelix_core::ir::OpenAiChatExt
@@ -1652,13 +1717,13 @@ impl core::marker::UnsafeUnpin for entelix_core::ir::OpenAiChatExt
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::OpenAiChatExt
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::OpenAiChatExt
 #[non_exhaustive] pub struct entelix_core::ir::OpenAiResponsesExt
+pub entelix_core::ir::OpenAiResponsesExt::cache_key: core::option::Option<alloc::string::String>
 pub entelix_core::ir::OpenAiResponsesExt::reasoning_summary: core::option::Option<entelix_core::ir::ReasoningSummary>
-pub entelix_core::ir::OpenAiResponsesExt::seed: core::option::Option<i64>
-pub entelix_core::ir::OpenAiResponsesExt::user: core::option::Option<alloc::string::String>
+pub entelix_core::ir::OpenAiResponsesExt::service_tier: core::option::Option<entelix_core::ir::ServiceTier>
 impl entelix_core::ir::OpenAiResponsesExt
+pub fn entelix_core::ir::OpenAiResponsesExt::with_cache_key(self, key: impl core::convert::Into<alloc::string::String>) -> Self
 pub const fn entelix_core::ir::OpenAiResponsesExt::with_reasoning_summary(self, summary: entelix_core::ir::ReasoningSummary) -> Self
-pub const fn entelix_core::ir::OpenAiResponsesExt::with_seed(self, seed: i64) -> Self
-pub fn entelix_core::ir::OpenAiResponsesExt::with_user(self, user: impl core::convert::Into<alloc::string::String>) -> Self
+pub const fn entelix_core::ir::OpenAiResponsesExt::with_service_tier(self, tier: entelix_core::ir::ServiceTier) -> Self
 impl core::clone::Clone for entelix_core::ir::OpenAiResponsesExt
 pub fn entelix_core::ir::OpenAiResponsesExt::clone(&self) -> entelix_core::ir::OpenAiResponsesExt
 impl core::cmp::Eq for entelix_core::ir::OpenAiResponsesExt
@@ -1879,6 +1944,31 @@ impl<'a> core::marker::Unpin for entelix_core::ir::ToolUseRef<'a>
 impl<'a> core::marker::UnsafeUnpin for entelix_core::ir::ToolUseRef<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ToolUseRef<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ToolUseRef<'a>
+#[non_exhaustive] pub struct entelix_core::ir::UrlContext
+impl entelix_core::ir::UrlContext
+pub const entelix_core::ir::UrlContext::ENABLED: Self
+impl core::clone::Clone for entelix_core::ir::UrlContext
+pub fn entelix_core::ir::UrlContext::clone(&self) -> entelix_core::ir::UrlContext
+impl core::cmp::Eq for entelix_core::ir::UrlContext
+impl core::cmp::PartialEq for entelix_core::ir::UrlContext
+pub fn entelix_core::ir::UrlContext::eq(&self, other: &entelix_core::ir::UrlContext) -> bool
+impl core::default::Default for entelix_core::ir::UrlContext
+pub fn entelix_core::ir::UrlContext::default() -> entelix_core::ir::UrlContext
+impl core::fmt::Debug for entelix_core::ir::UrlContext
+pub fn entelix_core::ir::UrlContext::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_core::ir::UrlContext
+impl core::marker::StructuralPartialEq for entelix_core::ir::UrlContext
+impl serde_core::ser::Serialize for entelix_core::ir::UrlContext
+pub fn entelix_core::ir::UrlContext::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::ir::UrlContext
+pub fn entelix_core::ir::UrlContext::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::ir::UrlContext
+impl core::marker::Send for entelix_core::ir::UrlContext
+impl core::marker::Sync for entelix_core::ir::UrlContext
+impl core::marker::Unpin for entelix_core::ir::UrlContext
+impl core::marker::UnsafeUnpin for entelix_core::ir::UrlContext
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::UrlContext
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::UrlContext
 #[non_exhaustive] pub struct entelix_core::ir::Usage
 pub entelix_core::ir::Usage::cache_creation_input_tokens: u32
 pub entelix_core::ir::Usage::cached_input_tokens: u32
@@ -1975,20 +2065,24 @@ pub fn F::validate(&self, output: &O) -> entelix_core::error::Result<()>
 pub mod entelix_core::overrides
 #[non_exhaustive] pub struct entelix_core::overrides::RequestOverrides
 impl entelix_core::overrides::RequestOverrides
+pub fn entelix_core::overrides::RequestOverrides::end_user_id(&self) -> core::option::Option<&str>
 pub const fn entelix_core::overrides::RequestOverrides::max_tokens(&self) -> core::option::Option<u32>
 pub fn entelix_core::overrides::RequestOverrides::new() -> Self
 pub const fn entelix_core::overrides::RequestOverrides::parallel_tool_calls(&self) -> core::option::Option<bool>
 pub const fn entelix_core::overrides::RequestOverrides::reasoning_effort(&self) -> core::option::Option<&entelix_core::ir::ReasoningEffort>
 pub const fn entelix_core::overrides::RequestOverrides::response_format(&self) -> core::option::Option<&entelix_core::ir::ResponseFormat>
+pub const fn entelix_core::overrides::RequestOverrides::seed(&self) -> core::option::Option<i64>
 pub fn entelix_core::overrides::RequestOverrides::stop_sequences(&self) -> core::option::Option<&[alloc::string::String]>
 pub const fn entelix_core::overrides::RequestOverrides::temperature(&self) -> core::option::Option<f32>
 pub const fn entelix_core::overrides::RequestOverrides::tool_choice(&self) -> core::option::Option<&entelix_core::ir::ToolChoice>
 pub const fn entelix_core::overrides::RequestOverrides::top_k(&self) -> core::option::Option<u32>
 pub const fn entelix_core::overrides::RequestOverrides::top_p(&self) -> core::option::Option<f32>
+pub fn entelix_core::overrides::RequestOverrides::with_end_user_id(self, user_id: impl core::convert::Into<alloc::string::String>) -> Self
 pub const fn entelix_core::overrides::RequestOverrides::with_max_tokens(self, n: u32) -> Self
 pub const fn entelix_core::overrides::RequestOverrides::with_parallel_tool_calls(self, enabled: bool) -> Self
 pub fn entelix_core::overrides::RequestOverrides::with_reasoning_effort(self, effort: entelix_core::ir::ReasoningEffort) -> Self
 pub fn entelix_core::overrides::RequestOverrides::with_response_format(self, format: entelix_core::ir::ResponseFormat) -> Self
+pub const fn entelix_core::overrides::RequestOverrides::with_seed(self, seed: i64) -> Self
 pub fn entelix_core::overrides::RequestOverrides::with_stop_sequences(self, sequences: alloc::vec::Vec<alloc::string::String>) -> Self
 pub const fn entelix_core::overrides::RequestOverrides::with_temperature(self, t: f32) -> Self
 pub fn entelix_core::overrides::RequestOverrides::with_tool_choice(self, choice: entelix_core::ir::ToolChoice) -> Self
@@ -3678,20 +3772,24 @@ impl<T> core::panic::unwind_safe::RefUnwindSafe for entelix_core::llm_facing::Re
 impl<T> core::panic::unwind_safe::UnwindSafe for entelix_core::llm_facing::RenderedForLlm<T> where T: core::panic::unwind_safe::UnwindSafe
 #[non_exhaustive] pub struct entelix_core::RequestOverrides
 impl entelix_core::overrides::RequestOverrides
+pub fn entelix_core::overrides::RequestOverrides::end_user_id(&self) -> core::option::Option<&str>
 pub const fn entelix_core::overrides::RequestOverrides::max_tokens(&self) -> core::option::Option<u32>
 pub fn entelix_core::overrides::RequestOverrides::new() -> Self
 pub const fn entelix_core::overrides::RequestOverrides::parallel_tool_calls(&self) -> core::option::Option<bool>
 pub const fn entelix_core::overrides::RequestOverrides::reasoning_effort(&self) -> core::option::Option<&entelix_core::ir::ReasoningEffort>
 pub const fn entelix_core::overrides::RequestOverrides::response_format(&self) -> core::option::Option<&entelix_core::ir::ResponseFormat>
+pub const fn entelix_core::overrides::RequestOverrides::seed(&self) -> core::option::Option<i64>
 pub fn entelix_core::overrides::RequestOverrides::stop_sequences(&self) -> core::option::Option<&[alloc::string::String]>
 pub const fn entelix_core::overrides::RequestOverrides::temperature(&self) -> core::option::Option<f32>
 pub const fn entelix_core::overrides::RequestOverrides::tool_choice(&self) -> core::option::Option<&entelix_core::ir::ToolChoice>
 pub const fn entelix_core::overrides::RequestOverrides::top_k(&self) -> core::option::Option<u32>
 pub const fn entelix_core::overrides::RequestOverrides::top_p(&self) -> core::option::Option<f32>
+pub fn entelix_core::overrides::RequestOverrides::with_end_user_id(self, user_id: impl core::convert::Into<alloc::string::String>) -> Self
 pub const fn entelix_core::overrides::RequestOverrides::with_max_tokens(self, n: u32) -> Self
 pub const fn entelix_core::overrides::RequestOverrides::with_parallel_tool_calls(self, enabled: bool) -> Self
 pub fn entelix_core::overrides::RequestOverrides::with_reasoning_effort(self, effort: entelix_core::ir::ReasoningEffort) -> Self
 pub fn entelix_core::overrides::RequestOverrides::with_response_format(self, format: entelix_core::ir::ResponseFormat) -> Self
+pub const fn entelix_core::overrides::RequestOverrides::with_seed(self, seed: i64) -> Self
 pub fn entelix_core::overrides::RequestOverrides::with_stop_sequences(self, sequences: alloc::vec::Vec<alloc::string::String>) -> Self
 pub const fn entelix_core::overrides::RequestOverrides::with_temperature(self, t: f32) -> Self
 pub fn entelix_core::overrides::RequestOverrides::with_tool_choice(self, choice: entelix_core::ir::ToolChoice) -> Self

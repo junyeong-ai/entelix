@@ -370,7 +370,7 @@ mod tests {
         let meter = Arc::new(CostMeter::new(pricing()));
         let mgr = Arc::new(
             PolicyRegistry::new().with_tenant(
-                "acme",
+                TenantId::new("acme"),
                 TenantPolicy::builder()
                     .with_redactor(Arc::new(RegexRedactor::with_defaults()))
                     .with_cost_meter(meter.clone())
@@ -400,7 +400,7 @@ mod tests {
     async fn rate_refusal_returns_provider_429_and_skips_inner() {
         let mgr = Arc::new(
             PolicyRegistry::new().with_tenant(
-                "acme",
+                TenantId::new("acme"),
                 TenantPolicy::builder()
                     .with_quota(Arc::new(QuotaLimiter::new(
                         Some(Arc::new(TokenBucketLimiter::new(1, 1.0).unwrap())),
@@ -471,7 +471,7 @@ mod tests {
     async fn tool_layer_redacts_input_and_output() {
         let mgr = Arc::new(
             PolicyRegistry::new().with_tenant(
-                "acme",
+                TenantId::new("acme"),
                 TenantPolicy::builder()
                     .with_redactor(Arc::new(RegexRedactor::with_defaults()))
                     .build()

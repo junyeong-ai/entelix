@@ -232,8 +232,8 @@ async fn distributed_lock_namespaces_by_tenant_id() {
     let (pers, _container) = boot_persistence().await;
     let lock = pers.lock();
 
-    let key_a = AdvisoryKey::for_session("tenant-a", "shared-thread");
-    let key_b = AdvisoryKey::for_session("tenant-b", "shared-thread");
+    let key_a = AdvisoryKey::for_session(&entelix_core::TenantId::new("tenant-a"), "shared-thread");
+    let key_b = AdvisoryKey::for_session(&entelix_core::TenantId::new("tenant-b"), "shared-thread");
 
     let g_a = lock
         .try_acquire(&key_a, Duration::from_secs(5))

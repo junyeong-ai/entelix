@@ -47,7 +47,8 @@ fn redis_key_is_ascii_and_well_formed() {
 fn for_session_namespace_distinct_from_raw() {
     // Same parts as for_session uses internally must NOT collide with a
     // random tenant/thread combination.
-    let session = AdvisoryKey::for_session("acme", "thread-7");
+    let tenant = entelix_core::TenantId::new("acme");
+    let session = AdvisoryKey::for_session(&tenant, "thread-7");
     let raw = AdvisoryKey::from_strings(&["acme", "thread-7"]);
     assert_ne!(session, raw, "namespace prefix must alter the hash");
 }
@@ -61,7 +62,7 @@ fn collision_rate_below_one_in_million() {
     let mut redis_seen: HashSet<String> = HashSet::with_capacity(100_000);
     for tenant_n in 0..1000u64 {
         for thread_n in 0..100u64 {
-            let tenant = format!("tenant-{tenant_n:08x}");
+            let tenant = entelix_core::TenantId::new(format!("tenant-{tenant_n:08x}"));
             let thread = format!("thread-{thread_n:08x}");
             let key = AdvisoryKey::for_session(&tenant, &thread);
             assert!(
@@ -86,7 +87,8 @@ fn high_low_uniformly_independent() {
     let mut low_set_count = 0u64;
     let total: u64 = 10_000;
     for n in 0..total {
-        let key = AdvisoryKey::for_session("uniform", &n.to_string());
+        let tenant = entelix_core::TenantId::new("uniform");
+        let key = AdvisoryKey::for_session(&tenant, &n.to_string());
         let (high, low) = key.halves();
         high_set_count += u64::from(high.count_ones());
         low_set_count += u64::from(low.count_ones());

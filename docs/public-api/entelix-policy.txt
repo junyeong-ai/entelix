@@ -160,12 +160,12 @@ pub struct entelix_policy::PolicyRegistry
 impl entelix_policy::PolicyRegistry
 pub fn entelix_policy::PolicyRegistry::new() -> Self
 pub fn entelix_policy::PolicyRegistry::policy_for(&self, tenant_id: &entelix_core::tenant_id::TenantId) -> alloc::sync::Arc<entelix_policy::TenantPolicy>
-pub fn entelix_policy::PolicyRegistry::register(&self, tenant_id: impl core::convert::Into<alloc::string::String>, policy: entelix_policy::TenantPolicy)
+pub fn entelix_policy::PolicyRegistry::register(&self, tenant_id: entelix_core::tenant_id::TenantId, policy: entelix_policy::TenantPolicy)
 pub fn entelix_policy::PolicyRegistry::set_fallback(&mut self, fallback: entelix_policy::TenantPolicy)
 pub fn entelix_policy::PolicyRegistry::tenant_count(&self) -> usize
-pub fn entelix_policy::PolicyRegistry::unregister(&self, tenant_id: &str)
+pub fn entelix_policy::PolicyRegistry::unregister(&self, tenant_id: &entelix_core::tenant_id::TenantId)
 pub fn entelix_policy::PolicyRegistry::with_fallback(self, fallback: entelix_policy::TenantPolicy) -> Self
-pub fn entelix_policy::PolicyRegistry::with_tenant(self, tenant_id: impl core::convert::Into<alloc::string::String>, policy: entelix_policy::TenantPolicy) -> Self
+pub fn entelix_policy::PolicyRegistry::with_tenant(self, tenant_id: entelix_core::tenant_id::TenantId, policy: entelix_policy::TenantPolicy) -> Self
 impl core::clone::Clone for entelix_policy::PolicyRegistry
 pub fn entelix_policy::PolicyRegistry::clone(&self) -> entelix_policy::PolicyRegistry
 impl core::default::Default for entelix_policy::PolicyRegistry

@@ -56,7 +56,7 @@ impl SessionLog for PostgresSessionLog {
         // Lock the per-thread row range so concurrent appends don't
         // interleave ordinals. Uses a thread-scoped advisory lock —
         // shared with `with_session_lock` so they cooperate.
-        let advisory = crate::AdvisoryKey::for_session(tenant_id.as_str(), thread_id);
+        let advisory = crate::AdvisoryKey::for_session(tenant_id, thread_id);
         let (high, low) = advisory.halves();
         sqlx::query("SELECT pg_advisory_xact_lock($1, $2)")
             .bind(high)

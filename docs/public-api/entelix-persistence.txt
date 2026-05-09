@@ -2,7 +2,7 @@ pub mod entelix_persistence
 pub mod entelix_persistence::advisory_key
 pub struct entelix_persistence::advisory_key::AdvisoryKey
 impl entelix_persistence::advisory_key::AdvisoryKey
-pub fn entelix_persistence::advisory_key::AdvisoryKey::for_session(tenant_id: &str, thread_id: &str) -> Self
+pub fn entelix_persistence::advisory_key::AdvisoryKey::for_session(tenant_id: &entelix_core::tenant_id::TenantId, thread_id: &str) -> Self
 pub fn entelix_persistence::advisory_key::AdvisoryKey::from_strings(parts: &[&str]) -> Self
 pub const fn entelix_persistence::advisory_key::AdvisoryKey::halves(&self) -> (i32, i32)
 pub const fn entelix_persistence::advisory_key::AdvisoryKey::raw(&self) -> i64
@@ -85,7 +85,7 @@ pub fn entelix_persistence::lock::DistributedLock::acquire<'life0, 'life1, 'asyn
 pub fn entelix_persistence::lock::DistributedLock::extend<'life0, 'life1, 'async_trait>(&'life0 self, guard: &'life1 entelix_persistence::lock::LockGuard, ttl: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<bool>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn entelix_persistence::lock::DistributedLock::release<'life0, 'async_trait>(&'life0 self, guard: entelix_persistence::lock::LockGuard) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 pub fn entelix_persistence::lock::DistributedLock::try_acquire<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_persistence::advisory_key::AdvisoryKey, ttl: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<core::option::Option<entelix_persistence::lock::LockGuard>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-pub async fn entelix_persistence::lock::with_session_lock<L, F, Fut, T, E>(lock: &L, tenant_id: &str, thread_id: &str, ttl: core::option::Option<core::time::Duration>, deadline: core::option::Option<core::time::Duration>, f: F) -> entelix_persistence::error::PersistenceResult<T> where L: entelix_persistence::lock::DistributedLock + ?core::marker::Sized, F: core::ops::function::FnOnce() -> Fut, Fut: core::future::future::Future<Output = core::result::Result<T, E>>, E: core::convert::Into<entelix_persistence::error::PersistenceError>
+pub async fn entelix_persistence::lock::with_session_lock<L, F, Fut, T, E>(lock: &L, tenant_id: &entelix_core::tenant_id::TenantId, thread_id: &str, ttl: core::option::Option<core::time::Duration>, deadline: core::option::Option<core::time::Duration>, f: F) -> entelix_persistence::error::PersistenceResult<T> where L: entelix_persistence::lock::DistributedLock + ?core::marker::Sized, F: core::ops::function::FnOnce() -> Fut, Fut: core::future::future::Future<Output = core::result::Result<T, E>>, E: core::convert::Into<entelix_persistence::error::PersistenceError>
 pub mod entelix_persistence::schema_version
 pub struct entelix_persistence::schema_version::SessionSchemaVersion(pub u32)
 impl entelix_persistence::schema_version::SessionSchemaVersion
@@ -150,7 +150,7 @@ impl !core::panic::unwind_safe::RefUnwindSafe for entelix_persistence::error::Pe
 impl !core::panic::unwind_safe::UnwindSafe for entelix_persistence::error::PersistenceError
 pub struct entelix_persistence::AdvisoryKey
 impl entelix_persistence::advisory_key::AdvisoryKey
-pub fn entelix_persistence::advisory_key::AdvisoryKey::for_session(tenant_id: &str, thread_id: &str) -> Self
+pub fn entelix_persistence::advisory_key::AdvisoryKey::for_session(tenant_id: &entelix_core::tenant_id::TenantId, thread_id: &str) -> Self
 pub fn entelix_persistence::advisory_key::AdvisoryKey::from_strings(parts: &[&str]) -> Self
 pub const fn entelix_persistence::advisory_key::AdvisoryKey::halves(&self) -> (i32, i32)
 pub const fn entelix_persistence::advisory_key::AdvisoryKey::raw(&self) -> i64
@@ -227,5 +227,5 @@ pub fn entelix_persistence::DistributedLock::acquire<'life0, 'life1, 'async_trai
 pub fn entelix_persistence::DistributedLock::extend<'life0, 'life1, 'async_trait>(&'life0 self, guard: &'life1 entelix_persistence::lock::LockGuard, ttl: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<bool>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn entelix_persistence::DistributedLock::release<'life0, 'async_trait>(&'life0 self, guard: entelix_persistence::lock::LockGuard) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 pub fn entelix_persistence::DistributedLock::try_acquire<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_persistence::advisory_key::AdvisoryKey, ttl: core::time::Duration) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_persistence::error::PersistenceResult<core::option::Option<entelix_persistence::lock::LockGuard>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-pub async fn entelix_persistence::with_session_lock<L, F, Fut, T, E>(lock: &L, tenant_id: &str, thread_id: &str, ttl: core::option::Option<core::time::Duration>, deadline: core::option::Option<core::time::Duration>, f: F) -> entelix_persistence::error::PersistenceResult<T> where L: entelix_persistence::lock::DistributedLock + ?core::marker::Sized, F: core::ops::function::FnOnce() -> Fut, Fut: core::future::future::Future<Output = core::result::Result<T, E>>, E: core::convert::Into<entelix_persistence::error::PersistenceError>
+pub async fn entelix_persistence::with_session_lock<L, F, Fut, T, E>(lock: &L, tenant_id: &entelix_core::tenant_id::TenantId, thread_id: &str, ttl: core::option::Option<core::time::Duration>, deadline: core::option::Option<core::time::Duration>, f: F) -> entelix_persistence::error::PersistenceResult<T> where L: entelix_persistence::lock::DistributedLock + ?core::marker::Sized, F: core::ops::function::FnOnce() -> Fut, Fut: core::future::future::Future<Output = core::result::Result<T, E>>, E: core::convert::Into<entelix_persistence::error::PersistenceError>
 pub type entelix_persistence::PersistenceResult<T> = core::result::Result<T, entelix_persistence::error::PersistenceError>

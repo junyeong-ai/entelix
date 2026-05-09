@@ -1,6 +1,6 @@
-# entelix — workspace manifest (0.1.0)
+# entelix — workspace manifest (0.2.0)
 #
-# Rust 1.94, Edition 2024, resolver v3.
+# Rust 1.95, Edition 2024, resolver v3.
 # Lockstep workspace — every member crate carries the same version on
 # crates.io. All dependencies pinned at workspace root; members inherit
 # via `dep = { workspace = true }`. The canonical member list is below.

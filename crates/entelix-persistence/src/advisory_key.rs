@@ -17,6 +17,7 @@
 
 use std::fmt;
 
+use entelix_core::TenantId;
 use twox_hash::XxHash64;
 
 const ADVISORY_NAMESPACE: &str = "entelix:lock";
@@ -59,8 +60,8 @@ impl AdvisoryKey {
 
     /// Convenience: namespace + `tenant_id` + `thread_id` (the
     /// canonical session-lock derivation).
-    pub fn for_session(tenant_id: &str, thread_id: &str) -> Self {
-        Self::from_strings(&[ADVISORY_NAMESPACE, "session", tenant_id, thread_id])
+    pub fn for_session(tenant_id: &TenantId, thread_id: &str) -> Self {
+        Self::from_strings(&[ADVISORY_NAMESPACE, "session", tenant_id.as_str(), thread_id])
     }
 
     /// 64-bit key for `pg_try_advisory_xact_lock(bigint)`.

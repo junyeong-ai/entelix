@@ -42,7 +42,7 @@ fn malformed_response_does_not_leak_body() {
 #[test]
 fn unknown_server_does_not_leak_tenant_id() {
     let err = McpError::UnknownServer {
-        tenant_id: "tenant-42-private".to_owned(),
+        tenant_id: entelix_core::TenantId::new("tenant-42-private"),
         server: "primary".to_owned(),
     };
     let rendering = err.for_llm().into_inner();

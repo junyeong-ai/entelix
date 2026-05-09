@@ -150,7 +150,7 @@ pub const DEFAULT_SESSION_LOCK_DEADLINE: Duration = Duration::from_secs(5);
 /// directly.
 pub async fn with_session_lock<L, F, Fut, T, E>(
     lock: &L,
-    tenant_id: &str,
+    tenant_id: &entelix_core::TenantId,
     thread_id: &str,
     ttl: Option<Duration>,
     deadline: Option<Duration>,

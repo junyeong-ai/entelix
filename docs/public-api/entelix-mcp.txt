@@ -119,7 +119,7 @@ pub entelix_mcp::McpError::ResourceBounded::message: alloc::string::String
 pub entelix_mcp::McpError::Serde(serde_json::error::Error)
 pub entelix_mcp::McpError::UnknownServer
 pub entelix_mcp::McpError::UnknownServer::server: alloc::string::String
-pub entelix_mcp::McpError::UnknownServer::tenant_id: alloc::string::String
+pub entelix_mcp::McpError::UnknownServer::tenant_id: entelix_core::tenant_id::TenantId
 pub entelix_mcp::McpError::Unreachable
 pub entelix_mcp::McpError::Unreachable::attempts: u32
 pub entelix_mcp::McpError::Unreachable::server: alloc::string::String

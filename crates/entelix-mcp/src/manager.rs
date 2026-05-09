@@ -49,7 +49,7 @@ use crate::tool_definition::McpToolDefinition;
 
 /// Pool key: `(tenant_id, server_name)`. The exact pair the F9
 /// mitigation depends on — never collapse to either side alone.
-type PoolKey = (String, String);
+type PoolKey = (entelix_core::TenantId, String);
 
 /// One pooled client plus its last-touched timestamp. The timestamp
 /// is `seconds since pool start` so it fits in a `u64` and updates
@@ -318,7 +318,7 @@ impl McpManager {
         tenant_id: &entelix_core::TenantId,
         server: &str,
     ) -> McpResult<Arc<dyn McpClient>> {
-        let key = (tenant_id.as_str().to_owned(), server.to_owned());
+        let key = (tenant_id.clone(), server.to_owned());
         if let Some(existing) = self.pool.get(&key) {
             existing
                 .last_used_secs
@@ -329,7 +329,7 @@ impl McpManager {
             .configs
             .get(server)
             .ok_or_else(|| McpError::UnknownServer {
-                tenant_id: tenant_id.as_str().to_owned(),
+                tenant_id: tenant_id.clone(),
                 server: server.to_owned(),
             })?;
         let client = self.factory.build(config).await?;

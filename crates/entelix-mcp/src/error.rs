@@ -51,7 +51,7 @@ pub enum McpError {
     #[error("MCP server '{server}' not registered for tenant '{tenant_id}'")]
     UnknownServer {
         /// Tenant scope.
-        tenant_id: String,
+        tenant_id: entelix_core::TenantId,
         /// Server name.
         server: String,
     },

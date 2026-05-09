@@ -191,8 +191,8 @@ async fn distributed_lock_isolates_distinct_tenants_under_identical_thread_id() 
     let (pers, _container) = boot_persistence().await;
     let lock = pers.lock();
 
-    let acme = AdvisoryKey::for_session("acme", "shared-thread-name");
-    let beta = AdvisoryKey::for_session("beta", "shared-thread-name");
+    let acme = AdvisoryKey::for_session(&entelix_core::TenantId::new("acme"), "shared-thread-name");
+    let beta = AdvisoryKey::for_session(&entelix_core::TenantId::new("beta"), "shared-thread-name");
     assert_ne!(
         acme.raw(),
         beta.raw(),

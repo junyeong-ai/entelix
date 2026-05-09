@@ -165,7 +165,8 @@ async fn session_log_append_load_archive() {
 async fn distributed_lock_acquire_release() {
     let (pers, _container) = boot_persistence().await;
     let lock = pers.lock();
-    let key = AdvisoryKey::for_session("tenant-x", "thread-7");
+    let tenant = entelix_core::TenantId::new("tenant-x");
+    let key = AdvisoryKey::for_session(&tenant, "thread-7");
 
     let g1 = lock
         .try_acquire(&key, Duration::from_secs(5))
@@ -193,7 +194,7 @@ async fn with_session_lock_via_postgres() {
     let lock = pers.lock();
     let result: entelix_persistence::PersistenceResult<u32> = with_session_lock(
         &lock,
-        "tenant-x",
+        &entelix_core::TenantId::new("tenant-x"),
         "thread-7",
         Some(Duration::from_secs(5)),
         Some(Duration::from_secs(5)),

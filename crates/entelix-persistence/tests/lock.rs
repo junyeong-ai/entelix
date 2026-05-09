@@ -82,8 +82,9 @@ async fn with_session_lock_acquires_and_releases() {
     let lock = InMemoryLock::default();
     let count = Arc::new(Mutex::new(0u32));
     let count_inner = count.clone();
+    let tenant = entelix_core::TenantId::new("tenant-x");
     let result: PersistenceResult<u32> =
-        with_session_lock(&lock, "tenant-x", "thread-7", None, None, || async move {
+        with_session_lock(&lock, &tenant, "thread-7", None, None, || async move {
             *count_inner.lock() += 1;
             Ok::<u32, PersistenceError>(42)
         })
@@ -91,7 +92,7 @@ async fn with_session_lock_acquires_and_releases() {
     assert_eq!(result.unwrap(), 42);
     assert_eq!(*count.lock(), 1);
     // Lock is released — another acquire on the same key succeeds.
-    let key = AdvisoryKey::for_session("tenant-x", "thread-7");
+    let key = AdvisoryKey::for_session(&tenant, "thread-7");
     assert!(
         lock.try_acquire(&key, DEFAULT_SESSION_LOCK_TTL)
             .await
@@ -103,14 +104,15 @@ async fn with_session_lock_acquires_and_releases() {
 #[tokio::test]
 async fn with_session_lock_releases_on_inner_error() {
     let lock = InMemoryLock::default();
+    let tenant = entelix_core::TenantId::new("tenant-x");
     let result: PersistenceResult<u32> =
-        with_session_lock(&lock, "tenant-x", "thread-7", None, None, || async move {
+        with_session_lock(&lock, &tenant, "thread-7", None, None, || async move {
             Err::<u32, PersistenceError>(PersistenceError::Backend("inner failure".into()))
         })
         .await;
     assert!(result.is_err());
     // Lock released even though inner closure failed.
-    let key = AdvisoryKey::for_session("tenant-x", "thread-7");
+    let key = AdvisoryKey::for_session(&tenant, "thread-7");
     assert!(
         lock.try_acquire(&key, DEFAULT_SESSION_LOCK_TTL)
             .await
@@ -122,7 +124,8 @@ async fn with_session_lock_releases_on_inner_error() {
 #[tokio::test]
 async fn try_acquire_returns_none_when_held() {
     let lock = InMemoryLock::default();
-    let key = AdvisoryKey::for_session("tenant-x", "thread-7");
+    let tenant = entelix_core::TenantId::new("tenant-x");
+    let key = AdvisoryKey::for_session(&tenant, "thread-7");
     let _g1 = lock
         .try_acquire(&key, DEFAULT_SESSION_LOCK_TTL)
         .await
@@ -138,7 +141,8 @@ async fn try_acquire_returns_none_when_held() {
 #[tokio::test]
 async fn release_idempotent_for_already_released() {
     let lock = InMemoryLock::default();
-    let key = AdvisoryKey::for_session("tenant-x", "thread-7");
+    let tenant = entelix_core::TenantId::new("tenant-x");
+    let key = AdvisoryKey::for_session(&tenant, "thread-7");
     let g1 = lock
         .try_acquire(&key, DEFAULT_SESSION_LOCK_TTL)
         .await
@@ -158,7 +162,8 @@ async fn release_idempotent_for_already_released() {
 #[tokio::test]
 async fn lock_acquire_timeout_surfaces_attempt_count() {
     let lock = InMemoryLock::default();
-    let key = AdvisoryKey::for_session("tenant-x", "thread-7");
+    let tenant = entelix_core::TenantId::new("tenant-x");
+    let key = AdvisoryKey::for_session(&tenant, "thread-7");
     let _g = lock
         .try_acquire(&key, DEFAULT_SESSION_LOCK_TTL)
         .await

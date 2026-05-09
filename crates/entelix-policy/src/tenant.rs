@@ -121,7 +121,7 @@ impl TenantPolicyBuilder {
 /// Cloning is cheap — internal state lives behind `Arc`s.
 #[derive(Clone)]
 pub struct PolicyRegistry {
-    per_tenant: Arc<DashMap<String, Arc<TenantPolicy>>>,
+    per_tenant: Arc<DashMap<entelix_core::TenantId, Arc<TenantPolicy>>>,
     fallback: Arc<TenantPolicy>,
 }
 
@@ -157,32 +157,29 @@ impl PolicyRegistry {
     }
 
     /// Register (or overwrite) a tenant's policy.
-    pub fn register(&self, tenant_id: impl Into<String>, policy: TenantPolicy) {
-        self.per_tenant.insert(tenant_id.into(), Arc::new(policy));
+    pub fn register(&self, tenant_id: entelix_core::TenantId, policy: TenantPolicy) {
+        self.per_tenant.insert(tenant_id, Arc::new(policy));
     }
 
     /// Builder-style register.
     #[must_use]
-    pub fn with_tenant(self, tenant_id: impl Into<String>, policy: TenantPolicy) -> Self {
+    pub fn with_tenant(self, tenant_id: entelix_core::TenantId, policy: TenantPolicy) -> Self {
         self.register(tenant_id, policy);
         self
     }
 
     /// Drop a tenant's registration. Subsequent lookups fall back to
     /// the fallback policy.
-    pub fn unregister(&self, tenant_id: &str) {
+    pub fn unregister(&self, tenant_id: &entelix_core::TenantId) {
         self.per_tenant.remove(tenant_id);
     }
 
     /// Resolve a tenant's policy. Always returns *some* policy —
     /// the fallback when the tenant isn't explicitly registered.
-    /// Looks the tenant up by `&str` via [`std::borrow::Borrow`], so
-    /// callers passing the typed [`entelix_core::TenantId`] avoid an
-    /// extra allocation.
     #[must_use]
     pub fn policy_for(&self, tenant_id: &entelix_core::TenantId) -> Arc<TenantPolicy> {
         self.per_tenant
-            .get(tenant_id.as_str())
+            .get(tenant_id)
             .map_or_else(|| self.fallback.clone(), |entry| entry.clone())
     }
 
@@ -226,7 +223,7 @@ mod tests {
             .with_redactor(Arc::new(RegexRedactor::with_defaults()))
             .build()
             .unwrap();
-        mgr.register("acme", policy);
+        mgr.register(TenantId::new("acme"), policy);
         let p = mgr.policy_for(&TenantId::new("acme"));
         assert!(p.redactor.is_some());
         // Unregistered still gets fallback.
@@ -248,18 +245,18 @@ mod tests {
     #[test]
     fn unregister_drops_tenant() {
         let mgr = PolicyRegistry::new();
-        mgr.register("acme", TenantPolicy::default());
+        mgr.register(TenantId::new("acme"), TenantPolicy::default());
         assert_eq!(mgr.tenant_count(), 1);
-        mgr.unregister("acme");
+        mgr.unregister(&TenantId::new("acme"));
         assert_eq!(mgr.tenant_count(), 0);
     }
 
     #[test]
     fn re_register_overwrites() {
         let mgr = PolicyRegistry::new();
-        mgr.register("acme", TenantPolicy::default());
+        mgr.register(TenantId::new("acme"), TenantPolicy::default());
         mgr.register(
-            "acme",
+            TenantId::new("acme"),
             TenantPolicy::builder()
                 .with_redactor(Arc::new(RegexRedactor::with_defaults()))
                 .build()

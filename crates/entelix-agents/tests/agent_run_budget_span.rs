@@ -1,8 +1,10 @@
 //! regression — `Agent::execute` mirrors the frozen
-//! `RunBudget` snapshot onto the `entelix.agent.run` span as five
-//! `gen_ai.usage.*` / `entelix.usage.*` attributes. Runs without a
-//! budget leave the fields as `tracing::field::Empty`, which the
-//! `tracing-opentelemetry` bridge omits from the exported span.
+//! `RunBudget` snapshot onto the `entelix.agent.run` span as six
+//! attributes (three `gen_ai.usage.*` token counters, two
+//! `entelix.usage.*` aggregates, one `entelix.agent.usage.cost`
+//! roll-up). Runs without a budget leave the fields as
+//! `tracing::field::Empty`, which the `tracing-opentelemetry`
+//! bridge omits from the exported span.
 //!
 //! The test installs a `tracing::subscriber` with a custom `Layer`
 //! that captures `Span::record` calls so the assertion is on the
@@ -32,33 +34,49 @@ use tracing_subscriber::registry::LookupSpan;
 
 #[derive(Default, Clone)]
 struct UsageFieldCapture {
-    /// Per-span-id snapshot of recorded `u64` field values. The
-    /// `entelix.agent.run` span is the only one this test exercises
-    /// so a single-key map is sufficient — keyed by span name to
-    /// keep the assertion site readable.
+    /// Per-span-id snapshot of recorded numeric field values.
     fields: Arc<Mutex<HashMap<String, HashMap<String, u64>>>>,
+    /// Per-span-id snapshot of recorded string field values
+    /// (cost lands here as a `Decimal`-rendered display string).
+    strings: Arc<Mutex<HashMap<String, HashMap<String, String>>>>,
 }
 
 impl UsageFieldCapture {
     fn snapshot_for(&self, span_name: &str) -> Option<HashMap<String, u64>> {
         self.fields.lock().get(span_name).cloned()
     }
+
+    fn string_snapshot_for(&self, span_name: &str) -> Option<HashMap<String, String>> {
+        self.strings.lock().get(span_name).cloned()
+    }
 }
 
-struct U64Visitor<'a> {
-    target: &'a mut HashMap<String, u64>,
+struct FieldVisitor<'a> {
+    numeric: &'a mut HashMap<String, u64>,
+    strings: &'a mut HashMap<String, String>,
 }
 
-impl Visit for U64Visitor<'_> {
+impl Visit for FieldVisitor<'_> {
     fn record_u64(&mut self, field: &tracing::field::Field, value: u64) {
-        self.target.insert(field.name().to_owned(), value);
+        self.numeric.insert(field.name().to_owned(), value);
     }
     fn record_i64(&mut self, field: &tracing::field::Field, value: i64) {
         if let Ok(v) = u64::try_from(value) {
-            self.target.insert(field.name().to_owned(), v);
+            self.numeric.insert(field.name().to_owned(), v);
         }
     }
-    fn record_debug(&mut self, _f: &tracing::field::Field, _v: &dyn std::fmt::Debug) {}
+    fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
+        self.strings
+            .insert(field.name().to_owned(), value.to_owned());
+    }
+    fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn std::fmt::Debug) {
+        // `tracing::field::display(&Decimal)` falls through to
+        // `record_debug` on subscribers that don't surface a typed
+        // `record_display` method — the wrapped value's Debug impl
+        // is what we capture.
+        self.strings
+            .insert(field.name().to_owned(), format!("{value:?}"));
+    }
 }
 
 impl<S> tracing_subscriber::Layer<S> for UsageFieldCapture
@@ -66,14 +84,17 @@ where
     S: Subscriber + for<'lookup> LookupSpan<'lookup>,
 {
     fn on_new_span(&self, attrs: &Attributes<'_>, id: &Id, ctx: LayerCtx<'_, S>) {
-        // Capture the span name so subsequent `on_record` calls can
-        // be routed to the right bucket.
         let Some(meta) = ctx.span(id).map(|s| s.metadata()) else {
             return;
         };
-        let mut store = self.fields.lock();
-        let bucket = store.entry(meta.name().to_owned()).or_default();
-        let mut visitor = U64Visitor { target: bucket };
+        let mut numeric_store = self.fields.lock();
+        let mut string_store = self.strings.lock();
+        let numeric_bucket = numeric_store.entry(meta.name().to_owned()).or_default();
+        let string_bucket = string_store.entry(meta.name().to_owned()).or_default();
+        let mut visitor = FieldVisitor {
+            numeric: numeric_bucket,
+            strings: string_bucket,
+        };
         attrs.record(&mut visitor);
     }
 
@@ -81,9 +102,14 @@ where
         let Some(meta) = ctx.span(id).map(|s| s.metadata()) else {
             return;
         };
-        let mut store = self.fields.lock();
-        let bucket = store.entry(meta.name().to_owned()).or_default();
-        let mut visitor = U64Visitor { target: bucket };
+        let mut numeric_store = self.fields.lock();
+        let mut string_store = self.strings.lock();
+        let numeric_bucket = numeric_store.entry(meta.name().to_owned()).or_default();
+        let string_bucket = string_store.entry(meta.name().to_owned()).or_default();
+        let mut visitor = FieldVisitor {
+            numeric: numeric_bucket,
+            strings: string_bucket,
+        };
         values.record(&mut visitor);
     }
 }
@@ -127,6 +153,13 @@ async fn agent_run_span_records_usage_snapshot_when_budget_attached() {
     budget
         .observe_usage(&entelix_core::ir::Usage::new(120, 30))
         .unwrap();
+    // Cost axis observation — exercises the 6th OTel field
+    // (`entelix.agent.usage.cost`) that the agent root span
+    // exposes (per-run cumulative roll-up; distinct from
+    // `OtelLayer`'s per-call `gen_ai.usage.cost` increment).
+    budget
+        .observe_cost(rust_decimal::Decimal::new(125, 4)) // $0.0125
+        .unwrap();
     let ctx = ExecutionContext::new().with_run_budget(budget);
 
     let _ = agent.execute(7, &ctx).await.unwrap();
@@ -149,6 +182,16 @@ async fn agent_run_span_records_usage_snapshot_when_budget_attached() {
     );
     assert_eq!(recorded.get("entelix.usage.requests").copied(), Some(2));
     assert_eq!(recorded.get("entelix.usage.tool_calls").copied(), Some(1));
+    let strings = capture
+        .string_snapshot_for("entelix.agent.run")
+        .expect("entelix.agent.run span string fields must be captured");
+    let cost = strings
+        .get("entelix.agent.usage.cost")
+        .expect("entelix.agent.usage.cost must be recorded on the span");
+    assert!(
+        cost.contains("0.0125"),
+        "captured cost render must encode the observed Decimal (got {cost:?})"
+    );
 }
 
 #[tokio::test]
@@ -165,7 +208,7 @@ async fn agent_run_span_omits_usage_fields_when_no_budget_attached() {
     let _ = agent.execute(7, &ExecutionContext::new()).await.unwrap();
 
     // The span itself was opened (other tests verify the span
-    // surface), but the five usage fields were declared as
+    // surface), but the six usage fields were declared as
     // `tracing::field::Empty` and never `record`-ed — so they must
     // not appear in the captured bucket. Empty fields ride through
     // `on_new_span` / `on_record` as no-ops; the visitor never

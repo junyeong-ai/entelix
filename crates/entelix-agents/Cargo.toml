@@ -41,5 +41,6 @@ uuid = { workspace = true }
 [dev-dependencies]
 async-trait = { workspace = true }
 parking_lot = { workspace = true }
+rust_decimal = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "sync"] }
 tracing-subscriber = { workspace = true }

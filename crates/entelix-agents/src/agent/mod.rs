@@ -159,6 +159,19 @@ where
     /// shorter at the call site and signals the per-call shape at
     /// a glance.
     ///
+    /// **Asymmetric by design** — `RunOverrides` is the
+    /// agent-loop carrier (model / system prompt / max iterations
+    /// owned by the loop the `Agent` itself drives) so a typed
+    /// convenience belongs on `Agent`. `RequestOverrides`
+    /// (temperature / top_p / top_k / max_tokens / stop_sequences /
+    /// reasoning_effort / tool_choice / response_format /
+    /// parallel_tool_calls) is `ChatModel`-shaped — the dispatch
+    /// layer downstream picks it up via
+    /// `ExecutionContext::add_extension(RequestOverrides::new()…)`,
+    /// no agent-side convenience is needed (and adding one would
+    /// duplicate the orthogonality that the carrier split S99
+    /// established).
+    ///
     /// Operators threading multiple per-call extensions stay on
     /// [`Self::execute`] with their own `add_extension` chain.
     pub async fn execute_with(
@@ -209,18 +222,10 @@ where
                 Ok(result)
             }
             Err(err) => {
-                if let entelix_core::Error::UsageLimitExceeded {
-                    axis,
-                    limit,
-                    observed,
-                } = &err
+                if let entelix_core::Error::UsageLimitExceeded(breach) = &err
                     && let Some(handle) = ctx.audit_sink()
                 {
-                    handle.as_sink().record_usage_limit_exceeded(
-                        &axis.to_string(),
-                        *limit,
-                        *observed,
-                    );
+                    handle.as_sink().record_usage_limit_exceeded(breach);
                 }
                 // Best-effort `Failed` emission — if the sink itself
                 // errors (dropped receiver), swallow the secondary
@@ -243,7 +248,7 @@ where
     /// the rest of the OTel surface so dashboards joining on
     /// run_id stay consistent across the layer / agent stack.
     ///
-    /// The five `gen_ai.usage.*` / `entelix.usage.*` fields are
+    /// The six `gen_ai.usage.*` / `entelix.usage.*` fields are
     /// declared as [`tracing::field::Empty`] placeholders and
     /// populated by [`Self::run_inner`] at the
     /// [`AgentRunResult::usage`] freeze point — a `RunBudget`
@@ -264,6 +269,7 @@ where
             gen_ai.usage.input_tokens = tracing::field::Empty,
             gen_ai.usage.output_tokens = tracing::field::Empty,
             gen_ai.usage.total_tokens = tracing::field::Empty,
+            entelix.agent.usage.cost = tracing::field::Empty,
             entelix.usage.requests = tracing::field::Empty,
             entelix.usage.tool_calls = tracing::field::Empty,
         )
@@ -327,6 +333,24 @@ where
             span.record("gen_ai.usage.input_tokens", snapshot.input_tokens);
             span.record("gen_ai.usage.output_tokens", snapshot.output_tokens);
             span.record("gen_ai.usage.total_tokens", snapshot.total_tokens());
+            // `Decimal` lacks a `tracing::Value` impl; serialise to
+            // string. OTel exporters round-trip the cost as a
+            // string-typed attribute (the `Decimal` representation
+            // is the most accurate; consumers parse on read).
+            //
+            // Attribute name `entelix.agent.usage.cost` is distinct
+            // from `OtelLayer`'s per-model-call `gen_ai.usage.cost`
+            // — that one is a per-charge increment (`f64`), this one
+            // is the per-run cumulative roll-up (`Decimal` Display).
+            // Same key would conflate two different metrics on the
+            // dashboard; the namespace split mirrors the existing
+            // `entelix.usage.requests` / `entelix.usage.tool_calls`
+            // pattern (per-run aggregates ride the `entelix.*`
+            // namespace; per-call vendor signals ride `gen_ai.*`).
+            span.record(
+                "entelix.agent.usage.cost",
+                tracing::field::display(&snapshot.cost_usd),
+            );
             span.record("entelix.usage.requests", snapshot.requests);
             span.record("entelix.usage.tool_calls", snapshot.tool_calls);
         }

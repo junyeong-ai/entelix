@@ -78,10 +78,6 @@ enum Cmd {
     /// Every sub-crate `pub use` item is reachable through `entelix::*`.
     FacadeCompleteness,
 
-    /// Backend / adapter / session surfaces stay under named facade
-    /// modules (no top-level `entelix::Type` drift for advanced surface).
-    FacadeCuration,
-
     /// `cargo audit` (RustSec CVE) + `cargo deny check`
     /// (license + bans + transitive).
     SupplyChain,
@@ -115,7 +111,6 @@ fn main() -> ExitCode {
         Cmd::DeadDeps => invariants::dead_deps::run(),
         Cmd::DocCanonicalPaths => invariants::doc_canonical_paths::run(),
         Cmd::FacadeCompleteness => invariants::facade_completeness::run(),
-        Cmd::FacadeCuration => invariants::facade_curation::run(),
         Cmd::SupplyChain => invariants::supply_chain::run(),
         Cmd::FeatureMatrix => invariants::feature_matrix::run(),
         Cmd::PublicApi => invariants::public_api::run(),

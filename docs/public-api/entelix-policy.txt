@@ -265,23 +265,6 @@ impl core::marker::Unpin for entelix_policy::RegexRedactor
 impl core::marker::UnsafeUnpin for entelix_policy::RegexRedactor
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_policy::RegexRedactor
 impl core::panic::unwind_safe::UnwindSafe for entelix_policy::RegexRedactor
-pub struct entelix_policy::SystemClock
-impl core::clone::Clone for entelix_policy::SystemClock
-pub fn entelix_policy::SystemClock::clone(&self) -> entelix_policy::SystemClock
-impl core::default::Default for entelix_policy::SystemClock
-pub fn entelix_policy::SystemClock::default() -> entelix_policy::SystemClock
-impl core::fmt::Debug for entelix_policy::SystemClock
-pub fn entelix_policy::SystemClock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for entelix_policy::SystemClock
-impl entelix_policy::Clock for entelix_policy::SystemClock
-pub fn entelix_policy::SystemClock::now_micros(&self) -> u64
-impl core::marker::Freeze for entelix_policy::SystemClock
-impl core::marker::Send for entelix_policy::SystemClock
-impl core::marker::Sync for entelix_policy::SystemClock
-impl core::marker::Unpin for entelix_policy::SystemClock
-impl core::marker::UnsafeUnpin for entelix_policy::SystemClock
-impl core::panic::unwind_safe::RefUnwindSafe for entelix_policy::SystemClock
-impl core::panic::unwind_safe::UnwindSafe for entelix_policy::SystemClock
 pub struct entelix_policy::TenantPolicy
 impl entelix_policy::TenantPolicy
 pub fn entelix_policy::TenantPolicy::builder() -> entelix_policy::TenantPolicyBuilder
@@ -322,7 +305,7 @@ pub struct entelix_policy::TokenBucketLimiter
 impl entelix_policy::TokenBucketLimiter
 pub fn entelix_policy::TokenBucketLimiter::key_count(&self) -> usize
 pub fn entelix_policy::TokenBucketLimiter::new(capacity: u32, refill_per_sec: f64) -> entelix_policy::PolicyResult<Self>
-pub fn entelix_policy::TokenBucketLimiter::with_clock(capacity: u32, refill_per_sec: f64, clock: alloc::sync::Arc<dyn entelix_policy::Clock>) -> entelix_policy::PolicyResult<Self>
+pub fn entelix_policy::TokenBucketLimiter::with_clock(capacity: u32, refill_per_sec: f64, clock: alloc::sync::Arc<dyn entelix_core::time::Clock>) -> entelix_policy::PolicyResult<Self>
 impl core::fmt::Debug for entelix_policy::TokenBucketLimiter
 pub fn entelix_policy::TokenBucketLimiter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl entelix_policy::RateLimiter for entelix_policy::TokenBucketLimiter
@@ -336,11 +319,7 @@ impl !core::panic::unwind_safe::RefUnwindSafe for entelix_policy::TokenBucketLim
 impl !core::panic::unwind_safe::UnwindSafe for entelix_policy::TokenBucketLimiter
 pub const entelix_policy::DEFAULT_MAX_TENANTS: usize
 pub const entelix_policy::MAX_WARNED_MODELS: usize
-pub trait entelix_policy::Clock: core::marker::Send + core::marker::Sync
-pub fn entelix_policy::Clock::now_micros(&self) -> u64
-impl entelix_policy::Clock for entelix_policy::SystemClock
-pub fn entelix_policy::SystemClock::now_micros(&self) -> u64
-pub trait entelix_policy::PiiRedactor: core::marker::Send + core::marker::Sync
+pub trait entelix_policy::PiiRedactor: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_policy::PiiRedactor::redact_json<'life0, 'life1, 'async_trait>(&'life0 self, value: &'life1 mut serde_json::value::Value) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_policy::PolicyResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn entelix_policy::PiiRedactor::redact_request<'life0, 'life1, 'async_trait>(&'life0 self, request: &'life1 mut entelix_core::ir::request::ModelRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_policy::PolicyResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn entelix_policy::PiiRedactor::redact_response<'life0, 'life1, 'async_trait>(&'life0 self, response: &'life1 mut entelix_core::ir::response::ModelResponse) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_policy::PolicyResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
@@ -348,7 +327,7 @@ impl entelix_policy::PiiRedactor for entelix_policy::RegexRedactor
 pub fn entelix_policy::RegexRedactor::redact_json<'life0, 'life1, 'async_trait>(&'life0 self, value: &'life1 mut serde_json::value::Value) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_policy::PolicyResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn entelix_policy::RegexRedactor::redact_request<'life0, 'life1, 'async_trait>(&'life0 self, request: &'life1 mut entelix_core::ir::request::ModelRequest) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_policy::PolicyResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn entelix_policy::RegexRedactor::redact_response<'life0, 'life1, 'async_trait>(&'life0 self, response: &'life1 mut entelix_core::ir::response::ModelResponse) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_policy::PolicyResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
-pub trait entelix_policy::RateLimiter: core::marker::Send + core::marker::Sync
+pub trait entelix_policy::RateLimiter: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_policy::RateLimiter::try_acquire<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 str, tokens: u32) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_policy::PolicyResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 impl entelix_policy::RateLimiter for entelix_policy::TokenBucketLimiter
 pub fn entelix_policy::TokenBucketLimiter::try_acquire<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 str, tokens: u32) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_policy::PolicyResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait

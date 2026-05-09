@@ -57,9 +57,7 @@ pub entelix_session::GraphEvent::ToolResult::name: alloc::string::String
 pub entelix_session::GraphEvent::ToolResult::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
 pub entelix_session::GraphEvent::ToolResult::tool_use_id: alloc::string::String
 pub entelix_session::GraphEvent::UsageLimitExceeded
-pub entelix_session::GraphEvent::UsageLimitExceeded::axis: alloc::string::String
-pub entelix_session::GraphEvent::UsageLimitExceeded::limit: u64
-pub entelix_session::GraphEvent::UsageLimitExceeded::observed: u64
+pub entelix_session::GraphEvent::UsageLimitExceeded::breach: entelix_core::run_budget::UsageLimitBreach
 pub entelix_session::GraphEvent::UsageLimitExceeded::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
 pub entelix_session::GraphEvent::UserMessage
 pub entelix_session::GraphEvent::UserMessage::content: alloc::vec::Vec<entelix_core::ir::content::ContentPart>
@@ -168,7 +166,7 @@ pub fn entelix_session::SessionAuditSink::record_agent_handoff(&self, from: core
 pub fn entelix_session::SessionAuditSink::record_memory_recall(&self, tier: &str, namespace_key: &str, hits: usize)
 pub fn entelix_session::SessionAuditSink::record_resumed(&self, from_checkpoint: &str)
 pub fn entelix_session::SessionAuditSink::record_sub_agent_invoked(&self, agent_id: &str, sub_thread_id: &str)
-pub fn entelix_session::SessionAuditSink::record_usage_limit_exceeded(&self, axis: &str, limit: u64, observed: u64)
+pub fn entelix_session::SessionAuditSink::record_usage_limit_exceeded(&self, breach: &entelix_core::run_budget::UsageLimitBreach)
 impl core::marker::Freeze for entelix_session::SessionAuditSink
 impl core::marker::Send for entelix_session::SessionAuditSink
 impl core::marker::Sync for entelix_session::SessionAuditSink
@@ -228,7 +226,7 @@ pub trait entelix_session::Compactor: core::marker::Send + core::marker::Sync + 
 pub fn entelix_session::Compactor::compact(&self, events: &[entelix_session::GraphEvent], budget_chars: usize) -> entelix_core::error::Result<entelix_session::CompactedHistory>
 impl entelix_session::Compactor for entelix_session::HeadDropCompactor
 pub fn entelix_session::HeadDropCompactor::compact(&self, events: &[entelix_session::GraphEvent], budget_chars: usize) -> entelix_core::error::Result<entelix_session::CompactedHistory>
-pub trait entelix_session::SessionLog: core::marker::Send + core::marker::Sync
+pub trait entelix_session::SessionLog: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_session::SessionLog::append<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, events: &'life2 [entelix_session::GraphEvent]) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<u64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
 pub fn entelix_session::SessionLog::archive_before<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, watermark: u64) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn entelix_session::SessionLog::load_since<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, cursor: u64) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_session::GraphEvent>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait

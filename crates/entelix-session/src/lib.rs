@@ -11,7 +11,7 @@
 //! ephemeral pub-sub, this module is the durable replay source.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-session/0.1.0")]
+#![doc(html_root_url = "https://docs.rs/entelix-session/0.2.0")]
 #![deny(missing_docs)]
 
 mod audit_sink;

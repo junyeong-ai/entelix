@@ -84,7 +84,6 @@ impl core::marker::Unpin for entelix_core::approval::PendingApprovalDecisions
 impl core::marker::UnsafeUnpin for entelix_core::approval::PendingApprovalDecisions
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::approval::PendingApprovalDecisions
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::approval::PendingApprovalDecisions
-pub const entelix_core::approval::INTERRUPT_KIND_APPROVAL_PENDING: &str
 pub mod entelix_core::audit
 pub struct entelix_core::audit::AuditSinkHandle(_)
 impl entelix_core::audit::AuditSinkHandle
@@ -107,7 +106,7 @@ pub fn entelix_core::audit::AuditSink::record_agent_handoff(&self, from: core::o
 pub fn entelix_core::audit::AuditSink::record_memory_recall(&self, tier: &str, namespace_key: &str, hits: usize)
 pub fn entelix_core::audit::AuditSink::record_resumed(&self, from_checkpoint: &str)
 pub fn entelix_core::audit::AuditSink::record_sub_agent_invoked(&self, agent_id: &str, sub_thread_id: &str)
-pub fn entelix_core::audit::AuditSink::record_usage_limit_exceeded(&self, axis: &str, limit: u64, observed: u64)
+pub fn entelix_core::audit::AuditSink::record_usage_limit_exceeded(&self, breach: &entelix_core::run_budget::UsageLimitBreach)
 pub mod entelix_core::auth
 #[non_exhaustive] pub enum entelix_core::auth::AuthError
 pub entelix_core::auth::AuthError::Expired
@@ -284,6 +283,7 @@ pub const fn entelix_core::chat::ChatModel<C, T>::with_temperature(self, t: f32)
 pub fn entelix_core::chat::ChatModel<C, T>::with_tool(self, t: entelix_core::ir::ToolSpec) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_tool_choice(self, c: entelix_core::ir::ToolChoice) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_tools(self, tools: alloc::vec::Vec<entelix_core::ir::ToolSpec>) -> Self
+pub const fn entelix_core::chat::ChatModel<C, T>::with_top_k(self, k: u32) -> Self
 pub const fn entelix_core::chat::ChatModel<C, T>::with_top_p(self, p: f32) -> Self
 pub const fn entelix_core::chat::ChatModel<C, T>::with_validation_retries(self, n: u32) -> Self
 impl<C: entelix_core::codecs::Codec + 'static, T: entelix_core::transports::Transport + 'static> core::clone::Clone for entelix_core::chat::ChatModel<C, T>
@@ -309,6 +309,7 @@ pub const fn entelix_core::chat::ChatModelConfig::system(&self) -> &entelix_core
 pub const fn entelix_core::chat::ChatModelConfig::temperature(&self) -> core::option::Option<f32>
 pub const fn entelix_core::chat::ChatModelConfig::tool_choice(&self) -> &entelix_core::ir::ToolChoice
 pub fn entelix_core::chat::ChatModelConfig::tools(&self) -> &[entelix_core::ir::ToolSpec]
+pub const fn entelix_core::chat::ChatModelConfig::top_k(&self) -> core::option::Option<u32>
 pub const fn entelix_core::chat::ChatModelConfig::top_p(&self) -> core::option::Option<f32>
 pub const fn entelix_core::chat::ChatModelConfig::validation_retries(&self) -> u32
 impl core::clone::Clone for entelix_core::chat::ChatModelConfig
@@ -596,6 +597,7 @@ pub entelix_core::error::Error::Cancelled
 pub entelix_core::error::Error::Config(alloc::borrow::Cow<'static, str>)
 pub entelix_core::error::Error::DeadlineExceeded
 pub entelix_core::error::Error::Interrupted
+pub entelix_core::error::Error::Interrupted::kind: entelix_core::interruption::InterruptionKind
 pub entelix_core::error::Error::Interrupted::payload: serde_json::value::Value
 pub entelix_core::error::Error::InvalidRequest(alloc::borrow::Cow<'static, str>)
 pub entelix_core::error::Error::ModelRetry
@@ -607,10 +609,7 @@ pub entelix_core::error::Error::Provider::message: alloc::string::String
 pub entelix_core::error::Error::Provider::retry_after: core::option::Option<core::time::Duration>
 pub entelix_core::error::Error::Provider::source: core::option::Option<alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>>
 pub entelix_core::error::Error::Serde(serde_json::error::Error)
-pub entelix_core::error::Error::UsageLimitExceeded
-pub entelix_core::error::Error::UsageLimitExceeded::axis: entelix_core::run_budget::UsageLimitAxis
-pub entelix_core::error::Error::UsageLimitExceeded::limit: u64
-pub entelix_core::error::Error::UsageLimitExceeded::observed: u64
+pub entelix_core::error::Error::UsageLimitExceeded(entelix_core::run_budget::UsageLimitBreach)
 impl entelix_core::error::Error
 pub fn entelix_core::error::Error::config(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
 pub fn entelix_core::error::Error::invalid_request(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
@@ -747,6 +746,58 @@ impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::extensions::Exte
 impl !core::panic::unwind_safe::UnwindSafe for entelix_core::extensions::Extensions
 pub mod entelix_core::identity
 pub fn entelix_core::identity::validate_config_identifier(surface: &str, field: &str, value: &str) -> entelix_core::error::Result<()>
+pub mod entelix_core::interruption
+#[non_exhaustive] pub enum entelix_core::interruption::InterruptionKind
+pub entelix_core::interruption::InterruptionKind::ApprovalPending
+pub entelix_core::interruption::InterruptionKind::ApprovalPending::tool_use_id: alloc::string::String
+pub entelix_core::interruption::InterruptionKind::Custom
+pub entelix_core::interruption::InterruptionKind::ScheduledPause
+pub entelix_core::interruption::InterruptionKind::ScheduledPause::node: alloc::string::String
+pub entelix_core::interruption::InterruptionKind::ScheduledPause::phase: entelix_core::interruption::InterruptionPhase
+impl core::clone::Clone for entelix_core::interruption::InterruptionKind
+pub fn entelix_core::interruption::InterruptionKind::clone(&self) -> entelix_core::interruption::InterruptionKind
+impl core::cmp::Eq for entelix_core::interruption::InterruptionKind
+impl core::cmp::PartialEq for entelix_core::interruption::InterruptionKind
+pub fn entelix_core::interruption::InterruptionKind::eq(&self, other: &entelix_core::interruption::InterruptionKind) -> bool
+impl core::fmt::Debug for entelix_core::interruption::InterruptionKind
+pub fn entelix_core::interruption::InterruptionKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_core::interruption::InterruptionKind
+impl serde_core::ser::Serialize for entelix_core::interruption::InterruptionKind
+pub fn entelix_core::interruption::InterruptionKind::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::interruption::InterruptionKind
+pub fn entelix_core::interruption::InterruptionKind::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::interruption::InterruptionKind
+impl core::marker::Send for entelix_core::interruption::InterruptionKind
+impl core::marker::Sync for entelix_core::interruption::InterruptionKind
+impl core::marker::Unpin for entelix_core::interruption::InterruptionKind
+impl core::marker::UnsafeUnpin for entelix_core::interruption::InterruptionKind
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::interruption::InterruptionKind
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::interruption::InterruptionKind
+#[non_exhaustive] pub enum entelix_core::interruption::InterruptionPhase
+pub entelix_core::interruption::InterruptionPhase::After
+pub entelix_core::interruption::InterruptionPhase::Before
+impl core::clone::Clone for entelix_core::interruption::InterruptionPhase
+pub fn entelix_core::interruption::InterruptionPhase::clone(&self) -> entelix_core::interruption::InterruptionPhase
+impl core::cmp::Eq for entelix_core::interruption::InterruptionPhase
+impl core::cmp::PartialEq for entelix_core::interruption::InterruptionPhase
+pub fn entelix_core::interruption::InterruptionPhase::eq(&self, other: &entelix_core::interruption::InterruptionPhase) -> bool
+impl core::fmt::Debug for entelix_core::interruption::InterruptionPhase
+pub fn entelix_core::interruption::InterruptionPhase::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_core::interruption::InterruptionPhase
+impl core::marker::StructuralPartialEq for entelix_core::interruption::InterruptionPhase
+impl serde_core::ser::Serialize for entelix_core::interruption::InterruptionPhase
+pub fn entelix_core::interruption::InterruptionPhase::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::interruption::InterruptionPhase
+pub fn entelix_core::interruption::InterruptionPhase::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::interruption::InterruptionPhase
+impl core::marker::Send for entelix_core::interruption::InterruptionPhase
+impl core::marker::Sync for entelix_core::interruption::InterruptionPhase
+impl core::marker::Unpin for entelix_core::interruption::InterruptionPhase
+impl core::marker::UnsafeUnpin for entelix_core::interruption::InterruptionPhase
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::interruption::InterruptionPhase
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::interruption::InterruptionPhase
+pub fn entelix_core::interruption::interrupt<T>(payload: serde_json::value::Value) -> core::result::Result<T, entelix_core::error::Error>
+pub fn entelix_core::interruption::interrupt_with<T>(kind: entelix_core::interruption::InterruptionKind, payload: serde_json::value::Value) -> core::result::Result<T, entelix_core::error::Error>
 pub mod entelix_core::ir
 #[non_exhaustive] pub enum entelix_core::ir::CacheTtl
 pub entelix_core::ir::CacheTtl::FiveMinutes
@@ -1264,11 +1315,9 @@ impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ToolResultCon
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ToolResultContent
 #[non_exhaustive] pub struct entelix_core::ir::AnthropicExt
 pub entelix_core::ir::AnthropicExt::betas: alloc::vec::Vec<alloc::string::String>
-pub entelix_core::ir::AnthropicExt::disable_parallel_tool_use: core::option::Option<bool>
 pub entelix_core::ir::AnthropicExt::user_id: core::option::Option<alloc::string::String>
 impl entelix_core::ir::AnthropicExt
 pub fn entelix_core::ir::AnthropicExt::with_betas<I, S>(self, betas: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::Into<alloc::string::String>
-pub const fn entelix_core::ir::AnthropicExt::with_disable_parallel_tool_use(self, disable: bool) -> Self
 pub fn entelix_core::ir::AnthropicExt::with_user_id(self, user_id: impl core::convert::Into<alloc::string::String>) -> Self
 impl core::clone::Clone for entelix_core::ir::AnthropicExt
 pub fn entelix_core::ir::AnthropicExt::clone(&self) -> entelix_core::ir::AnthropicExt
@@ -1511,6 +1560,7 @@ pub entelix_core::ir::ModelRequest::cached_content: core::option::Option<alloc::
 pub entelix_core::ir::ModelRequest::max_tokens: core::option::Option<u32>
 pub entelix_core::ir::ModelRequest::messages: alloc::vec::Vec<entelix_core::ir::Message>
 pub entelix_core::ir::ModelRequest::model: alloc::string::String
+pub entelix_core::ir::ModelRequest::parallel_tool_calls: core::option::Option<bool>
 pub entelix_core::ir::ModelRequest::provider_extensions: entelix_core::ir::ProviderExtensions
 pub entelix_core::ir::ModelRequest::reasoning_effort: core::option::Option<entelix_core::ir::ReasoningEffort>
 pub entelix_core::ir::ModelRequest::response_format: core::option::Option<entelix_core::ir::ResponseFormat>
@@ -1519,6 +1569,7 @@ pub entelix_core::ir::ModelRequest::system: entelix_core::ir::SystemPrompt
 pub entelix_core::ir::ModelRequest::temperature: core::option::Option<f32>
 pub entelix_core::ir::ModelRequest::tool_choice: entelix_core::ir::ToolChoice
 pub entelix_core::ir::ModelRequest::tools: alloc::vec::Vec<entelix_core::ir::ToolSpec>
+pub entelix_core::ir::ModelRequest::top_k: core::option::Option<u32>
 pub entelix_core::ir::ModelRequest::top_p: core::option::Option<f32>
 impl core::clone::Clone for entelix_core::ir::ModelRequest
 pub fn entelix_core::ir::ModelRequest::clone(&self) -> entelix_core::ir::ModelRequest
@@ -1921,6 +1972,40 @@ pub fn entelix_core::output_validator::OutputValidator::validate(&self, output: 
 impl<O, F> entelix_core::output_validator::OutputValidator<O> for F where O: core::marker::Send + 'static, F: core::ops::function::Fn(&O) -> entelix_core::error::Result<()> + core::marker::Send + core::marker::Sync + 'static
 pub fn F::validate(&self, output: &O) -> entelix_core::error::Result<()>
 pub mod entelix_core::overrides
+#[non_exhaustive] pub struct entelix_core::overrides::RequestOverrides
+impl entelix_core::overrides::RequestOverrides
+pub const fn entelix_core::overrides::RequestOverrides::max_tokens(&self) -> core::option::Option<u32>
+pub fn entelix_core::overrides::RequestOverrides::new() -> Self
+pub const fn entelix_core::overrides::RequestOverrides::parallel_tool_calls(&self) -> core::option::Option<bool>
+pub const fn entelix_core::overrides::RequestOverrides::reasoning_effort(&self) -> core::option::Option<&entelix_core::ir::ReasoningEffort>
+pub const fn entelix_core::overrides::RequestOverrides::response_format(&self) -> core::option::Option<&entelix_core::ir::ResponseFormat>
+pub fn entelix_core::overrides::RequestOverrides::stop_sequences(&self) -> core::option::Option<&[alloc::string::String]>
+pub const fn entelix_core::overrides::RequestOverrides::temperature(&self) -> core::option::Option<f32>
+pub const fn entelix_core::overrides::RequestOverrides::tool_choice(&self) -> core::option::Option<&entelix_core::ir::ToolChoice>
+pub const fn entelix_core::overrides::RequestOverrides::top_k(&self) -> core::option::Option<u32>
+pub const fn entelix_core::overrides::RequestOverrides::top_p(&self) -> core::option::Option<f32>
+pub const fn entelix_core::overrides::RequestOverrides::with_max_tokens(self, n: u32) -> Self
+pub const fn entelix_core::overrides::RequestOverrides::with_parallel_tool_calls(self, enabled: bool) -> Self
+pub fn entelix_core::overrides::RequestOverrides::with_reasoning_effort(self, effort: entelix_core::ir::ReasoningEffort) -> Self
+pub fn entelix_core::overrides::RequestOverrides::with_response_format(self, format: entelix_core::ir::ResponseFormat) -> Self
+pub fn entelix_core::overrides::RequestOverrides::with_stop_sequences(self, sequences: alloc::vec::Vec<alloc::string::String>) -> Self
+pub const fn entelix_core::overrides::RequestOverrides::with_temperature(self, t: f32) -> Self
+pub fn entelix_core::overrides::RequestOverrides::with_tool_choice(self, choice: entelix_core::ir::ToolChoice) -> Self
+pub const fn entelix_core::overrides::RequestOverrides::with_top_k(self, k: u32) -> Self
+pub const fn entelix_core::overrides::RequestOverrides::with_top_p(self, p: f32) -> Self
+impl core::clone::Clone for entelix_core::overrides::RequestOverrides
+pub fn entelix_core::overrides::RequestOverrides::clone(&self) -> entelix_core::overrides::RequestOverrides
+impl core::default::Default for entelix_core::overrides::RequestOverrides
+pub fn entelix_core::overrides::RequestOverrides::default() -> entelix_core::overrides::RequestOverrides
+impl core::fmt::Debug for entelix_core::overrides::RequestOverrides
+pub fn entelix_core::overrides::RequestOverrides::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_core::overrides::RequestOverrides
+impl core::marker::Send for entelix_core::overrides::RequestOverrides
+impl core::marker::Sync for entelix_core::overrides::RequestOverrides
+impl core::marker::Unpin for entelix_core::overrides::RequestOverrides
+impl core::marker::UnsafeUnpin for entelix_core::overrides::RequestOverrides
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::overrides::RequestOverrides
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::overrides::RequestOverrides
 #[non_exhaustive] pub struct entelix_core::overrides::RunOverrides
 impl entelix_core::overrides::RunOverrides
 pub const fn entelix_core::overrides::RunOverrides::max_iterations(&self) -> core::option::Option<usize>
@@ -1976,41 +2061,57 @@ impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::rate_limit::RateL
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::rate_limit::RateLimitSnapshot
 pub const entelix_core::rate_limit::LOW_REMAINING_FLOOR: u64
 pub mod entelix_core::run_budget
-#[non_exhaustive] pub enum entelix_core::run_budget::UsageLimitAxis
-pub entelix_core::run_budget::UsageLimitAxis::InputTokens
-pub entelix_core::run_budget::UsageLimitAxis::OutputTokens
-pub entelix_core::run_budget::UsageLimitAxis::Requests
-pub entelix_core::run_budget::UsageLimitAxis::ToolCalls
-pub entelix_core::run_budget::UsageLimitAxis::TotalTokens
-impl core::clone::Clone for entelix_core::run_budget::UsageLimitAxis
-pub fn entelix_core::run_budget::UsageLimitAxis::clone(&self) -> entelix_core::run_budget::UsageLimitAxis
-impl core::cmp::Eq for entelix_core::run_budget::UsageLimitAxis
-impl core::cmp::PartialEq for entelix_core::run_budget::UsageLimitAxis
-pub fn entelix_core::run_budget::UsageLimitAxis::eq(&self, other: &entelix_core::run_budget::UsageLimitAxis) -> bool
-impl core::fmt::Debug for entelix_core::run_budget::UsageLimitAxis
-pub fn entelix_core::run_budget::UsageLimitAxis::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for entelix_core::run_budget::UsageLimitAxis
-pub fn entelix_core::run_budget::UsageLimitAxis::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for entelix_core::run_budget::UsageLimitAxis
-impl core::marker::StructuralPartialEq for entelix_core::run_budget::UsageLimitAxis
-impl serde_core::ser::Serialize for entelix_core::run_budget::UsageLimitAxis
-pub fn entelix_core::run_budget::UsageLimitAxis::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
-impl<'de> serde_core::de::Deserialize<'de> for entelix_core::run_budget::UsageLimitAxis
-pub fn entelix_core::run_budget::UsageLimitAxis::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
-impl core::marker::Freeze for entelix_core::run_budget::UsageLimitAxis
-impl core::marker::Send for entelix_core::run_budget::UsageLimitAxis
-impl core::marker::Sync for entelix_core::run_budget::UsageLimitAxis
-impl core::marker::Unpin for entelix_core::run_budget::UsageLimitAxis
-impl core::marker::UnsafeUnpin for entelix_core::run_budget::UsageLimitAxis
-impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::UsageLimitAxis
-impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::UsageLimitAxis
+#[non_exhaustive] pub enum entelix_core::run_budget::UsageLimitBreach
+pub entelix_core::run_budget::UsageLimitBreach::CostUsd
+pub entelix_core::run_budget::UsageLimitBreach::CostUsd::limit: rust_decimal::decimal::Decimal
+pub entelix_core::run_budget::UsageLimitBreach::CostUsd::observed: rust_decimal::decimal::Decimal
+pub entelix_core::run_budget::UsageLimitBreach::InputTokens
+pub entelix_core::run_budget::UsageLimitBreach::InputTokens::limit: u64
+pub entelix_core::run_budget::UsageLimitBreach::InputTokens::observed: u64
+pub entelix_core::run_budget::UsageLimitBreach::OutputTokens
+pub entelix_core::run_budget::UsageLimitBreach::OutputTokens::limit: u64
+pub entelix_core::run_budget::UsageLimitBreach::OutputTokens::observed: u64
+pub entelix_core::run_budget::UsageLimitBreach::Requests
+pub entelix_core::run_budget::UsageLimitBreach::Requests::limit: u64
+pub entelix_core::run_budget::UsageLimitBreach::Requests::observed: u64
+pub entelix_core::run_budget::UsageLimitBreach::ToolCalls
+pub entelix_core::run_budget::UsageLimitBreach::ToolCalls::limit: u64
+pub entelix_core::run_budget::UsageLimitBreach::ToolCalls::observed: u64
+pub entelix_core::run_budget::UsageLimitBreach::TotalTokens
+pub entelix_core::run_budget::UsageLimitBreach::TotalTokens::limit: u64
+pub entelix_core::run_budget::UsageLimitBreach::TotalTokens::observed: u64
+impl entelix_core::run_budget::UsageLimitBreach
+pub const fn entelix_core::run_budget::UsageLimitBreach::axis_name(&self) -> &'static str
+impl core::clone::Clone for entelix_core::run_budget::UsageLimitBreach
+pub fn entelix_core::run_budget::UsageLimitBreach::clone(&self) -> entelix_core::run_budget::UsageLimitBreach
+impl core::cmp::Eq for entelix_core::run_budget::UsageLimitBreach
+impl core::cmp::PartialEq for entelix_core::run_budget::UsageLimitBreach
+pub fn entelix_core::run_budget::UsageLimitBreach::eq(&self, other: &entelix_core::run_budget::UsageLimitBreach) -> bool
+impl core::fmt::Debug for entelix_core::run_budget::UsageLimitBreach
+pub fn entelix_core::run_budget::UsageLimitBreach::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_core::run_budget::UsageLimitBreach
+pub fn entelix_core::run_budget::UsageLimitBreach::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_core::run_budget::UsageLimitBreach
+impl serde_core::ser::Serialize for entelix_core::run_budget::UsageLimitBreach
+pub fn entelix_core::run_budget::UsageLimitBreach::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::run_budget::UsageLimitBreach
+pub fn entelix_core::run_budget::UsageLimitBreach::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::run_budget::UsageLimitBreach
+impl core::marker::Send for entelix_core::run_budget::UsageLimitBreach
+impl core::marker::Sync for entelix_core::run_budget::UsageLimitBreach
+impl core::marker::Unpin for entelix_core::run_budget::UsageLimitBreach
+impl core::marker::UnsafeUnpin for entelix_core::run_budget::UsageLimitBreach
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::UsageLimitBreach
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::UsageLimitBreach
 pub struct entelix_core::run_budget::RunBudget
 impl entelix_core::run_budget::RunBudget
 pub fn entelix_core::run_budget::RunBudget::check_pre_request(&self) -> entelix_core::error::Result<()>
 pub fn entelix_core::run_budget::RunBudget::check_pre_tool_call(&self) -> entelix_core::error::Result<()>
+pub fn entelix_core::run_budget::RunBudget::observe_cost(&self, charge_usd: rust_decimal::decimal::Decimal) -> entelix_core::error::Result<()>
 pub fn entelix_core::run_budget::RunBudget::observe_usage(&self, usage: &entelix_core::ir::Usage) -> entelix_core::error::Result<()>
 pub fn entelix_core::run_budget::RunBudget::snapshot(&self) -> entelix_core::run_budget::UsageSnapshot
 pub fn entelix_core::run_budget::RunBudget::unlimited() -> Self
+pub const fn entelix_core::run_budget::RunBudget::with_cost_limit_usd(self, limit: rust_decimal::decimal::Decimal) -> Self
 pub const fn entelix_core::run_budget::RunBudget::with_input_tokens_limit(self, n: u64) -> Self
 pub const fn entelix_core::run_budget::RunBudget::with_output_tokens_limit(self, n: u64) -> Self
 pub const fn entelix_core::run_budget::RunBudget::with_request_limit(self, n: u32) -> Self
@@ -2030,6 +2131,7 @@ impl core::marker::UnsafeUnpin for entelix_core::run_budget::RunBudget
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::RunBudget
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::RunBudget
 #[non_exhaustive] pub struct entelix_core::run_budget::UsageSnapshot
+pub entelix_core::run_budget::UsageSnapshot::cost_usd: rust_decimal::decimal::Decimal
 pub entelix_core::run_budget::UsageSnapshot::input_tokens: u64
 pub entelix_core::run_budget::UsageSnapshot::output_tokens: u64
 pub entelix_core::run_budget::UsageSnapshot::requests: u32
@@ -2191,7 +2293,7 @@ impl core::marker::Unpin for entelix_core::sandbox::DirEntry
 impl core::marker::UnsafeUnpin for entelix_core::sandbox::DirEntry
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::sandbox::DirEntry
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::sandbox::DirEntry
-pub trait entelix_core::sandbox::Sandbox: core::marker::Send + core::marker::Sync
+pub trait entelix_core::sandbox::Sandbox: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::sandbox::Sandbox::backend(&self) -> &str
 pub fn entelix_core::sandbox::Sandbox::list_dir<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, path: &'life1 str, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_core::sandbox::DirEntry>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
 pub fn entelix_core::sandbox::Sandbox::read_file<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, path: &'life1 str, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<u8>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
@@ -2506,6 +2608,28 @@ impl core::marker::Unpin for entelix_core::thread_key::ThreadKey
 impl core::marker::UnsafeUnpin for entelix_core::thread_key::ThreadKey
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::thread_key::ThreadKey
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::thread_key::ThreadKey
+pub mod entelix_core::time
+pub struct entelix_core::time::SystemClock
+impl core::clone::Clone for entelix_core::time::SystemClock
+pub fn entelix_core::time::SystemClock::clone(&self) -> entelix_core::time::SystemClock
+impl core::default::Default for entelix_core::time::SystemClock
+pub fn entelix_core::time::SystemClock::default() -> entelix_core::time::SystemClock
+impl core::fmt::Debug for entelix_core::time::SystemClock
+pub fn entelix_core::time::SystemClock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_core::time::SystemClock
+impl entelix_core::time::Clock for entelix_core::time::SystemClock
+pub fn entelix_core::time::SystemClock::now_micros(&self) -> u64
+impl core::marker::Freeze for entelix_core::time::SystemClock
+impl core::marker::Send for entelix_core::time::SystemClock
+impl core::marker::Sync for entelix_core::time::SystemClock
+impl core::marker::Unpin for entelix_core::time::SystemClock
+impl core::marker::UnsafeUnpin for entelix_core::time::SystemClock
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::time::SystemClock
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::time::SystemClock
+pub trait entelix_core::time::Clock: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::time::Clock::now_micros(&self) -> u64
+impl entelix_core::time::Clock for entelix_core::time::SystemClock
+pub fn entelix_core::time::SystemClock::now_micros(&self) -> u64
 pub mod entelix_core::tools
 #[non_exhaustive] pub enum entelix_core::tools::ToolEffect
 pub entelix_core::tools::ToolEffect::Destructive
@@ -2998,6 +3122,7 @@ pub entelix_core::Error::Cancelled
 pub entelix_core::Error::Config(alloc::borrow::Cow<'static, str>)
 pub entelix_core::Error::DeadlineExceeded
 pub entelix_core::Error::Interrupted
+pub entelix_core::Error::Interrupted::kind: entelix_core::interruption::InterruptionKind
 pub entelix_core::Error::Interrupted::payload: serde_json::value::Value
 pub entelix_core::Error::InvalidRequest(alloc::borrow::Cow<'static, str>)
 pub entelix_core::Error::ModelRetry
@@ -3009,10 +3134,7 @@ pub entelix_core::Error::Provider::message: alloc::string::String
 pub entelix_core::Error::Provider::retry_after: core::option::Option<core::time::Duration>
 pub entelix_core::Error::Provider::source: core::option::Option<alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>>
 pub entelix_core::Error::Serde(serde_json::error::Error)
-pub entelix_core::Error::UsageLimitExceeded
-pub entelix_core::Error::UsageLimitExceeded::axis: entelix_core::run_budget::UsageLimitAxis
-pub entelix_core::Error::UsageLimitExceeded::limit: u64
-pub entelix_core::Error::UsageLimitExceeded::observed: u64
+pub entelix_core::Error::UsageLimitExceeded(entelix_core::run_budget::UsageLimitBreach)
 impl entelix_core::error::Error
 pub fn entelix_core::error::Error::config(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
 pub fn entelix_core::error::Error::invalid_request(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
@@ -3047,6 +3169,55 @@ impl core::marker::Unpin for entelix_core::error::Error
 impl core::marker::UnsafeUnpin for entelix_core::error::Error
 impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::error::Error
 impl !core::panic::unwind_safe::UnwindSafe for entelix_core::error::Error
+#[non_exhaustive] pub enum entelix_core::InterruptionKind
+pub entelix_core::InterruptionKind::ApprovalPending
+pub entelix_core::InterruptionKind::ApprovalPending::tool_use_id: alloc::string::String
+pub entelix_core::InterruptionKind::Custom
+pub entelix_core::InterruptionKind::ScheduledPause
+pub entelix_core::InterruptionKind::ScheduledPause::node: alloc::string::String
+pub entelix_core::InterruptionKind::ScheduledPause::phase: entelix_core::interruption::InterruptionPhase
+impl core::clone::Clone for entelix_core::interruption::InterruptionKind
+pub fn entelix_core::interruption::InterruptionKind::clone(&self) -> entelix_core::interruption::InterruptionKind
+impl core::cmp::Eq for entelix_core::interruption::InterruptionKind
+impl core::cmp::PartialEq for entelix_core::interruption::InterruptionKind
+pub fn entelix_core::interruption::InterruptionKind::eq(&self, other: &entelix_core::interruption::InterruptionKind) -> bool
+impl core::fmt::Debug for entelix_core::interruption::InterruptionKind
+pub fn entelix_core::interruption::InterruptionKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_core::interruption::InterruptionKind
+impl serde_core::ser::Serialize for entelix_core::interruption::InterruptionKind
+pub fn entelix_core::interruption::InterruptionKind::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::interruption::InterruptionKind
+pub fn entelix_core::interruption::InterruptionKind::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::interruption::InterruptionKind
+impl core::marker::Send for entelix_core::interruption::InterruptionKind
+impl core::marker::Sync for entelix_core::interruption::InterruptionKind
+impl core::marker::Unpin for entelix_core::interruption::InterruptionKind
+impl core::marker::UnsafeUnpin for entelix_core::interruption::InterruptionKind
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::interruption::InterruptionKind
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::interruption::InterruptionKind
+#[non_exhaustive] pub enum entelix_core::InterruptionPhase
+pub entelix_core::InterruptionPhase::After
+pub entelix_core::InterruptionPhase::Before
+impl core::clone::Clone for entelix_core::interruption::InterruptionPhase
+pub fn entelix_core::interruption::InterruptionPhase::clone(&self) -> entelix_core::interruption::InterruptionPhase
+impl core::cmp::Eq for entelix_core::interruption::InterruptionPhase
+impl core::cmp::PartialEq for entelix_core::interruption::InterruptionPhase
+pub fn entelix_core::interruption::InterruptionPhase::eq(&self, other: &entelix_core::interruption::InterruptionPhase) -> bool
+impl core::fmt::Debug for entelix_core::interruption::InterruptionPhase
+pub fn entelix_core::interruption::InterruptionPhase::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_core::interruption::InterruptionPhase
+impl core::marker::StructuralPartialEq for entelix_core::interruption::InterruptionPhase
+impl serde_core::ser::Serialize for entelix_core::interruption::InterruptionPhase
+pub fn entelix_core::interruption::InterruptionPhase::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::interruption::InterruptionPhase
+pub fn entelix_core::interruption::InterruptionPhase::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::interruption::InterruptionPhase
+impl core::marker::Send for entelix_core::interruption::InterruptionPhase
+impl core::marker::Sync for entelix_core::interruption::InterruptionPhase
+impl core::marker::Unpin for entelix_core::interruption::InterruptionPhase
+impl core::marker::UnsafeUnpin for entelix_core::interruption::InterruptionPhase
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::interruption::InterruptionPhase
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::interruption::InterruptionPhase
 #[non_exhaustive] pub enum entelix_core::ProviderErrorKind
 pub entelix_core::ProviderErrorKind::Dns
 pub entelix_core::ProviderErrorKind::Http(u16)
@@ -3092,34 +3263,48 @@ impl core::marker::Unpin for entelix_core::SkillResourceContent
 impl core::marker::UnsafeUnpin for entelix_core::SkillResourceContent
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::SkillResourceContent
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::SkillResourceContent
-#[non_exhaustive] pub enum entelix_core::UsageLimitAxis
-pub entelix_core::UsageLimitAxis::InputTokens
-pub entelix_core::UsageLimitAxis::OutputTokens
-pub entelix_core::UsageLimitAxis::Requests
-pub entelix_core::UsageLimitAxis::ToolCalls
-pub entelix_core::UsageLimitAxis::TotalTokens
-impl core::clone::Clone for entelix_core::run_budget::UsageLimitAxis
-pub fn entelix_core::run_budget::UsageLimitAxis::clone(&self) -> entelix_core::run_budget::UsageLimitAxis
-impl core::cmp::Eq for entelix_core::run_budget::UsageLimitAxis
-impl core::cmp::PartialEq for entelix_core::run_budget::UsageLimitAxis
-pub fn entelix_core::run_budget::UsageLimitAxis::eq(&self, other: &entelix_core::run_budget::UsageLimitAxis) -> bool
-impl core::fmt::Debug for entelix_core::run_budget::UsageLimitAxis
-pub fn entelix_core::run_budget::UsageLimitAxis::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Display for entelix_core::run_budget::UsageLimitAxis
-pub fn entelix_core::run_budget::UsageLimitAxis::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for entelix_core::run_budget::UsageLimitAxis
-impl core::marker::StructuralPartialEq for entelix_core::run_budget::UsageLimitAxis
-impl serde_core::ser::Serialize for entelix_core::run_budget::UsageLimitAxis
-pub fn entelix_core::run_budget::UsageLimitAxis::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
-impl<'de> serde_core::de::Deserialize<'de> for entelix_core::run_budget::UsageLimitAxis
-pub fn entelix_core::run_budget::UsageLimitAxis::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
-impl core::marker::Freeze for entelix_core::run_budget::UsageLimitAxis
-impl core::marker::Send for entelix_core::run_budget::UsageLimitAxis
-impl core::marker::Sync for entelix_core::run_budget::UsageLimitAxis
-impl core::marker::Unpin for entelix_core::run_budget::UsageLimitAxis
-impl core::marker::UnsafeUnpin for entelix_core::run_budget::UsageLimitAxis
-impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::UsageLimitAxis
-impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::UsageLimitAxis
+#[non_exhaustive] pub enum entelix_core::UsageLimitBreach
+pub entelix_core::UsageLimitBreach::CostUsd
+pub entelix_core::UsageLimitBreach::CostUsd::limit: rust_decimal::decimal::Decimal
+pub entelix_core::UsageLimitBreach::CostUsd::observed: rust_decimal::decimal::Decimal
+pub entelix_core::UsageLimitBreach::InputTokens
+pub entelix_core::UsageLimitBreach::InputTokens::limit: u64
+pub entelix_core::UsageLimitBreach::InputTokens::observed: u64
+pub entelix_core::UsageLimitBreach::OutputTokens
+pub entelix_core::UsageLimitBreach::OutputTokens::limit: u64
+pub entelix_core::UsageLimitBreach::OutputTokens::observed: u64
+pub entelix_core::UsageLimitBreach::Requests
+pub entelix_core::UsageLimitBreach::Requests::limit: u64
+pub entelix_core::UsageLimitBreach::Requests::observed: u64
+pub entelix_core::UsageLimitBreach::ToolCalls
+pub entelix_core::UsageLimitBreach::ToolCalls::limit: u64
+pub entelix_core::UsageLimitBreach::ToolCalls::observed: u64
+pub entelix_core::UsageLimitBreach::TotalTokens
+pub entelix_core::UsageLimitBreach::TotalTokens::limit: u64
+pub entelix_core::UsageLimitBreach::TotalTokens::observed: u64
+impl entelix_core::run_budget::UsageLimitBreach
+pub const fn entelix_core::run_budget::UsageLimitBreach::axis_name(&self) -> &'static str
+impl core::clone::Clone for entelix_core::run_budget::UsageLimitBreach
+pub fn entelix_core::run_budget::UsageLimitBreach::clone(&self) -> entelix_core::run_budget::UsageLimitBreach
+impl core::cmp::Eq for entelix_core::run_budget::UsageLimitBreach
+impl core::cmp::PartialEq for entelix_core::run_budget::UsageLimitBreach
+pub fn entelix_core::run_budget::UsageLimitBreach::eq(&self, other: &entelix_core::run_budget::UsageLimitBreach) -> bool
+impl core::fmt::Debug for entelix_core::run_budget::UsageLimitBreach
+pub fn entelix_core::run_budget::UsageLimitBreach::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_core::run_budget::UsageLimitBreach
+pub fn entelix_core::run_budget::UsageLimitBreach::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_core::run_budget::UsageLimitBreach
+impl serde_core::ser::Serialize for entelix_core::run_budget::UsageLimitBreach
+pub fn entelix_core::run_budget::UsageLimitBreach::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::run_budget::UsageLimitBreach
+pub fn entelix_core::run_budget::UsageLimitBreach::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::run_budget::UsageLimitBreach
+impl core::marker::Send for entelix_core::run_budget::UsageLimitBreach
+impl core::marker::Sync for entelix_core::run_budget::UsageLimitBreach
+impl core::marker::Unpin for entelix_core::run_budget::UsageLimitBreach
+impl core::marker::UnsafeUnpin for entelix_core::run_budget::UsageLimitBreach
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::UsageLimitBreach
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::UsageLimitBreach
 pub struct entelix_core::AgentContext<D>
 impl<D: core::clone::Clone> entelix_core::agent_context::AgentContext<D>
 pub fn entelix_core::agent_context::AgentContext<D>::child(&self) -> Self
@@ -3270,6 +3455,7 @@ pub const fn entelix_core::chat::ChatModel<C, T>::with_temperature(self, t: f32)
 pub fn entelix_core::chat::ChatModel<C, T>::with_tool(self, t: entelix_core::ir::ToolSpec) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_tool_choice(self, c: entelix_core::ir::ToolChoice) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::with_tools(self, tools: alloc::vec::Vec<entelix_core::ir::ToolSpec>) -> Self
+pub const fn entelix_core::chat::ChatModel<C, T>::with_top_k(self, k: u32) -> Self
 pub const fn entelix_core::chat::ChatModel<C, T>::with_top_p(self, p: f32) -> Self
 pub const fn entelix_core::chat::ChatModel<C, T>::with_validation_retries(self, n: u32) -> Self
 impl<C: entelix_core::codecs::Codec + 'static, T: entelix_core::transports::Transport + 'static> core::clone::Clone for entelix_core::chat::ChatModel<C, T>
@@ -3295,6 +3481,7 @@ pub const fn entelix_core::chat::ChatModelConfig::system(&self) -> &entelix_core
 pub const fn entelix_core::chat::ChatModelConfig::temperature(&self) -> core::option::Option<f32>
 pub const fn entelix_core::chat::ChatModelConfig::tool_choice(&self) -> &entelix_core::ir::ToolChoice
 pub fn entelix_core::chat::ChatModelConfig::tools(&self) -> &[entelix_core::ir::ToolSpec]
+pub const fn entelix_core::chat::ChatModelConfig::top_k(&self) -> core::option::Option<u32>
 pub const fn entelix_core::chat::ChatModelConfig::top_p(&self) -> core::option::Option<f32>
 pub const fn entelix_core::chat::ChatModelConfig::validation_retries(&self) -> u32
 impl core::clone::Clone for entelix_core::chat::ChatModelConfig
@@ -3488,13 +3675,49 @@ impl<T> core::marker::Unpin for entelix_core::llm_facing::RenderedForLlm<T> wher
 impl<T> core::marker::UnsafeUnpin for entelix_core::llm_facing::RenderedForLlm<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for entelix_core::llm_facing::RenderedForLlm<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for entelix_core::llm_facing::RenderedForLlm<T> where T: core::panic::unwind_safe::UnwindSafe
+#[non_exhaustive] pub struct entelix_core::RequestOverrides
+impl entelix_core::overrides::RequestOverrides
+pub const fn entelix_core::overrides::RequestOverrides::max_tokens(&self) -> core::option::Option<u32>
+pub fn entelix_core::overrides::RequestOverrides::new() -> Self
+pub const fn entelix_core::overrides::RequestOverrides::parallel_tool_calls(&self) -> core::option::Option<bool>
+pub const fn entelix_core::overrides::RequestOverrides::reasoning_effort(&self) -> core::option::Option<&entelix_core::ir::ReasoningEffort>
+pub const fn entelix_core::overrides::RequestOverrides::response_format(&self) -> core::option::Option<&entelix_core::ir::ResponseFormat>
+pub fn entelix_core::overrides::RequestOverrides::stop_sequences(&self) -> core::option::Option<&[alloc::string::String]>
+pub const fn entelix_core::overrides::RequestOverrides::temperature(&self) -> core::option::Option<f32>
+pub const fn entelix_core::overrides::RequestOverrides::tool_choice(&self) -> core::option::Option<&entelix_core::ir::ToolChoice>
+pub const fn entelix_core::overrides::RequestOverrides::top_k(&self) -> core::option::Option<u32>
+pub const fn entelix_core::overrides::RequestOverrides::top_p(&self) -> core::option::Option<f32>
+pub const fn entelix_core::overrides::RequestOverrides::with_max_tokens(self, n: u32) -> Self
+pub const fn entelix_core::overrides::RequestOverrides::with_parallel_tool_calls(self, enabled: bool) -> Self
+pub fn entelix_core::overrides::RequestOverrides::with_reasoning_effort(self, effort: entelix_core::ir::ReasoningEffort) -> Self
+pub fn entelix_core::overrides::RequestOverrides::with_response_format(self, format: entelix_core::ir::ResponseFormat) -> Self
+pub fn entelix_core::overrides::RequestOverrides::with_stop_sequences(self, sequences: alloc::vec::Vec<alloc::string::String>) -> Self
+pub const fn entelix_core::overrides::RequestOverrides::with_temperature(self, t: f32) -> Self
+pub fn entelix_core::overrides::RequestOverrides::with_tool_choice(self, choice: entelix_core::ir::ToolChoice) -> Self
+pub const fn entelix_core::overrides::RequestOverrides::with_top_k(self, k: u32) -> Self
+pub const fn entelix_core::overrides::RequestOverrides::with_top_p(self, p: f32) -> Self
+impl core::clone::Clone for entelix_core::overrides::RequestOverrides
+pub fn entelix_core::overrides::RequestOverrides::clone(&self) -> entelix_core::overrides::RequestOverrides
+impl core::default::Default for entelix_core::overrides::RequestOverrides
+pub fn entelix_core::overrides::RequestOverrides::default() -> entelix_core::overrides::RequestOverrides
+impl core::fmt::Debug for entelix_core::overrides::RequestOverrides
+pub fn entelix_core::overrides::RequestOverrides::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_core::overrides::RequestOverrides
+impl core::marker::Send for entelix_core::overrides::RequestOverrides
+impl core::marker::Sync for entelix_core::overrides::RequestOverrides
+impl core::marker::Unpin for entelix_core::overrides::RequestOverrides
+impl core::marker::UnsafeUnpin for entelix_core::overrides::RequestOverrides
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::overrides::RequestOverrides
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::overrides::RequestOverrides
 pub struct entelix_core::RunBudget
 impl entelix_core::run_budget::RunBudget
 pub fn entelix_core::run_budget::RunBudget::check_pre_request(&self) -> entelix_core::error::Result<()>
 pub fn entelix_core::run_budget::RunBudget::check_pre_tool_call(&self) -> entelix_core::error::Result<()>
+pub fn entelix_core::run_budget::RunBudget::observe_cost(&self, charge_usd: rust_decimal::decimal::Decimal) -> entelix_core::error::Result<()>
 pub fn entelix_core::run_budget::RunBudget::observe_usage(&self, usage: &entelix_core::ir::Usage) -> entelix_core::error::Result<()>
 pub fn entelix_core::run_budget::RunBudget::snapshot(&self) -> entelix_core::run_budget::UsageSnapshot
 pub fn entelix_core::run_budget::RunBudget::unlimited() -> Self
+pub const fn entelix_core::run_budget::RunBudget::with_cost_limit_usd(self, limit: rust_decimal::decimal::Decimal) -> Self
 pub const fn entelix_core::run_budget::RunBudget::with_input_tokens_limit(self, n: u64) -> Self
 pub const fn entelix_core::run_budget::RunBudget::with_output_tokens_limit(self, n: u64) -> Self
 pub const fn entelix_core::run_budget::RunBudget::with_request_limit(self, n: u32) -> Self
@@ -3600,6 +3823,23 @@ impl core::marker::Unpin for entelix_core::service::StreamingModelInvocation
 impl core::marker::UnsafeUnpin for entelix_core::service::StreamingModelInvocation
 impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::service::StreamingModelInvocation
 impl !core::panic::unwind_safe::UnwindSafe for entelix_core::service::StreamingModelInvocation
+pub struct entelix_core::SystemClock
+impl core::clone::Clone for entelix_core::time::SystemClock
+pub fn entelix_core::time::SystemClock::clone(&self) -> entelix_core::time::SystemClock
+impl core::default::Default for entelix_core::time::SystemClock
+pub fn entelix_core::time::SystemClock::default() -> entelix_core::time::SystemClock
+impl core::fmt::Debug for entelix_core::time::SystemClock
+pub fn entelix_core::time::SystemClock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_core::time::SystemClock
+impl entelix_core::time::Clock for entelix_core::time::SystemClock
+pub fn entelix_core::time::SystemClock::now_micros(&self) -> u64
+impl core::marker::Freeze for entelix_core::time::SystemClock
+impl core::marker::Send for entelix_core::time::SystemClock
+impl core::marker::Sync for entelix_core::time::SystemClock
+impl core::marker::Unpin for entelix_core::time::SystemClock
+impl core::marker::UnsafeUnpin for entelix_core::time::SystemClock
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::time::SystemClock
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::time::SystemClock
 pub struct entelix_core::TenantId(_)
 impl entelix_core::tenant_id::TenantId
 pub fn entelix_core::tenant_id::TenantId::as_str(&self) -> &str
@@ -3745,6 +3985,7 @@ impl<O> core::marker::UnsafeUnpin for entelix_core::chat::TypedModelStream<O>
 impl<O> !core::panic::unwind_safe::RefUnwindSafe for entelix_core::chat::TypedModelStream<O>
 impl<O> !core::panic::unwind_safe::UnwindSafe for entelix_core::chat::TypedModelStream<O>
 #[non_exhaustive] pub struct entelix_core::UsageSnapshot
+pub entelix_core::UsageSnapshot::cost_usd: rust_decimal::decimal::Decimal
 pub entelix_core::UsageSnapshot::input_tokens: u64
 pub entelix_core::UsageSnapshot::output_tokens: u64
 pub entelix_core::UsageSnapshot::requests: u32
@@ -3774,13 +4015,16 @@ impl core::marker::UnsafeUnpin for entelix_core::run_budget::UsageSnapshot
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::UsageSnapshot
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::UsageSnapshot
 pub const entelix_core::DEFAULT_TENANT_ID: &str
-pub const entelix_core::INTERRUPT_KIND_APPROVAL_PENDING: &str
 pub trait entelix_core::AuditSink: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::AuditSink::record_agent_handoff(&self, from: core::option::Option<&str>, to: &str)
 pub fn entelix_core::AuditSink::record_memory_recall(&self, tier: &str, namespace_key: &str, hits: usize)
 pub fn entelix_core::AuditSink::record_resumed(&self, from_checkpoint: &str)
 pub fn entelix_core::AuditSink::record_sub_agent_invoked(&self, agent_id: &str, sub_thread_id: &str)
-pub fn entelix_core::AuditSink::record_usage_limit_exceeded(&self, axis: &str, limit: u64, observed: u64)
+pub fn entelix_core::AuditSink::record_usage_limit_exceeded(&self, breach: &entelix_core::run_budget::UsageLimitBreach)
+pub trait entelix_core::Clock: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::Clock::now_micros(&self) -> u64
+impl entelix_core::time::Clock for entelix_core::time::SystemClock
+pub fn entelix_core::time::SystemClock::now_micros(&self) -> u64
 pub trait entelix_core::CostCalculator: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::CostCalculator::compute_cost<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, model: &'life1 str, usage: &'life2 entelix_core::ir::Usage, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<f64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
 pub trait entelix_core::CredentialProvider: core::marker::Send + core::marker::Sync + 'static
@@ -3821,6 +4065,8 @@ pub fn entelix_core::Tool::execute<'life0, 'life1, 'async_trait>(&'life0 self, i
 pub fn entelix_core::Tool::metadata(&self) -> &entelix_core::tools::ToolMetadata
 pub trait entelix_core::ToolCostCalculator: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::ToolCostCalculator::compute_cost<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, tool_name: &'life1 str, output: &'life2 serde_json::value::Value, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<f64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_core::interrupt<T>(payload: serde_json::value::Value) -> core::result::Result<T, entelix_core::error::Error>
+pub fn entelix_core::interrupt_with<T>(kind: entelix_core::interruption::InterruptionKind, payload: serde_json::value::Value) -> core::result::Result<T, entelix_core::error::Error>
 pub fn entelix_core::tap_aggregator(inner: entelix_core::codecs::BoxDeltaStream<'static>) -> entelix_core::service::ModelStream
 pub type entelix_core::BoxedModelService = tower::util::boxed_clone::BoxCloneService<entelix_core::service::ModelInvocation, entelix_core::ir::ModelResponse, entelix_core::error::Error>
 pub type entelix_core::BoxedStreamingService = tower::util::boxed_clone::BoxCloneService<entelix_core::service::StreamingModelInvocation, entelix_core::service::ModelStream, entelix_core::error::Error>

@@ -47,11 +47,12 @@ pub use entelix_core::transports;
 // matching, LLM-facing error rendering) reaches them. Keep them at
 // the top so callers don't need to memorise an internal module name.
 pub use entelix_core::{
-    AgentContext, ApprovalDecision, AuditSink, AuditSinkHandle, ChatModel, ChatModelConfig,
-    CostCalculator, DEFAULT_TENANT_ID, Error, ExecutionContext, Extensions,
-    INTERRUPT_KIND_APPROVAL_PENDING, LlmFacingSchema, LlmRenderable, OutputValidator,
-    PendingApprovalDecisions, ProviderErrorKind, RenderedForLlm, Result, RunBudget, RunOverrides,
-    TenantId, ThreadKey, ToolCostCalculator, TypedModelStream, UsageLimitAxis, UsageSnapshot,
+    AgentContext, ApprovalDecision, AuditSink, AuditSinkHandle, ChatModel, ChatModelConfig, Clock,
+    CostCalculator, DEFAULT_TENANT_ID, Error, ExecutionContext, Extensions, InterruptionKind,
+    InterruptionPhase, LlmFacingSchema, LlmRenderable, OutputValidator, PendingApprovalDecisions,
+    ProviderErrorKind, RenderedForLlm, RequestOverrides, Result, RunBudget, RunOverrides,
+    SystemClock, TenantId, ThreadKey, ToolCostCalculator, TypedModelStream, UsageLimitBreach,
+    UsageSnapshot, interrupt, interrupt_with,
 };
 
 // ── Sub-crate re-exports — the 90% surface for crates that don't
@@ -94,7 +95,7 @@ pub use entelix_graph::{
     Annotated, Append, Checkpoint, CheckpointGranularity, CheckpointId, Checkpointer, Command,
     CompiledGraph, ConditionalEdge, ContributingNodeAdapter, DEFAULT_RECURSION_LIMIT, END,
     EdgeSelector, InMemoryCheckpointer, Max, MergeMap, MergeNodeAdapter, Reducer, Replace,
-    SendEdge, SendMerger, SendSelector, StateGraph, StateMerge, interrupt,
+    SendEdge, SendMerger, SendSelector, StateGraph, StateMerge,
 };
 #[cfg(feature = "graphmemory-pg")]
 #[cfg_attr(docsrs, doc(cfg(feature = "graphmemory-pg")))]
@@ -179,10 +180,10 @@ pub use entelix_persistence::{
 #[cfg(feature = "policy")]
 #[cfg_attr(docsrs, doc(cfg(feature = "policy")))]
 pub use entelix_policy::{
-    Budget, Clock, CostMeter, DEFAULT_MAX_TENANTS as POLICY_DEFAULT_MAX_TENANTS,
+    Budget, CostMeter, DEFAULT_MAX_TENANTS as POLICY_DEFAULT_MAX_TENANTS,
     MAX_WARNED_MODELS as POLICY_MAX_WARNED_MODELS, ModelPricing, PiiPattern, PiiRedactor,
     PolicyError, PolicyLayer, PolicyRegistry, PolicyResult, PolicyService, PricingTable,
-    QuotaLimiter, RateLimiter, RegexRedactor, SystemClock, TenantPolicy, TenantPolicyBuilder,
+    QuotaLimiter, RateLimiter, RegexRedactor, TenantPolicy, TenantPolicyBuilder,
     TokenBucketLimiter, UnknownModelPolicy, default_pii_patterns, luhn_valid,
 };
 pub use entelix_prompt::{
@@ -191,10 +192,10 @@ pub use entelix_prompt::{
     PromptTemplate, PromptValue, PromptVars, SharedExampleSelector,
 };
 pub use entelix_runnable::{
-    AnyRunnable, AnyRunnableHandle, BoxStream, Configured, DebugEvent, Fallback, JsonOutputParser,
-    Mapping, Retrying, Runnable, RunnableEvent, RunnableExt, RunnableLambda, RunnableParallel,
-    RunnablePassthrough, RunnableRouter, RunnableSequence, StreamChunk, StreamMode, Timed,
-    ToolToRunnableAdapter, erase,
+    AnyRunnable, AnyRunnableHandle, BoxStream, ChatModelExt, Configured, DebugEvent, Fallback,
+    JsonOutputParser, Mapping, Retrying, Runnable, RunnableEvent, RunnableExt, RunnableLambda,
+    RunnableParallel, RunnablePassthrough, RunnableRouter, RunnableSequence, StreamChunk,
+    StreamMode, StructuredOutputAdapter, Timed, ToolToRunnableAdapter, erase,
 };
 #[cfg(feature = "server")]
 #[cfg_attr(docsrs, doc(cfg(feature = "server")))]

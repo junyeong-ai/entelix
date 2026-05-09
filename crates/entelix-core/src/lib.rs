@@ -47,6 +47,7 @@ pub mod error;
 pub mod events;
 pub mod extensions;
 pub mod identity;
+pub mod interruption;
 pub mod ir;
 pub mod llm_facing;
 pub mod output_validator;
@@ -59,11 +60,12 @@ pub mod skills;
 pub mod stream;
 pub mod tenant_id;
 pub mod thread_key;
+pub mod time;
 pub mod tools;
 pub mod transports;
 
 pub use agent_context::AgentContext;
-pub use approval::{ApprovalDecision, INTERRUPT_KIND_APPROVAL_PENDING, PendingApprovalDecisions};
+pub use approval::{ApprovalDecision, PendingApprovalDecisions};
 pub use audit::{AuditSink, AuditSinkHandle};
 pub use auth::{
     ApiKeyProvider, AuthError, BearerProvider, CachedCredentialProvider, ChainedCredentialProvider,
@@ -74,10 +76,11 @@ pub use context::ExecutionContext;
 pub use cost::{CostCalculator, ToolCostCalculator};
 pub use error::{Error, ProviderErrorKind, Result};
 pub use extensions::Extensions;
+pub use interruption::{InterruptionKind, InterruptionPhase, interrupt, interrupt_with};
 pub use llm_facing::{LlmFacingSchema, LlmRenderable, RenderedForLlm};
 pub use output_validator::OutputValidator;
-pub use overrides::RunOverrides;
-pub use run_budget::{RunBudget, UsageLimitAxis, UsageSnapshot};
+pub use overrides::{RequestOverrides, RunOverrides};
+pub use run_budget::{RunBudget, UsageLimitBreach, UsageSnapshot};
 pub use service::{
     BoxedModelService, BoxedStreamingService, BoxedToolService, ModelInvocation, ModelStream,
     StreamingModelInvocation, ToolInvocation,
@@ -88,4 +91,5 @@ pub use skills::{
 pub use stream::tap_aggregator;
 pub use tenant_id::{DEFAULT_TENANT_ID, TenantId};
 pub use thread_key::ThreadKey;
+pub use time::{Clock, SystemClock};
 pub use tools::{Tool, ToolRegistry};

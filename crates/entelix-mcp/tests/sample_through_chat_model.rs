@@ -7,6 +7,8 @@
 
 #![allow(clippy::unwrap_used, clippy::indexing_slicing)]
 
+#![cfg(feature = "chatmodel-sampling")]
+
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;

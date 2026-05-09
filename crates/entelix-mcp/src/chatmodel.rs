@@ -106,7 +106,7 @@ where
         // but not enforced (the spec is intentionally vague).
         if let Some(prefs) = request.model_preferences.as_ref() {
             tracing::debug!(
-                target: "entelix_mcp_chatmodel",
+                target: "entelix_mcp::chatmodel",
                 hints = ?prefs.hints,
                 cost_priority = ?prefs.cost_priority,
                 speed_priority = ?prefs.speed_priority,
@@ -116,7 +116,7 @@ where
         }
         if let Some(ctx_kind) = request.include_context {
             tracing::debug!(
-                target: "entelix_mcp_chatmodel",
+                target: "entelix_mcp::chatmodel",
                 include_context = ?ctx_kind,
                 "MCP sampling: includeContext advisory (not honoured by default adapter)"
             );
@@ -167,21 +167,6 @@ fn sampling_content_to_part(c: &SamplingContent) -> ContentPart {
             source: MediaSource::base64(mime_type.clone(), data.clone()),
             cache_control: None,
         },
-        // `SamplingContent` is `#[non_exhaustive]`. A future MCP
-        // spec variant lands as a typed warning + empty Text
-        // surrogate so the dispatch chain doesn't panic, and the
-        // operator sees the unmapped case via tracing.
-        other => {
-            tracing::warn!(
-                target: "entelix_mcp_chatmodel",
-                ?other,
-                "MCP sampling: unknown SamplingContent variant — surrogate empty text"
-            );
-            ContentPart::Text {
-                text: String::new(),
-                cache_control: None,
-            }
-        }
     }
 }
 
@@ -219,7 +204,7 @@ fn stop_reason_to_wire(reason: &StopReason) -> String {
         // Surfaces via tracing so operators notice.
         other => {
             tracing::warn!(
-                target: "entelix_mcp_chatmodel",
+                target: "entelix_mcp::chatmodel",
                 stop_reason = ?other,
                 "MCP sampling: unmapped IR StopReason variant — collapsed to endTurn"
             );
@@ -253,7 +238,7 @@ fn first_emittable_content(parts: &[ContentPart]) -> SamplingContent {
                     .collect();
                 if !dropped.is_empty() {
                     tracing::warn!(
-                        target: "entelix_mcp_chatmodel",
+                        target: "entelix_mcp::chatmodel",
                         dropped_kinds = ?dropped,
                         "MCP sampling: response carried multiple content parts; \
                          only the first emittable one survives the wire shape"

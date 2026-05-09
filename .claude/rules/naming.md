@@ -146,7 +146,8 @@ Two conventions, both intentional. Don't reorder a method's `ctx` without amendi
 
 ## Feature flags
 
-- One lowercase word, no dashes/underscores.
+- Lowercase. Compound names use **hyphens** to join lowercase components (matches Cargo's TOML-key convention and the rest of the workspace's conditional surfaces — `mcp-chatmodel`, `embedders-openai`, `vectorstores-qdrant`, `vectorstores-pgvector`, `graphmemory-pg`, per-crate `chatmodel-sampling`). Single-component features stay one word (`mcp`, `postgres`, `redis`, `otel`, `aws`, `gcp`, `azure`, `policy`, `server`).
+- Sub-namespacing reads `<role>-<detail>` (`embedders-openai` = embedder family, OpenAI vendor); single-word features describe the role directly. No underscores.
 - `full` aggregates everything.
 - Canonical list lives in the facade `crates/entelix/Cargo.toml` — never enumerate elsewhere.
 

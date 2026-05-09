@@ -22,7 +22,7 @@
 - **`GraphMemory<N, E>`** — typed nodes + timestamped edges, BFS traversal + shortest-path. `PgGraphMemory` folds BFS into one `WITH RECURSIVE` round-trip and bulk insert into one `INSERT … SELECT FROM UNNEST(…)` call.
 - **Codecs through one IR** — Anthropic Messages, OpenAI Chat, OpenAI Responses, Gemini, Bedrock Converse — capability honesty + `LossyEncode` warnings on every coerced field + `Other { raw }` for unknown vendor signals (no silent fallback) + token-level streaming.
 - **Transports** — Direct (any HTTPS), Bedrock (SigV4 + bearer), Vertex (gcp_auth), Foundry (api-key + AAD). Sparse codec×transport matrix.
-- **MCP first-class with all 3 server-initiated channels** — `Roots` + `Elicitation` + `Sampling`. Wire your `ChatModel` as the sampling backend in 5 lines via `entelix-mcp-chatmodel`. Per-tenant `(tenant_id, server_name)` pool isolation. HTTP-only by design (invariant 9).
+- **MCP first-class with all 3 server-initiated channels** — `Roots` + `Elicitation` + `Sampling`. Wire your `ChatModel` as the sampling backend in 5 lines via the `chatmodel-sampling` feature on `entelix-mcp`. Per-tenant `(tenant_id, server_name)` pool isolation. HTTP-only by design (invariant 9).
 - **Multi-tenant policy** — `RateLimiter`, `PiiRedactor` (bidirectional), `CostMeter` (`rust_decimal`, transactional, charged only inside the `Ok` branch), `QuotaLimiter`, `TenantPolicy` aggregate.
 - **OpenTelemetry GenAI semconv 0.32** — `OtelLayer` (tower middleware on both model and tool invocations) emits `gen_ai.*` events including cache token telemetry (`cached_input_tokens`, `cache_creation_input_tokens`, `reasoning_tokens`). Tool I/O capture mode (`Off` / `Truncated{4096}` / `Full`). `Agent::execute` opens an `entelix.agent.run` root span so trace UIs show agent → model → tool as one tree.
 - **Typed audit channel** — `entelix::AuditSink` with 4 `record_*` verbs (`sub_agent_invoked` / `agent_handoff` / `resumed` / `memory_recall`). `entelix::SessionAuditSink` maps onto `GraphEvent` so replays reconstruct managed-agent lifecycle without re-running the dispatch path.
@@ -171,8 +171,7 @@ entelix-memory-pgvector  — Postgres + pgvector concrete VectorStore with row-l
 entelix-graphmemory-pg   — Postgres concrete GraphMemory with WITH RECURSIVE BFS + UNNEST bulk insert (companion)
 entelix-persistence      — Postgres + Redis Checkpointer/Store/SessionLog with row-level security + advisory lock
 entelix-tools            — HttpFetchTool, CalculatorTool, SchemaTool, sandboxed tools, skills, memory tools
-entelix-mcp              — native JSON-RPC 2.0 over MCP streamable-http; Roots + Elicitation + Sampling channels
-entelix-mcp-chatmodel    — bridges MCP sampling/createMessage onto a ChatModel<C, T> (companion)
+entelix-mcp              — native JSON-RPC 2.0 over MCP streamable-http; Roots + Elicitation + Sampling channels; ChatModelSamplingProvider behind `chatmodel-sampling`
 entelix-cloud            — Bedrock (SigV4) / Vertex (gcp_auth) / Foundry (AAD) transports
 entelix-policy           — TenantPolicy, RateLimiter, PiiRedactor, CostMeter, QuotaLimiter, PolicyLayer
 entelix-otel             — OpenTelemetry GenAI semconv tower::Layer + cache token telemetry + agent root span

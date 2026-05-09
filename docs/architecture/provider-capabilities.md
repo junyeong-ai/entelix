@@ -110,7 +110,7 @@ Operator-extension traits ship with a documented "production impl status" so 1.0
 | `AuditSink` | ✅ shipped | `SessionAuditSink` (in `entelix-session`) | — |
 | `Sandbox` | ⚠️ **BYO at 1.0** | `MockSandbox` (test only) | companion planned post-1.0 (`entelix-sandbox-e2b`, `entelix-sandbox-modal`) |
 | `SearchProvider` | ⚠️ **BYO at 1.0** | `MockProvider` (test only) | companion planned post-1.0 (`entelix-search-tavily`, `entelix-search-brave`) |
-| `RootsProvider` / `ElicitationProvider` / `SamplingProvider` | ✅ shipped | `Static*` impls | `entelix-mcp-chatmodel` (closes the `Sampling` operator side) |
+| `RootsProvider` / `ElicitationProvider` / `SamplingProvider` | ✅ shipped | `Static*` impls | `entelix-mcp` `chatmodel-sampling` feature (closes the `Sampling` operator side) |
 | `RateLimiter` | ✅ shipped | `TokenBucketLimiter` | — |
 | `PiiRedactor` | ✅ shipped | `RegexRedactor` | — |
 | `DistributedLock` | ✅ shipped | (in-memory test fixture) | `entelix-persistence` (Postgres advisory lock, Redis lock) |

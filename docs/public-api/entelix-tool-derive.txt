@@ -1,0 +1,2 @@
+pub mod entelix_tool_derive
+pub proc macro entelix_tool_derive::#[tool]

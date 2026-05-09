@@ -15,6 +15,7 @@ const CRATES: &[&str] = &[
     "entelix-prompt",
     "entelix-graph",
     "entelix-graph-derive",
+    "entelix-tool-derive",
     "entelix-session",
     "entelix-memory",
     "entelix-memory-openai",

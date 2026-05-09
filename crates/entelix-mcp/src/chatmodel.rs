@@ -268,7 +268,7 @@ fn media_to_sampling(source: &MediaSource, is_image: bool) -> Option<SamplingCon
         // FileId references can't be expressed on the wire and
         // would force a fetch the adapter doesn't perform.
         tracing::warn!(
-            target: "entelix_mcp_chatmodel",
+            target: "entelix_mcp::chatmodel",
             ?source,
             "MCP sampling: non-base64 media source dropped from response"
         );

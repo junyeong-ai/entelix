@@ -1,7 +1,8 @@
 //! `17_mcp_sampling_provider` — MCP `sampling/createMessage`
 //! server-initiated requests dispatched through an
 //! `entelix_core::ChatModel<C, T>` via the
-//! `entelix-mcp-chatmodel` companion adapter.
+//! `ChatModelSamplingProvider` adapter (entelix-mcp's
+//! `chatmodel-sampling` feature).
 //!
 //! Build: `cargo build --example 17_mcp_sampling_provider -p entelix --features mcp,mcp-chatmodel`
 //! Run:   `cargo run   --example 17_mcp_sampling_provider -p entelix --features mcp,mcp-chatmodel`

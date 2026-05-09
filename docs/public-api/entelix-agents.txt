@@ -442,6 +442,19 @@ impl core::marker::Unpin for entelix_agents::ReActState
 impl core::marker::UnsafeUnpin for entelix_agents::ReActState
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_agents::ReActState
 impl core::panic::unwind_safe::UnwindSafe for entelix_agents::ReActState
+pub struct entelix_agents::RunnableCompacting<R>
+impl<R> entelix_agents::RunnableCompacting<R>
+pub const fn entelix_agents::RunnableCompacting<R>::inner(&self) -> &R
+pub const fn entelix_agents::RunnableCompacting<R>::threshold_chars(&self) -> usize
+impl<R> entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> for entelix_agents::RunnableCompacting<R> where R: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::RunnableCompacting<R>::invoke<'life0, 'life1, 'async_trait>(&'life0 self, input: alloc::vec::Vec<entelix_core::ir::message::Message>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::ir::message::Message>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<R> core::marker::Freeze for entelix_agents::RunnableCompacting<R> where R: core::marker::Freeze
+impl<R> core::marker::Send for entelix_agents::RunnableCompacting<R> where R: core::marker::Send
+impl<R> core::marker::Sync for entelix_agents::RunnableCompacting<R> where R: core::marker::Sync
+impl<R> core::marker::Unpin for entelix_agents::RunnableCompacting<R> where R: core::marker::Unpin
+impl<R> core::marker::UnsafeUnpin for entelix_agents::RunnableCompacting<R> where R: core::marker::UnsafeUnpin
+impl<R> !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::RunnableCompacting<R>
+impl<R> !core::panic::unwind_safe::UnwindSafe for entelix_agents::RunnableCompacting<R>
 pub struct entelix_agents::RunnableToSummarizerAdapter<R>
 impl<R> entelix_agents::RunnableToSummarizerAdapter<R> where R: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
 pub fn entelix_agents::RunnableToSummarizerAdapter<R>::from_arc(runnable: alloc::sync::Arc<R>) -> Self
@@ -683,6 +696,10 @@ impl entelix_agents::Approver for entelix_agents::AlwaysApprove
 pub fn entelix_agents::AlwaysApprove::decide<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _request: &'life1 entelix_agents::ApprovalRequest, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::approval::ApprovalDecision>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
 impl entelix_agents::Approver for entelix_agents::ChannelApprover
 pub fn entelix_agents::ChannelApprover::decide<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, request: &'life1 entelix_agents::ApprovalRequest, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::approval::ApprovalDecision>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub trait entelix_agents::MessageRunnableCompactionExt: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + core::marker::Sized
+pub fn entelix_agents::MessageRunnableCompactionExt::with_compaction(self, compactor: alloc::sync::Arc<dyn entelix_session::compaction::Compactor>, threshold_chars: usize) -> entelix_agents::RunnableCompacting<Self>
+impl<R> entelix_agents::MessageRunnableCompactionExt for R where R: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + core::marker::Sized
+pub fn R::with_compaction(self, compactor: alloc::sync::Arc<dyn entelix_session::compaction::Compactor>, threshold_chars: usize) -> entelix_agents::RunnableCompacting<Self>
 pub trait entelix_agents::ToolApprovalEventSink: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_agents::ToolApprovalEventSink::record_approved<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, run_id: &'life1 str, tool_use_id: &'life2 str, tool: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = ()> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
 pub fn entelix_agents::ToolApprovalEventSink::record_denied<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, run_id: &'life1 str, tool_use_id: &'life2 str, tool: &'life3 str, reason: &'life4 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = ()> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait

@@ -35,6 +35,7 @@
 
 use std::collections::HashMap;
 
+use chrono::Utc;
 use entelix_core::error::{Error, Result};
 use entelix_core::ir::{ContentPart, Message, Role, ToolResultContent};
 
@@ -248,6 +249,90 @@ impl Compactor for HeadDropCompactor {
         let trimmed = turns.split_off(keep_index);
         Ok(CompactedHistory::from_turns(trimmed))
     }
+}
+
+/// Render an in-flight `Vec<Message>` (the shape an agent's working
+/// state carries) into a `Vec<GraphEvent>` that [`Compactor::compact`]
+/// can consume. Inverse of [`CompactedHistory::to_messages`].
+///
+/// Auto-compaction wiring: an agent loop holds messages, not events,
+/// so the trigger path needs this helper to feed the existing
+/// event-shaped compaction surface — preserving the type-enforced
+/// `tool_call` / `tool_result` pair invariant end-to-end.
+///
+/// `Role::System` messages are dropped — system prompts ride outside
+/// the event log by design (configured separately on the model). All
+/// timestamps are stamped with [`Utc::now`] since per-message wall-clock
+/// is unavailable from the message representation; compaction does not
+/// rely on event ordering by timestamp (it uses positional ordering).
+///
+/// Returns [`Error::Config`] when the message sequence violates the
+/// `tool_call` / `tool_result` pair invariant before compaction (e.g.
+/// `Role::Tool` content carrying a `tool_use_id` with no preceding
+/// assistant `ToolUse` part).
+pub fn messages_to_events(messages: &[Message]) -> Result<Vec<GraphEvent>> {
+    let now = Utc::now();
+    let mut events = Vec::with_capacity(messages.len() * 2);
+    for msg in messages {
+        match msg.role {
+            Role::User => {
+                events.push(GraphEvent::UserMessage {
+                    content: msg.content.clone(),
+                    timestamp: now,
+                });
+            }
+            Role::Assistant => {
+                events.push(GraphEvent::AssistantMessage {
+                    content: msg.content.clone(),
+                    usage: None,
+                    timestamp: now,
+                });
+                for part in &msg.content {
+                    if let ContentPart::ToolUse { id, name, input } = part {
+                        events.push(GraphEvent::ToolCall {
+                            id: id.clone(),
+                            name: name.clone(),
+                            input: input.clone(),
+                            timestamp: now,
+                        });
+                    }
+                }
+            }
+            Role::Tool => {
+                for part in &msg.content {
+                    if let ContentPart::ToolResult {
+                        tool_use_id,
+                        name,
+                        content,
+                        is_error,
+                        ..
+                    } = part
+                    {
+                        events.push(GraphEvent::ToolResult {
+                            tool_use_id: tool_use_id.clone(),
+                            name: name.clone(),
+                            content: content.clone(),
+                            is_error: *is_error,
+                            timestamp: now,
+                        });
+                    }
+                }
+            }
+            // `Role::System` rides outside the event log (configured
+            // separately on the model); future variants similarly do
+            // not represent appendable conversation turns.
+            _ => {}
+        }
+    }
+    Ok(events)
+}
+
+/// Character-length proxy for the token cost of a message slice. Same
+/// metric [`HeadDropCompactor`] uses to compare against `budget_chars`,
+/// so threshold-driven auto-compaction can use the same yardstick.
+#[must_use]
+pub fn messages_char_size(messages: &[Message]) -> usize {
+    messages.iter().map(|m| content_chars(&m.content)).sum()
 }
 
 /// Group events into the type-enforced [`Turn`] shape. Every

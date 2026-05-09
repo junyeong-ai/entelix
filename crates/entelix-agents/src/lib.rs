@@ -34,6 +34,7 @@
 
 pub(crate) mod agent;
 mod chat_agent;
+mod compaction;
 mod react_agent;
 mod state;
 mod subagent;
@@ -49,6 +50,7 @@ pub use agent::{
     ToolHookRequest, ToolHookService,
 };
 pub use chat_agent::{build_chat_graph, create_chat_agent};
+pub use compaction::{MessageRunnableCompactionExt, RunnableCompacting};
 pub use react_agent::{ReActAgentBuilder, build_react_graph, create_react_agent};
 pub use state::{ChatState, ReActState, SupervisorState};
 pub use subagent::{Subagent, SubagentBuilder, SubagentMetadata, SubagentTool};

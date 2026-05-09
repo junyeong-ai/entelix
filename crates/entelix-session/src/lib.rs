@@ -21,7 +21,10 @@ mod log;
 mod session_graph;
 
 pub use audit_sink::SessionAuditSink;
-pub use compaction::{CompactedHistory, Compactor, HeadDropCompactor, ToolPair, Turn};
+pub use compaction::{
+    CompactedHistory, Compactor, HeadDropCompactor, ToolPair, Turn, messages_char_size,
+    messages_to_events,
+};
 pub use event::GraphEvent;
 pub use log::{InMemorySessionLog, SessionLog};
 pub use session_graph::SessionGraph;

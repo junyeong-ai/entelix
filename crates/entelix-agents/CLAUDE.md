@@ -10,6 +10,7 @@ Production agent SDK on top of `entelix-runnable` + `entelix-graph`. Recipes (Re
 - **`AgentEventSink` trait** + `BroadcastSink` / `CaptureSink` / `ChannelSink` / `DroppingSink` — fan-out for `AgentEvent<S>`.
 - **`AgentObserver` trait** + `DynObserver` adapter — `pre_turn` / `on_complete` lifecycle hooks (ctx-last per naming taxonomy).
 - **`Approver` trait** + `AlwaysApprove` / `ChannelApprover` — `decide(&request, ctx)` for HITL gating.
+- **`RunnableCompacting<R>`** + **`MessageRunnableCompactionExt::with_compaction(compactor, threshold_chars)`** — auto-compaction adapter for any `Runnable<Vec<Message>, Message>`. Wraps the model itself (not the agent loop), so every recipe (ReAct / Supervisor / Chat) inherits threshold-driven compaction unchanged: `let model = my_model.with_compaction(Arc::new(HeadDropCompactor), 8_192);`. Routes through `messages_to_events` + `Compactor::compact` + `CompactedHistory::to_messages` so the `tool_call` / `tool_result` pair invariant survives the round-trip end-to-end.
 - **`SupervisorDecision { Agent(String), Finish, Handoff { agent, payload } }`** — replaces the prior `String` + `SUPERVISOR_FINISH` sentinel pairing (invariant 17). `Handoff` carries a JSON payload the supervisor dispatch injects as the next agent's leading `system` message (typed context transfer without round-tripping through the model). `team_from_supervisor` builds a nested-supervisor topology.
 
 ## Crate-local rules

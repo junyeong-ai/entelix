@@ -15,6 +15,22 @@ readme = "README.md"
 [lints]
 workspace = true
 
+[features]
+default = []
+# `sandboxed` — `Sandbox`-trait-backed tools that delegate shell /
+# code execution / filesystem access to an operator-supplied
+# isolation backend (E2B, Modal, Lambda, …). Off by default so the
+# generic-purpose surface stays free of coding-shape opinions; opt
+# in when building a coding agent or any agent that needs sandboxed
+# IO. Pulls in `SandboxedShellTool`, `SandboxedCodeTool`, the three
+# `Sandboxed{Read,Write,ListDir}FileTool` variants, `CodePolicy`,
+# `ShellPolicy`, `ShellPolicyError`, `SandboxSkill` (Anthropic
+# Claude Skills `SKILL.md` layout), and the `SandboxResource`
+# helper. Invariant 9 is preserved — no `std::fs` or
+# `std::process` import lands in this crate even with the feature
+# enabled; everything routes through `entelix_core::sandbox::Sandbox`.
+sandboxed = []
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]

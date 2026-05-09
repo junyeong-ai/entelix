@@ -15,6 +15,7 @@
 //! body that follows the frontmatter, and whose other files are
 //! enumerated as lazy resources.
 
+#![cfg(feature = "sandboxed")]
 #![allow(clippy::unwrap_used, clippy::indexing_slicing)]
 
 use std::sync::Arc;

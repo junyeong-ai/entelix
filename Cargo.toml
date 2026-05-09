@@ -39,6 +39,7 @@ members = [
     "crates/entelix-policy",          # tenant, rate-limit, PII, cost meter, quota
     "crates/entelix-otel",            # OpenTelemetry GenAI semconv
     "crates/entelix-server",          # axum + 5-mode SSE streaming
+    "crates/entelix-auth-claude-code", # Claude.ai OAuth credential provider (Claude Code CLI shared storage)
 
     # ── recipes ─────────────────────────────────────────────────────────
     "crates/entelix-agents",          # ReAct, Supervisor, Hierarchical, Chat pre-built recipes
@@ -72,6 +73,7 @@ tower = { version = "0.5", features = ["util"] }
 # ── Serialization / Schema ───────────────────────────────────────────────
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
+serde_urlencoded = "0.7"
 schemars = "1.2"
 jsonschema = { version = "0.46", default-features = false }
 bytes = "1.11"
@@ -169,6 +171,7 @@ entelix-policy      = { version = "0.3.0", path = "crates/entelix-policy" }
 entelix-otel        = { version = "0.3.0", path = "crates/entelix-otel" }
 entelix-server      = { version = "0.3.0", path = "crates/entelix-server" }
 entelix-agents      = { version = "0.3.0", path = "crates/entelix-agents" }
+entelix-auth-claude-code = { version = "0.3.0", path = "crates/entelix-auth-claude-code" }
 
 # ─────────────────────────────────────────────────────────────────────────
 # Lints — workspace-wide

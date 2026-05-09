@@ -1,0 +1,148 @@
+pub mod entelix_auth_claude_code
+#[non_exhaustive] pub enum entelix_auth_claude_code::ClaudeCodeAuthError
+pub entelix_auth_claude_code::ClaudeCodeAuthError::CredentialsMissing
+pub entelix_auth_claude_code::ClaudeCodeAuthError::CredentialsMissing::path: alloc::string::String
+pub entelix_auth_claude_code::ClaudeCodeAuthError::HomeUnresolved
+pub entelix_auth_claude_code::ClaudeCodeAuthError::InvalidStorage
+pub entelix_auth_claude_code::ClaudeCodeAuthError::InvalidStorage::path: alloc::string::String
+pub entelix_auth_claude_code::ClaudeCodeAuthError::InvalidStorage::source: serde_json::error::Error
+pub entelix_auth_claude_code::ClaudeCodeAuthError::Io
+pub entelix_auth_claude_code::ClaudeCodeAuthError::Io::path: alloc::string::String
+pub entelix_auth_claude_code::ClaudeCodeAuthError::Io::source: std::io::error::Error
+pub entelix_auth_claude_code::ClaudeCodeAuthError::OAuthSectionMissing
+pub entelix_auth_claude_code::ClaudeCodeAuthError::OAuthSectionMissing::path: alloc::string::String
+pub entelix_auth_claude_code::ClaudeCodeAuthError::RefreshHttp
+pub entelix_auth_claude_code::ClaudeCodeAuthError::RefreshHttp::message: alloc::string::String
+pub entelix_auth_claude_code::ClaudeCodeAuthError::RefreshTokenMissing
+impl core::convert::From<entelix_auth_claude_code::ClaudeCodeAuthError> for entelix_core::error::Error
+pub fn entelix_core::error::Error::from(err: entelix_auth_claude_code::ClaudeCodeAuthError) -> Self
+impl core::error::Error for entelix_auth_claude_code::ClaudeCodeAuthError
+pub fn entelix_auth_claude_code::ClaudeCodeAuthError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for entelix_auth_claude_code::ClaudeCodeAuthError
+pub fn entelix_auth_claude_code::ClaudeCodeAuthError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_auth_claude_code::ClaudeCodeAuthError
+pub fn entelix_auth_claude_code::ClaudeCodeAuthError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_auth_claude_code::ClaudeCodeAuthError
+impl core::marker::Send for entelix_auth_claude_code::ClaudeCodeAuthError
+impl core::marker::Sync for entelix_auth_claude_code::ClaudeCodeAuthError
+impl core::marker::Unpin for entelix_auth_claude_code::ClaudeCodeAuthError
+impl core::marker::UnsafeUnpin for entelix_auth_claude_code::ClaudeCodeAuthError
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_auth_claude_code::ClaudeCodeAuthError
+impl !core::panic::unwind_safe::UnwindSafe for entelix_auth_claude_code::ClaudeCodeAuthError
+#[non_exhaustive] pub struct entelix_auth_claude_code::ClaudeCodeOAuthConfig
+pub entelix_auth_claude_code::ClaudeCodeOAuthConfig::client_id: core::option::Option<alloc::string::String>
+pub entelix_auth_claude_code::ClaudeCodeOAuthConfig::refresh_timeout: core::time::Duration
+pub entelix_auth_claude_code::ClaudeCodeOAuthConfig::token_url: alloc::string::String
+impl entelix_auth_claude_code::ClaudeCodeOAuthConfig
+pub fn entelix_auth_claude_code::ClaudeCodeOAuthConfig::new() -> Self
+pub fn entelix_auth_claude_code::ClaudeCodeOAuthConfig::with_client_id(self, client_id: impl core::convert::Into<alloc::string::String>) -> Self
+pub const fn entelix_auth_claude_code::ClaudeCodeOAuthConfig::with_refresh_timeout(self, timeout: core::time::Duration) -> Self
+pub fn entelix_auth_claude_code::ClaudeCodeOAuthConfig::with_token_url(self, url: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for entelix_auth_claude_code::ClaudeCodeOAuthConfig
+pub fn entelix_auth_claude_code::ClaudeCodeOAuthConfig::clone(&self) -> entelix_auth_claude_code::ClaudeCodeOAuthConfig
+impl core::default::Default for entelix_auth_claude_code::ClaudeCodeOAuthConfig
+pub fn entelix_auth_claude_code::ClaudeCodeOAuthConfig::default() -> Self
+impl core::fmt::Debug for entelix_auth_claude_code::ClaudeCodeOAuthConfig
+pub fn entelix_auth_claude_code::ClaudeCodeOAuthConfig::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_auth_claude_code::ClaudeCodeOAuthConfig
+impl core::marker::Send for entelix_auth_claude_code::ClaudeCodeOAuthConfig
+impl core::marker::Sync for entelix_auth_claude_code::ClaudeCodeOAuthConfig
+impl core::marker::Unpin for entelix_auth_claude_code::ClaudeCodeOAuthConfig
+impl core::marker::UnsafeUnpin for entelix_auth_claude_code::ClaudeCodeOAuthConfig
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_auth_claude_code::ClaudeCodeOAuthConfig
+impl core::panic::unwind_safe::UnwindSafe for entelix_auth_claude_code::ClaudeCodeOAuthConfig
+pub struct entelix_auth_claude_code::ClaudeCodeOAuthProvider
+impl entelix_auth_claude_code::ClaudeCodeOAuthProvider
+pub fn entelix_auth_claude_code::ClaudeCodeOAuthProvider::new(store: impl entelix_auth_claude_code::CredentialStore) -> Self
+pub fn entelix_auth_claude_code::ClaudeCodeOAuthProvider::with_config(store: impl entelix_auth_claude_code::CredentialStore, config: entelix_auth_claude_code::ClaudeCodeOAuthConfig) -> Self
+impl core::fmt::Debug for entelix_auth_claude_code::ClaudeCodeOAuthProvider
+pub fn entelix_auth_claude_code::ClaudeCodeOAuthProvider::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::auth::CredentialProvider for entelix_auth_claude_code::ClaudeCodeOAuthProvider
+pub fn entelix_auth_claude_code::ClaudeCodeOAuthProvider::resolve<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::auth::Credentials>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl !core::marker::Freeze for entelix_auth_claude_code::ClaudeCodeOAuthProvider
+impl core::marker::Send for entelix_auth_claude_code::ClaudeCodeOAuthProvider
+impl core::marker::Sync for entelix_auth_claude_code::ClaudeCodeOAuthProvider
+impl core::marker::Unpin for entelix_auth_claude_code::ClaudeCodeOAuthProvider
+impl core::marker::UnsafeUnpin for entelix_auth_claude_code::ClaudeCodeOAuthProvider
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_auth_claude_code::ClaudeCodeOAuthProvider
+impl !core::panic::unwind_safe::UnwindSafe for entelix_auth_claude_code::ClaudeCodeOAuthProvider
+#[non_exhaustive] pub struct entelix_auth_claude_code::CredentialFile
+pub entelix_auth_claude_code::CredentialFile::claude_ai_oauth: core::option::Option<entelix_auth_claude_code::OAuthCredential>
+impl entelix_auth_claude_code::CredentialFile
+pub fn entelix_auth_claude_code::CredentialFile::empty() -> Self
+pub const fn entelix_auth_claude_code::CredentialFile::with_oauth(credential: entelix_auth_claude_code::OAuthCredential) -> Self
+impl core::clone::Clone for entelix_auth_claude_code::CredentialFile
+pub fn entelix_auth_claude_code::CredentialFile::clone(&self) -> entelix_auth_claude_code::CredentialFile
+impl core::default::Default for entelix_auth_claude_code::CredentialFile
+pub fn entelix_auth_claude_code::CredentialFile::default() -> entelix_auth_claude_code::CredentialFile
+impl core::fmt::Debug for entelix_auth_claude_code::CredentialFile
+pub fn entelix_auth_claude_code::CredentialFile::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for entelix_auth_claude_code::CredentialFile
+pub fn entelix_auth_claude_code::CredentialFile::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_auth_claude_code::CredentialFile
+pub fn entelix_auth_claude_code::CredentialFile::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_auth_claude_code::CredentialFile
+impl core::marker::Send for entelix_auth_claude_code::CredentialFile
+impl core::marker::Sync for entelix_auth_claude_code::CredentialFile
+impl core::marker::Unpin for entelix_auth_claude_code::CredentialFile
+impl core::marker::UnsafeUnpin for entelix_auth_claude_code::CredentialFile
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_auth_claude_code::CredentialFile
+impl core::panic::unwind_safe::UnwindSafe for entelix_auth_claude_code::CredentialFile
+pub struct entelix_auth_claude_code::FileCredentialStore
+impl entelix_auth_claude_code::FileCredentialStore
+pub fn entelix_auth_claude_code::FileCredentialStore::default_claude_path() -> entelix_auth_claude_code::ClaudeCodeAuthResult<std::path::PathBuf>
+pub fn entelix_auth_claude_code::FileCredentialStore::path(&self) -> &std::path::Path
+pub fn entelix_auth_claude_code::FileCredentialStore::with_path(path: impl core::convert::Into<std::path::PathBuf>) -> Self
+impl core::clone::Clone for entelix_auth_claude_code::FileCredentialStore
+pub fn entelix_auth_claude_code::FileCredentialStore::clone(&self) -> entelix_auth_claude_code::FileCredentialStore
+impl core::fmt::Debug for entelix_auth_claude_code::FileCredentialStore
+pub fn entelix_auth_claude_code::FileCredentialStore::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_auth_claude_code::CredentialStore for entelix_auth_claude_code::FileCredentialStore
+pub fn entelix_auth_claude_code::FileCredentialStore::load<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_auth_claude_code::ClaudeCodeAuthResult<core::option::Option<entelix_auth_claude_code::CredentialFile>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_auth_claude_code::FileCredentialStore::save<'life0, 'life1, 'async_trait>(&'life0 self, file: &'life1 entelix_auth_claude_code::CredentialFile) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_auth_claude_code::ClaudeCodeAuthResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for entelix_auth_claude_code::FileCredentialStore
+impl core::marker::Send for entelix_auth_claude_code::FileCredentialStore
+impl core::marker::Sync for entelix_auth_claude_code::FileCredentialStore
+impl core::marker::Unpin for entelix_auth_claude_code::FileCredentialStore
+impl core::marker::UnsafeUnpin for entelix_auth_claude_code::FileCredentialStore
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_auth_claude_code::FileCredentialStore
+impl core::panic::unwind_safe::UnwindSafe for entelix_auth_claude_code::FileCredentialStore
+#[non_exhaustive] pub struct entelix_auth_claude_code::OAuthCredential
+pub entelix_auth_claude_code::OAuthCredential::access_token: alloc::string::String
+pub entelix_auth_claude_code::OAuthCredential::expires_at_ms: i64
+pub entelix_auth_claude_code::OAuthCredential::refresh_token: core::option::Option<alloc::string::String>
+pub entelix_auth_claude_code::OAuthCredential::scopes: alloc::vec::Vec<alloc::string::String>
+pub entelix_auth_claude_code::OAuthCredential::subscription_type: core::option::Option<alloc::string::String>
+impl entelix_auth_claude_code::OAuthCredential
+pub fn entelix_auth_claude_code::OAuthCredential::expires_at(&self) -> core::option::Option<chrono::datetime::DateTime<chrono::offset::utc::Utc>>
+pub fn entelix_auth_claude_code::OAuthCredential::needs_refresh(&self) -> bool
+pub fn entelix_auth_claude_code::OAuthCredential::new(access_token: impl core::convert::Into<alloc::string::String>, expires_at_ms: i64) -> Self
+pub fn entelix_auth_claude_code::OAuthCredential::to_bearer_secret(&self) -> secrecy::SecretString
+pub fn entelix_auth_claude_code::OAuthCredential::with_refresh_token(self, token: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_auth_claude_code::OAuthCredential::with_scopes<I, S>(self, scopes: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::Into<alloc::string::String>
+pub fn entelix_auth_claude_code::OAuthCredential::with_subscription_type(self, tier: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for entelix_auth_claude_code::OAuthCredential
+pub fn entelix_auth_claude_code::OAuthCredential::clone(&self) -> entelix_auth_claude_code::OAuthCredential
+impl core::fmt::Debug for entelix_auth_claude_code::OAuthCredential
+pub fn entelix_auth_claude_code::OAuthCredential::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for entelix_auth_claude_code::OAuthCredential
+pub fn entelix_auth_claude_code::OAuthCredential::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_auth_claude_code::OAuthCredential
+pub fn entelix_auth_claude_code::OAuthCredential::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_auth_claude_code::OAuthCredential
+impl core::marker::Send for entelix_auth_claude_code::OAuthCredential
+impl core::marker::Sync for entelix_auth_claude_code::OAuthCredential
+impl core::marker::Unpin for entelix_auth_claude_code::OAuthCredential
+impl core::marker::UnsafeUnpin for entelix_auth_claude_code::OAuthCredential
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_auth_claude_code::OAuthCredential
+impl core::panic::unwind_safe::UnwindSafe for entelix_auth_claude_code::OAuthCredential
+pub const entelix_auth_claude_code::CLAUDE_CODE_BETA: &str
+pub const entelix_auth_claude_code::DEFAULT_REFRESH_TIMEOUT: core::time::Duration
+pub const entelix_auth_claude_code::DEFAULT_TOKEN_URL: &str
+pub trait entelix_auth_claude_code::CredentialStore: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_auth_claude_code::CredentialStore::load<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_auth_claude_code::ClaudeCodeAuthResult<core::option::Option<entelix_auth_claude_code::CredentialFile>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_auth_claude_code::CredentialStore::save<'life0, 'life1, 'async_trait>(&'life0 self, file: &'life1 entelix_auth_claude_code::CredentialFile) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_auth_claude_code::ClaudeCodeAuthResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl entelix_auth_claude_code::CredentialStore for entelix_auth_claude_code::FileCredentialStore
+pub fn entelix_auth_claude_code::FileCredentialStore::load<'life0, 'async_trait>(&'life0 self) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_auth_claude_code::ClaudeCodeAuthResult<core::option::Option<entelix_auth_claude_code::CredentialFile>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+pub fn entelix_auth_claude_code::FileCredentialStore::save<'life0, 'life1, 'async_trait>(&'life0 self, file: &'life1 entelix_auth_claude_code::CredentialFile) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_auth_claude_code::ClaudeCodeAuthResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub type entelix_auth_claude_code::ClaudeCodeAuthResult<T> = core::result::Result<T, entelix_auth_claude_code::ClaudeCodeAuthError>

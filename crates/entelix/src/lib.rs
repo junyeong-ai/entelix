@@ -71,6 +71,15 @@ pub use entelix_agents::{
     build_react_graph, build_supervisor_graph, create_chat_agent, create_react_agent,
     create_supervisor_agent, team_from_supervisor,
 };
+#[cfg(feature = "auth-claude-code")]
+#[cfg_attr(docsrs, doc(cfg(feature = "auth-claude-code")))]
+pub use entelix_auth_claude_code::{
+    CLAUDE_CODE_BETA, ClaudeCodeAuthError, ClaudeCodeAuthResult, ClaudeCodeOAuthConfig,
+    ClaudeCodeOAuthProvider, CredentialFile as ClaudeCodeCredentialFile, CredentialStore,
+    DEFAULT_REFRESH_TIMEOUT as CLAUDE_CODE_DEFAULT_REFRESH_TIMEOUT,
+    DEFAULT_TOKEN_URL as CLAUDE_CODE_DEFAULT_TOKEN_URL, FileCredentialStore,
+    OAuthCredential as ClaudeCodeOAuthCredential,
+};
 pub use entelix_cloud::CloudError;
 #[cfg(feature = "aws")]
 #[cfg_attr(docsrs, doc(cfg(feature = "aws")))]
@@ -211,17 +220,22 @@ pub use entelix_session::{
     messages_to_events,
 };
 pub use entelix_tools::{
-    ActivateSkillTool, Calculator, CalculatorInput, CalculatorOutput, CodePolicy,
+    ActivateSkillTool, Calculator, CalculatorInput, CalculatorOutput,
     DEFAULT_FETCH_TIMEOUT as HTTP_FETCH_DEFAULT_TIMEOUT,
     DEFAULT_MAX_REDIRECTS as HTTP_FETCH_DEFAULT_MAX_REDIRECTS,
     DEFAULT_MAX_RESPONSE_BYTES as HTTP_FETCH_DEFAULT_MAX_RESPONSE_BYTES,
     DEFAULT_MAX_RESULTS as SEARCH_DEFAULT_MAX_RESULTS, HostAllowlist, HostRule, HttpFetchTool,
     HttpFetchToolBuilder, InMemorySkill, InMemorySkillBuilder, ListSkillsTool,
-    ReadSkillResourceTool, SandboxResource, SandboxSkill, SandboxedCodeTool, SandboxedListDirTool,
-    SandboxedReadFileTool, SandboxedShellTool, SandboxedWriteFileTool, SchemaTool,
-    SchemaToolAdapter, SchemaToolExt, SearchProvider, SearchResult, SearchTool, ShellPolicy,
-    ShellPolicyError, SsrfSafeDnsResolver, StaticResource, ToolError, ToolResult, is_ssrf_blocked,
-    tool,
+    ReadSkillResourceTool, SchemaTool, SchemaToolAdapter, SchemaToolExt, SearchProvider,
+    SearchResult, SearchTool, SsrfSafeDnsResolver, StaticResource, ToolError, ToolResult,
+    is_ssrf_blocked, tool,
+};
+#[cfg(feature = "sandboxed")]
+#[cfg_attr(docsrs, doc(cfg(feature = "sandboxed")))]
+pub use entelix_tools::{
+    CodePolicy, SandboxResource, SandboxSkill, SandboxedCodeTool, SandboxedListDirTool,
+    SandboxedReadFileTool, SandboxedShellTool, SandboxedWriteFileTool, ShellPolicy,
+    ShellPolicyError,
 };
 
 /// Common imports for typical SDK usage.

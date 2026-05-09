@@ -24,7 +24,9 @@
 //!   `SkillRegistry` API for out-of-band host-application use.
 
 mod in_memory;
+#[cfg(feature = "sandboxed")]
 mod manifest;
+#[cfg(feature = "sandboxed")]
 mod sandbox_skill;
 mod tools;
 
@@ -35,7 +37,11 @@ use entelix_core::skills::SkillRegistry;
 use entelix_core::tools::ToolRegistry;
 
 pub use in_memory::{InMemorySkill, InMemorySkillBuilder, StaticResource};
+#[cfg(feature = "sandboxed")]
+#[cfg_attr(docsrs, doc(cfg(feature = "sandboxed")))]
 pub use manifest::{ManifestError, SkillManifest, parse_skill_md};
+#[cfg(feature = "sandboxed")]
+#[cfg_attr(docsrs, doc(cfg(feature = "sandboxed")))]
 pub use sandbox_skill::{SandboxResource, SandboxSkill};
 pub use tools::{ActivateSkillTool, ListSkillsTool, ReadSkillResourceTool};
 

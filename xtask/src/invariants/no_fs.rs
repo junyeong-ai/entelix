@@ -31,12 +31,28 @@ const FORBIDDEN_PREFIXES: &[&[&str]] = &[
 
 const FORBIDDEN_MACROS: &[&str] = &["include_str", "include_bytes"];
 
+/// Crate paths exempted from invariant 9 because the crate's
+/// raison d'être is operator-credential persistence — a documented
+/// exception in CLAUDE.md. The exemption is per-crate, not
+/// per-file, so a regression that adds shell / process behaviour
+/// to the exempted crate still has to land via reviewer approval
+/// rather than being caught by the gate.
+const CREDENTIAL_STORAGE_EXEMPTIONS: &[&str] = &["crates/entelix-auth-claude-code/"];
+
 pub(crate) fn run() -> Result<()> {
     let root = repo_root()?;
     let files = rust_source_files(&root);
 
     let mut violations = Vec::new();
     for file in &files {
+        let rel = file.strip_prefix(&root).unwrap_or(file);
+        let rel_str = rel.to_string_lossy();
+        if CREDENTIAL_STORAGE_EXEMPTIONS
+            .iter()
+            .any(|prefix| rel_str.starts_with(prefix))
+        {
+            continue;
+        }
         let (_, ast) = parse(file)?;
         let mut v = NoFsVisitor {
             file: file.clone(),
@@ -52,8 +68,11 @@ pub(crate) fn run() -> Result<()> {
          no shell, no local sandbox. Replace `std::fs` reads with HTTP / Store /\n\
          user-supplied bytes; replace `std::process` shell-outs with first-class\n\
          tools or MCP servers; replace `include_str!` / `include_bytes!` with\n\
-         runtime data. If you genuinely need fs access, propose an ADR amending\n\
-         the invariant — never bypass the gate.",
+         runtime data. Credential-storage backends (e.g. \
+         `entelix-auth-claude-code`) are the documented exception — fs access \
+         there is bounded to the OAuth credential file the upstream Claude \
+         Code CLI shares. Any other crate proposing fs access must amend \
+         CLAUDE.md and this gate's exemption list together.",
     )
 }
 

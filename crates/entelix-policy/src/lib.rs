@@ -80,5 +80,5 @@ pub use error::{PolicyError, PolicyResult};
 pub use layer::{PolicyLayer, PolicyService};
 pub use pii::{PiiPattern, PiiRedactor, RegexRedactor, default_pii_patterns, luhn_valid};
 pub use quota::{Budget, QuotaLimiter};
-pub use rate_limit::{Clock, RateLimiter, SystemClock, TokenBucketLimiter};
+pub use rate_limit::{RateLimiter, TokenBucketLimiter};
 pub use tenant::{PolicyRegistry, TenantPolicy, TenantPolicyBuilder};

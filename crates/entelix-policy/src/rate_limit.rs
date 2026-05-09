@@ -8,10 +8,11 @@
 //! [`PolicyError::RateLimited`] otherwise, indicating how long the
 //! caller must wait before enough tokens accumulate.
 //!
-//! Time is injected via the [`Clock`] trait. Production wires
-//! [`SystemClock`] (delegates to `tokio::time::Instant`); tests pass
-//! a deterministic clock so `tokio::time::pause()` + manual
-//! `advance` make the bucket walk a known schedule.
+//! Time is injected via the [`entelix_core::Clock`] trait.
+//! Production wires [`entelix_core::SystemClock`] (delegates to
+//! `tokio::time::Instant`); tests pass a deterministic clock so
+//! `tokio::time::pause()` + manual `advance` make the bucket walk
+//! a known schedule.
 
 // `parking_lot::Mutex` guards on `Bucket` are scoped inside non-async
 // blocks (we never hold a guard across `.await`). clippy's
@@ -24,50 +25,20 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
+use entelix_core::{Clock, SystemClock};
 use parking_lot::Mutex;
 
 use crate::error::{PolicyError, PolicyResult};
 
 /// Backend-agnostic rate-limit surface.
 #[async_trait]
-pub trait RateLimiter: Send + Sync {
+pub trait RateLimiter: Send + Sync + 'static {
     /// Try to acquire `tokens` from the bucket keyed by `key`.
     /// Returns `Ok(())` on grant. On refusal returns
     /// [`PolicyError::RateLimited`] with `retry_after_ms` indicating
     /// when retry could plausibly succeed (assuming no other
     /// concurrent draws).
     async fn try_acquire(&self, key: &str, tokens: u32) -> PolicyResult<()>;
-}
-
-/// Monotonic-clock abstraction. Implementors must produce strictly
-/// non-decreasing values; jitter or skew breaks bucket math.
-pub trait Clock: Send + Sync {
-    /// Microseconds since some fixed origin. The origin doesn't
-    /// matter — only differences are read.
-    fn now_micros(&self) -> u64;
-}
-
-/// `Clock` backed by `tokio::time::Instant`. Honours
-/// `tokio::time::pause` so test harnesses can simulate elapsed
-/// time without real waits.
-#[derive(Clone, Copy, Debug, Default)]
-pub struct SystemClock;
-
-impl Clock for SystemClock {
-    fn now_micros(&self) -> u64 {
-        // tokio::time::Instant uses a monotonic source; converting
-        // through a stable origin keeps the absolute value bounded
-        // for the process lifetime.
-        let origin = origin_instant();
-        let now = tokio::time::Instant::now();
-        u64::try_from(now.duration_since(origin).as_micros()).unwrap_or(u64::MAX)
-    }
-}
-
-fn origin_instant() -> tokio::time::Instant {
-    use std::sync::OnceLock;
-    static ORIGIN: OnceLock<tokio::time::Instant> = OnceLock::new();
-    *ORIGIN.get_or_init(tokio::time::Instant::now)
 }
 
 /// Per-key token-bucket limiter. Buckets are created lazily on first

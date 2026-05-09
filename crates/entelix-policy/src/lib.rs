@@ -56,7 +56,7 @@
 //! "no policy" — pass-through).
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-policy/0.2.0")]
+#![doc(html_root_url = "https://docs.rs/entelix-policy/0.3.0")]
 #![deny(missing_docs)]
 #![allow(
     clippy::missing_errors_doc,

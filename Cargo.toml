@@ -1,4 +1,4 @@
-# entelix — workspace manifest (0.2.0)
+# entelix — workspace manifest (0.3.0)
 #
 # Rust 1.95, Edition 2024, resolver v3.
 # Lockstep workspace — every member crate carries the same version on
@@ -45,7 +45,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.95"
 license = "MIT"
@@ -149,26 +149,26 @@ testcontainers-modules = { version = "0.15", features = ["postgres", "redis"] }
 proptest = "1.7"
 
 # ── Internal crate references ────────────────────────────────────────────
-entelix-core        = { version = "0.2.0", path = "crates/entelix-core" }
-entelix-runnable    = { version = "0.2.0", path = "crates/entelix-runnable" }
-entelix-prompt      = { version = "0.2.0", path = "crates/entelix-prompt" }
-entelix-graph       = { version = "0.2.0", path = "crates/entelix-graph" }
-entelix-graph-derive = { version = "0.2.0", path = "crates/entelix-graph-derive" }
-entelix-tool-derive = { version = "0.2.0", path = "crates/entelix-tool-derive" }
-entelix-session     = { version = "0.2.0", path = "crates/entelix-session" }
-entelix-memory      = { version = "0.2.0", path = "crates/entelix-memory" }
-entelix-memory-openai   = { version = "0.2.0", path = "crates/entelix-memory-openai" }
-entelix-memory-qdrant   = { version = "0.2.0", path = "crates/entelix-memory-qdrant" }
-entelix-memory-pgvector = { version = "0.2.0", path = "crates/entelix-memory-pgvector" }
-entelix-graphmemory-pg  = { version = "0.2.0", path = "crates/entelix-graphmemory-pg" }
-entelix-persistence = { version = "0.2.0", path = "crates/entelix-persistence" }
-entelix-tools       = { version = "0.2.0", path = "crates/entelix-tools" }
-entelix-mcp         = { version = "0.2.0", path = "crates/entelix-mcp" }
-entelix-cloud       = { version = "0.2.0", path = "crates/entelix-cloud" }
-entelix-policy      = { version = "0.2.0", path = "crates/entelix-policy" }
-entelix-otel        = { version = "0.2.0", path = "crates/entelix-otel" }
-entelix-server      = { version = "0.2.0", path = "crates/entelix-server" }
-entelix-agents      = { version = "0.2.0", path = "crates/entelix-agents" }
+entelix-core        = { version = "0.3.0", path = "crates/entelix-core" }
+entelix-runnable    = { version = "0.3.0", path = "crates/entelix-runnable" }
+entelix-prompt      = { version = "0.3.0", path = "crates/entelix-prompt" }
+entelix-graph       = { version = "0.3.0", path = "crates/entelix-graph" }
+entelix-graph-derive = { version = "0.3.0", path = "crates/entelix-graph-derive" }
+entelix-tool-derive = { version = "0.3.0", path = "crates/entelix-tool-derive" }
+entelix-session     = { version = "0.3.0", path = "crates/entelix-session" }
+entelix-memory      = { version = "0.3.0", path = "crates/entelix-memory" }
+entelix-memory-openai   = { version = "0.3.0", path = "crates/entelix-memory-openai" }
+entelix-memory-qdrant   = { version = "0.3.0", path = "crates/entelix-memory-qdrant" }
+entelix-memory-pgvector = { version = "0.3.0", path = "crates/entelix-memory-pgvector" }
+entelix-graphmemory-pg  = { version = "0.3.0", path = "crates/entelix-graphmemory-pg" }
+entelix-persistence = { version = "0.3.0", path = "crates/entelix-persistence" }
+entelix-tools       = { version = "0.3.0", path = "crates/entelix-tools" }
+entelix-mcp         = { version = "0.3.0", path = "crates/entelix-mcp" }
+entelix-cloud       = { version = "0.3.0", path = "crates/entelix-cloud" }
+entelix-policy      = { version = "0.3.0", path = "crates/entelix-policy" }
+entelix-otel        = { version = "0.3.0", path = "crates/entelix-otel" }
+entelix-server      = { version = "0.3.0", path = "crates/entelix-server" }
+entelix-agents      = { version = "0.3.0", path = "crates/entelix-agents" }
 
 # ─────────────────────────────────────────────────────────────────────────
 # Lints — workspace-wide

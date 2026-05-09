@@ -9,7 +9,7 @@
 //!.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-memory/0.2.0")]
+#![doc(html_root_url = "https://docs.rs/entelix-memory/0.3.0")]
 #![deny(missing_docs)]
 // Doc-prose lints fire on legitimate proper nouns (LangChain,
 // Neo4j, ArangoDB, BTreeMap) and on long opening paragraphs that

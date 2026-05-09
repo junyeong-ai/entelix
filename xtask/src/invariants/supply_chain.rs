@@ -23,20 +23,27 @@ pub(crate) fn run() -> Result<()> {
         anyhow::bail!("cargo-deny not installed; run: cargo install cargo-deny --locked");
     }
 
-    // cargo audit — exits non-zero on unfixed CVE.
-    let audit_ok = Command::new("cargo")
-        .args(["audit", "--deny", "warnings", "--quiet"])
+    // cargo audit — exits non-zero on unfixed CVE. Captured + replayed
+    // on failure so CI logs carry the actual advisory body without a
+    // separate `cargo audit` re-run.
+    let audit_output = Command::new("cargo")
+        .args(["audit", "--deny", "warnings"])
         .current_dir(&root)
-        .status()?
-        .success();
-    if !audit_ok {
+        .output()?;
+    if !audit_output.status.success() {
+        eprintln!("\n── cargo audit output ───────────────────────────────");
+        eprint!("{}", String::from_utf8_lossy(&audit_output.stderr));
+        eprint!("{}", String::from_utf8_lossy(&audit_output.stdout));
+        eprintln!("─────────────────────────────────────────────────────\n");
         violations.push(Violation::file(
             root.join("Cargo.lock"),
-            "cargo audit reported an unfixed CVE — see `cargo audit --deny warnings` output",
+            "cargo audit reported an unfixed CVE — output above",
         ));
     }
 
-    // cargo deny — must produce the four-line all-ok summary.
+    // cargo deny — must produce the four-line all-ok summary. On
+    // failure, replay both streams so CI logs surface the offending
+    // advisory / license / ban / source.
     let deny_output = Command::new("cargo")
         .args(["deny", "check"])
         .current_dir(&root)
@@ -44,9 +51,13 @@ pub(crate) fn run() -> Result<()> {
     let combined = String::from_utf8_lossy(&deny_output.stderr).to_string()
         + &String::from_utf8_lossy(&deny_output.stdout);
     if !combined.contains("advisories ok, bans ok, licenses ok, sources ok") {
+        eprintln!("\n── cargo deny check output ──────────────────────────");
+        eprint!("{}", String::from_utf8_lossy(&deny_output.stderr));
+        eprint!("{}", String::from_utf8_lossy(&deny_output.stdout));
+        eprintln!("─────────────────────────────────────────────────────\n");
         violations.push(Violation::file(
             root.join("deny.toml"),
-            "cargo deny check did not produce all-ok summary — see `cargo deny check` output",
+            "cargo deny check did not produce all-ok summary — output above",
         ));
     }
 

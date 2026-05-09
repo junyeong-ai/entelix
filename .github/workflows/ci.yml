@@ -147,7 +147,12 @@ jobs:
       - name: cargo xtask feature-matrix
         run: cargo xtask feature-matrix
 
-  # ── Public-API drift gate (requires cargo-public-api) ──────────────────────
+  # ── Public-API drift gate (requires cargo-public-api + nightly) ───────────
+  # `cargo public-api` shells out to nightly `rustdoc` to emit the JSON
+  # surface representation; the pinned stable toolchain (`preflight`)
+  # cannot satisfy `--output-format=json`. We install nightly *in
+  # addition to* the stable default so `cargo xtask public-api` can
+  # invoke the right toolchain transparently.
   public-api:
     name: public-API drift
     needs: preflight
@@ -155,7 +160,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@1.94.0
+      - name: Install Rust toolchain (stable, pinned)
+        uses: dtolnay/rust-toolchain@1.94.0
+      - name: Install Rust toolchain (nightly, for rustdoc-json)
+        uses: dtolnay/rust-toolchain@nightly
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ubuntu-latest

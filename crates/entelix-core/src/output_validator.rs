@@ -39,7 +39,7 @@
 use crate::error::Result;
 
 /// Post-decode validator. Implementors return [`Error::ModelRetry`]
-/// to signal the chat-model retry loop should re-prompt the model
+/// to signal the `ChatModel` retry loop should re-prompt the model
 /// with corrective feedback. Other error variants bubble unchanged.
 ///
 /// [`Error::ModelRetry`]: crate::Error::ModelRetry

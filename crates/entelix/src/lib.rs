@@ -10,11 +10,11 @@
 //! `MessagesPlaceholder`), the IR (`ir`), every codec
 //! ([`codecs::AnthropicMessagesCodec`] and siblings), transports
 //! (`DirectTransport` plus optional cloud transports under feature flags),
-//! the chat-model bundle ([`ChatModel`]), the `Tool` hand contract, and
+//! the `ChatModel` bundle ([`ChatModel`]), the `Tool` hand contract, and
 //! optional sub-crates for memory, persistence, MCP, policy,
 //! observability, the HTTP server, and agent recipes.
 //!
-//! Architectural canon: see `CLAUDE.md` (21 invariants + naming taxonomy)
+//! Architectural canon: see `CLAUDE.md` (22 invariants + naming taxonomy)
 //! and `docs/architecture/principles.md`.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]

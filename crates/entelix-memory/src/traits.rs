@@ -61,7 +61,7 @@ impl Document {
 }
 
 /// Token-accounting metadata an [`Embedder`] reports alongside the
-/// computed vector. Mirrors the chat-model `Usage` shape so cost
+/// computed vector. Mirrors the `ChatModel` `Usage` shape so cost
 /// meters can charge embedding calls with the same machinery they
 /// use for completions.
 ///

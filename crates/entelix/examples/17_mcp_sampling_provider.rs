@@ -159,7 +159,7 @@ async fn main() -> entelix_core::Result<()> {
         include_context: None,
         // f64 → f32 inside the adapter (vendor-bounded loss).
         temperature: Some(0.2),
-        // Override the chat-model default (2048) for this call.
+        // Override the `ChatModel` default (2048) for this call.
         max_tokens: Some(64),
         stop_sequences: vec!["STOP".into()],
         metadata: None,

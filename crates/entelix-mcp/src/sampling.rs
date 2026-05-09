@@ -13,7 +13,7 @@
 //! ## Why a trait, not a `ChatModel` adapter shipped here
 //!
 //! A "wire `ChatModel` directly" adapter would force this
-//! crate to depend on the chat-model surface. Instead the
+//! crate to depend on the `ChatModel` surface. Instead the
 //! trait stays minimal and operators write a 20-line wrapper
 //! that converts MCP messages → `entelix_core::ir::Message` →
 //! `ChatModel::invoke` → MCP response. The conversion is

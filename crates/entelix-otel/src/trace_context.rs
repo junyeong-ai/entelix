@@ -160,7 +160,7 @@ fn current_otel_context() -> OtelContext {
 /// W3C trace-context (`traceparent` / `tracestate` / `baggage`)
 /// into any outbound `http::HeaderMap`.
 ///
-/// Designed for transports outside the chat-model path — the
+/// Designed for transports outside the `ChatModel` path — the
 /// canonical use case is wiring it onto
 /// `entelix_mcp::McpServerConfig::with_request_decorator` so
 /// distributed traces span the SDK caller and the MCP server it

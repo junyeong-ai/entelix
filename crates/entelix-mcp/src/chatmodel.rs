@@ -317,7 +317,7 @@ fn map_chat_error(err: &entelix_core::Error) -> McpError {
     tracing::error!(
         target: "entelix_mcp::chatmodel",
         error = %err,
-        "MCP sampling chat-model failure",
+        "MCP sampling ChatModel failure",
     );
     McpError::JsonRpc {
         code,

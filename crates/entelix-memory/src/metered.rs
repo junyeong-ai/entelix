@@ -195,7 +195,7 @@ fn aggregate_usage(embeddings: &[Embedding]) -> Option<EmbeddingUsage> {
     any.then_some(EmbeddingUsage::new(total))
 }
 
-/// Adapter that bridges any [`CostCalculator`] (chat-model pricing
+/// Adapter that bridges any [`CostCalculator`] (`ChatModel` pricing
 /// source) into the [`EmbeddingCostCalculator`] surface.
 ///
 /// Embeddings only consume input tokens, so the adapter constructs
@@ -356,7 +356,7 @@ mod tests {
         assert_eq!(calls.load(Ordering::SeqCst), 1);
     }
 
-    /// Stub `CostCalculator` (chat-model surface) that records the
+    /// Stub `CostCalculator` (`ChatModel` surface) that records the
     /// `input_tokens` it sees so the adapter test can confirm the
     /// embedding usage round-tripped into the synthetic `Usage`.
     struct ChatStyleCalculator {
@@ -386,7 +386,7 @@ mod tests {
         // PricingTable charge model, tool, AND embedding surfaces
         // without per-surface duplication. Verify the
         // `EmbeddingUsage::input_tokens` arrives intact at the
-        // wrapped chat-model calculator.
+        // wrapped `ChatModel` calculator.
         let observed = Arc::new(std::sync::Mutex::new(Vec::<u32>::new()));
         let chat_calc = Arc::new(ChatStyleCalculator {
             rate_per_token: 0.0001,

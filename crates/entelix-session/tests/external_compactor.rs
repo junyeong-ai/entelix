@@ -19,9 +19,10 @@
 
 #![allow(clippy::unwrap_used, clippy::indexing_slicing)]
 
+use async_trait::async_trait;
 use chrono::Utc;
-use entelix_core::Result;
 use entelix_core::ir::{ContentPart, ToolResultContent};
+use entelix_core::{ExecutionContext, Result};
 use entelix_session::{CompactedHistory, Compactor, GraphEvent, Turn};
 
 /// First-N compactor — keeps only the *first* `n` turns instead of
@@ -31,8 +32,14 @@ struct FirstNCompactor {
     n: usize,
 }
 
+#[async_trait]
 impl Compactor for FirstNCompactor {
-    fn compact(&self, events: &[GraphEvent], _budget_chars: usize) -> Result<CompactedHistory> {
+    async fn compact(
+        &self,
+        events: &[GraphEvent],
+        _budget_chars: usize,
+        _ctx: &ExecutionContext,
+    ) -> Result<CompactedHistory> {
         let mut turns = CompactedHistory::group(events)?.turns().to_vec();
         turns.truncate(self.n);
         Ok(CompactedHistory::from_turns(turns))
@@ -88,8 +95,8 @@ fn tool_result(id: &str, name: &str, text: &str) -> GraphEvent {
     }
 }
 
-#[test]
-fn external_compactor_can_construct_compacted_history() {
+#[tokio::test]
+async fn external_compactor_can_construct_compacted_history() {
     let events = vec![
         user("first"),
         assistant("first reply"),
@@ -97,15 +104,18 @@ fn external_compactor_can_construct_compacted_history() {
         assistant("second reply"),
     ];
 
-    let history = FirstNCompactor { n: 2 }.compact(&events, 0).unwrap();
+    let history = FirstNCompactor { n: 2 }
+        .compact(&events, 0, &ExecutionContext::new())
+        .await
+        .unwrap();
     assert_eq!(history.len(), 2);
     let turns = history.turns();
     assert!(matches!(&turns[0], Turn::User { .. }));
     assert!(matches!(&turns[1], Turn::Assistant { .. }));
 }
 
-#[test]
-fn external_compactor_passes_tool_pairs_through_unchanged() {
+#[tokio::test]
+async fn external_compactor_passes_tool_pairs_through_unchanged() {
     let events = vec![
         user("query"),
         assistant_with_tool_use("checking", "call_1", "search"),
@@ -114,7 +124,10 @@ fn external_compactor_passes_tool_pairs_through_unchanged() {
         assistant("done"),
     ];
 
-    let history = FirstNCompactor { n: 2 }.compact(&events, 0).unwrap();
+    let history = FirstNCompactor { n: 2 }
+        .compact(&events, 0, &ExecutionContext::new())
+        .await
+        .unwrap();
     assert_eq!(history.len(), 2);
     let turns = history.turns();
     assert!(matches!(&turns[0], Turn::User { .. }));

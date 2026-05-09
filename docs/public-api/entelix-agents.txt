@@ -536,6 +536,20 @@ impl core::marker::Unpin for entelix_agents::SubagentTool
 impl core::marker::UnsafeUnpin for entelix_agents::SubagentTool
 impl !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::SubagentTool
 impl !core::panic::unwind_safe::UnwindSafe for entelix_agents::SubagentTool
+pub struct entelix_agents::SummaryCompactor<M>
+impl<M> entelix_agents::SummaryCompactor<M>
+pub fn entelix_agents::SummaryCompactor<M>::new(model: alloc::sync::Arc<M>) -> Self
+pub const fn entelix_agents::SummaryCompactor<M>::with_keep_recent_turns(self, n: usize) -> Self
+pub fn entelix_agents::SummaryCompactor<M>::with_system_prompt(self, prompt: impl core::convert::Into<alloc::string::String>) -> Self
+impl<M> entelix_session::compaction::Compactor for entelix_agents::SummaryCompactor<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::SummaryCompactor<M>::compact<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, events: &'life1 [entelix_session::event::GraphEvent], _budget_chars: usize, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_session::compaction::CompactedHistory>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl<M> core::marker::Freeze for entelix_agents::SummaryCompactor<M>
+impl<M> core::marker::Send for entelix_agents::SummaryCompactor<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Sync for entelix_agents::SummaryCompactor<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Unpin for entelix_agents::SummaryCompactor<M>
+impl<M> core::marker::UnsafeUnpin for entelix_agents::SummaryCompactor<M>
+impl<M> core::panic::unwind_safe::RefUnwindSafe for entelix_agents::SummaryCompactor<M> where M: core::panic::unwind_safe::RefUnwindSafe
+impl<M> core::panic::unwind_safe::UnwindSafe for entelix_agents::SummaryCompactor<M> where M: core::panic::unwind_safe::RefUnwindSafe
 pub struct entelix_agents::SupervisorState
 pub entelix_agents::SupervisorState::last_speaker: core::option::Option<alloc::string::String>
 pub entelix_agents::SupervisorState::messages: alloc::vec::Vec<entelix_core::ir::message::Message>
@@ -675,6 +689,8 @@ impl<Inner> core::marker::Unpin for entelix_agents::ToolHookService<Inner> where
 impl<Inner> core::marker::UnsafeUnpin for entelix_agents::ToolHookService<Inner> where Inner: core::marker::UnsafeUnpin
 impl<Inner> !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::ToolHookService<Inner>
 impl<Inner> !core::panic::unwind_safe::UnwindSafe for entelix_agents::ToolHookService<Inner>
+pub const entelix_agents::DEFAULT_SUMMARY_KEEP_RECENT_TURNS: usize
+pub const entelix_agents::DEFAULT_SUMMARY_SYSTEM_PROMPT: &str
 pub trait entelix_agents::AgentEventSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static: core::marker::Send + core::marker::Sync
 pub fn entelix_agents::AgentEventSink::send<'life0, 'async_trait>(&'life0 self, event: entelix_agents::AgentEvent<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 impl<S> entelix_agents::AgentEventSink<S> for entelix_agents::BroadcastSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static

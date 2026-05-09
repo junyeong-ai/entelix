@@ -14,6 +14,12 @@
 //! against a deterministic in-process model so the example runs in
 //! CI without API keys. The model echoes the count of messages it
 //! actually sees, making the trim observable.
+//!
+//! Operators wanting LLM-summary compaction (industry-equivalent of
+//! Claude Agent SDK auto-compaction or `LangChain`'s summarisation
+//! middleware) swap `HeadDropCompactor` for
+//! `entelix::SummaryCompactor::new(summariser_model)` — the wrapper
+//! API is identical.
 
 #![allow(clippy::print_stdout)]
 

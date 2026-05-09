@@ -131,7 +131,7 @@ impl core::fmt::Debug for entelix_session::HeadDropCompactor
 pub fn entelix_session::HeadDropCompactor::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for entelix_session::HeadDropCompactor
 impl entelix_session::Compactor for entelix_session::HeadDropCompactor
-pub fn entelix_session::HeadDropCompactor::compact(&self, events: &[entelix_session::GraphEvent], budget_chars: usize) -> entelix_core::error::Result<entelix_session::CompactedHistory>
+pub fn entelix_session::HeadDropCompactor::compact<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, events: &'life1 [entelix_session::GraphEvent], budget_chars: usize, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_session::CompactedHistory>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
 impl core::marker::Freeze for entelix_session::HeadDropCompactor
 impl core::marker::Send for entelix_session::HeadDropCompactor
 impl core::marker::Sync for entelix_session::HeadDropCompactor
@@ -223,9 +223,9 @@ impl core::marker::UnsafeUnpin for entelix_session::ToolPair
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_session::ToolPair
 impl core::panic::unwind_safe::UnwindSafe for entelix_session::ToolPair
 pub trait entelix_session::Compactor: core::marker::Send + core::marker::Sync + 'static
-pub fn entelix_session::Compactor::compact(&self, events: &[entelix_session::GraphEvent], budget_chars: usize) -> entelix_core::error::Result<entelix_session::CompactedHistory>
+pub fn entelix_session::Compactor::compact<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, events: &'life1 [entelix_session::GraphEvent], budget_chars: usize, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_session::CompactedHistory>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
 impl entelix_session::Compactor for entelix_session::HeadDropCompactor
-pub fn entelix_session::HeadDropCompactor::compact(&self, events: &[entelix_session::GraphEvent], budget_chars: usize) -> entelix_core::error::Result<entelix_session::CompactedHistory>
+pub fn entelix_session::HeadDropCompactor::compact<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, events: &'life1 [entelix_session::GraphEvent], budget_chars: usize, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_session::CompactedHistory>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
 pub trait entelix_session::SessionLog: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_session::SessionLog::append<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, events: &'life2 [entelix_session::GraphEvent]) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<u64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
 pub fn entelix_session::SessionLog::archive_before<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 entelix_core::thread_key::ThreadKey, watermark: u64) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<usize>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait

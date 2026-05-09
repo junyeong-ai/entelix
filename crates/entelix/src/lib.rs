@@ -122,7 +122,7 @@ pub use entelix_mcp::{
 };
 #[cfg(feature = "mcp-chatmodel")]
 #[cfg_attr(docsrs, doc(cfg(feature = "mcp-chatmodel")))]
-pub use entelix_mcp_chatmodel::ChatModelSamplingProvider;
+pub use entelix_mcp::ChatModelSamplingProvider;
 pub use entelix_memory::{
     BufferMemory, ConsolidatingBufferMemory, ConsolidationContext, ConsolidationPolicy,
     CostCalculatorAdapter, Direction, Document, DocumentId, EdgeId, Embedder, Embedding,

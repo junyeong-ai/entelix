@@ -1483,7 +1483,6 @@ dependencies = [
  "entelix-graph",
  "entelix-graphmemory-pg",
  "entelix-mcp",
- "entelix-mcp-chatmodel",
  "entelix-memory",
  "entelix-memory-openai",
  "entelix-memory-pgvector",
@@ -1644,6 +1643,7 @@ name = "entelix-mcp"
 version = "0.2.0"
 dependencies = [
  "async-trait",
+ "bytes",
  "dashmap",
  "entelix-core",
  "futures",
@@ -1658,19 +1658,6 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wiremock",
-]
-
-[[package]]
-name = "entelix-mcp-chatmodel"
-version = "0.2.0"
-dependencies = [
- "async-trait",
- "bytes",
- "entelix-core",
- "entelix-mcp",
- "http 1.4.0",
- "tokio",
- "tracing",
 ]
 
 [[package]]

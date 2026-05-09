@@ -32,8 +32,7 @@ members = [
 
     # ── action surface ──────────────────────────────────────────────────
     "crates/entelix-tools",           # http_fetch, search adapter trait, calculator
-    "crates/entelix-mcp",             # MCP client (JSON-RPC 2.0 over HTTP)
-    "crates/entelix-mcp-chatmodel",   # companion — bridges MCP sampling/createMessage onto ChatModel<C, T>
+    "crates/entelix-mcp",             # MCP client (JSON-RPC 2.0 over HTTP); ChatModelSamplingProvider behind `chatmodel-sampling`
     "crates/entelix-cloud",           # Bedrock + Vertex + Foundry transports
 
     # ── operational ─────────────────────────────────────────────────────
@@ -165,7 +164,6 @@ entelix-graphmemory-pg  = { version = "0.2.0", path = "crates/entelix-graphmemor
 entelix-persistence = { version = "0.2.0", path = "crates/entelix-persistence" }
 entelix-tools       = { version = "0.2.0", path = "crates/entelix-tools" }
 entelix-mcp         = { version = "0.2.0", path = "crates/entelix-mcp" }
-entelix-mcp-chatmodel = { version = "0.2.0", path = "crates/entelix-mcp-chatmodel" }
 entelix-cloud       = { version = "0.2.0", path = "crates/entelix-cloud" }
 entelix-policy      = { version = "0.2.0", path = "crates/entelix-policy" }
 entelix-otel        = { version = "0.2.0", path = "crates/entelix-otel" }

@@ -20,9 +20,9 @@ use entelix_core::ir::{
 };
 use entelix_core::transports::{Transport, TransportResponse};
 use entelix_mcp::{
-    SamplingContent, SamplingMessage, SamplingProvider, SamplingRequest, StaticSamplingProvider,
+    ChatModelSamplingProvider, SamplingContent, SamplingMessage, SamplingProvider, SamplingRequest,
+    StaticSamplingProvider,
 };
-use entelix_mcp_chatmodel::ChatModelSamplingProvider;
 
 /// Stub codec — encodes to a placeholder body (the transport
 /// ignores it) and decodes the captured `ModelRequest` snapshot

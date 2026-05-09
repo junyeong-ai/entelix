@@ -18,7 +18,7 @@ workspace = true
 [features]
 default = []
 mcp = ["dep:entelix-mcp"]
-mcp-chatmodel = ["mcp", "dep:entelix-mcp-chatmodel"]
+mcp-chatmodel = ["mcp", "entelix-mcp/chatmodel-sampling"]
 postgres = ["dep:entelix-persistence", "entelix-persistence/postgres"]
 redis = ["dep:entelix-persistence", "entelix-persistence/redis"]
 otel = ["dep:entelix-otel"]
@@ -48,7 +48,6 @@ entelix-agents = { workspace = true }
 entelix-cloud = { workspace = true }
 entelix-tools = { workspace = true }
 entelix-mcp = { workspace = true, optional = true }
-entelix-mcp-chatmodel = { workspace = true, optional = true }
 entelix-memory-openai = { workspace = true, optional = true }
 entelix-memory-pgvector = { workspace = true, optional = true }
 entelix-memory-qdrant = { workspace = true, optional = true }
@@ -64,8 +63,7 @@ axum = { workspace = true }
 bytes = { workspace = true }
 chrono = { workspace = true }
 entelix-core = { workspace = true }
-entelix-mcp = { workspace = true }
-entelix-mcp-chatmodel = { workspace = true }
+entelix-mcp = { workspace = true, features = ["chatmodel-sampling"] }
 entelix-policy = { workspace = true }
 http = { workspace = true }
 futures = { workspace = true }

@@ -1,6 +1,9 @@
 //! `ChatModelSamplingProvider<C, T>` — bridges
-//! [`SamplingProvider`](entelix_mcp::SamplingProvider) onto an
-//! [`entelix_core::ChatModel<C, T>`].
+//! [`crate::SamplingProvider`] onto an
+//! [`entelix_core::ChatModel<C, T>`]. Feature-gated behind
+//! `chatmodel-sampling` so MCP consumers that wire their own
+//! `SamplingProvider` against a non-`ChatModel` model don't pay the
+//! extra compile cost.
 
 use async_trait::async_trait;
 use entelix_core::ChatModel;
@@ -8,7 +11,8 @@ use entelix_core::codecs::Codec;
 use entelix_core::context::ExecutionContext;
 use entelix_core::ir::{ContentPart, MediaSource, Message, ModelResponse, Role, StopReason};
 use entelix_core::transports::Transport;
-use entelix_mcp::{
+
+use crate::{
     McpError, McpResult, SamplingContent, SamplingMessage, SamplingProvider, SamplingRequest,
     SamplingResponse,
 };
@@ -27,7 +31,7 @@ const STOP_SEQUENCE: &str = "stopSequence";
 /// underlying chat model is `Arc`-backed.
 ///
 /// Per-request overrides supplied on the
-/// [`SamplingRequest`](entelix_mcp::SamplingRequest)
+/// [`SamplingRequest`](crate::SamplingRequest)
 /// (`system_prompt`, `temperature`, `max_tokens`,
 /// `stop_sequences`) are applied to a per-call clone of the chat
 /// model so the wrapped instance is unchanged across concurrent

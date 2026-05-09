@@ -15,6 +15,13 @@ readme = "README.md"
 [lints]
 workspace = true
 
+[features]
+default = []
+# Optional bridge from `SamplingProvider` onto `entelix_core::ChatModel<C, T>`.
+# MCP consumers wiring their own non-`ChatModel` sampling backend skip the
+# extra compile cost; operators that want the canonical adapter opt in.
+chatmodel-sampling = []
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
@@ -36,5 +43,7 @@ tokio-util = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
+async-trait = { workspace = true }
+bytes = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
 wiremock = { workspace = true }

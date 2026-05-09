@@ -56,7 +56,6 @@ const SUBCRATES: &[&str] = &[
     "entelix-persistence",
     "entelix-tools",
     "entelix-mcp",
-    "entelix-mcp-chatmodel",
     "entelix-cloud",
     "entelix-policy",
     "entelix-otel",

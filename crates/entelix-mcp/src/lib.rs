@@ -55,6 +55,9 @@
     clippy::ignored_unit_patterns
 )]
 
+#[cfg(feature = "chatmodel-sampling")]
+#[cfg_attr(docsrs, doc(cfg(feature = "chatmodel-sampling")))]
+mod chatmodel;
 mod client;
 mod completion;
 mod elicitation;
@@ -71,6 +74,9 @@ mod sse;
 mod tool_adapter;
 mod tool_definition;
 
+#[cfg(feature = "chatmodel-sampling")]
+#[cfg_attr(docsrs, doc(cfg(feature = "chatmodel-sampling")))]
+pub use chatmodel::ChatModelSamplingProvider;
 pub use client::{HttpMcpClient, McpClient};
 pub use completion::{McpCompletionArgument, McpCompletionReference, McpCompletionResult};
 pub use elicitation::{

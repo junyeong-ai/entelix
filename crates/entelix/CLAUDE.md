@@ -21,7 +21,7 @@ Re-export crate. The 90% surface every consumer constructs: `entelix::ChatModel`
 ## Forbidden
 
 - A `pub use` that drops the `#[cfg(feature = "X")]` gate for a re-export from a feature-gated dependency — facade compile breaks under `--no-default-features`.
-- A new feature flag that doesn't pass through to the underlying crate's matching feature (and `check-feature-matrix.sh` doesn't catch the gap until CI runs).
+- A new feature flag that doesn't pass through to the underlying crate's matching feature (`cargo xtask feature-matrix` catches the gap).
 - A re-export of an internal-only type (e.g. `entelix-graph::dispatch::scatter`) — the facade is the canonical 90% surface, advanced internals stay behind sub-crate paths.
 
 ## References

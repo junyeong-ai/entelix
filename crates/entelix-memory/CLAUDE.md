@@ -12,7 +12,7 @@ Tier-3 cross-thread persistent knowledge. Trait surface + zero-dependency refere
 - **Memory patterns** — `BufferMemory`, `SummaryMemory`, `EntityMemory`, `SemanticMemory<E, V>`, `EpisodicMemory<V>`, `ConsolidatingBufferMemory` (LangChain-style facades over `Store<V>`).
 - **`GraphMemory<N, E>` trait** + `InMemoryGraphMemory<N, E>` — typed-node + timestamped-edge knowledge graph. Read methods follow the `get_*` verb-family (`get_node` / `get_edge`); BFS traversal via `traverse(start, max_depth, direction)` and `find_path(from, to, max_depth)`. Postgres-backed `PgGraphMemory` companion folds traversal into a single `WITH RECURSIVE` round-trip.
 
-## Companion crates (1.0)
+## Companion crates
 
 | Crate | Backend | Use case |
 |---|---|---|

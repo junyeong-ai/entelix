@@ -512,14 +512,20 @@ mod tests {
 
     #[tokio::test]
     async fn empty_event_log_compacts_to_empty_history() {
-        let history = HeadDropCompactor.compact(&[], 1024, &ExecutionContext::new()).await.unwrap();
+        let history = HeadDropCompactor
+            .compact(&[], 1024, &ExecutionContext::new())
+            .await
+            .unwrap();
         assert!(history.is_empty());
     }
 
     #[tokio::test]
     async fn user_assistant_round_trip_preserves_both_turns() {
         let events = vec![user("hi"), assistant("hello!")];
-        let history = HeadDropCompactor.compact(&events, 1024, &ExecutionContext::new()).await.unwrap();
+        let history = HeadDropCompactor
+            .compact(&events, 1024, &ExecutionContext::new())
+            .await
+            .unwrap();
         assert_eq!(history.len(), 2);
         assert!(matches!(history.turns()[0], Turn::User { .. }));
         assert!(matches!(history.turns()[1], Turn::Assistant { .. }));
@@ -534,7 +540,10 @@ mod tests {
             tool_result("call_1", "calculator", "2"),
             assistant("answer is 2"),
         ];
-        let history = HeadDropCompactor.compact(&events, 1024, &ExecutionContext::new()).await.unwrap();
+        let history = HeadDropCompactor
+            .compact(&events, 1024, &ExecutionContext::new())
+            .await
+            .unwrap();
         assert_eq!(history.len(), 3); // user + assistant + assistant
         if let Turn::Assistant { tools, .. } = &history.turns()[1] {
             assert_eq!(tools.len(), 1);
@@ -552,7 +561,10 @@ mod tests {
             assistant("calling"),
             tool_result("orphan", "calc", "x"),
         ];
-        let err = HeadDropCompactor.compact(&events, 1024, &ExecutionContext::new()).await.unwrap_err();
+        let err = HeadDropCompactor
+            .compact(&events, 1024, &ExecutionContext::new())
+            .await
+            .unwrap_err();
         let msg = err.to_string();
         assert!(
             msg.contains("orphan"),
@@ -567,7 +579,10 @@ mod tests {
             assistant("calling"),
             tool_call("dangling", "calc", json!({})),
         ];
-        let err = HeadDropCompactor.compact(&events, 1024, &ExecutionContext::new()).await.unwrap_err();
+        let err = HeadDropCompactor
+            .compact(&events, 1024, &ExecutionContext::new())
+            .await
+            .unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("pair invariant violated"), "got: {msg}");
     }
@@ -584,7 +599,10 @@ mod tests {
             user("three three three"),
             assistant("three reply"),
         ];
-        let history = HeadDropCompactor.compact(&events, 50, &ExecutionContext::new()).await.unwrap();
+        let history = HeadDropCompactor
+            .compact(&events, 50, &ExecutionContext::new())
+            .await
+            .unwrap();
         // Must include the LAST turns under budget — never partial.
         assert!(!history.is_empty());
         let last = history.turns().last().unwrap();
@@ -608,7 +626,10 @@ mod tests {
             tool_call("c", "tool", json!({})),
             tool_result("c", "tool", "ok"),
         ];
-        let history = HeadDropCompactor.compact(&events, 1024, &ExecutionContext::new()).await.unwrap();
+        let history = HeadDropCompactor
+            .compact(&events, 1024, &ExecutionContext::new())
+            .await
+            .unwrap();
         let msgs = history.to_messages();
         assert_eq!(msgs.len(), 3); // user, assistant, tool
         assert!(matches!(msgs[0].role, Role::User));
@@ -631,7 +652,10 @@ mod tests {
             user("u2"),
             assistant("a2"),
         ];
-        let history = HeadDropCompactor.compact(&events, 30, &ExecutionContext::new()).await.unwrap();
+        let history = HeadDropCompactor
+            .compact(&events, 30, &ExecutionContext::new())
+            .await
+            .unwrap();
         for turn in history.turns() {
             if let Turn::Assistant { tools, .. } = turn {
                 for pair in tools {

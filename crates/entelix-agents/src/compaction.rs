@@ -88,9 +88,10 @@ where
                 .to_messages();
             let retained_size = messages_char_size(&compacted);
             if let Some(handle) = ctx.audit_sink() {
-                handle
-                    .as_sink()
-                    .record_context_compacted(dropped_size.saturating_sub(retained_size), retained_size);
+                handle.as_sink().record_context_compacted(
+                    dropped_size.saturating_sub(retained_size),
+                    retained_size,
+                );
             }
             compacted
         } else {
@@ -319,7 +320,10 @@ mod tests {
             user("three three three three"),
             assistant("third reply"),
         ];
-        let _ = wrapped.invoke(input.clone(), &ExecutionContext::new()).await.unwrap();
+        let _ = wrapped
+            .invoke(input.clone(), &ExecutionContext::new())
+            .await
+            .unwrap();
         let observed_len = wrapped.inner().last_input_len.load(Ordering::SeqCst);
         assert!(
             observed_len < input.len(),
@@ -350,7 +354,9 @@ mod tests {
         fn record_memory_recall(&self, _tier: &str, _namespace_key: &str, _hits: usize) {}
         fn record_usage_limit_exceeded(&self, _breach: &entelix_core::UsageLimitBreach) {}
         fn record_context_compacted(&self, dropped_chars: usize, retained_chars: usize) {
-            self.compactions.lock().push((dropped_chars, retained_chars));
+            self.compactions
+                .lock()
+                .push((dropped_chars, retained_chars));
         }
     }
 
@@ -400,7 +406,10 @@ mod tests {
         let compactor: Arc<dyn Compactor> = Arc::new(HeadDropCompactor);
         let model = EchoModel::new();
         let wrapped = model.with_compaction(compactor, 1024);
-        let _ = wrapped.invoke(Vec::new(), &ExecutionContext::new()).await.unwrap();
+        let _ = wrapped
+            .invoke(Vec::new(), &ExecutionContext::new())
+            .await
+            .unwrap();
         assert_eq!(wrapped.inner().last_input_len.load(Ordering::SeqCst), 0);
     }
 
@@ -424,11 +433,7 @@ mod tests {
 
     #[async_trait]
     impl Runnable<Vec<Message>, Message> for StubSummariser {
-        async fn invoke(
-            &self,
-            input: Vec<Message>,
-            _ctx: &ExecutionContext,
-        ) -> Result<Message> {
+        async fn invoke(&self, input: Vec<Message>, _ctx: &ExecutionContext) -> Result<Message> {
             *self.captured_prompt.lock() = input;
             Ok(Message::new(
                 Role::Assistant,
@@ -495,7 +500,10 @@ mod tests {
         if let Turn::User { content } = &history.turns()[0] {
             if let ContentPart::Text { text, .. } = &content[0] {
                 assert!(text.contains("Summary"), "summary marker missing: {text}");
-                assert!(text.contains("brief recap"), "summariser reply missing: {text}");
+                assert!(
+                    text.contains("brief recap"),
+                    "summariser reply missing: {text}"
+                );
             }
         } else {
             panic!("expected User turn at head");
@@ -508,7 +516,10 @@ mod tests {
             captured_len = captured.len();
             captured_role = captured[0].role;
         }
-        assert!(captured_len >= 5, "expected system + ≥4 older messages, got {captured_len}");
+        assert!(
+            captured_len >= 5,
+            "expected system + ≥4 older messages, got {captured_len}"
+        );
         assert!(matches!(captured_role, Role::System));
     }
 

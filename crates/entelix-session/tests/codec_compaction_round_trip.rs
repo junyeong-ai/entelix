@@ -28,6 +28,7 @@
 //! cleaner test-failure diagnostics and no `#![allow(unwrap_used)]`
 //! hatch over the workspace lint.
 
+use entelix_core::ExecutionContext;
 use entelix_core::Result;
 use entelix_core::codecs::{
     AnthropicMessagesCodec, BedrockConverseCodec, Codec, GeminiCodec, OpenAiChatCodec,
@@ -36,7 +37,6 @@ use entelix_core::codecs::{
 use entelix_core::ir::{
     ContentPart, Message, ModelRequest, ModelWarning, Role, ToolResultContent, ToolSpec,
 };
-use entelix_core::ExecutionContext;
 use entelix_session::{Compactor, HeadDropCompactor, messages_to_events};
 
 fn tool_use_conversation() -> Vec<Message> {

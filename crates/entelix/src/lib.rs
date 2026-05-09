@@ -61,11 +61,11 @@ pub use entelix_core::{
 pub use entelix_agents::{
     Agent, AgentBuilder, AgentEntry, AgentEvent, AgentEventSink, AgentObserver, AgentRunResult,
     AlwaysApprove, ApprovalLayer, ApprovalRequest, ApprovalService, Approver, BroadcastSink,
-    CaptureSink, ChannelApprover, ChannelApproverConfig, ChannelSink, ChatState, DroppingSink,
-    DEFAULT_SUMMARY_KEEP_RECENT_TURNS, DEFAULT_SUMMARY_SYSTEM_PROMPT, DynObserver, ExecutionMode,
-    MessageRunnableCompactionExt, PendingApproval, ReActAgentBuilder, ReActState,
-    RunnableCompacting, RunnableToSummarizerAdapter, Subagent, SubagentBuilder, SummaryCompactor,
-    SubagentMetadata, SubagentTool, SupervisorDecision, SupervisorState, ToolApprovalEventSink,
+    CaptureSink, ChannelApprover, ChannelApproverConfig, ChannelSink, ChatState,
+    DEFAULT_SUMMARY_KEEP_RECENT_TURNS, DEFAULT_SUMMARY_SYSTEM_PROMPT, DroppingSink, DynObserver,
+    ExecutionMode, MessageRunnableCompactionExt, PendingApproval, ReActAgentBuilder, ReActState,
+    RunnableCompacting, RunnableToSummarizerAdapter, Subagent, SubagentBuilder, SubagentMetadata,
+    SubagentTool, SummaryCompactor, SupervisorDecision, SupervisorState, ToolApprovalEventSink,
     ToolApprovalEventSinkHandle, ToolEventLayer, ToolEventService, ToolHook, ToolHookDecision,
     ToolHookLayer, ToolHookRegistry, ToolHookRequest, ToolHookService, build_chat_graph,
     build_react_graph, build_supervisor_graph, create_chat_agent, create_react_agent,
@@ -104,6 +104,9 @@ pub use entelix_graph::{
 pub use entelix_graphmemory_pg::{
     PgGraphMemory, PgGraphMemoryBuilder, PgGraphMemoryError, PgGraphMemoryResult,
 };
+#[cfg(feature = "mcp-chatmodel")]
+#[cfg_attr(docsrs, doc(cfg(feature = "mcp-chatmodel")))]
+pub use entelix_mcp::ChatModelSamplingProvider;
 #[cfg(feature = "mcp")]
 #[cfg_attr(docsrs, doc(cfg(feature = "mcp")))]
 pub use entelix_mcp::{
@@ -120,9 +123,6 @@ pub use entelix_mcp::{
     SamplingRequest, SamplingResponse, StaticElicitationProvider, StaticRootsProvider,
     StaticSamplingProvider, qualified_name, validate_server_name,
 };
-#[cfg(feature = "mcp-chatmodel")]
-#[cfg_attr(docsrs, doc(cfg(feature = "mcp-chatmodel")))]
-pub use entelix_mcp::ChatModelSamplingProvider;
 pub use entelix_memory::{
     BufferMemory, ConsolidatingBufferMemory, ConsolidationContext, ConsolidationPolicy,
     CostCalculatorAdapter, Direction, Document, DocumentId, EdgeId, Embedder, Embedding,

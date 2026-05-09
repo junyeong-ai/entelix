@@ -68,7 +68,9 @@ async fn main() -> Result<()> {
 
     // ── Pass 1 — short conversation under threshold ──────────────────
     let short = turn_pair("hi", "hello");
-    model.invoke(short.clone(), &ExecutionContext::new()).await?;
+    model
+        .invoke(short.clone(), &ExecutionContext::new())
+        .await?;
     let observed_short = observed.load(Ordering::SeqCst);
     assert_eq!(
         observed_short,

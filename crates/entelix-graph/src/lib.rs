@@ -3,17 +3,19 @@
 //! Control-flow contract for entelix (invariant 8). Houses
 //! [`StateGraph<S>`] with typed state, the [`Reducer<T>`] trait,
 //! conditional / fan-out edges, subgraphs, the [`Checkpointer`]
-//! trait plus [`InMemoryCheckpointer`], and the [`interrupt()`] /
-//! [`Command<S>`] HITL API. `recursion_limit` (F6 mitigation) is
-//! enforced here.
+//! trait plus [`InMemoryCheckpointer`], and the [`Command<S>`]
+//! HITL resume API. `recursion_limit` (F6 mitigation) is enforced
+//! here. The HITL pause primitive
+//! ([`entelix_core::interrupt`] / [`entelix_core::interrupt_with`])
+//! lives in `entelix-core` so tools, nodes, and middleware layers
+//! all raise the same `Error::Interrupted` shape.
 //!
 //! Surface: [`StateGraph<S>`] builder with static and conditional
 //! edges + [`CompiledGraph<S>`] executor with `recursion_limit`
 //! enforcement and the [`END`] sentinel target. [`Checkpointer`] +
 //! [`InMemoryCheckpointer`] for write-after-each-node persistence;
 //! [`CompiledGraph::resume`] / [`CompiledGraph::resume_with`] crash
-//! recovery. [`interrupt()`] + [`Command<S>`] for HITL
-//! pause-and-continue.
+//! recovery. [`Command<S>`] for typed resume payloads.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc(html_root_url = "https://docs.rs/entelix-graph/0.1.0")]
@@ -30,7 +32,6 @@ mod contributing_node;
 mod dispatch;
 mod finalizing_stream;
 mod in_memory_checkpointer;
-mod interrupt;
 mod merge_node;
 mod reducer;
 mod state_graph;
@@ -44,7 +45,6 @@ pub use contributing_node::ContributingNodeAdapter;
 pub use dispatch::{Dispatch, scatter};
 pub use finalizing_stream::FinalizingStream;
 pub use in_memory_checkpointer::InMemoryCheckpointer;
-pub use interrupt::interrupt;
 pub use merge_node::MergeNodeAdapter;
 pub use reducer::{Annotated, Append, Max, MergeMap, Reducer, Replace, StateMerge};
 pub use state_graph::{CheckpointGranularity, DEFAULT_RECURSION_LIMIT, END, StateGraph};

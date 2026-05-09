@@ -102,8 +102,8 @@ where
                             // decision threaded through
                             // `Command::ApproveTool { tool_use_id, decision }`
                             // on `CompiledGraph::resume_with`.
-                            Err(Error::Interrupted { payload }) => {
-                                return Err(Error::Interrupted { payload });
+                            Err(Error::Interrupted { kind, payload }) => {
+                                return Err(Error::Interrupted { kind, payload });
                             }
                             // Invariant #16 — model sees the LLM-facing
                             // rendering (no vendor status, no source

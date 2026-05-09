@@ -37,12 +37,13 @@
 //! ## `AwaitExternal` pause-and-resume
 //!
 //! When `Approver::decide` returns `ApprovalDecision::AwaitExternal`,
-//! the layer raises `Error::Interrupted { payload }` with a
-//! structured payload (`kind = "approval_pending"`, plus the
-//! pending dispatch's `run_id` / `tool_use_id` / `tool` / `input`).
-//! The graph dispatch loop catches it, persists a checkpoint with
-//! pre-node state, and surfaces the typed error to the caller —
-//! the agent run pauses cleanly with no inflight resources.
+//! the layer raises `Error::Interrupted` with
+//! [`InterruptionKind::ApprovalPending { tool_use_id }`](entelix_core::interruption::InterruptionKind::ApprovalPending)
+//! and a payload carrying the pending dispatch's `run_id` / `tool` /
+//! `input` for operator-side audit. The graph dispatch loop catches
+//! it, persists a checkpoint with pre-node state, and surfaces the
+//! typed error to the caller — the agent run pauses cleanly with no
+//! inflight resources.
 //!
 //! Resume drops the operator's eventual decision into
 //! the typed `Command::ApproveTool { tool_use_id, decision }`
@@ -66,9 +67,10 @@ use futures::future::BoxFuture;
 use serde_json::{Value, json};
 use tower::{Layer, Service};
 
+use entelix_core::PendingApprovalDecisions;
 use entelix_core::error::{Error, Result};
+use entelix_core::interruption::InterruptionKind;
 use entelix_core::service::ToolInvocation;
-use entelix_core::{INTERRUPT_KIND_APPROVAL_PENDING, PendingApprovalDecisions};
 
 use crate::agent::approver::{ApprovalDecision, ApprovalRequest, Approver};
 use crate::agent::event::AgentEvent;
@@ -299,8 +301,10 @@ where
                     // branch above short-circuits without re-asking
                     // the approver.
                     Err(Error::Interrupted {
+                        kind: InterruptionKind::ApprovalPending {
+                            tool_use_id: tool_use_id.clone(),
+                        },
                         payload: json!({
-                            "kind": INTERRUPT_KIND_APPROVAL_PENDING,
                             "run_id": run_id,
                             "tool_use_id": tool_use_id,
                             "tool": tool_name,
@@ -519,10 +523,12 @@ mod tests {
             .await
             .unwrap_err();
         match err {
-            Error::Interrupted { payload } => {
+            Error::Interrupted { kind, payload } => {
                 assert_eq!(
-                    payload["kind"].as_str(),
-                    Some(INTERRUPT_KIND_APPROVAL_PENDING)
+                    kind,
+                    InterruptionKind::ApprovalPending {
+                        tool_use_id: "tu-1".into()
+                    }
                 );
                 assert_eq!(payload["tool_use_id"].as_str(), Some("tu-1"));
                 assert_eq!(payload["tool"].as_str(), Some("echo"));

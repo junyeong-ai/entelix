@@ -508,21 +508,14 @@ fn clone_error(e: &Error) -> Error {
         Error::Auth(_) => Error::config("authentication failed (cloned for stream completion)"),
         Error::Cancelled => Error::Cancelled,
         Error::DeadlineExceeded => Error::DeadlineExceeded,
-        Error::Interrupted { payload } => Error::Interrupted {
+        Error::Interrupted { kind, payload } => Error::Interrupted {
+            kind: kind.clone(),
             payload: payload.clone(),
         },
         Error::Serde(_) => {
             Error::invalid_request("output serialisation failed (cloned for stream completion)")
         }
-        Error::UsageLimitExceeded {
-            axis,
-            limit,
-            observed,
-        } => Error::UsageLimitExceeded {
-            axis: *axis,
-            limit: *limit,
-            observed: *observed,
-        },
+        Error::UsageLimitExceeded(breach) => Error::UsageLimitExceeded(breach.clone()),
         Error::ModelRetry { hint, attempt } => Error::ModelRetry {
             hint: hint.clone(),
             attempt: *attempt,

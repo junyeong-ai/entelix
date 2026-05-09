@@ -280,7 +280,7 @@ where
             .as_ref()
             .ok_or_else(|| Error::config("CompiledGraph::resume requires a Checkpointer"))?;
         let key = ThreadKey::from_ctx(ctx)?;
-        let latest = checkpointer.latest(&key).await?.ok_or_else(|| {
+        let latest = checkpointer.get_latest(&key).await?.ok_or_else(|| {
             Error::invalid_request(format!(
                 "CompiledGraph::resume: no checkpoint exists for tenant '{}' thread '{}'",
                 key.tenant_id(),
@@ -306,7 +306,7 @@ where
             .ok_or_else(|| Error::config("CompiledGraph::resume_from requires a Checkpointer"))?;
         let key = ThreadKey::from_ctx(ctx)?;
         let cp = checkpointer
-            .by_id(&key, checkpoint_id)
+            .get_by_id(&key, checkpoint_id)
             .await?
             .ok_or_else(|| {
                 Error::invalid_request(format!(
@@ -458,7 +458,11 @@ where
                     .await?;
                 }
                 return Err(Error::Interrupted {
-                    payload: serde_json::json!({"kind": "before", "node": current}),
+                    kind: entelix_core::InterruptionKind::ScheduledPause {
+                        phase: entelix_core::InterruptionPhase::Before,
+                        node: current.clone(),
+                    },
+                    payload: serde_json::Value::Null,
                 });
             }
             // Subsequent iterations always honour `interrupt_before`.
@@ -466,7 +470,7 @@ where
 
             match node.invoke(state, ctx).await {
                 Ok(new_state) => state = new_state,
-                Err(Error::Interrupted { payload }) => {
+                Err(Error::Interrupted { kind, payload }) => {
                     // Persist a checkpoint with PRE-node state so resume re-
                     // runs the interrupted node (typically with updated
                     // state injected via `Command::Update`).
@@ -482,7 +486,7 @@ where
                         ))
                         .await?;
                     }
-                    return Err(Error::Interrupted { payload });
+                    return Err(Error::Interrupted { kind, payload });
                 }
                 Err(other) => return Err(other),
             }
@@ -505,7 +509,11 @@ where
                     .await?;
                 }
                 return Err(Error::Interrupted {
-                    payload: serde_json::json!({"kind": "after", "node": current}),
+                    kind: entelix_core::InterruptionKind::ScheduledPause {
+                        phase: entelix_core::InterruptionPhase::After,
+                        node: current.clone(),
+                    },
+                    payload: serde_json::Value::Null,
                 });
             }
 

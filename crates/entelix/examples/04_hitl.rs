@@ -75,8 +75,9 @@ async fn main() -> Result<()> {
 
     println!("=== first invocation — should interrupt ===");
     match graph.invoke(initial, &ctx).await {
-        Err(Error::Interrupted { payload }) => {
+        Err(Error::Interrupted { kind, payload }) => {
             println!("graph paused for human review.");
+            println!("kind: {kind:?}");
             println!("payload: {payload:#}");
         }
         Ok(_) => println!("WARNING: expected an interrupt, got success"),

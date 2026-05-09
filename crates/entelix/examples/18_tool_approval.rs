@@ -136,8 +136,9 @@ async fn main() -> Result<()> {
         )
         .await
     {
-        Err(Error::Interrupted { payload }) => {
+        Err(Error::Interrupted { kind, payload }) => {
             println!("agent paused for human review.");
+            println!("kind: {kind:?}");
             println!("payload: {payload:#}");
         }
         Ok(_) => {

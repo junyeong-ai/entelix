@@ -68,14 +68,26 @@ pub enum Error {
     #[error("deadline exceeded")]
     DeadlineExceeded,
 
-    /// A graph node requested human-in-the-loop intervention. The graph
-    /// executor catches this, persists a checkpoint at the pre-node
-    /// state, and returns the payload to the caller. Resume with
+    /// A dispatch (tool body, graph node, or middleware layer) requested
+    /// human-in-the-loop intervention. The runtime catches this,
+    /// persists a checkpoint at the pre-dispatch state, and returns
+    /// `kind` + `payload` to the caller. Resume with
     /// `entelix_graph::CompiledGraph::resume_with`.
-    #[error("graph interrupted for human review")]
+    ///
+    /// See [`crate::interruption::InterruptionKind`] for the typed
+    /// reason taxonomy and [`crate::interrupt`] /
+    /// [`crate::interrupt_with`] for the canonical raise sites.
+    #[error("dispatch interrupted for human review")]
     Interrupted {
-        /// Caller-visible payload describing what input the node needs
-        /// (e.g. an approval question, tool input awaiting human review).
+        /// Typed reason — `Custom` for operator-defined pauses,
+        /// `ApprovalPending { tool_use_id }` for tool-approval
+        /// pauses raised by `ApprovalLayer`, or any future SDK
+        /// variant. Operator match sites should carry a fall-through
+        /// `_` arm.
+        kind: crate::interruption::InterruptionKind,
+        /// Operator free-form data describing what the resumer needs
+        /// to know. For typed kinds this is often `Value::Null`; for
+        /// `Custom` it carries whatever `interrupt(payload)` passed.
         payload: serde_json::Value,
     },
 
@@ -129,16 +141,14 @@ pub enum Error {
     /// short-circuit (a budget breach does not retry) and from
     /// [`Self::InvalidRequest`] so dashboards see the budget
     /// signal as a first-class category.
-    #[error("run budget exceeded on {axis} axis: observed {observed}, limit {limit}")]
-    UsageLimitExceeded {
-        /// Which budget axis breached its cap.
-        axis: crate::run_budget::UsageLimitAxis,
-        /// Configured limit (in the axis's native unit — count for
-        /// requests / tool calls, tokens for the token axes).
-        limit: u64,
-        /// Observed value that breached the limit.
-        observed: u64,
-    },
+    /// A [`crate::RunBudget`] axis was exceeded. The typed
+    /// [`crate::run_budget::UsageLimitBreach`] enum carries both
+    /// the breaching axis and its magnitude in one variant — axis
+    /// and magnitude are paired by construction so consumers
+    /// pattern-match a single value rather than checking the axis
+    /// to know which numeric type to read.
+    #[error("{0}")]
+    UsageLimitExceeded(crate::run_budget::UsageLimitBreach),
 }
 
 impl Error {

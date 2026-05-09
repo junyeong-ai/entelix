@@ -6,8 +6,9 @@ use entelix_core::TenantId;
 use std::sync::Arc;
 
 use entelix_core::ThreadKey;
+use entelix_core::interrupt;
 use entelix_core::{Error, ExecutionContext, Result};
-use entelix_graph::{Checkpointer, Command, InMemoryCheckpointer, StateGraph, interrupt};
+use entelix_graph::{Checkpointer, Command, InMemoryCheckpointer, StateGraph};
 use entelix_runnable::{Runnable, RunnableLambda};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -63,7 +64,7 @@ async fn interrupt_returns_payload_to_caller() {
 
     let err = graph.invoke(initial, &ctx).await.unwrap_err();
     match err {
-        Error::Interrupted { payload } => {
+        Error::Interrupted { payload, .. } => {
             assert_eq!(payload["request"], "Deploy to prod");
             assert!(payload["options"].is_array());
         }
@@ -92,7 +93,7 @@ async fn interrupt_writes_pre_node_checkpoint() -> Result<()> {
     let _ = graph.invoke(initial.clone(), &ctx).await;
 
     let key = ThreadKey::from_ctx(&ctx)?;
-    let latest = cp.latest(&key).await?.unwrap();
+    let latest = cp.get_latest(&key).await?.unwrap();
     // Pre-node state preserved.
     assert_eq!(latest.state, initial);
     // Resume should re-run the interrupted node.
@@ -259,9 +260,14 @@ async fn interrupt_before_pauses_without_invoking_node() -> Result<()> {
 
     let err = graph.invoke(initial.clone(), &ctx).await.unwrap_err();
     match err {
-        Error::Interrupted { payload } => {
-            assert_eq!(payload["kind"], "before");
-            assert_eq!(payload["node"], "review");
+        Error::Interrupted { kind, .. } => {
+            assert_eq!(
+                kind,
+                entelix_core::InterruptionKind::ScheduledPause {
+                    phase: entelix_core::InterruptionPhase::Before,
+                    node: "review".into(),
+                }
+            );
         }
         other => panic!("expected Interrupted, got {other:?}"),
     }
@@ -306,9 +312,14 @@ async fn interrupt_after_pauses_after_node_completes() -> Result<()> {
 
     let err = graph.invoke(initial.clone(), &ctx).await.unwrap_err();
     match err {
-        Error::Interrupted { payload } => {
-            assert_eq!(payload["kind"], "after");
-            assert_eq!(payload["node"], "preflight");
+        Error::Interrupted { kind, .. } => {
+            assert_eq!(
+                kind,
+                entelix_core::InterruptionKind::ScheduledPause {
+                    phase: entelix_core::InterruptionPhase::After,
+                    node: "preflight".into(),
+                }
+            );
         }
         other => panic!("expected Interrupted, got {other:?}"),
     }

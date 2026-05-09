@@ -123,8 +123,8 @@ async fn main() -> Result<()> {
     {
         let graph_pod1 = build_graph(checkpointer.clone())?;
         match graph_pod1.invoke(initial, &pod1_ctx).await {
-            Err(Error::Interrupted { payload }) => {
-                println!("pod-1 halted at review; payload: {payload:#}");
+            Err(Error::Interrupted { kind, payload }) => {
+                println!("pod-1 halted at review; kind={kind:?}; payload: {payload:#}");
             }
             other => println!("unexpected: {other:?}"),
         }
@@ -133,7 +133,7 @@ async fn main() -> Result<()> {
     }
 
     let key = ThreadKey::from_ctx(&pod1_ctx)?;
-    let history = checkpointer.history(&key, usize::MAX).await?;
+    let history = checkpointer.list_history(&key, usize::MAX).await?;
     println!(
         "checkpointer holds {} checkpoint(s) for tenant '{}' thread '{}'",
         history.len(),
@@ -171,7 +171,7 @@ async fn main() -> Result<()> {
     }
 
     let key2 = ThreadKey::from_ctx(&pod2_ctx)?;
-    let history_after = checkpointer.history(&key2, usize::MAX).await?;
+    let history_after = checkpointer.list_history(&key2, usize::MAX).await?;
     println!("\ncheckpoint count after resume: {}", history_after.len());
     println!("✓ harness was stateless across pods (invariant 2)");
     Ok(())

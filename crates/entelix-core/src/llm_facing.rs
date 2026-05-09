@@ -215,7 +215,7 @@ impl LlmRenderable<String> for Error {
             // Usage-limit breaches are operational signals — the
             // model does not need budget visibility (and exposing
             // it would invite the model to plan around limits).
-            Self::UsageLimitExceeded { .. } => "request quota reached".to_owned(),
+            Self::UsageLimitExceeded(_) => "request quota reached".to_owned(),
             // `ModelRetry` carries an already-rendered hint by
             // construction — surface that text verbatim. The retry
             // loop catches the variant before LLM emission in normal

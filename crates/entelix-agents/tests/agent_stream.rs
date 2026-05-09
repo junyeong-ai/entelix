@@ -333,7 +333,10 @@ async fn observer_on_error_skipped_for_interrupted_variant() {
 
     let interrupting = RunnableLambda::new(|_n: i32, _ctx| async move {
         Err::<i32, _>(entelix_core::Error::Interrupted {
-            payload: serde_json::json!({"kind": "approval_pending"}),
+            kind: entelix_core::InterruptionKind::ApprovalPending {
+                tool_use_id: "tu-1".into(),
+            },
+            payload: serde_json::Value::Null,
         })
     });
 

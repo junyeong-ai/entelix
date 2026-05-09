@@ -27,9 +27,10 @@ use serde::{Deserialize, Serialize};
 ///   `Error::InvalidRequest` carrying `reason` (the model receives
 ///   the lean text).
 /// - `AwaitExternal` → the dispatch raises `Error::Interrupted`
-///   (kind = [`INTERRUPT_KIND_APPROVAL_PENDING`]). The graph
-///   dispatch loop persists a checkpoint and bubbles the typed
-///   error to the caller. Resume via
+///   with [`InterruptionKind::ApprovalPending`](crate::interruption::InterruptionKind::ApprovalPending)
+///   carrying the `tool_use_id`. The graph dispatch loop
+///   persists a checkpoint and bubbles the typed error to the
+///   caller. Resume via
 ///   `entelix_graph::Command::ApproveTool { tool_use_id, decision }`
 ///   threads the operator's eventual decision back through; the
 ///   approver is not re-asked for that `tool_use_id`.
@@ -51,17 +52,6 @@ pub enum ApprovalDecision {
     /// Supports out-of-band human review (web UI, Slack, e-mail).
     AwaitExternal,
 }
-
-/// Discriminator string carried inside `Error::Interrupted::payload`
-/// when an approval layer pauses on an `AwaitExternal` decision.
-///
-/// Operators inspecting the payload can match on this constant to
-/// recognise approval pauses without parsing the full payload
-/// shape. The typed resume primitive is
-/// `entelix_graph::Command::ApproveTool` — operators that thread
-/// resumes through `Command` rarely need the discriminator string
-/// directly.
-pub const INTERRUPT_KIND_APPROVAL_PENDING: &str = "approval_pending";
 
 /// Resume-side mapping from `tool_use_id` to the operator's
 /// decision. Attached to `ExecutionContext::extension` so the

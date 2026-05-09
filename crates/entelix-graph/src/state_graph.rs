@@ -402,10 +402,12 @@ where
 
     /// Mark `nodes` as HITL pause points evaluated **before** the
     /// node runs. When control reaches a marked node the runtime
-    /// raises `Error::Interrupted { payload }` with a payload of
-    /// `{"kind": "before", "node": "<name>"}` and (when a
-    /// `Checkpointer` is attached) persists a checkpoint pointing
-    /// back at the same node.
+    /// raises `Error::Interrupted` with
+    /// `kind: InterruptionKind::ScheduledPause { phase: Before, node }`
+    /// (the `payload` is `Value::Null` — every distinguishing
+    /// detail is on the typed kind) and (when a `Checkpointer` is
+    /// attached) persists a checkpoint pointing back at the same
+    /// node.
     ///
     /// Resume via the existing `Command` machinery:
     /// - `Command::Resume` re-runs the marked node from the saved
@@ -427,10 +429,10 @@ where
 
     /// Mark `nodes` as HITL pause points evaluated **after** the
     /// node completes successfully. When such a node returns Ok
-    /// the runtime raises `Error::Interrupted { payload }` with a
-    /// payload of `{"kind": "after", "node": "<name>"}` and
-    /// persists a checkpoint with the post-node state pointing at
-    /// the resolved next node — `Command::Resume` then continues
+    /// the runtime raises `Error::Interrupted` with
+    /// `kind: InterruptionKind::ScheduledPause { phase: After, node }`
+    /// and persists a checkpoint with the post-node state pointing
+    /// at the resolved next node — `Command::Resume` then continues
     /// forward, skipping a re-run of the just-completed node.
     #[must_use]
     pub fn interrupt_after<I, T>(mut self, nodes: I) -> Self

@@ -115,7 +115,11 @@ async fn rls_blocks_cross_tenant_node_lookup_at_db_layer() {
         .await
         .unwrap();
     assert_eq!(
-        app_graph.node(&ctx, &ns_a, &id).await.unwrap().as_deref(),
+        app_graph
+            .get_node(&ctx, &ns_a, &id)
+            .await
+            .unwrap()
+            .as_deref(),
         Some("alice"),
     );
 

@@ -246,8 +246,8 @@ async fn checkpointer_isolates_state_across_tenants_at_same_thread_id() {
     cp.put(cp_a).await.unwrap();
     cp.put(cp_b).await.unwrap();
 
-    let latest_a = cp.latest(&key_a).await.unwrap().unwrap();
-    let latest_b = cp.latest(&key_b).await.unwrap().unwrap();
+    let latest_a = cp.get_latest(&key_a).await.unwrap().unwrap();
+    let latest_b = cp.get_latest(&key_b).await.unwrap().unwrap();
     assert_eq!(
         latest_a.state, 100,
         "tenant A latest must be tenant A's state"
@@ -262,16 +262,16 @@ async fn checkpointer_isolates_state_across_tenants_at_same_thread_id() {
     // by_id with the wrong tenant must miss — the checkpoint id is
     // not a global namespace, it is scoped to (tenant, thread).
     assert!(
-        cp.by_id(&key_a, &id_b).await.unwrap().is_none(),
+        cp.get_by_id(&key_a, &id_b).await.unwrap().is_none(),
         "tenant A must NOT find tenant B's checkpoint id"
     );
     assert!(
-        cp.by_id(&key_b, &id_a).await.unwrap().is_none(),
+        cp.get_by_id(&key_b, &id_a).await.unwrap().is_none(),
         "tenant B must NOT find tenant A's checkpoint id"
     );
 
-    let history_a = cp.history(&key_a, 10).await.unwrap();
-    let history_b = cp.history(&key_b, 10).await.unwrap();
+    let history_a = cp.list_history(&key_a, 10).await.unwrap();
+    let history_b = cp.list_history(&key_b, 10).await.unwrap();
     assert_eq!(history_a.len(), 1);
     assert_eq!(history_b.len(), 1);
     assert_eq!(history_a[0].state, 100);

@@ -46,20 +46,20 @@ async fn checkpointer_round_trip() {
     let checkpoint = Checkpoint::new(&key, 0, 42u32, Some("next".into()));
     let id = checkpoint.id.clone();
     cp.put(checkpoint).await.unwrap();
-    let loaded = cp.latest(&key).await.unwrap().unwrap();
+    let loaded = cp.get_latest(&key).await.unwrap().unwrap();
     assert_eq!(loaded.state, 42);
     assert_eq!(loaded.id, id);
 
-    let by_id = cp.by_id(&key, &id).await.unwrap().unwrap();
+    let by_id = cp.get_by_id(&key, &id).await.unwrap().unwrap();
     assert_eq!(by_id.id, id);
 
-    let history = cp.history(&key, 10).await.unwrap();
+    let history = cp.list_history(&key, 10).await.unwrap();
     assert_eq!(history.len(), 1);
 
     // Tenant isolation: different tenant_id must return None / empty.
     let other_key = ThreadKey::new(TenantId::new("other"), "t1");
-    assert!(cp.latest(&other_key).await.unwrap().is_none());
-    assert!(cp.history(&other_key, 10).await.unwrap().is_empty());
+    assert!(cp.get_latest(&other_key).await.unwrap().is_none());
+    assert!(cp.list_history(&other_key, 10).await.unwrap().is_empty());
 }
 
 #[tokio::test]

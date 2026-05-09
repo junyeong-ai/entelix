@@ -95,6 +95,23 @@ Trait-to-trait converters keep `*Adapter` (`ToolToRunnableAdapter`); output extr
 
 Async-by-default: most entelix APIs are `async`. Use `_async` suffix only when a sync sibling exists.
 
+### Persistence read verb-family taxonomy
+
+Persistence-trait read methods (`Store`, `VectorStore`, `GraphMemory`, `Checkpointer`, `SessionLog`, …) follow a four-verb taxonomy. The shape — single-item lookup, paginated enumeration, cursor-based stream, or query-shaped multi-result — picks the verb; pick-by-noun (`.node()`, `.edge()`, `.latest()`) is reviewer-rejected because the noun's shape is not self-evident at the call site.
+
+| Verb-family | Use for | Example |
+|---|---|---|
+| `get_xxx(.) -> Result<Option<T>>` | single-item primary-key lookup. Always returns `Option<T>` — absence is a normal outcome, not an error. | `Checkpointer::get_latest`, `Checkpointer::get_by_id`, `GraphMemory::get_node`, `GraphMemory::get_edge`, `Store::get` |
+| `list_xxx(.)` | paginated enumeration. Operator-time admin shape — pages of ids or full records, no cursor semantics implied. | `GraphMemory::list_nodes`, `PgGraphMemory::list_node_records` |
+| `load_since(.)` / `load_until(.)` | cursor-based stream. The `since/until` suffix carries the temporal bound. | `SessionLog::load_since` |
+| `find_xxx(.)` / `search_xxx(.)` | query-shaped multi-result. `find` for typed predicates, `search` for ranked retrieval. | `VectorStore::search`, `GraphMemory::find_path` |
+
+`get_xxx` is *only* forbidden for **field accessors** (`get_name(&self) -> &str` is reviewer-rejected — use `name(&self)`). Method names that take parameters and return `Option<T>` are not field accessors and the `get_xxx` form is the canonical persistence-read shape.
+
+### Batch placement
+
+Batch variants of CRUD operations use the **suffix** form (`add_batch`, never `batch_add`) so the operation name reads as a noun-verb chunk modified by `_batch`. Mirrors the `*_batch` taxonomy in `Embedder::embed_batch` and `GraphMemory::add_edges_batch`.
+
 ### Builder verb-prefix exception — `add_*` / `set_*` / `register` for graph and collection construction
 
 `with_*` covers configuration builders (knobs on a single shaped target). Topology / collection construction uses domain verbs — they read more naturally and signal intent (insert vs. configure) at the call site. Both shapes consume `self` and return `Self` (or `Result<Self>` for fallible registry inserts).
@@ -142,7 +159,6 @@ Two conventions, both intentional. Don't reorder a method's `ctx` without amendi
 
 - `PascalCase` nouns: `Invalid`, `Provider`, `Network`, `Timeout`
 - Each variant carries an actionable message
-- Provider failures include `hint: Option<String>`
 - `#[error(transparent)]` for pass-through wrappers
 - Top-level type: `Error`. Module-internal: `FooError`.
 

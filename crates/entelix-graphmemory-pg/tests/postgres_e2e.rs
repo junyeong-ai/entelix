@@ -44,12 +44,18 @@ async fn add_and_lookup_node_round_trip() {
     let ctx = ExecutionContext::new();
 
     let id = graph.add_node(&ctx, &ns, "alice".into()).await.unwrap();
-    let got = graph.node(&ctx, &ns, &id).await.unwrap();
+    let got = graph.get_node(&ctx, &ns, &id).await.unwrap();
     assert_eq!(got.as_deref(), Some("alice"));
 
     // Same id under a different namespace must not leak.
     let other_ns = Namespace::new(TenantId::new("acme")).with_scope("agent-b");
-    assert!(graph.node(&ctx, &other_ns, &id).await.unwrap().is_none());
+    assert!(
+        graph
+            .get_node(&ctx, &other_ns, &id)
+            .await
+            .unwrap()
+            .is_none()
+    );
 }
 
 #[tokio::test]
@@ -96,8 +102,8 @@ async fn add_edges_batch_inserts_all_in_one_round_trip() {
     assert_eq!(ids.len(), 50);
     assert_eq!(count_after - count_before, 50);
     // Spot-check round-trip on the first and last assigned ids.
-    let first = graph.edge(&ctx, &ns, &ids[0]).await.unwrap();
-    let last = graph.edge(&ctx, &ns, &ids[49]).await.unwrap();
+    let first = graph.get_edge(&ctx, &ns, &ids[0]).await.unwrap();
+    let last = graph.get_edge(&ctx, &ns, &ids[49]).await.unwrap();
     assert!(first.is_some() && last.is_some());
     assert_eq!(first.unwrap().edge, "edge-0");
     assert_eq!(last.unwrap().edge, "edge-49");
@@ -494,8 +500,20 @@ async fn namespaces_isolate_nodes_and_edges() {
     assert_eq!(from_b.len(), 1);
 
     // Cross-namespace lookup must miss.
-    assert!(graph.node(&ctx, &ns_b, &a_node).await.unwrap().is_none());
-    assert!(graph.node(&ctx, &ns_a, &b_node).await.unwrap().is_none());
+    assert!(
+        graph
+            .get_node(&ctx, &ns_b, &a_node)
+            .await
+            .unwrap()
+            .is_none()
+    );
+    assert!(
+        graph
+            .get_node(&ctx, &ns_a, &b_node)
+            .await
+            .unwrap()
+            .is_none()
+    );
 }
 
 #[tokio::test]
@@ -511,7 +529,11 @@ async fn edge_lookup_returns_full_hop_at_db_layer() {
         .add_edge(&ctx, &ns, &a, &b, "ab".into(), now)
         .await
         .unwrap();
-    let hop = graph.edge(&ctx, &ns, &id).await.unwrap().expect("present");
+    let hop = graph
+        .get_edge(&ctx, &ns, &id)
+        .await
+        .unwrap()
+        .expect("present");
     assert_eq!(hop.edge_id, id);
     assert_eq!(hop.from, a);
     assert_eq!(hop.to, b);
@@ -520,7 +542,13 @@ async fn edge_lookup_returns_full_hop_at_db_layer() {
     // Same id under a different namespace → None (RLS gate +
     // namespace anchor both prevent the leak).
     let other_ns = Namespace::new(TenantId::new("acme")).with_scope("other");
-    assert!(graph.edge(&ctx, &other_ns, &id).await.unwrap().is_none());
+    assert!(
+        graph
+            .get_edge(&ctx, &other_ns, &id)
+            .await
+            .unwrap()
+            .is_none()
+    );
 }
 
 #[tokio::test]
@@ -682,8 +710,8 @@ async fn delete_node_cascades_to_incident_edges_at_db_layer() {
         .unwrap();
     let removed = graph.delete_node(&ctx, &ns, &a).await.unwrap();
     assert_eq!(removed, 3);
-    assert!(graph.node(&ctx, &ns, &a).await.unwrap().is_none());
-    assert!(graph.node(&ctx, &ns, &b).await.unwrap().is_some());
+    assert!(graph.get_node(&ctx, &ns, &a).await.unwrap().is_none());
+    assert!(graph.get_node(&ctx, &ns, &b).await.unwrap().is_some());
     let b_in = graph
         .neighbors(&ctx, &ns, &b, Direction::Incoming)
         .await
@@ -714,9 +742,21 @@ async fn prune_orphan_nodes_drops_zero_edge_nodes_at_db_layer() {
 
     let removed = graph.prune_orphan_nodes(&ns).await.unwrap();
     assert_eq!(removed, 1);
-    assert!(graph.node(&ctx, &ns, &connected_a).await.unwrap().is_some());
-    assert!(graph.node(&ctx, &ns, &connected_b).await.unwrap().is_some());
-    assert!(graph.node(&ctx, &ns, &lonely).await.unwrap().is_none());
+    assert!(
+        graph
+            .get_node(&ctx, &ns, &connected_a)
+            .await
+            .unwrap()
+            .is_some()
+    );
+    assert!(
+        graph
+            .get_node(&ctx, &ns, &connected_b)
+            .await
+            .unwrap()
+            .is_some()
+    );
+    assert!(graph.get_node(&ctx, &ns, &lonely).await.unwrap().is_none());
 }
 
 #[tokio::test]
@@ -758,8 +798,8 @@ async fn prune_older_than_drops_stale_edges_at_db_layer() {
     assert_eq!(removed, 1);
 
     // Edge-only sweep — both nodes still present.
-    assert!(graph.node(&ctx, &ns, &a).await.unwrap().is_some());
-    assert!(graph.node(&ctx, &ns, &b).await.unwrap().is_some());
+    assert!(graph.get_node(&ctx, &ns, &a).await.unwrap().is_some());
+    assert!(graph.get_node(&ctx, &ns, &b).await.unwrap().is_some());
     let outgoing = graph
         .neighbors(&ctx, &ns, &a, Direction::Outgoing)
         .await

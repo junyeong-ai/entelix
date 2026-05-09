@@ -489,7 +489,7 @@ where
         Ok(ids)
     }
 
-    async fn node(
+    async fn get_node(
         &self,
         _ctx: &ExecutionContext,
         ns: &Namespace,
@@ -512,7 +512,7 @@ where
             .transpose()
     }
 
-    async fn edge(
+    async fn get_edge(
         &self,
         _ctx: &ExecutionContext,
         ns: &Namespace,

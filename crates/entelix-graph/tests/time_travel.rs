@@ -55,11 +55,11 @@ async fn by_id_retrieves_checkpoint() -> Result<()> {
         .await?;
 
     let key = ThreadKey::from_ctx(&ctx)?;
-    let history = cp.history(&key, 100).await?;
+    let history = cp.list_history(&key, 100).await?;
     let middle = &history[1]; // second-most-recent — written after node "b"
 
     let fetched = cp
-        .by_id(&key, &middle.id)
+        .get_by_id(&key, &middle.id)
         .await?
         .expect("checkpoint with that id should exist");
     assert_eq!(fetched.id, middle.id);
@@ -83,7 +83,7 @@ async fn by_id_returns_none_for_unknown_id() -> Result<()> {
         .await?;
     let key = ThreadKey::from_ctx(&ctx)?;
     let bogus = entelix_graph::CheckpointId::new();
-    let result = cp.by_id(&key, &bogus).await?;
+    let result = cp.get_by_id(&key, &bogus).await?;
     assert!(result.is_none());
     Ok(())
 }
@@ -106,7 +106,7 @@ async fn update_state_creates_branched_checkpoint() -> Result<()> {
     let key = ThreadKey::from_ctx(&ctx)?;
 
     // History before branching: 3 checkpoints.
-    let pre = cp.history(&key, 100).await?;
+    let pre = cp.list_history(&key, 100).await?;
     assert_eq!(pre.len(), 3);
     let parent = &pre[2]; // earliest — after node "a"
 
@@ -118,7 +118,7 @@ async fn update_state_creates_branched_checkpoint() -> Result<()> {
     let new_id = cp.update_state(&key, &parent.id, new_state.clone()).await?;
 
     // History grew by 1, parent_id and inherited next_node tracked.
-    let post = cp.history(&key, 100).await?;
+    let post = cp.list_history(&key, 100).await?;
     assert_eq!(post.len(), 4);
     let branched = post.iter().find(|c| c.id == new_id).unwrap();
     assert_eq!(branched.parent_id.as_ref(), Some(&parent.id));
@@ -168,7 +168,7 @@ async fn resume_from_historical_checkpoint_with_update() -> Result<()> {
     let key = ThreadKey::from_ctx(&ctx)?;
 
     // Earliest checkpoint: after "a" ran.
-    let history = cp.history(&key, 100).await?;
+    let history = cp.list_history(&key, 100).await?;
     let earliest = history.last().unwrap().clone();
     assert_eq!(earliest.next_node.as_deref(), Some("b"));
 
@@ -221,7 +221,7 @@ async fn update_state_then_resume_from_creates_full_branch() -> Result<()> {
     let key = ThreadKey::from_ctx(&ctx)?;
 
     // Earliest checkpoint (post-a).
-    let earliest_id = cp.history(&key, 100).await?.last().unwrap().id.clone();
+    let earliest_id = cp.list_history(&key, 100).await?.last().unwrap().id.clone();
 
     // Branch: write a new checkpoint with rewritten state.
     let branch_id = cp

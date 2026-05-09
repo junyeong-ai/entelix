@@ -255,7 +255,16 @@ fn check_method(
     let (line, col) = span_loc(sig.ident.span());
 
     // ── Rule 3: `get_*` accessors with self receiver ──
-    if name.starts_with("get_") && has_self_receiver(sig) {
+    //
+    // Forbidden: `fn get_name(&self) -> &str` — bare field accessor
+    // shape, must use the bare name (`name`) per naming taxonomy.
+    //
+    // Allowed: `fn get_node(&self, ctx, ns, id) -> Result<Option<N>>`
+    // — persistence-read verb-family per `.claude/rules/naming.md`.
+    // Parameterized lookups returning `Option` are not field
+    // accessors; the `get_*` prefix is the canonical persistence
+    // read shape.
+    if name.starts_with("get_") && has_self_receiver(sig) && sig.inputs.len() == 1 {
         v.violations.push(Violation::new(
             v.file.clone(),
             line,

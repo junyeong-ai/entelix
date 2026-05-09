@@ -322,11 +322,20 @@ pub enum VectorFilter {
 }
 
 /// Vector index keyed by [`Namespace`]. Backed by qdrant, lancedb,
-/// pgvector, etc. in 1.1+.
+/// pgvector, etc. in companion crates.
+///
+/// **Layering** — this is **tier 1 (primitive)** of the
+/// semantic-memory three-tier architecture. Operators implement
+/// `VectorStore` once per backend; the bundle
+/// [`crate::SemanticMemory<E, V>`] (tier 2) and the consumer trait
+/// [`crate::SemanticMemoryBackend`] (tier 3) compose it into the
+/// agent-facing surface automatically. Take `Namespace` as a
+/// per-call parameter so a single store instance serves many
+/// tenants.
 ///
 /// Every async method accepts an [`ExecutionContext`] so backends
 /// can honour caller-side cancellation and deadlines (CLAUDE.md
-/// §"Cancellation"). The `delete` / `update` / `batch_add` /
+/// §"Cancellation"). The `delete` / `update` / `add_batch` /
 /// `search_filtered` methods have default impls so simple backends
 /// only need `add` and `search` — production backends override
 /// every method for efficiency and correctness.
@@ -390,7 +399,7 @@ pub trait VectorStore: Send + Sync + 'static {
     /// `add` round-trip instead of completing the full batch.
     /// Backends that support a native batch endpoint **should**
     /// override — sequential calls amplify network latency by `N`.
-    async fn batch_add(
+    async fn add_batch(
         &self,
         ctx: &ExecutionContext,
         ns: &Namespace,

@@ -67,7 +67,7 @@ where
         Ok(())
     }
 
-    async fn latest(&self, key: &ThreadKey) -> Result<Option<Checkpoint<S>>> {
+    async fn get_latest(&self, key: &ThreadKey) -> Result<Option<Checkpoint<S>>> {
         let mut conn = (*self.manager).clone();
         let ids: Vec<String> = redis::cmd("ZREVRANGE")
             .arg(zset_key(key))
@@ -82,12 +82,12 @@ where
         load_by_id::<S>(&mut conn, key, &id).await
     }
 
-    async fn by_id(&self, key: &ThreadKey, id: &CheckpointId) -> Result<Option<Checkpoint<S>>> {
+    async fn get_by_id(&self, key: &ThreadKey, id: &CheckpointId) -> Result<Option<Checkpoint<S>>> {
         let mut conn = (*self.manager).clone();
         load_by_id::<S>(&mut conn, key, &id.to_hyphenated_string()).await
     }
 
-    async fn history(&self, key: &ThreadKey, limit: usize) -> Result<Vec<Checkpoint<S>>> {
+    async fn list_history(&self, key: &ThreadKey, limit: usize) -> Result<Vec<Checkpoint<S>>> {
         let mut conn = (*self.manager).clone();
         let stop = if limit == 0 || limit == usize::MAX {
             -1isize
@@ -116,7 +116,7 @@ where
         parent_id: &CheckpointId,
         new_state: S,
     ) -> Result<CheckpointId> {
-        let parent = self.by_id(key, parent_id).await?.ok_or_else(|| {
+        let parent = self.get_by_id(key, parent_id).await?.ok_or_else(|| {
             Error::invalid_request(format!(
                 "RedisCheckpointer::update_state: parent {} not found in tenant '{}' thread '{}'",
                 parent_id.to_hyphenated_string(),

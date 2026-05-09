@@ -54,7 +54,7 @@ async fn writes_a_checkpoint_per_node_when_thread_id_set() -> Result<()> {
     assert_eq!(cp.thread_count(), 1);
 
     let key = ThreadKey::from_ctx(&ctx)?;
-    let history = cp.history(&key, 10).await?;
+    let history = cp.list_history(&key, 10).await?;
     assert_eq!(history.len(), 3);
     // Most recent first.
     assert_eq!(history[0].state.n, 6);
@@ -264,16 +264,16 @@ async fn checkpointer_partitions_per_tenant() -> Result<()> {
     let alpha_key = ThreadKey::new(TenantId::new("alpha"), "conv-1");
     let bravo_key = ThreadKey::new(TenantId::new("bravo"), "conv-1");
 
-    let alpha_hist = cp.history(&alpha_key, 10).await?;
-    let bravo_hist = cp.history(&bravo_key, 10).await?;
+    let alpha_hist = cp.list_history(&alpha_key, 10).await?;
+    let bravo_hist = cp.list_history(&bravo_key, 10).await?;
 
     assert_eq!(alpha_hist.len(), 1);
     assert_eq!(bravo_hist.len(), 1);
     assert_eq!(alpha_hist[0].state.n, 1);
     assert_eq!(bravo_hist[0].state.n, 101);
     // Cross-read: alpha's history under bravo's key MUST be empty.
-    assert!(cp.latest(&bravo_key).await?.is_some());
-    let cross = cp.by_id(&alpha_key, &bravo_hist[0].id).await?;
+    assert!(cp.get_latest(&bravo_key).await?.is_some());
+    let cross = cp.get_by_id(&alpha_key, &bravo_hist[0].id).await?;
     assert!(
         cross.is_none(),
         "tenant scope must isolate checkpoint lookups"
@@ -311,7 +311,7 @@ async fn history_respects_limit_and_order() -> Result<()> {
         .await?;
 
     let key = ThreadKey::from_ctx(&ctx)?;
-    let two = cp.history(&key, 2).await?;
+    let two = cp.list_history(&key, 2).await?;
     assert_eq!(two.len(), 2);
     assert_eq!(two[0].state.n, 5); // most recent (after e)
     assert_eq!(two[1].state.n, 4); // before that (after d)

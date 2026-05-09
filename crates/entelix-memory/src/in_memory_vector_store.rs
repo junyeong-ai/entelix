@@ -621,13 +621,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn batch_add_default_loops_through_add() {
+    async fn add_batch_default_loops_through_add() {
         let store = InMemoryVectorStore::new(2);
         let items = vec![
             (doc("a", "x", json!({})), vec![1.0, 0.0]),
             (doc("b", "y", json!({})), vec![0.0, 1.0]),
         ];
-        store.batch_add(&ctx(), &ns(), items).await.unwrap();
+        store.add_batch(&ctx(), &ns(), items).await.unwrap();
         assert_eq!(store.total_slots(), 2);
     }
 

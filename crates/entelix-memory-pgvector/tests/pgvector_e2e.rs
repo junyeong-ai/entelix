@@ -191,7 +191,7 @@ async fn search_filtered_with_eq_filter() {
 
 #[tokio::test]
 #[ignore = "requires docker"]
-async fn batch_add_uses_single_round_trip() {
+async fn add_batch_uses_single_round_trip() {
     let (_container, store) = boot_pg().await;
     let ctx = ExecutionContext::new();
     let ns = Namespace::new(TenantId::new("tenant-a")).with_scope("default");
@@ -203,7 +203,7 @@ async fn batch_add_uses_single_round_trip() {
             (doc(&format!("doc-{i}"), json!({"i": i})), v)
         })
         .collect();
-    store.batch_add(&ctx, &ns, items).await.unwrap();
+    store.add_batch(&ctx, &ns, items).await.unwrap();
     assert_eq!(store.count(&ctx, &ns, None).await.unwrap(), 5);
 }
 

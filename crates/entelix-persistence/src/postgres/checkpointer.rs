@@ -81,7 +81,7 @@ where
         Ok(())
     }
 
-    async fn latest(&self, key: &ThreadKey) -> Result<Option<Checkpoint<S>>> {
+    async fn get_latest(&self, key: &ThreadKey) -> Result<Option<Checkpoint<S>>> {
         let mut tx = self.pool.begin().await.map_err(backend_to_core)?;
         set_tenant_session(&mut *tx, key.tenant_id()).await?;
         let row: Option<CheckpointRow> = sqlx::query_as::<_, CheckpointRow>(
@@ -104,7 +104,7 @@ where
             .map_err(into_core)
     }
 
-    async fn by_id(&self, key: &ThreadKey, id: &CheckpointId) -> Result<Option<Checkpoint<S>>> {
+    async fn get_by_id(&self, key: &ThreadKey, id: &CheckpointId) -> Result<Option<Checkpoint<S>>> {
         let mut tx = self.pool.begin().await.map_err(backend_to_core)?;
         set_tenant_session(&mut *tx, key.tenant_id()).await?;
         let row: Option<CheckpointRow> = sqlx::query_as::<_, CheckpointRow>(
@@ -126,7 +126,7 @@ where
             .map_err(into_core)
     }
 
-    async fn history(&self, key: &ThreadKey, limit: usize) -> Result<Vec<Checkpoint<S>>> {
+    async fn list_history(&self, key: &ThreadKey, limit: usize) -> Result<Vec<Checkpoint<S>>> {
         let limit_i64 = i64::try_from(limit).unwrap_or(i64::MAX);
         let mut tx = self.pool.begin().await.map_err(backend_to_core)?;
         set_tenant_session(&mut *tx, key.tenant_id()).await?;
@@ -158,7 +158,7 @@ where
         parent_id: &CheckpointId,
         new_state: S,
     ) -> Result<CheckpointId> {
-        let parent = self.by_id(key, parent_id).await?.ok_or_else(|| {
+        let parent = self.get_by_id(key, parent_id).await?.ok_or_else(|| {
             Error::invalid_request(format!(
                 "PostgresCheckpointer::update_state: parent {} not found in tenant '{}' thread '{}'",
                 parent_id.to_hyphenated_string(),

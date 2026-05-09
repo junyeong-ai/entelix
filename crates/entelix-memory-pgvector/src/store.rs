@@ -301,7 +301,7 @@ impl VectorStore for PgVectorStore {
         Ok(())
     }
 
-    async fn batch_add(
+    async fn add_batch(
         &self,
         ctx: &ExecutionContext,
         ns: &Namespace,

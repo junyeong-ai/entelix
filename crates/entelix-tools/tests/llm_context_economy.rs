@@ -205,7 +205,7 @@ impl SemanticMemoryBackend for InMemorySemantic {
     async fn add(&self, _ctx: &ExecutionContext, _document: Document) -> Result<()> {
         Ok(())
     }
-    async fn batch_add(&self, _ctx: &ExecutionContext, _documents: Vec<Document>) -> Result<()> {
+    async fn add_batch(&self, _ctx: &ExecutionContext, _documents: Vec<Document>) -> Result<()> {
         Ok(())
     }
     async fn delete(&self, _ctx: &ExecutionContext, _doc_id: &str) -> Result<()> {

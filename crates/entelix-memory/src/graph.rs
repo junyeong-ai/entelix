@@ -18,8 +18,8 @@
 //! - `add_node` / `add_edge` — insertion. Backends mint stable
 //!   [`NodeId`] / [`EdgeId`] values and return them so callers can
 //!   reference nodes/edges later without name lookups.
-//! - `node` / `edge` — single-id lookup. `node` returns the
-//!   payload `Option<N>`; `edge` returns the full
+//! - `get_node` / `get_edge` — single-id lookup. `get_node`
+//!   returns the payload `Option<N>`; `get_edge` returns the full
 //!   [`GraphHop<E>`] (`from`, `to`, `edge`, `timestamp`).
 //! - `neighbors(id, direction)` — outgoing or incoming edges from a
 //!   single node.
@@ -221,8 +221,15 @@ where
         Ok(ids)
     }
 
-    /// Look up a node by id.
-    async fn node(&self, ctx: &ExecutionContext, ns: &Namespace, id: &NodeId) -> Result<Option<N>>;
+    /// Look up a node by id (verb-family `get` per
+    /// `.claude/rules/naming.md` — single-item primary-key
+    /// lookup).
+    async fn get_node(
+        &self,
+        ctx: &ExecutionContext,
+        ns: &Namespace,
+        id: &NodeId,
+    ) -> Result<Option<N>>;
 
     /// Look up an edge by id and return the full structural body
     /// ([`GraphHop<E>`] — `from`, `to`, `edge`, `timestamp`).
@@ -232,12 +239,13 @@ where
     /// neighbour navigation). Returning the full hop saves a
     /// second lookup.
     ///
-    /// Asymmetric with [`Self::node`] (which returns `Option<N>`
-    /// because nodes have no separate structural body) — the
-    /// shape difference is intentional, not an oversight.
+    /// Asymmetric with [`Self::get_node`] (which returns
+    /// `Option<N>` because nodes have no separate structural
+    /// body) — the shape difference is intentional, not an
+    /// oversight.
     ///
     /// Default impl returns `None`.
-    async fn edge(
+    async fn get_edge(
         &self,
         _ctx: &ExecutionContext,
         _ns: &Namespace,
@@ -609,7 +617,7 @@ where
         Ok(ids)
     }
 
-    async fn node(
+    async fn get_node(
         &self,
         _ctx: &ExecutionContext,
         ns: &Namespace,
@@ -621,7 +629,7 @@ where
         Ok(table.read().nodes.get(id).cloned())
     }
 
-    async fn edge(
+    async fn get_edge(
         &self,
         _ctx: &ExecutionContext,
         ns: &Namespace,
@@ -984,7 +992,7 @@ mod tests {
         let g = InMemoryGraphMemory::<&str, &str>::new();
         let ctx = ExecutionContext::new();
         let id = g.add_node(&ctx, &ns(), "alice").await.unwrap();
-        let fetched = g.node(&ctx, &ns(), &id).await.unwrap();
+        let fetched = g.get_node(&ctx, &ns(), &id).await.unwrap();
         assert_eq!(fetched, Some("alice"));
     }
 
@@ -1011,7 +1019,7 @@ mod tests {
         assert_eq!(ids.len(), 3, "returns one EdgeId per input");
         // Every id must resolve to the corresponding hop.
         for id in &ids {
-            let hop = g.edge(&ctx, &ns(), id).await.unwrap();
+            let hop = g.get_edge(&ctx, &ns(), id).await.unwrap();
             assert!(hop.is_some(), "edge {id} must be retrievable");
         }
     }
@@ -1239,10 +1247,10 @@ mod tests {
         let _ = g.add_edge(&ctx, &ns(), &b, &a, "ba", now).await.unwrap();
         let removed = g.delete_node(&ctx, &ns(), &a).await.unwrap();
         assert_eq!(removed, 3);
-        assert!(g.node(&ctx, &ns(), &a).await.unwrap().is_none());
+        assert!(g.get_node(&ctx, &ns(), &a).await.unwrap().is_none());
         // `b` and `c` survive (cascade is node-scoped, not graph-wide).
-        assert!(g.node(&ctx, &ns(), &b).await.unwrap().is_some());
-        assert!(g.node(&ctx, &ns(), &c).await.unwrap().is_some());
+        assert!(g.get_node(&ctx, &ns(), &b).await.unwrap().is_some());
+        assert!(g.get_node(&ctx, &ns(), &c).await.unwrap().is_some());
         // No dangling adjacency entries — `b`'s incoming edge from
         // `a` is gone too.
         let b_in = g
@@ -1309,8 +1317,8 @@ mod tests {
             .unwrap();
         assert_eq!(removed, 1);
         // Both nodes survive — edge-only sweep, no orphan cleanup.
-        assert!(g.node(&ctx, &ns(), &a).await.unwrap().is_some());
-        assert!(g.node(&ctx, &ns(), &b).await.unwrap().is_some());
+        assert!(g.get_node(&ctx, &ns(), &a).await.unwrap().is_some());
+        assert!(g.get_node(&ctx, &ns(), &b).await.unwrap().is_some());
         // Adjacency lists deduplicated — only the fresh edge remains.
         let outgoing = g
             .neighbors(&ctx, &ns(), &a, Direction::Outgoing)
@@ -1435,7 +1443,10 @@ mod tests {
             let id_reader = beta_node_id.clone();
             reads.push(tokio::spawn(async move {
                 let ctx = ExecutionContext::new();
-                g_reader.node(&ctx, &beta_reader, &id_reader).await.unwrap()
+                g_reader
+                    .get_node(&ctx, &beta_reader, &id_reader)
+                    .await
+                    .unwrap()
             }));
         }
         for r in reads {

@@ -91,21 +91,21 @@ where
         Ok(())
     }
 
-    async fn latest(&self, key: &ThreadKey) -> Result<Option<Checkpoint<S>>> {
+    async fn get_latest(&self, key: &ThreadKey) -> Result<Option<Checkpoint<S>>> {
         let guard = self.inner.lock();
         Ok(guard
             .get(&partition(key))
             .and_then(|history| history.last().cloned()))
     }
 
-    async fn by_id(&self, key: &ThreadKey, id: &CheckpointId) -> Result<Option<Checkpoint<S>>> {
+    async fn get_by_id(&self, key: &ThreadKey, id: &CheckpointId) -> Result<Option<Checkpoint<S>>> {
         let guard = self.inner.lock();
         Ok(guard
             .get(&partition(key))
             .and_then(|h| h.iter().find(|cp| &cp.id == id).cloned()))
     }
 
-    async fn history(&self, key: &ThreadKey, limit: usize) -> Result<Vec<Checkpoint<S>>> {
+    async fn list_history(&self, key: &ThreadKey, limit: usize) -> Result<Vec<Checkpoint<S>>> {
         let guard = self.inner.lock();
         Ok(guard
             .get(&partition(key))

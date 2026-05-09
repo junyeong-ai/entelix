@@ -359,7 +359,7 @@ impl VectorStore for QdrantVectorStore {
         Ok(())
     }
 
-    async fn batch_add(
+    async fn add_batch(
         &self,
         ctx: &ExecutionContext,
         ns: &Namespace,

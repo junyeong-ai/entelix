@@ -346,7 +346,7 @@ async fn semantic_memory_add_and_search_round_trip() -> Result<()> {
 }
 
 /// Misbehaving embedder that returns one fewer vector than texts —
-/// the kind of bug `SemanticMemory::batch_add` must surface rather
+/// the kind of bug `SemanticMemory::add_batch` must surface rather
 /// than silently zip-truncating the document set.
 struct ShortBatchEmbedder {
     dimension: usize,
@@ -374,7 +374,7 @@ impl Embedder for ShortBatchEmbedder {
 }
 
 #[tokio::test]
-async fn semantic_memory_batch_add_surfaces_embedder_count_mismatch() -> Result<()> {
+async fn semantic_memory_add_batch_surfaces_embedder_count_mismatch() -> Result<()> {
     // Embedder returns N-1 vectors for N documents — must NOT
     // silently drop the trailing document via zip-truncation.
     let embedder: Arc<ShortBatchEmbedder> = Arc::new(ShortBatchEmbedder { dimension: 4 });
@@ -386,7 +386,7 @@ async fn semantic_memory_batch_add_surfaces_embedder_count_mismatch() -> Result<
         Document::new("beta"),
         Document::new("gamma"),
     ];
-    match mem.batch_add(&ctx, docs).await {
+    match mem.add_batch(&ctx, docs).await {
         Err(entelix_core::Error::Config(msg)) => {
             assert!(
                 msg.contains("returned 2 vectors for 3 documents"),
@@ -519,11 +519,11 @@ impl entelix_memory::VectorStore for StubAddOnly {
 }
 
 #[tokio::test]
-async fn vector_store_default_batch_add_bails_on_cancellation() {
+async fn vector_store_default_add_batch_bails_on_cancellation() {
     use entelix_core::cancellation::CancellationToken;
     use entelix_memory::VectorStore;
 
-    // The default `batch_add` impl loops over `add` — pre-cancel the
+    // The default `add_batch` impl loops over `add` — pre-cancel the
     // context so the loop bails on the very first iteration with
     // `Error::Cancelled` rather than draining the full batch.
     let store = StubAddOnly::new(4);
@@ -534,7 +534,7 @@ async fn vector_store_default_batch_add_bails_on_cancellation() {
     let items: Vec<(Document, Vec<f32>)> = (0..50)
         .map(|i| (Document::new(format!("d{i}")), vec![0.0; 4]))
         .collect();
-    match store.batch_add(&ctx, &ns, items).await {
+    match store.add_batch(&ctx, &ns, items).await {
         Err(entelix_core::Error::Cancelled) => {}
         other => panic!("expected Error::Cancelled, got {other:?}"),
     }

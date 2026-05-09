@@ -337,7 +337,7 @@ where
     let (ctx, token) = build_ctx(&state, &headers, &thread_id)?;
     let _cancel_on_disconnect = token.drop_guard();
     let key = ThreadKey::from_ctx(&ctx)?;
-    let latest = cp.latest(&key).await?.ok_or_else(|| {
+    let latest = cp.get_latest(&key).await?.ok_or_else(|| {
         ServerError::NotFound(format!(
             "no checkpoint exists for tenant '{}' thread '{}'",
             key.tenant_id(),

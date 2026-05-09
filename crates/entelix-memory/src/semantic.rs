@@ -1,9 +1,29 @@
 //! `SemanticMemory<E, V>` — generic composition of `Embedder` +
-//! `VectorStore` scoped to one `Namespace`.
+//! `VectorStore` scoped to one `Namespace`. Plus
+//! [`SemanticMemoryBackend`], the object-safe consumer trait.
 //!
-//! Per, no concrete `Embedder` / `VectorStore` impls ship in
-//! 1.0. This type is the user-facing entry point: pair any embedder with
-//! any vector store and the search shape is uniform.
+//! ## Three-tier layering
+//!
+//! 1. **Primitives** — [`crate::Embedder`] + [`crate::VectorStore`]
+//!    are operator-implemented backend traits. The `VectorStore`
+//!    takes `Namespace` as a per-call parameter so a single store
+//!    instance backs many tenants. The `Embedder` is independent
+//!    and pool-shared via `Arc<Self>`.
+//! 2. **Bundle** — [`SemanticMemory<E, V>`] glues `Arc<E>` +
+//!    `Arc<V>` + a fixed `Namespace` into one surface. Generic over
+//!    the concrete embedder / vector-store types so static dispatch
+//!    is preserved on hot paths.
+//! 3. **Consumer trait** — [`SemanticMemoryBackend`] is the object-
+//!    safe view tools and orchestration code consume as
+//!    `Arc<dyn SemanticMemoryBackend>`. The bound `Namespace` is
+//!    baked in via [`SemanticMemoryBackend::namespace`]; consumers
+//!    don't pass one. Implemented automatically for every
+//!    `SemanticMemory<E, V>`.
+//!
+//! Operators add a backend by implementing `VectorStore` (and
+//! optionally `Embedder` for non-OpenAI vendors); they never need
+//! to implement `SemanticMemoryBackend` directly — wrapping in
+//! `SemanticMemory::new` produces the trait-object view for free.
 
 use std::sync::Arc;
 
@@ -13,13 +33,21 @@ use entelix_core::{Error, ExecutionContext, Result};
 use crate::namespace::Namespace;
 use crate::traits::{Document, Embedder, RerankedDocument, Reranker, VectorFilter, VectorStore};
 
-/// Object-safe view of a [`SemanticMemory<E, V>`] suitable for
-/// storing behind an `Arc<dyn SemanticMemoryBackend>` — useful when
-/// building tools or other infrastructure that should not be
-/// parameterised over the concrete embedder / vector-store types.
+/// Object-safe consumer trait — tier 3 of the semantic-memory
+/// layering documented at the module level. Consumers (tools,
+/// orchestration code, recipes) take
+/// `Arc<dyn SemanticMemoryBackend>` to operate on a namespace-scoped
+/// embed-and-search surface without parameterising over the
+/// concrete embedder / vector-store types.
 ///
-/// The trait mirrors the full `SemanticMemory` surface (search,
-/// add, delete, update, batch_add, search_filtered, plus a
+/// **Operators do not implement this trait directly.** Implement
+/// [`crate::VectorStore`] (and optionally [`crate::Embedder`]),
+/// then wrap in [`SemanticMemory::new`] — the
+/// `impl SemanticMemoryBackend for SemanticMemory<E, V>` blanket
+/// produces the trait-object view automatically.
+///
+/// The trait mirrors the full [`SemanticMemory`] surface (search,
+/// add, delete, update, add_batch, search_filtered, plus a
 /// rerank-aware variant via `&dyn Reranker`) so consumers do not
 /// need to downcast to the concrete generic type to access mutating
 /// or rerank operations.
@@ -77,7 +105,7 @@ pub trait SemanticMemoryBackend: Send + Sync + 'static {
     /// Add many documents at once. Default implementations defer to
     /// the embedder's batch path then to the vector store's batch
     /// path so backends that support either can amortise round-trips.
-    async fn batch_add(&self, ctx: &ExecutionContext, documents: Vec<Document>) -> Result<()>;
+    async fn add_batch(&self, ctx: &ExecutionContext, documents: Vec<Document>) -> Result<()>;
 
     /// Delete a previously-indexed document by its backend id.
     async fn delete(&self, ctx: &ExecutionContext, doc_id: &str) -> Result<()>;
@@ -163,14 +191,14 @@ where
     }
 
     /// Add many documents at once — uses `Embedder::embed_batch` to
-    /// amortise embedder calls then `VectorStore::batch_add` to
+    /// amortise embedder calls then `VectorStore::add_batch` to
     /// amortise index writes.
     ///
     /// Returns [`Error::Config`] if the embedder produces a vector
     /// count that doesn't match the input documents — silent
     /// truncation via `zip` would drop documents without surfacing
     /// the embedder bug.
-    pub async fn batch_add(&self, ctx: &ExecutionContext, documents: Vec<Document>) -> Result<()> {
+    pub async fn add_batch(&self, ctx: &ExecutionContext, documents: Vec<Document>) -> Result<()> {
         if documents.is_empty() {
             return Ok(());
         }
@@ -178,7 +206,7 @@ where
         let embeddings = self.embedder.embed_batch(&texts, ctx).await?;
         if embeddings.len() != texts.len() {
             return Err(Error::config(format!(
-                "SemanticMemory::batch_add: embedder returned {} vectors for {} documents",
+                "SemanticMemory::add_batch: embedder returned {} vectors for {} documents",
                 embeddings.len(),
                 texts.len()
             )));
@@ -189,7 +217,7 @@ where
             .map(|(doc, embedding)| (doc, embedding.vector))
             .collect();
         self.vector_store
-            .batch_add(ctx, &self.namespace, items)
+            .add_batch(ctx, &self.namespace, items)
             .await
     }
 
@@ -327,8 +355,8 @@ where
         Self::add(self, ctx, document).await
     }
 
-    async fn batch_add(&self, ctx: &ExecutionContext, documents: Vec<Document>) -> Result<()> {
-        Self::batch_add(self, ctx, documents).await
+    async fn add_batch(&self, ctx: &ExecutionContext, documents: Vec<Document>) -> Result<()> {
+        Self::add_batch(self, ctx, documents).await
     }
 
     async fn delete(&self, ctx: &ExecutionContext, doc_id: &str) -> Result<()> {

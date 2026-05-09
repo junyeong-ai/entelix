@@ -70,7 +70,7 @@ async fn main() -> Result<()> {
         .await?;
     println!("=== one-hop outgoing from Alice ===");
     for (_id, target, edge) in &alice_out {
-        let target_name = graph.node(&ctx, &ns, target).await?.unwrap_or_default();
+        let target_name = graph.get_node(&ctx, &ns, target).await?.unwrap_or_default();
         println!("  Alice --{edge}--> {target_name}");
     }
 
@@ -80,8 +80,14 @@ async fn main() -> Result<()> {
         .await?;
     println!("\n=== BFS up to 2 hops from Alice (Direction::Both) ===");
     for hop in &reached {
-        let from = graph.node(&ctx, &ns, &hop.from).await?.unwrap_or_default();
-        let to = graph.node(&ctx, &ns, &hop.to).await?.unwrap_or_default();
+        let from = graph
+            .get_node(&ctx, &ns, &hop.from)
+            .await?
+            .unwrap_or_default();
+        let to = graph
+            .get_node(&ctx, &ns, &hop.to)
+            .await?
+            .unwrap_or_default();
         println!("  {from} --{edge}--> {to}", edge = hop.edge);
     }
 
@@ -136,5 +142,5 @@ async fn node_name(
     ns: &Namespace,
     id: &NodeId,
 ) -> Result<String> {
-    Ok(graph.node(ctx, ns, id).await?.unwrap_or_default())
+    Ok(graph.get_node(ctx, ns, id).await?.unwrap_or_default())
 }

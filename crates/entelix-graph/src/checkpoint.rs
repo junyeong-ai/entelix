@@ -180,15 +180,18 @@ where
     /// `(tenant_id, thread_id)` fields define its addressing.
     async fn put(&self, checkpoint: Checkpoint<S>) -> Result<()>;
 
-    /// Load the most recent checkpoint for `key`.
-    async fn latest(&self, key: &ThreadKey) -> Result<Option<Checkpoint<S>>>;
+    /// Load the most recent checkpoint for `key`. Verb-family
+    /// `get` per `.claude/rules/naming.md` — single-item primary-
+    /// key (most-recent) lookup, returns `Option<Checkpoint<S>>`.
+    async fn get_latest(&self, key: &ThreadKey) -> Result<Option<Checkpoint<S>>>;
 
     /// Look up a specific checkpoint by id within `key`'s scope.
-    async fn by_id(&self, key: &ThreadKey, id: &CheckpointId) -> Result<Option<Checkpoint<S>>>;
+    /// Verb-family `get` — primary-key lookup.
+    async fn get_by_id(&self, key: &ThreadKey, id: &CheckpointId) -> Result<Option<Checkpoint<S>>>;
 
     /// Return the thread's checkpoint history, most recent first.
     /// `limit` caps the result size (`usize::MAX` for "all").
-    async fn history(&self, key: &ThreadKey, limit: usize) -> Result<Vec<Checkpoint<S>>>;
+    async fn list_history(&self, key: &ThreadKey, limit: usize) -> Result<Vec<Checkpoint<S>>>;
 
     /// Time-travel write: create a fresh checkpoint that branches off
     /// `parent_id`, replacing only the state. The new checkpoint

@@ -45,6 +45,8 @@ impl AuditSink for CapturingAuditSink {
     fn record_usage_limit_exceeded(&self, breach: &entelix_core::UsageLimitBreach) {
         self.breaches.lock().push(breach.clone());
     }
+
+    fn record_context_compacted(&self, _dropped_chars: usize, _retained_chars: usize) {}
 }
 
 struct TwoRequestRunnable;

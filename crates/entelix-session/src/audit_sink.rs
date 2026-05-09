@@ -136,4 +136,16 @@ impl AuditSink for SessionAuditSink {
             },
         );
     }
+
+    fn record_context_compacted(&self, dropped_chars: usize, retained_chars: usize) {
+        spawn_append(
+            Arc::clone(&self.log),
+            self.key.clone(),
+            GraphEvent::ContextCompacted {
+                dropped_chars,
+                retained_chars,
+                timestamp: Utc::now(),
+            },
+        );
+    }
 }

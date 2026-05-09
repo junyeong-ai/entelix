@@ -44,6 +44,8 @@ impl AuditSink for RecordingAuditSink {
     }
     fn record_memory_recall(&self, _tier: &str, _namespace_key: &str, _hits: usize) {}
     fn record_usage_limit_exceeded(&self, _breach: &entelix_core::UsageLimitBreach) {}
+
+    fn record_context_compacted(&self, _dropped_chars: usize, _retained_chars: usize) {}
 }
 
 fn assistant_text(text: &str) -> Message {

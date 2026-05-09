@@ -79,11 +79,20 @@ where
 {
     async fn invoke(&self, input: Vec<Message>, ctx: &ExecutionContext) -> Result<Message> {
         let input = if messages_char_size(&input) >= self.threshold_chars {
+            let dropped_size = messages_char_size(&input);
             let events = messages_to_events(&input)?;
-            self.compactor
+            let compacted = self
+                .compactor
                 .compact(&events, self.threshold_chars, ctx)
                 .await?
-                .to_messages()
+                .to_messages();
+            let retained_size = messages_char_size(&compacted);
+            if let Some(handle) = ctx.audit_sink() {
+                handle
+                    .as_sink()
+                    .record_context_compacted(dropped_size.saturating_sub(retained_size), retained_size);
+            }
+            compacted
         } else {
             input
         };
@@ -316,6 +325,73 @@ mod tests {
             observed_len < input.len(),
             "compaction must trim — got {observed_len}, input had {}",
             input.len()
+        );
+    }
+
+    /// `AuditSink` test impl that records every `record_*` call so
+    /// the compaction-emit assertion can verify the audit channel is
+    /// actually crossed (invariant 18).
+    struct CapturingAuditSink {
+        compactions: Mutex<Vec<(usize, usize)>>,
+    }
+
+    impl CapturingAuditSink {
+        fn new() -> Self {
+            Self {
+                compactions: Mutex::new(Vec::new()),
+            }
+        }
+    }
+
+    impl entelix_core::AuditSink for CapturingAuditSink {
+        fn record_sub_agent_invoked(&self, _agent_id: &str, _sub_thread_id: &str) {}
+        fn record_agent_handoff(&self, _from: Option<&str>, _to: &str) {}
+        fn record_resumed(&self, _from_checkpoint: &str) {}
+        fn record_memory_recall(&self, _tier: &str, _namespace_key: &str, _hits: usize) {}
+        fn record_usage_limit_exceeded(&self, _breach: &entelix_core::UsageLimitBreach) {}
+        fn record_context_compacted(&self, dropped_chars: usize, retained_chars: usize) {
+            self.compactions.lock().push((dropped_chars, retained_chars));
+        }
+    }
+
+    #[tokio::test]
+    async fn compaction_records_audit_event_when_threshold_exceeded() {
+        let compactor: Arc<dyn Compactor> = Arc::new(HeadDropCompactor);
+        let model = EchoModel::new();
+        let wrapped = model.with_compaction(compactor, 30);
+        let sink = Arc::new(CapturingAuditSink::new());
+        let ctx = ExecutionContext::new()
+            .with_audit_sink(entelix_core::AuditSinkHandle::new(sink.clone()));
+
+        let input = vec![
+            user("padding to force compaction one one one one"),
+            assistant("more padding to force compaction"),
+            user("trailing turn"),
+            assistant("ok"),
+        ];
+        let _ = wrapped.invoke(input, &ctx).await.unwrap();
+
+        let captured = sink.compactions.lock().clone();
+        assert_eq!(captured.len(), 1, "exactly one compaction event expected");
+        let (dropped, _retained) = captured[0];
+        assert!(dropped > 0, "must report some dropped characters");
+    }
+
+    #[tokio::test]
+    async fn compaction_records_no_audit_event_below_threshold() {
+        let compactor: Arc<dyn Compactor> = Arc::new(HeadDropCompactor);
+        let model = EchoModel::new();
+        let wrapped = model.with_compaction(compactor, 1024);
+        let sink = Arc::new(CapturingAuditSink::new());
+        let ctx = ExecutionContext::new()
+            .with_audit_sink(entelix_core::AuditSinkHandle::new(sink.clone()));
+
+        let input = vec![user("short"), assistant("ok")];
+        let _ = wrapped.invoke(input, &ctx).await.unwrap();
+
+        assert!(
+            sink.compactions.lock().is_empty(),
+            "no audit event expected when threshold is not crossed"
         );
     }
 

@@ -193,6 +193,8 @@ impl AuditSink for RecordingAuditSink {
             .push((tier.to_owned(), namespace_key.to_owned(), hits));
     }
     fn record_usage_limit_exceeded(&self, _breach: &entelix_core::UsageLimitBreach) {}
+
+    fn record_context_compacted(&self, _dropped_chars: usize, _retained_chars: usize) {}
 }
 
 #[tokio::test]

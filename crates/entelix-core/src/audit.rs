@@ -61,6 +61,16 @@ pub trait AuditSink: Send + Sync + 'static {
     /// pass the breach value straight through from the matching
     /// `Error::UsageLimitExceeded(breach)` arm.
     fn record_usage_limit_exceeded(&self, breach: &crate::run_budget::UsageLimitBreach);
+
+    /// Record that an auto-compaction adapter trimmed the working
+    /// message slice. `dropped_chars` is the character cost of the
+    /// turns the compactor dropped (or summarised away);
+    /// `retained_chars` is the cost of the turns the post-compaction
+    /// slice carries forward. Operators correlate the pair against
+    /// the threshold they wired to detect drift between configured
+    /// budget and actual trim — production observability for the
+    /// `RunnableCompacting` path (lives in `entelix-agents`).
+    fn record_context_compacted(&self, dropped_chars: usize, retained_chars: usize);
 }
 
 /// `Arc`-shaped handle the [`crate::context::ExecutionContext`]

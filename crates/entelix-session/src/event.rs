@@ -35,6 +35,20 @@ pub enum GraphEvent {
         /// Wall-clock time the event was appended.
         timestamp: DateTime<Utc>,
     },
+    /// An auto-compaction adapter trimmed the working message slice.
+    /// `dropped_chars` is the character cost the compactor removed
+    /// (or summarised away); `retained_chars` is the cost the
+    /// post-compaction slice carries forward. The pair lets dashboards
+    /// detect drift between the threshold the operator wired and the
+    /// actual trim each invocation produces.
+    ContextCompacted {
+        /// Character cost the compactor dropped.
+        dropped_chars: usize,
+        /// Character cost the post-compaction slice retained.
+        retained_chars: usize,
+        /// Wall-clock time the event was appended.
+        timestamp: DateTime<Utc>,
+    },
     /// A tool was dispatched by the assistant.
     ToolCall {
         /// Stable tool-use id matching a future `ToolResult`.
@@ -260,6 +274,7 @@ impl GraphEvent {
             | Self::Resumed { timestamp, .. }
             | Self::MemoryRecall { timestamp, .. }
             | Self::UsageLimitExceeded { timestamp, .. }
+            | Self::ContextCompacted { timestamp, .. }
             | Self::Error { timestamp, .. } => timestamp,
         }
     }

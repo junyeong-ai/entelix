@@ -103,6 +103,7 @@ impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::audit::AuditSink
 impl !core::panic::unwind_safe::UnwindSafe for entelix_core::audit::AuditSinkHandle
 pub trait entelix_core::audit::AuditSink: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::audit::AuditSink::record_agent_handoff(&self, from: core::option::Option<&str>, to: &str)
+pub fn entelix_core::audit::AuditSink::record_context_compacted(&self, dropped_chars: usize, retained_chars: usize)
 pub fn entelix_core::audit::AuditSink::record_memory_recall(&self, tier: &str, namespace_key: &str, hits: usize)
 pub fn entelix_core::audit::AuditSink::record_resumed(&self, from_checkpoint: &str)
 pub fn entelix_core::audit::AuditSink::record_sub_agent_invoked(&self, agent_id: &str, sub_thread_id: &str)
@@ -4017,6 +4018,7 @@ impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::UsageSna
 pub const entelix_core::DEFAULT_TENANT_ID: &str
 pub trait entelix_core::AuditSink: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::AuditSink::record_agent_handoff(&self, from: core::option::Option<&str>, to: &str)
+pub fn entelix_core::AuditSink::record_context_compacted(&self, dropped_chars: usize, retained_chars: usize)
 pub fn entelix_core::AuditSink::record_memory_recall(&self, tier: &str, namespace_key: &str, hits: usize)
 pub fn entelix_core::AuditSink::record_resumed(&self, from_checkpoint: &str)
 pub fn entelix_core::AuditSink::record_sub_agent_invoked(&self, agent_id: &str, sub_thread_id: &str)

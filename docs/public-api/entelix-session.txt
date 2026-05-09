@@ -19,6 +19,10 @@ pub entelix_session::GraphEvent::CheckpointMarker
 pub entelix_session::GraphEvent::CheckpointMarker::checkpoint_id: alloc::string::String
 pub entelix_session::GraphEvent::CheckpointMarker::thread_id: alloc::string::String
 pub entelix_session::GraphEvent::CheckpointMarker::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_session::GraphEvent::ContextCompacted
+pub entelix_session::GraphEvent::ContextCompacted::dropped_chars: usize
+pub entelix_session::GraphEvent::ContextCompacted::retained_chars: usize
+pub entelix_session::GraphEvent::ContextCompacted::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
 pub entelix_session::GraphEvent::Error
 pub entelix_session::GraphEvent::Error::class: alloc::string::String
 pub entelix_session::GraphEvent::Error::message: alloc::string::String
@@ -163,6 +167,7 @@ impl core::fmt::Debug for entelix_session::SessionAuditSink
 pub fn entelix_session::SessionAuditSink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl entelix_core::audit::AuditSink for entelix_session::SessionAuditSink
 pub fn entelix_session::SessionAuditSink::record_agent_handoff(&self, from: core::option::Option<&str>, to: &str)
+pub fn entelix_session::SessionAuditSink::record_context_compacted(&self, dropped_chars: usize, retained_chars: usize)
 pub fn entelix_session::SessionAuditSink::record_memory_recall(&self, tier: &str, namespace_key: &str, hits: usize)
 pub fn entelix_session::SessionAuditSink::record_resumed(&self, from_checkpoint: &str)
 pub fn entelix_session::SessionAuditSink::record_sub_agent_invoked(&self, agent_id: &str, sub_thread_id: &str)

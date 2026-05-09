@@ -6,7 +6,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use entelix_core::{Error, Result, ThreadKey};
+use entelix_core::{Error, Result, TenantId, ThreadKey};
 use entelix_session::{GraphEvent, SessionLog};
 use redis::aio::ConnectionManager;
 
@@ -23,17 +23,17 @@ impl RedisSessionLog {
     }
 }
 
-fn events_key(tenant_id: &str, thread_id: &str) -> String {
+fn events_key(tenant_id: &TenantId, thread_id: &str) -> String {
     format!("entelix:session:{tenant_id}:{thread_id}:events")
 }
 
-fn watermark_key(tenant_id: &str, thread_id: &str) -> String {
+fn watermark_key(tenant_id: &TenantId, thread_id: &str) -> String {
     format!("entelix:session:{tenant_id}:{thread_id}:watermark")
 }
 
 async fn current_watermark(
     conn: &mut ConnectionManager,
-    tenant_id: &str,
+    tenant_id: &TenantId,
     thread_id: &str,
 ) -> std::result::Result<u64, redis::RedisError> {
     let raw: Option<String> = redis::cmd("GET")
@@ -51,11 +51,11 @@ impl SessionLog for RedisSessionLog {
         let thread_id = key.thread_id();
         if events.is_empty() {
             let len: u64 = redis::cmd("LLEN")
-                .arg(events_key(tenant_id.as_str(), thread_id))
+                .arg(events_key(tenant_id, thread_id))
                 .query_async(&mut conn)
                 .await
                 .map_err(backend_to_core)?;
-            let watermark = current_watermark(&mut conn, tenant_id.as_str(), thread_id)
+            let watermark = current_watermark(&mut conn, tenant_id, thread_id)
                 .await
                 .map_err(backend_to_core)?;
             return Ok(watermark.saturating_add(len));
@@ -65,12 +65,12 @@ impl SessionLog for RedisSessionLog {
             payloads.push(serde_json::to_string(event).map_err(Error::Serde)?);
         }
         let new_len: u64 = redis::cmd("RPUSH")
-            .arg(events_key(tenant_id.as_str(), thread_id))
+            .arg(events_key(tenant_id, thread_id))
             .arg(&payloads)
             .query_async(&mut conn)
             .await
             .map_err(backend_to_core)?;
-        let watermark = current_watermark(&mut conn, tenant_id.as_str(), thread_id)
+        let watermark = current_watermark(&mut conn, tenant_id, thread_id)
             .await
             .map_err(backend_to_core)?;
         Ok(watermark.saturating_add(new_len))
@@ -80,7 +80,7 @@ impl SessionLog for RedisSessionLog {
         let mut conn = (*self.manager).clone();
         let tenant_id = key.tenant_id();
         let thread_id = key.thread_id();
-        let watermark = current_watermark(&mut conn, tenant_id.as_str(), thread_id)
+        let watermark = current_watermark(&mut conn, tenant_id, thread_id)
             .await
             .map_err(backend_to_core)?;
         // Cursor is the absolute ordinal; live events begin at offset
@@ -88,7 +88,7 @@ impl SessionLog for RedisSessionLog {
         let live_start = cursor.saturating_sub(watermark);
         let live_start_isize = isize::try_from(live_start).unwrap_or(isize::MAX);
         let raws: Vec<String> = redis::cmd("LRANGE")
-            .arg(events_key(tenant_id.as_str(), thread_id))
+            .arg(events_key(tenant_id, thread_id))
             .arg(live_start_isize)
             .arg(-1)
             .query_async(&mut conn)
@@ -103,7 +103,7 @@ impl SessionLog for RedisSessionLog {
         let mut conn = (*self.manager).clone();
         let tenant_id = key.tenant_id();
         let thread_id = key.thread_id();
-        let prior = current_watermark(&mut conn, tenant_id.as_str(), thread_id)
+        let prior = current_watermark(&mut conn, tenant_id, thread_id)
             .await
             .map_err(backend_to_core)?;
         if watermark <= prior {
@@ -114,14 +114,14 @@ impl SessionLog for RedisSessionLog {
         // LTRIM keeps elements in [start, stop]; we drop the first
         // `trim_count_isize` entries.
         let _: () = redis::cmd("LTRIM")
-            .arg(events_key(tenant_id.as_str(), thread_id))
+            .arg(events_key(tenant_id, thread_id))
             .arg(trim_count_isize)
             .arg(-1)
             .query_async(&mut conn)
             .await
             .map_err(backend_to_core)?;
         let _: () = redis::cmd("SET")
-            .arg(watermark_key(tenant_id.as_str(), thread_id))
+            .arg(watermark_key(tenant_id, thread_id))
             .arg(watermark.to_string())
             .query_async(&mut conn)
             .await

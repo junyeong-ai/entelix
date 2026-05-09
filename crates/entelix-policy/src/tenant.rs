@@ -12,7 +12,7 @@
 use std::sync::Arc;
 
 use dashmap::DashMap;
-use entelix_core::Result;
+use entelix_core::{Result, TenantId};
 
 use crate::cost::CostMeter;
 use crate::pii::PiiRedactor;
@@ -121,7 +121,7 @@ impl TenantPolicyBuilder {
 /// Cloning is cheap — internal state lives behind `Arc`s.
 #[derive(Clone)]
 pub struct PolicyRegistry {
-    per_tenant: Arc<DashMap<entelix_core::TenantId, Arc<TenantPolicy>>>,
+    per_tenant: Arc<DashMap<TenantId, Arc<TenantPolicy>>>,
     fallback: Arc<TenantPolicy>,
 }
 
@@ -157,27 +157,27 @@ impl PolicyRegistry {
     }
 
     /// Register (or overwrite) a tenant's policy.
-    pub fn register(&self, tenant_id: entelix_core::TenantId, policy: TenantPolicy) {
+    pub fn register(&self, tenant_id: TenantId, policy: TenantPolicy) {
         self.per_tenant.insert(tenant_id, Arc::new(policy));
     }
 
     /// Builder-style register.
     #[must_use]
-    pub fn with_tenant(self, tenant_id: entelix_core::TenantId, policy: TenantPolicy) -> Self {
+    pub fn with_tenant(self, tenant_id: TenantId, policy: TenantPolicy) -> Self {
         self.register(tenant_id, policy);
         self
     }
 
     /// Drop a tenant's registration. Subsequent lookups fall back to
     /// the fallback policy.
-    pub fn unregister(&self, tenant_id: &entelix_core::TenantId) {
+    pub fn unregister(&self, tenant_id: &TenantId) {
         self.per_tenant.remove(tenant_id);
     }
 
     /// Resolve a tenant's policy. Always returns *some* policy —
     /// the fallback when the tenant isn't explicitly registered.
     #[must_use]
-    pub fn policy_for(&self, tenant_id: &entelix_core::TenantId) -> Arc<TenantPolicy> {
+    pub fn policy_for(&self, tenant_id: &TenantId) -> Arc<TenantPolicy> {
         self.per_tenant
             .get(tenant_id)
             .map_or_else(|| self.fallback.clone(), |entry| entry.clone())
@@ -206,7 +206,6 @@ mod tests {
     use super::*;
     use crate::cost::{CostMeter, PricingTable};
     use crate::pii::RegexRedactor;
-    use entelix_core::TenantId;
 
     #[test]
     fn empty_manager_returns_empty_fallback() {

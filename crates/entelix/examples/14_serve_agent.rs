@@ -43,7 +43,7 @@ use tower::util::ServiceExt;
 struct AgentState {
     /// Tenant the request was routed under (filled by the planner
     /// node from `ctx.tenant_id()`).
-    tenant_id: String,
+    tenant_id: entelix::TenantId,
     /// Toy plan steps the agent produced.
     steps: Vec<String>,
     /// Final natural-language reply.
@@ -53,7 +53,7 @@ struct AgentState {
 fn build_agent() -> Result<entelix::CompiledGraph<AgentState>> {
     // Node 1 — planner: records the tenant scope and emits two steps.
     let planner = RunnableLambda::new(|mut s: AgentState, ctx: ExecutionContext| async move {
-        s.tenant_id = ctx.tenant_id().as_str().to_owned();
+        s.tenant_id = ctx.tenant_id().clone();
         s.steps.push(format!("plan@{}", s.tenant_id));
         s.steps.push("execute".to_owned());
         Ok::<_, _>(s)

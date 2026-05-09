@@ -25,9 +25,12 @@ pub(crate) fn run() -> Result<()> {
 
     // cargo audit — exits non-zero on unfixed CVE. Captured + replayed
     // on failure so CI logs carry the actual advisory body without a
-    // separate `cargo audit` re-run.
+    // separate `cargo audit` re-run. `--color never` keeps the output
+    // ANSI-free; the captured stream is what we substring-match against,
+    // and CI's `CARGO_TERM_COLOR=always` env would otherwise inject
+    // escape codes between the words we look for.
     let audit_output = Command::new("cargo")
-        .args(["audit", "--deny", "warnings"])
+        .args(["audit", "--color", "never", "--deny", "warnings"])
         .current_dir(&root)
         .output()?;
     if !audit_output.status.success() {
@@ -41,11 +44,12 @@ pub(crate) fn run() -> Result<()> {
         ));
     }
 
-    // cargo deny — must produce the four-line all-ok summary. On
-    // failure, replay both streams so CI logs surface the offending
-    // advisory / license / ban / source.
+    // cargo deny — must produce the four-line all-ok summary. Same
+    // `--color never` rationale as `cargo audit` above: the substring
+    // check below would otherwise miss the all-ok line under
+    // `CARGO_TERM_COLOR=always`.
     let deny_output = Command::new("cargo")
-        .args(["deny", "check"])
+        .args(["deny", "--color", "never", "check"])
         .current_dir(&root)
         .output()?;
     let combined = String::from_utf8_lossy(&deny_output.stderr).to_string()

@@ -518,8 +518,7 @@ fn codec_name_is_stable() {
 }
 
 #[test]
-fn anthropic_ext_disable_parallel_tool_use_threads_into_tool_choice() {
-    use entelix_core::ir::{AnthropicExt, ProviderExtensions};
+fn parallel_tool_calls_inverts_into_anthropic_tool_choice() {
     let codec = AnthropicMessagesCodec::new();
     let req = ModelRequest {
         model: "claude-opus-4-7".into(),
@@ -529,8 +528,7 @@ fn anthropic_ext_disable_parallel_tool_use_threads_into_tool_choice() {
             "arithmetic",
             json!({"type": "object"}),
         )],
-        provider_extensions: ProviderExtensions::default()
-            .with_anthropic(AnthropicExt::default().with_disable_parallel_tool_use(true)),
+        parallel_tool_calls: Some(false),
         max_tokens: Some(1024),
         ..ModelRequest::default()
     };
@@ -538,7 +536,49 @@ fn anthropic_ext_disable_parallel_tool_use_threads_into_tool_choice() {
     let body = parse(&encoded.body);
     assert_eq!(
         body["tool_choice"]["disable_parallel_tool_use"], true,
-        "disable_parallel_tool_use must thread into tool_choice"
+        "parallel_tool_calls=Some(false) must invert into Anthropic's disable_parallel_tool_use=true"
+    );
+}
+
+#[test]
+fn parallel_tool_calls_true_emits_disable_false_on_anthropic() {
+    let codec = AnthropicMessagesCodec::new();
+    let req = ModelRequest {
+        model: "claude-opus-4-7".into(),
+        messages: vec![Message::user("call my tool")],
+        tools: vec![ToolSpec::function(
+            "calc",
+            "arithmetic",
+            json!({"type": "object"}),
+        )],
+        parallel_tool_calls: Some(true),
+        max_tokens: Some(1024),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    let body = parse(&encoded.body);
+    assert_eq!(body["tool_choice"]["disable_parallel_tool_use"], false);
+}
+
+#[test]
+fn top_k_passes_through_natively_on_anthropic() {
+    let codec = AnthropicMessagesCodec::new();
+    let req = ModelRequest {
+        model: "claude-opus-4-7".into(),
+        messages: vec![Message::user("hi")],
+        max_tokens: Some(1024),
+        top_k: Some(40),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    let body = parse(&encoded.body);
+    assert_eq!(body["top_k"], 40);
+    assert!(
+        encoded.warnings.iter().all(|w| !matches!(
+            w,
+            ModelWarning::LossyEncode { field, .. } if field == "top_k"
+        )),
+        "Anthropic native top_k must NOT emit LossyEncode"
     );
 }
 

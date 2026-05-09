@@ -1,64 +1,65 @@
-//! `RunOverrides` — per-call knobs that operators stash on
-//! [`crate::context::ExecutionContext`] to override `ChatModel`
-//! config and graph recursion limits without rebuilding either
-//! component.
+//! Per-call overrides — operators stash these on
+//! [`crate::context::ExecutionContext`] to patch defaults without
+//! rebuilding `ChatModel` or `CompiledGraph`. Two carriers, scoped to
+//! orthogonal concerns:
 //!
-//! ## Why per-call
+//! - [`RunOverrides`] — agent-loop knobs (`model`, `system_prompt`,
+//!   `max_iterations`). Replace the model identifier on a per-call
+//!   classification step inside an agent otherwise pinned to an
+//!   expensive model, swap the system prompt for a triage variant,
+//!   or clamp graph recursion for an experimental run.
+//! - [`RequestOverrides`] — `ModelRequest`-shaped sampling knobs
+//!   (`temperature`, `top_p`, `max_tokens`, `stop_sequences`,
+//!   `reasoning_effort`, `tool_choice`, `response_format`). Vary the
+//!   sampling profile on a single call without rebuilding the
+//!   `ChatModel`'s configured defaults.
 //!
-//! `ChatModel` and `CompiledGraph` are built once at agent
-//! construction time and reused across many requests. A few
-//! parameters benefit from per-call override — picking a different
-//! model for a cheap classification step inside the same agent,
-//! injecting a request-specific system prompt, or clamping the
-//! recursion limit for an experimental run.
+//! ## Why two types
 //!
-//! `RunOverrides` flows through
-//! [`crate::context::ExecutionContext::extension`] so the operator's
-//! choice is one method call away on the call site and the layered
-//! `tower::Service` stack picks it up automatically. See
+//! `RunOverrides` patches things the *agent loop* owns — which model
+//! to dispatch against, what system prompt to introduce, how many
+//! reasoning rounds to permit. `RequestOverrides` patches the
+//! `ModelRequest` itself before encoding. The split lets each type
+//! grow its own knobs without becoming a god-struct, and makes the
+//! call-site intent self-documenting.
 //!
 //! ## Wiring
 //!
-//! Operator (explicit ctx mutation):
+//! Both types flow through
+//! [`crate::context::ExecutionContext::add_extension`]; the chat
+//! model and graph dispatch loop pick them up automatically:
 //!
 //! ```ignore
 //! let ctx = ExecutionContext::new()
 //!     .add_extension(RunOverrides::new()
 //!         .with_model("claude-3-5-haiku-latest")
-//!         .with_max_iterations(8));
+//!         .with_max_iterations(8))
+//!     .add_extension(RequestOverrides::new()
+//!         .with_temperature(0.2)
+//!         .with_max_tokens(512));
 //! agent.execute(input, &ctx).await?;
-//! ```
-//!
-//! Operator (convenience — sub-crate-specific entry points like
-//! `entelix_agents::Agent::execute_with` set the extension for
-//! you):
-//!
-//! ```ignore
-//! agent.execute_with(input, RunOverrides::new()
-//!     .with_system_prompt(SystemPrompt::text("You are a triage classifier.")),
-//!     &ctx).await?;
 //! ```
 //!
 //! Reading sites (internal — not operator code):
 //!
-//! - `ChatModel::complete_full` consults `ctx.extension::<RunOverrides>()`
-//!   and patches `ModelRequest::model` and `ModelRequest::system`
-//!   when the override is present.
-//! - `CompiledGraph::invoke` clamps its compile-time `recursion_limit`
-//!   to `min(recursion_limit, overrides.max_iterations)` when the
-//!   override is present (compile-time cap stays authoritative —
-//!   operators can lower but never raise).
+//! - `ChatModel::complete_full` and `ChatModel::stream_deltas` route
+//!   through `apply_overrides` which patches the outgoing
+//!   `ModelRequest` from both extensions when present.
+//! - `CompiledGraph::invoke` clamps its compile-time
+//!   `recursion_limit` to `min(recursion_limit,
+//!   run_overrides.max_iterations)` when the override is present
+//!   (compile-time cap stays authoritative — operators can lower but
+//!   never raise).
 
-use crate::ir::SystemPrompt;
+use crate::ir::{ReasoningEffort, ResponseFormat, SystemPrompt, ToolChoice};
 
-/// Per-call knobs operators stash on `ExecutionContext` to override
-/// `ChatModel` and `CompiledGraph` defaults without rebuilding either.
-/// All fields are optional — `None` means "use the configured default".
+/// Agent-loop overrides — model identifier, system prompt, recursion
+/// cap. Patched onto the call's [`crate::context::ExecutionContext`]
+/// via `add_extension`.
 ///
-/// `#[non_exhaustive]` so post-1.0 additions (per-call temperature,
-/// stop sequences, response_format, …) ship as MINOR. Construct via
-/// [`RunOverrides::new`] (or `default()`) and chain `with_*`
-/// setters.
+/// `#[non_exhaustive]` so additive loop-level knobs ship as MINOR.
+/// Construct via [`RunOverrides::new`] (or `default()`) and chain
+/// `with_*` setters.
 #[derive(Clone, Debug, Default)]
 #[non_exhaustive]
 pub struct RunOverrides {
@@ -126,13 +127,176 @@ impl RunOverrides {
     }
 }
 
+/// `ModelRequest`-shaped sampling overrides — temperature, top-p,
+/// max tokens, stop sequences, reasoning effort, tool choice,
+/// response format. Patched onto the call's
+/// [`crate::context::ExecutionContext`] via `add_extension`.
+///
+/// Each field is `Option`-wrapped: `None` means "use the
+/// `ChatModelConfig` default for this field"; `Some` overrides for
+/// the duration of the call. Stop sequences use `Option<Vec<String>>`
+/// so an empty `Vec` is a meaningful override (clear the list) versus
+/// `None` (keep the configured list).
+///
+/// `#[non_exhaustive]` so additive request-level knobs ship as MINOR.
+/// Construct via [`RequestOverrides::new`] (or `default()`) and
+/// chain `with_*` setters.
+#[derive(Clone, Debug, Default)]
+#[non_exhaustive]
+pub struct RequestOverrides {
+    temperature: Option<f32>,
+    top_p: Option<f32>,
+    top_k: Option<u32>,
+    max_tokens: Option<u32>,
+    stop_sequences: Option<Vec<String>>,
+    reasoning_effort: Option<ReasoningEffort>,
+    tool_choice: Option<ToolChoice>,
+    response_format: Option<ResponseFormat>,
+    parallel_tool_calls: Option<bool>,
+}
+
+impl RequestOverrides {
+    /// Empty overrides — every field `None`.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Override sampling temperature for this call. Codecs clamp to
+    /// vendor range.
+    #[must_use]
+    pub const fn with_temperature(mut self, t: f32) -> Self {
+        self.temperature = Some(t);
+        self
+    }
+
+    /// Override nucleus-sampling parameter (`top_p`) for this call.
+    #[must_use]
+    pub const fn with_top_p(mut self, p: f32) -> Self {
+        self.top_p = Some(p);
+        self
+    }
+
+    /// Override top-k sampling parameter for this call. Native on
+    /// Anthropic, Gemini, Bedrock-Anthropic; OpenAI codecs surface
+    /// as `LossyEncode`.
+    #[must_use]
+    pub const fn with_top_k(mut self, k: u32) -> Self {
+        self.top_k = Some(k);
+        self
+    }
+
+    /// Override hard output-token cap for this call.
+    #[must_use]
+    pub const fn with_max_tokens(mut self, n: u32) -> Self {
+        self.max_tokens = Some(n);
+        self
+    }
+
+    /// Replace the stop-sequence list for this call. Pass an empty
+    /// `Vec` to clear the configured list; pass `None` (the default,
+    /// implicit from not calling this) to keep the configured list.
+    #[must_use]
+    pub fn with_stop_sequences(mut self, sequences: Vec<String>) -> Self {
+        self.stop_sequences = Some(sequences);
+        self
+    }
+
+    /// Override the cross-vendor reasoning-effort knob for this
+    /// call. See [`ReasoningEffort`]'s module doc for the per-vendor
+    /// mapping.
+    #[must_use]
+    pub fn with_reasoning_effort(mut self, effort: ReasoningEffort) -> Self {
+        self.reasoning_effort = Some(effort);
+        self
+    }
+
+    /// Override the tool-selection constraint for this call.
+    #[must_use]
+    pub fn with_tool_choice(mut self, choice: ToolChoice) -> Self {
+        self.tool_choice = Some(choice);
+        self
+    }
+
+    /// Override the structured-output constraint for this call.
+    #[must_use]
+    pub fn with_response_format(mut self, format: ResponseFormat) -> Self {
+        self.response_format = Some(format);
+        self
+    }
+
+    /// Override the cross-vendor parallel-tool-call toggle for this
+    /// call. `Some(true)` opts in, `Some(false)` forces serial,
+    /// `None` (the default, implicit from not calling this) keeps
+    /// the configured default.
+    #[must_use]
+    pub const fn with_parallel_tool_calls(mut self, enabled: bool) -> Self {
+        self.parallel_tool_calls = Some(enabled);
+        self
+    }
+
+    /// The temperature override if set.
+    #[must_use]
+    pub const fn temperature(&self) -> Option<f32> {
+        self.temperature
+    }
+
+    /// The top-p override if set.
+    #[must_use]
+    pub const fn top_p(&self) -> Option<f32> {
+        self.top_p
+    }
+
+    /// The top-k override if set.
+    #[must_use]
+    pub const fn top_k(&self) -> Option<u32> {
+        self.top_k
+    }
+
+    /// The max-tokens override if set.
+    #[must_use]
+    pub const fn max_tokens(&self) -> Option<u32> {
+        self.max_tokens
+    }
+
+    /// Borrow the stop-sequence override if set.
+    #[must_use]
+    pub fn stop_sequences(&self) -> Option<&[String]> {
+        self.stop_sequences.as_deref()
+    }
+
+    /// Borrow the reasoning-effort override if set.
+    #[must_use]
+    pub const fn reasoning_effort(&self) -> Option<&ReasoningEffort> {
+        self.reasoning_effort.as_ref()
+    }
+
+    /// Borrow the tool-choice override if set.
+    #[must_use]
+    pub const fn tool_choice(&self) -> Option<&ToolChoice> {
+        self.tool_choice.as_ref()
+    }
+
+    /// Borrow the response-format override if set.
+    #[must_use]
+    pub const fn response_format(&self) -> Option<&ResponseFormat> {
+        self.response_format.as_ref()
+    }
+
+    /// The parallel-tool-calls override if set.
+    #[must_use]
+    pub const fn parallel_tool_calls(&self) -> Option<bool> {
+        self.parallel_tool_calls
+    }
+}
+
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 
     #[test]
-    fn empty_overrides_have_no_fields_set() {
+    fn run_overrides_empty() {
         let o = RunOverrides::new();
         assert!(o.model().is_none());
         assert!(o.system_prompt().is_none());
@@ -140,7 +304,7 @@ mod tests {
     }
 
     #[test]
-    fn with_setters_chain() {
+    fn run_overrides_setters_chain() {
         let o = RunOverrides::new()
             .with_model("haiku")
             .with_system_prompt(SystemPrompt::text("be brief"))
@@ -148,5 +312,50 @@ mod tests {
         assert_eq!(o.model(), Some("haiku"));
         assert!(o.system_prompt().is_some());
         assert_eq!(o.max_iterations(), Some(8));
+    }
+
+    #[test]
+    fn request_overrides_empty() {
+        let r = RequestOverrides::new();
+        assert!(r.temperature().is_none());
+        assert!(r.top_p().is_none());
+        assert!(r.max_tokens().is_none());
+        assert!(r.stop_sequences().is_none());
+        assert!(r.reasoning_effort().is_none());
+        assert!(r.tool_choice().is_none());
+        assert!(r.response_format().is_none());
+    }
+
+    #[test]
+    fn request_overrides_setters_chain() {
+        let format = ResponseFormat::strict(
+            crate::ir::JsonSchemaSpec::new("answer", serde_json::json!({"type": "object"}))
+                .expect("valid schema"),
+        );
+        let r = RequestOverrides::new()
+            .with_temperature(0.3)
+            .with_top_p(0.9)
+            .with_max_tokens(512)
+            .with_stop_sequences(vec!["</done>".into()])
+            .with_reasoning_effort(ReasoningEffort::Low)
+            .with_tool_choice(ToolChoice::Required)
+            .with_response_format(format);
+        assert_eq!(r.temperature(), Some(0.3));
+        assert_eq!(r.top_p(), Some(0.9));
+        assert_eq!(r.max_tokens(), Some(512));
+        assert_eq!(r.stop_sequences(), Some(&["</done>".to_string()][..]));
+        assert!(matches!(r.reasoning_effort(), Some(&ReasoningEffort::Low)));
+        assert!(matches!(r.tool_choice(), Some(&ToolChoice::Required)));
+        assert_eq!(r.response_format().expect("set").json_schema.name, "answer");
+    }
+
+    #[test]
+    fn request_overrides_stop_sequences_empty_vs_none() {
+        // Empty Vec is a meaningful override — distinct from None.
+        let cleared = RequestOverrides::new().with_stop_sequences(Vec::new());
+        assert_eq!(cleared.stop_sequences(), Some(&[][..]));
+
+        let unset = RequestOverrides::new();
+        assert!(unset.stop_sequences().is_none());
     }
 }

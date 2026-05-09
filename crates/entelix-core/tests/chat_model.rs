@@ -5,6 +5,7 @@
 
 #![allow(
     clippy::unwrap_used,
+    clippy::expect_used,
     clippy::indexing_slicing,
     clippy::unnecessary_literal_bound
 )]
@@ -201,6 +202,147 @@ async fn run_overrides_absent_keeps_configured_defaults() -> Result<()> {
     let req = codec.last_request();
     assert_eq!(req.model, "default-model");
     assert_eq!(req.system.concat_text(), "default system");
+    Ok(())
+}
+
+#[tokio::test]
+async fn request_overrides_patch_sampling_and_response_format() -> Result<()> {
+    let codec = std::sync::Arc::new(RecordingCodec::new());
+    let transport = FakeStatusTransport {
+        status: 200,
+        body: Bytes::new(),
+    };
+    let model = ChatModel::from_arc(
+        codec.clone(),
+        std::sync::Arc::new(transport),
+        "default-model",
+    )
+    .with_temperature(0.7)
+    .with_top_p(0.95)
+    .with_max_tokens(1024)
+    .with_stop_sequences(vec!["DEFAULT_STOP".to_string()])
+    .with_reasoning_effort(entelix_core::ir::ReasoningEffort::Medium);
+
+    let ctx = ExecutionContext::new().add_extension(
+        entelix_core::RequestOverrides::new()
+            .with_temperature(0.2)
+            .with_top_p(0.5)
+            .with_max_tokens(64)
+            .with_stop_sequences(vec!["</done>".to_string()])
+            .with_reasoning_effort(entelix_core::ir::ReasoningEffort::High)
+            .with_tool_choice(entelix_core::ir::ToolChoice::None)
+            .with_response_format(entelix_core::ir::ResponseFormat::strict(
+                entelix_core::ir::JsonSchemaSpec::new(
+                    "answer",
+                    serde_json::json!({"type": "object"}),
+                )
+                .unwrap(),
+            )),
+    );
+    model.complete(vec![Message::user("hi")], &ctx).await?;
+
+    let req = codec.last_request();
+    assert!((req.temperature.unwrap() - 0.2).abs() < 1e-6);
+    assert!((req.top_p.unwrap() - 0.5).abs() < 1e-6);
+    assert_eq!(req.max_tokens, Some(64));
+    assert_eq!(req.stop_sequences, vec!["</done>".to_string()]);
+    assert!(matches!(
+        req.reasoning_effort,
+        Some(entelix_core::ir::ReasoningEffort::High)
+    ));
+    assert!(matches!(
+        req.tool_choice,
+        entelix_core::ir::ToolChoice::None
+    ));
+    let format = req.response_format.as_ref().expect("response_format set");
+    assert_eq!(format.json_schema.name, "answer");
+    Ok(())
+}
+
+#[tokio::test]
+async fn request_overrides_partial_override_keeps_unset_fields() -> Result<()> {
+    let codec = std::sync::Arc::new(RecordingCodec::new());
+    let transport = FakeStatusTransport {
+        status: 200,
+        body: Bytes::new(),
+    };
+    let model = ChatModel::from_arc(
+        codec.clone(),
+        std::sync::Arc::new(transport),
+        "default-model",
+    )
+    .with_temperature(0.7)
+    .with_max_tokens(1024);
+
+    // Only temperature is overridden; max_tokens stays at the configured 1024.
+    let ctx = ExecutionContext::new()
+        .add_extension(entelix_core::RequestOverrides::new().with_temperature(0.1));
+    model.complete(vec![Message::user("hi")], &ctx).await?;
+
+    let req = codec.last_request();
+    assert!((req.temperature.unwrap() - 0.1).abs() < 1e-6);
+    assert_eq!(
+        req.max_tokens,
+        Some(1024),
+        "max_tokens not overridden — must keep configured default"
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn request_and_run_overrides_compose_independently() -> Result<()> {
+    let codec = std::sync::Arc::new(RecordingCodec::new());
+    let transport = FakeStatusTransport {
+        status: 200,
+        body: Bytes::new(),
+    };
+    let model = ChatModel::from_arc(
+        codec.clone(),
+        std::sync::Arc::new(transport),
+        "default-model",
+    )
+    .with_system("default system")
+    .with_temperature(0.7);
+
+    let ctx = ExecutionContext::new()
+        .add_extension(
+            entelix_core::RunOverrides::new()
+                .with_model("haiku")
+                .with_system_prompt(entelix_core::ir::SystemPrompt::text("triage")),
+        )
+        .add_extension(entelix_core::RequestOverrides::new().with_temperature(0.1));
+    model.complete(vec![Message::user("hi")], &ctx).await?;
+
+    let req = codec.last_request();
+    assert_eq!(req.model, "haiku");
+    assert_eq!(req.system.concat_text(), "triage");
+    assert!((req.temperature.unwrap() - 0.1).abs() < 1e-6);
+    Ok(())
+}
+
+#[tokio::test]
+async fn request_overrides_stop_sequences_empty_clears_configured() -> Result<()> {
+    let codec = std::sync::Arc::new(RecordingCodec::new());
+    let transport = FakeStatusTransport {
+        status: 200,
+        body: Bytes::new(),
+    };
+    let model = ChatModel::from_arc(
+        codec.clone(),
+        std::sync::Arc::new(transport),
+        "default-model",
+    )
+    .with_stop_sequences(vec!["A".to_string(), "B".to_string()]);
+
+    let ctx = ExecutionContext::new()
+        .add_extension(entelix_core::RequestOverrides::new().with_stop_sequences(Vec::new()));
+    model.complete(vec![Message::user("hi")], &ctx).await?;
+
+    let req = codec.last_request();
+    assert!(
+        req.stop_sequences.is_empty(),
+        "Empty stop_sequences override must clear the configured list"
+    );
     Ok(())
 }
 

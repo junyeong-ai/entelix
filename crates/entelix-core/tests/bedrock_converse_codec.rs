@@ -296,24 +296,21 @@ fn bedrock_emits_field_precise_lossy_for_anthropic_only_ext_fields() {
     let req = ModelRequest {
         model: "anthropic.claude-opus-4-7".into(),
         messages: vec![Message::user("hi")],
-        provider_extensions: ProviderExtensions::default().with_anthropic(
-            AnthropicExt::default()
-                .with_disable_parallel_tool_use(true)
-                .with_user_id("op-1"),
-        ),
+        provider_extensions: ProviderExtensions::default()
+            .with_anthropic(AnthropicExt::default().with_user_id("op-1")),
+        parallel_tool_calls: Some(false),
         max_tokens: Some(1024),
         ..ModelRequest::default()
     };
     let warnings = codec.encode(&req).unwrap().warnings;
-    let saw_disable = warnings.iter().any(|w| {
-        matches!(w, ModelWarning::LossyEncode { field, .. }
-            if field == "provider_extensions.anthropic.disable_parallel_tool_use")
-    });
+    let saw_parallel = warnings.iter().any(
+        |w| matches!(w, ModelWarning::LossyEncode { field, .. } if field == "parallel_tool_calls"),
+    );
     let saw_user = warnings.iter().any(|w| {
         matches!(w, ModelWarning::LossyEncode { field, .. }
             if field == "provider_extensions.anthropic.user_id")
     });
-    assert!(saw_disable && saw_user, "{warnings:?}");
+    assert!(saw_parallel && saw_user, "{warnings:?}");
 }
 
 #[test]

@@ -37,6 +37,20 @@ pub struct ModelRequest {
     pub temperature: Option<f32>,
     /// Nucleus sampling parameter.
     pub top_p: Option<f32>,
+    /// Top-k sampling parameter — restrict candidate-token sampling
+    /// to the `k` most-likely tokens. `None` defers to the vendor
+    /// default.
+    ///
+    /// Codec mapping (CLAUDE.md §"Provider IR promotion"; native on
+    /// Anthropic, Gemini, Bedrock Converse on Claude — three
+    /// vendors, criterion satisfied):
+    /// - **Anthropic**, **Bedrock Converse on Claude** — pass-through
+    ///   to the Messages API `top_k` field.
+    /// - **Gemini** — pass-through to `generationConfig.topK`.
+    /// - **OpenAI Chat** / **OpenAI Responses** — `LossyEncode` (no
+    ///   native parameter).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub top_k: Option<u32>,
     /// Sequences that, when produced, halt generation.
     #[serde(default)]
     pub stop_sequences: Vec<String>,
@@ -46,6 +60,23 @@ pub struct ModelRequest {
     /// Constraint on tool selection. Defaults to [`ToolChoice::Auto`].
     #[serde(default)]
     pub tool_choice: ToolChoice,
+    /// Allow the model to emit more than one tool call in a single
+    /// turn. `Some(true)` opts in to parallel tool use, `Some(false)`
+    /// forces serial dispatch, `None` defers to the vendor default.
+    ///
+    /// Codec mapping:
+    /// - **Anthropic**, **Bedrock Converse on Claude** — translate to
+    ///   `tool_choice.disable_parallel_tool_use` (inverted polarity);
+    ///   the codec only emits when a `tool_choice` block is present.
+    /// - **OpenAI Chat** / **OpenAI Responses** — pass-through to the
+    ///   `parallel_tool_calls` field.
+    /// - **Gemini** — `LossyEncode` (no native parallel-tool toggle).
+    ///
+    /// Promoted to IR per the rule "≥ 2 first-party vendors carry
+    /// the concept natively → IR field" (CLAUDE.md §"Provider IR
+    /// promotion").
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parallel_tool_calls: Option<bool>,
     /// Optional structured-output constraint. Codecs route to
     /// vendor-canonical channels (Anthropic `output_config.format`,
     /// OpenAI `response_format` / `text.format`, Gemini

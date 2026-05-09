@@ -154,6 +154,9 @@ fn build_body(request: &ModelRequest) -> Result<(Value, Vec<ModelWarning>)> {
     if let Some(p) = request.top_p {
         generation_config.insert("topP".into(), json!(p));
     }
+    if let Some(k) = request.top_k {
+        generation_config.insert("topK".into(), json!(k));
+    }
     if !request.stop_sequences.is_empty() {
         generation_config.insert("stopSequences".into(), json!(request.stop_sequences));
     }
@@ -207,6 +210,16 @@ fn apply_provider_extensions(
     warnings: &mut Vec<ModelWarning>,
 ) {
     let ext = &request.provider_extensions;
+    // Gemini has no native parallel-tool toggle on the
+    // generateContent surface. Surface the lossy snap so the operator
+    // sees their `parallel_tool_calls` setting was dropped on the
+    // wire instead of debugging a silently-ignored knob.
+    if request.parallel_tool_calls.is_some() {
+        warnings.push(ModelWarning::LossyEncode {
+            field: "parallel_tool_calls".into(),
+            detail: "Gemini exposes no parallel-tool toggle — setting dropped".into(),
+        });
+    }
     if let Some(gemini) = &ext.gemini {
         if !gemini.safety_settings.is_empty() {
             let arr: Vec<Value> = gemini

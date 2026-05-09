@@ -219,6 +219,9 @@ fn build_body(request: &ModelRequest, streaming: bool) -> Result<(Value, Vec<Mod
     if let Some(temp) = request.temperature {
         body.insert("temperature".into(), json!(temp));
     }
+    if let Some(k) = request.top_k {
+        body.insert("top_k".into(), json!(k));
+    }
     if let Some(p) = request.top_p {
         body.insert("top_p".into(), json!(p));
     }
@@ -294,20 +297,18 @@ fn apply_provider_extensions(
     warnings: &mut Vec<ModelWarning>,
 ) {
     let ext = &request.provider_extensions;
-    if let Some(anthropic) = &ext.anthropic {
-        if let Some(disable) = anthropic.disable_parallel_tool_use
-            && body.contains_key("tool_choice")
-        {
-            // Anthropic threads `disable_parallel_tool_use` inside
-            // `tool_choice`. Mutate the value in place so the
-            // operator's `tool_choice` selection survives.
-            if let Some(tc) = body.get_mut("tool_choice").and_then(Value::as_object_mut) {
-                tc.insert("disable_parallel_tool_use".into(), json!(disable));
-            }
-        }
-        if let Some(user_id) = &anthropic.user_id {
-            body.insert("metadata".into(), json!({"user_id": user_id}));
-        }
+    // IR `parallel_tool_calls` translates onto Anthropic's
+    // `tool_choice.disable_parallel_tool_use` (inverted polarity).
+    // Anthropic only accepts the toggle inside a `tool_choice` block.
+    if let Some(parallel) = request.parallel_tool_calls
+        && let Some(tc) = body.get_mut("tool_choice").and_then(Value::as_object_mut)
+    {
+        tc.insert("disable_parallel_tool_use".into(), json!(!parallel));
+    }
+    if let Some(anthropic) = &ext.anthropic
+        && let Some(user_id) = &anthropic.user_id
+    {
+        body.insert("metadata".into(), json!({"user_id": user_id}));
     }
     if let Some(effort) = &request.reasoning_effort {
         encode_anthropic_thinking(&request.model, effort, body, warnings);

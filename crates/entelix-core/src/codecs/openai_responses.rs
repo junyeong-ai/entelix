@@ -148,6 +148,12 @@ fn build_body(request: &ModelRequest, streaming: bool) -> Result<(Value, Vec<Mod
     if let Some(p) = request.top_p {
         body.insert("top_p".into(), json!(p));
     }
+    if request.top_k.is_some() {
+        warnings.push(ModelWarning::LossyEncode {
+            field: "top_k".into(),
+            detail: "OpenAI Responses has no top_k parameter — setting dropped".into(),
+        });
+    }
     if !request.stop_sequences.is_empty() {
         body.insert("stop".into(), json!(request.stop_sequences));
     }
@@ -193,6 +199,9 @@ fn apply_provider_extensions(
         .openai_responses
         .as_ref()
         .and_then(|e| e.reasoning_summary);
+    if let Some(parallel) = request.parallel_tool_calls {
+        body.insert("parallel_tool_calls".into(), json!(parallel));
+    }
     if let Some(openai_responses) = &ext.openai_responses {
         if let Some(seed) = openai_responses.seed {
             body.insert("seed".into(), json!(seed));

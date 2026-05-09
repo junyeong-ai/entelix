@@ -437,3 +437,36 @@ fn openai_responses_codec_warns_on_foreign_vendor_extension() {
         encoded.warnings
     );
 }
+
+#[test]
+fn parallel_tool_calls_passes_through_natively_on_openai_responses() {
+    let codec = OpenAiResponsesCodec::new();
+    let req = ModelRequest {
+        model: "gpt-5".into(),
+        messages: vec![Message::user("hi")],
+        parallel_tool_calls: Some(false),
+        ..ModelRequest::default()
+    };
+    let body =
+        serde_json::from_slice::<serde_json::Value>(&codec.encode(&req).unwrap().body).unwrap();
+    assert_eq!(body["parallel_tool_calls"], false);
+}
+
+#[test]
+fn top_k_emits_lossy_encode_on_openai_responses() {
+    let codec = OpenAiResponsesCodec::new();
+    let req = ModelRequest {
+        model: "gpt-5".into(),
+        messages: vec![Message::user("hi")],
+        top_k: Some(40),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    let saw = encoded.warnings.iter().any(|w| {
+        matches!(
+            w,
+            ModelWarning::LossyEncode { field, .. } if field == "top_k"
+        )
+    });
+    assert!(saw, "OpenAI Responses must emit LossyEncode for top_k");
+}

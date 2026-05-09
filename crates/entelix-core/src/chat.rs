@@ -34,7 +34,7 @@ use crate::ir::{
     ContentPart, JsonSchemaSpec, Message, ModelRequest, ModelResponse, ReasoningEffort,
     ResponseFormat, Role, SystemPrompt, ToolChoice, ToolSpec,
 };
-use crate::overrides::RunOverrides;
+use crate::overrides::{RequestOverrides, RunOverrides};
 use crate::service::{
     BoxedModelService, BoxedStreamingService, ModelInvocation, ModelStream,
     StreamingModelInvocation,
@@ -42,18 +42,53 @@ use crate::service::{
 use crate::stream::{StreamDelta, tap_aggregator};
 use crate::transports::Transport;
 
-/// Patch `request` with any [`RunOverrides`] attached to `ctx`. Both
-/// `complete_full` and `stream_deltas` route through this helper so
-/// the override semantics stay identical across the two surfaces.
-fn apply_run_overrides(request: &mut ModelRequest, ctx: &ExecutionContext) {
-    let Some(overrides) = ctx.extension::<RunOverrides>() else {
-        return;
-    };
-    if let Some(model) = overrides.model() {
-        model.clone_into(&mut request.model);
+/// Patch `request` with any [`RunOverrides`] and [`RequestOverrides`]
+/// attached to `ctx`. Both `complete_full` and `stream_deltas` route
+/// through this helper so the override semantics stay identical
+/// across the two surfaces.
+///
+/// `RunOverrides` patches agent-loop-owned fields (`model`,
+/// `system`); `RequestOverrides` patches `ModelRequest`-shaped
+/// sampling knobs (`temperature`, `top_p`, `max_tokens`,
+/// `stop_sequences`, `reasoning_effort`, `tool_choice`,
+/// `response_format`). Either, both, or neither may be present.
+fn apply_overrides(request: &mut ModelRequest, ctx: &ExecutionContext) {
+    if let Some(run) = ctx.extension::<RunOverrides>() {
+        if let Some(model) = run.model() {
+            model.clone_into(&mut request.model);
+        }
+        if let Some(system) = run.system_prompt() {
+            request.system = system.clone();
+        }
     }
-    if let Some(system) = overrides.system_prompt() {
-        request.system = system.clone();
+    if let Some(req) = ctx.extension::<RequestOverrides>() {
+        if let Some(t) = req.temperature() {
+            request.temperature = Some(t);
+        }
+        if let Some(p) = req.top_p() {
+            request.top_p = Some(p);
+        }
+        if let Some(k) = req.top_k() {
+            request.top_k = Some(k);
+        }
+        if let Some(n) = req.max_tokens() {
+            request.max_tokens = Some(n);
+        }
+        if let Some(sequences) = req.stop_sequences() {
+            request.stop_sequences = sequences.to_vec();
+        }
+        if let Some(effort) = req.reasoning_effort() {
+            request.reasoning_effort = Some(effort.clone());
+        }
+        if let Some(choice) = req.tool_choice() {
+            request.tool_choice = choice.clone();
+        }
+        if let Some(format) = req.response_format() {
+            request.response_format = Some(format.clone());
+        }
+        if let Some(parallel) = req.parallel_tool_calls() {
+            request.parallel_tool_calls = Some(parallel);
+        }
     }
 }
 
@@ -75,6 +110,7 @@ pub struct ChatModelConfig {
     system: SystemPrompt,
     temperature: Option<f32>,
     top_p: Option<f32>,
+    top_k: Option<u32>,
     stop_sequences: Vec<String>,
     tools: Vec<ToolSpec>,
     tool_choice: ToolChoice,
@@ -99,6 +135,7 @@ impl ChatModelConfig {
             system: SystemPrompt::default(),
             temperature: None,
             top_p: None,
+            top_k: None,
             stop_sequences: Vec::new(),
             tools: Vec::new(),
             tool_choice: ToolChoice::default(),
@@ -141,6 +178,13 @@ impl ChatModelConfig {
         self.top_p
     }
 
+    /// Top-k sampling parameter (`None` ⇒ vendor default). Codec
+    /// support follows the IR mapping documented on
+    /// [`crate::ir::ModelRequest::top_k`].
+    pub const fn top_k(&self) -> Option<u32> {
+        self.top_k
+    }
+
     /// Stop sequences.
     pub fn stop_sequences(&self) -> &[String] {
         &self.stop_sequences
@@ -176,9 +220,11 @@ impl ChatModelConfig {
             max_tokens: self.max_tokens,
             temperature: self.temperature,
             top_p: self.top_p,
+            top_k: self.top_k,
             stop_sequences: self.stop_sequences.clone(),
             tools: self.tools.clone(),
             tool_choice: self.tool_choice.clone(),
+            parallel_tool_calls: None,
             response_format: None,
             cache_key: None,
             cached_content: None,
@@ -453,6 +499,15 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         self
     }
 
+    /// Set top-k sampling parameter. Native on Anthropic, Gemini,
+    /// and Bedrock-Anthropic; OpenAI codecs surface as
+    /// `LossyEncode`.
+    #[must_use]
+    pub const fn with_top_k(mut self, k: u32) -> Self {
+        self.config.top_k = Some(k);
+        self
+    }
+
     /// Append one stop sequence.
     #[must_use]
     pub fn with_stop_sequence(mut self, s: impl Into<String>) -> Self {
@@ -649,7 +704,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
             budget.check_pre_request()?;
         }
         let mut request = self.config.build_request(messages);
-        apply_run_overrides(&mut request, ctx);
+        apply_overrides(&mut request, ctx);
         let invocation = ModelInvocation::new(request, ctx.clone());
         let response = self.service().oneshot(invocation).await?;
         if let Some(budget) = &budget {
@@ -720,7 +775,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
                 budget.check_pre_request()?;
             }
             let mut request = self.config.build_request(conversation.clone());
-            apply_run_overrides(&mut request, ctx);
+            apply_overrides(&mut request, ctx);
             request.response_format = Some(format.clone());
 
             let invocation = ModelInvocation::new(request, ctx.clone());
@@ -805,7 +860,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
                 budget.check_pre_request()?;
             }
             let mut request = self.config.build_request(conversation.clone());
-            apply_run_overrides(&mut request, ctx);
+            apply_overrides(&mut request, ctx);
             request.response_format = Some(format.clone());
 
             let invocation = ModelInvocation::new(request, ctx.clone());
@@ -895,7 +950,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
             budget.check_pre_request()?;
         }
         let mut request = self.config.build_request(messages);
-        apply_run_overrides(&mut request, ctx);
+        apply_overrides(&mut request, ctx);
         let invocation = StreamingModelInvocation::new(ModelInvocation::new(request, ctx.clone()));
         let model_stream = self.streaming_service().oneshot(invocation).await?;
         let ModelStream { stream, completion } = model_stream;
@@ -986,7 +1041,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
             budget.check_pre_request()?;
         }
         let mut request = self.config.build_request(messages);
-        apply_run_overrides(&mut request, ctx);
+        apply_overrides(&mut request, ctx);
         request.response_format = Some(format);
 
         let invocation = StreamingModelInvocation::new(ModelInvocation::new(request, ctx.clone()));

@@ -110,12 +110,6 @@ impl ProviderExtensions {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct AnthropicExt {
-    /// `disable_parallel_tool_use` — when `true`, Anthropic emits
-    /// at most one `tool_use` block per turn even when the model
-    /// would otherwise parallelise. Useful for tools that mutate
-    /// shared state and cannot run concurrently.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub disable_parallel_tool_use: Option<bool>,
     /// `metadata.user_id` — Anthropic stamps this on the request
     /// for end-user attribution in their abuse-monitoring stack.
     /// Operator pseudonymous id, not a PII identifier.
@@ -131,13 +125,6 @@ pub struct AnthropicExt {
 }
 
 impl AnthropicExt {
-    /// Set `disable_parallel_tool_use`. Builder-style.
-    #[must_use]
-    pub const fn with_disable_parallel_tool_use(mut self, disable: bool) -> Self {
-        self.disable_parallel_tool_use = Some(disable);
-        self
-    }
-
     /// Set the abuse-monitoring `user_id`.
     #[must_use]
     pub fn with_user_id(mut self, user_id: impl Into<String>) -> Self {
@@ -350,7 +337,7 @@ mod tests {
     fn builder_chain_attaches_each_vendor_ext() {
         let ext = ProviderExtensions::default()
             .with_anthropic(AnthropicExt {
-                disable_parallel_tool_use: Some(true),
+                user_id: Some("op-1".into()),
                 ..Default::default()
             })
             .with_openai_chat(OpenAiChatExt {
@@ -370,8 +357,8 @@ mod tests {
             });
         assert!(!ext.is_empty());
         assert_eq!(
-            ext.anthropic.as_ref().unwrap().disable_parallel_tool_use,
-            Some(true)
+            ext.anthropic.as_ref().unwrap().user_id.as_deref(),
+            Some("op-1")
         );
         assert_eq!(ext.openai_chat.as_ref().unwrap().seed, Some(42));
         assert_eq!(ext.gemini.as_ref().unwrap().candidate_count, Some(2));
@@ -390,11 +377,7 @@ mod tests {
     #[test]
     fn provider_extensions_serde_round_trip() {
         let ext = ProviderExtensions::default()
-            .with_anthropic(
-                AnthropicExt::default()
-                    .with_disable_parallel_tool_use(true)
-                    .with_user_id("op-9"),
-            )
+            .with_anthropic(AnthropicExt::default().with_user_id("op-9"))
             .with_gemini(GeminiExt {
                 safety_settings: vec![GeminiSafetyOverride {
                     category: "HARM_CATEGORY_HATE_SPEECH".into(),

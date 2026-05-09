@@ -387,3 +387,43 @@ fn gemini_codec_warns_on_foreign_vendor_extension() {
         encoded.warnings
     );
 }
+
+#[test]
+fn top_k_passes_through_natively_on_gemini() {
+    let codec = GeminiCodec::new();
+    let req = ModelRequest {
+        model: "gemini-2.5-pro".into(),
+        messages: vec![Message::user("hi")],
+        top_k: Some(40),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&encoded.body).unwrap();
+    assert_eq!(body["generationConfig"]["topK"], 40);
+    assert!(
+        encoded.warnings.iter().all(|w| !matches!(
+            w,
+            ModelWarning::LossyEncode { field, .. } if field == "top_k"
+        )),
+        "Gemini native topK must NOT emit LossyEncode"
+    );
+}
+
+#[test]
+fn parallel_tool_calls_emits_lossy_encode_on_gemini() {
+    let codec = GeminiCodec::new();
+    let req = ModelRequest {
+        model: "gemini-2.5-pro".into(),
+        messages: vec![Message::user("hi")],
+        parallel_tool_calls: Some(true),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    let saw = encoded.warnings.iter().any(|w| {
+        matches!(
+            w,
+            ModelWarning::LossyEncode { field, .. } if field == "parallel_tool_calls"
+        )
+    });
+    assert!(saw, "Gemini must emit LossyEncode for parallel_tool_calls");
+}

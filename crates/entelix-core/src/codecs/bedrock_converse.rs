@@ -187,6 +187,35 @@ fn build_body(request: &ModelRequest) -> Result<(Value, Vec<ModelWarning>)> {
     if !inference_config.is_empty() {
         body.insert("inferenceConfig".into(), Value::Object(inference_config));
     }
+    if let Some(k) = request.top_k {
+        // Bedrock Converse `inferenceConfig` does not expose `top_k`;
+        // for Anthropic-family models the parameter rides via
+        // `additionalModelRequestFields.top_k`. Other Bedrock model
+        // families (Nova, Mistral, Llama, …) have no `top_k`
+        // equivalent — surface a typed lossy snap so the operator
+        // sees the drop rather than a silently ignored field.
+        if is_bedrock_anthropic(&request.model) {
+            let mut additional = body
+                .remove("additionalModelRequestFields")
+                .and_then(|v| match v {
+                    Value::Object(o) => Some(o),
+                    _ => None,
+                })
+                .unwrap_or_default(); // silent-fallback-ok: caller-initiated additionalModelRequestFields nesting — fresh empty Map when absent or non-object
+            additional.insert("top_k".into(), json!(k));
+            body.insert(
+                "additionalModelRequestFields".into(),
+                Value::Object(additional),
+            );
+        } else {
+            warnings.push(ModelWarning::LossyEncode {
+                field: "top_k".into(),
+                detail: "Bedrock Converse non-Anthropic models have no top_k parameter — \
+                         setting dropped"
+                    .into(),
+            });
+        }
+    }
 
     if !request.tools.is_empty() {
         let mut tool_config = Map::new();
@@ -477,28 +506,30 @@ fn apply_provider_extensions(
             body.insert("performanceConfig".into(), json!({ "latency": tier }));
         }
     }
+    // IR `parallel_tool_calls` has no native Bedrock Converse
+    // toggle (the on-Anthropic field rides under `tool_choice` but
+    // Converse does not surface it); emit a field-precise lossy
+    // signal so the operator sees the drop.
+    if request.parallel_tool_calls.is_some() {
+        warnings.push(ModelWarning::LossyEncode {
+            field: "parallel_tool_calls".into(),
+            detail: "Bedrock Converse exposes no equivalent toggle — \
+                     setting dropped on the wire"
+                .into(),
+        });
+    }
     // Anthropic-on-Bedrock: a subset of `AnthropicExt` rides through
     // `additionalModelRequestFields`, the rest is genuinely
-    // unreachable on the Converse wire. Emit field-precise
-    // `LossyEncode` warnings so the operator sees exactly which
-    // setting was honoured and which was dropped.
-    if let Some(anthropic) = &ext.anthropic {
-        if anthropic.disable_parallel_tool_use.is_some() {
-            warnings.push(ModelWarning::LossyEncode {
-                field: "provider_extensions.anthropic.disable_parallel_tool_use".into(),
-                detail: "Bedrock Converse exposes no equivalent toggle — \
-                         setting dropped on the wire"
-                    .into(),
-            });
-        }
-        if anthropic.user_id.is_some() {
-            warnings.push(ModelWarning::LossyEncode {
-                field: "provider_extensions.anthropic.user_id".into(),
-                detail: "Bedrock Converse has no per-request user-id \
-                         metadata channel — setting dropped"
-                    .into(),
-            });
-        }
+    // unreachable on the Converse wire.
+    if let Some(anthropic) = &ext.anthropic
+        && anthropic.user_id.is_some()
+    {
+        warnings.push(ModelWarning::LossyEncode {
+            field: "provider_extensions.anthropic.user_id".into(),
+            detail: "Bedrock Converse has no per-request user-id \
+                     metadata channel — setting dropped"
+                .into(),
+        });
     }
     if ext.openai_chat.is_some() {
         warnings.push(ModelWarning::ProviderExtensionIgnored {

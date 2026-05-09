@@ -10,7 +10,7 @@ documentation.workspace = true
 description = "entelix cloud transports — Bedrock, Vertex, Foundry; OAuth refresh (gcp_auth, aws-sigv4, azure_identity)"
 keywords.workspace = true
 categories.workspace = true
-readme.workspace = true
+readme = "README.md"
 
 [lints]
 workspace = true

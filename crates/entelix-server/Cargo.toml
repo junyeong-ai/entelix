@@ -10,7 +10,7 @@ documentation.workspace = true
 description = "entelix HTTP service — axum + 5-mode SSE streaming + multi-tenant header extraction (LangServe substitute)"
 keywords.workspace = true
 categories.workspace = true
-readme.workspace = true
+readme = "README.md"
 
 [lints]
 workspace = true

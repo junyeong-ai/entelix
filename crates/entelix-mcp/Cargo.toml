@@ -10,7 +10,7 @@ documentation.workspace = true
 description = "entelix MCP integration — JSON-RPC 2.0 over HTTP, per-tenant pool, lazy provisioning"
 keywords.workspace = true
 categories.workspace = true
-readme.workspace = true
+readme = "README.md"
 
 [lints]
 workspace = true

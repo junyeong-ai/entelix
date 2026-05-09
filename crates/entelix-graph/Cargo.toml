@@ -10,7 +10,7 @@ documentation.workspace = true
 description = "entelix control-flow contract — StateGraph<S>, Reducer, conditional/Send edges, subgraph, Checkpointer trait, interrupt API"
 keywords.workspace = true
 categories.workspace = true
-readme.workspace = true
+readme = "README.md"
 
 [lints]
 workspace = true

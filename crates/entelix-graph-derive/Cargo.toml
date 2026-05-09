@@ -10,7 +10,7 @@ documentation.workspace = true
 description = "entelix proc-macro — #[derive(StateMerge)] for per-field Annotated<T, R> reducer composition on StateGraph state types"
 keywords.workspace = true
 categories.workspace = true
-readme.workspace = true
+readme = "README.md"
 
 [lints]
 workspace = true

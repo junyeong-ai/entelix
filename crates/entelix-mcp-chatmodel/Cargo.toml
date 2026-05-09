@@ -10,7 +10,7 @@ documentation.workspace = true
 description = "entelix companion — bridges MCP `sampling/createMessage` server-initiated requests to an `entelix_core::ChatModel<C, T>`"
 keywords.workspace = true
 categories.workspace = true
-readme.workspace = true
+readme = "README.md"
 
 [lints]
 workspace = true

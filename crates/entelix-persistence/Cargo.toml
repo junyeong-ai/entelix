@@ -10,7 +10,7 @@ documentation.workspace = true
 description = "entelix persistence — Postgres + Redis impls of Checkpointer, Store, SessionLog, plus distributed session lock"
 keywords.workspace = true
 categories.workspace = true
-readme.workspace = true
+readme = "README.md"
 
 [lints]
 workspace = true

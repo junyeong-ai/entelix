@@ -247,7 +247,7 @@ where
             // a tracing event so the operator sees what happened.
             Some(name) => {
                 tracing::warn!(
-                    target: "entelix.agents.supervisor",
+                    target: "entelix_agents::supervisor",
                     unknown_agent = %name,
                     "supervisor router emitted decision routing to '{name}' but no AgentEntry by that name; finishing"
                 );

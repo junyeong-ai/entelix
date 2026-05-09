@@ -73,7 +73,7 @@ impl<D: Send + Sync + 'static> InnerToolService<D> {
             .build(&metadata.input_schema)
             .unwrap_or_else(|err| {
                 tracing::warn!(
-                    target: "entelix.tools",
+                    target: "entelix_core::tools",
                     tool = %metadata.name,
                     error = %err,
                     "tool input schema failed to compile; falling back to a permissive validator"

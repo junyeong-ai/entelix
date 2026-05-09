@@ -622,7 +622,7 @@ async fn handle_server_request(
             Some(provider) => match provider.list_roots().await {
                 Ok(roots) => success_response(&request.id, RootsListResult { roots }),
                 Err(e) => {
-                    tracing::error!(target: "entelix.mcp.dispatch", error = %e, "RootsProvider failed");
+                    tracing::error!(target: "entelix_mcp::client", error = %e, "RootsProvider failed");
                     error_response(&request.id, -32603, "RootsProvider failed".into())
                 }
             },
@@ -639,12 +639,12 @@ async fn handle_server_request(
                 Ok(elicit_req) => match provider.elicit(elicit_req).await {
                     Ok(resp) => success_response(&request.id, resp),
                     Err(e) => {
-                        tracing::error!(target: "entelix.mcp.dispatch", error = %e, "ElicitationProvider failed");
+                        tracing::error!(target: "entelix_mcp::client", error = %e, "ElicitationProvider failed");
                         error_response(&request.id, -32603, "ElicitationProvider failed".into())
                     }
                 },
                 Err(e) => {
-                    tracing::error!(target: "entelix.mcp.dispatch", error = %e, "Invalid elicitation params");
+                    tracing::error!(target: "entelix_mcp::client", error = %e, "Invalid elicitation params");
                     error_response(&request.id, -32602, "Invalid elicitation params".into())
                 }
             },
@@ -661,12 +661,12 @@ async fn handle_server_request(
                 Ok(sample_req) => match provider.sample(sample_req).await {
                     Ok(resp) => success_response(&request.id, resp),
                     Err(e) => {
-                        tracing::error!(target: "entelix.mcp.dispatch", error = %e, "SamplingProvider failed");
+                        tracing::error!(target: "entelix_mcp::client", error = %e, "SamplingProvider failed");
                         error_response(&request.id, -32603, "SamplingProvider failed".into())
                     }
                 },
                 Err(e) => {
-                    tracing::error!(target: "entelix.mcp.dispatch", error = %e, "Invalid sampling params");
+                    tracing::error!(target: "entelix_mcp::client", error = %e, "Invalid sampling params");
                     error_response(&request.id, -32602, "Invalid sampling params".into())
                 }
             },

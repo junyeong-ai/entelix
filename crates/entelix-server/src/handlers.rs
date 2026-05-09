@@ -224,7 +224,7 @@ where
             && err.is_panic()
         {
             tracing::error!(
-                target: "entelix.server",
+                target: "entelix_server::handlers",
                 "SSE streaming task panicked"
             );
             let _ = supervisor_tx

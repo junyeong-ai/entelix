@@ -315,7 +315,7 @@ fn map_chat_error(err: &entelix_core::Error) -> McpError {
         _ => -32603,
     };
     tracing::error!(
-        target: "entelix.mcp.sampling",
+        target: "entelix_mcp::chatmodel",
         error = %err,
         "MCP sampling chat-model failure",
     );

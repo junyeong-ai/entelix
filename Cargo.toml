@@ -229,7 +229,7 @@ struct_excessive_bools = "warn"
 # Profile tuning
 # ─────────────────────────────────────────────────────────────────────────
 
-# Workspace dev profile is tuned for a 22-crate workspace with 114
+# Workspace dev profile is tuned for a 21-crate workspace with 114
 # integration-test binaries and 18 examples — every binary statically
 # links the full dependency graph (2447 transitive crates). The four
 # axes below cut `target/` from the multi-tens-of-GB stock-default

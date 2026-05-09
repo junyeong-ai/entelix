@@ -117,7 +117,7 @@ impl Drop for LockGuard {
     fn drop(&mut self) {
         if !self.released {
             tracing::warn!(
-                target: "entelix.persistence::lock",
+                target: "entelix_persistence::lock",
                 key = %self.key,
                 held_ms = self.acquired_at.elapsed().as_millis() as u64,
                 "LockGuard dropped without explicit release; lock will expire by TTL only"
@@ -171,7 +171,7 @@ where
     // Best-effort release — TTL is the safety net.
     if let Err(e) = lock.release(guard).await {
         tracing::warn!(
-            target: "entelix.persistence::lock",
+            target: "entelix_persistence::lock",
             error = %e,
             "lock release failed; relying on TTL expiry"
         );

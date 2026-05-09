@@ -85,7 +85,7 @@ fn warn_dropped_first_event() {
         .is_ok()
     {
         tracing::debug!(
-            target: "entelix.agents",
+            target: "entelix_agents",
             "DroppingSink dropped first agent event — telemetry is not wired. \
              Pass an explicit sink via Agent::builder().with_sink(...) — see \
              ChannelSink, BroadcastSink, CaptureSink, or wire OtelLayer."
@@ -245,7 +245,7 @@ fn warn_no_subscribers_once() {
         .is_ok()
     {
         tracing::debug!(
-            target: "entelix.agents::sink",
+            target: "entelix_agents::sink",
             "BroadcastSink: no active subscribers; event dropped (further drops will be silent — \
              investigate whether the consumer crashed or was detached)"
         );

@@ -681,7 +681,7 @@ where
     /// signal.
     fn emit_depth_histogram(&self, depth: usize, ctx: &ExecutionContext) {
         tracing::event!(
-            target: "entelix.graph",
+            target: "entelix_graph::compiled",
             tracing::Level::DEBUG,
             entelix.graph.depth = depth,
             entelix.graph.recursion_limit = self.recursion_limit,

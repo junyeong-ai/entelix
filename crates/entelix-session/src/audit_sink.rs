@@ -67,7 +67,7 @@ fn spawn_append(log: Arc<dyn SessionLog>, key: ThreadKey, event: GraphEvent) {
     tokio::spawn(async move {
         if let Err(err) = log.append(&key, &[event]).await {
             tracing::warn!(
-                target: "entelix.session.audit",
+                target: "entelix_session::audit_sink",
                 tenant_id = %key.tenant_id(),
                 thread_id = %key.thread_id(),
                 error = %err,

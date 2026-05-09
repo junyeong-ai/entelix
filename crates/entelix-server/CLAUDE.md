@@ -13,8 +13,8 @@ Axum integration. `AgentRouterBuilder` produces an `axum::Router` exposing the c
 ## Crate-local rules
 
 - **Tenant routing matches the configured `TenantMode`** — `Default` keeps `ExecutionContext::tenant_id()` at `DEFAULT_TENANT_ID`; `RequiredHeader(name)` extracts from the named header and rejects missing / non-UTF-8 / whitespace-only with a typed 4xx (invariant 11). There is no silent fall-through from strict to default.
-- **`Error::Interrupted` maps to `202 Accepted`** — graph node requested HITL; the response body carries the `payload` for the operator to drive the resume call. Per.
-- **No request-time agent registration** — the runnable is wired at builder time. Replacing it post-build requires a fresh `AgentRouterBuilder` instance. Avoids the F11 race window.
+- **`Error::Interrupted` maps to `202 Accepted`** — graph node requested HITL; the response body carries the `kind` + `payload` for the operator to drive the resume call.
+- **No request-time agent registration** — the runnable is wired at builder time. Replacing it post-build requires a fresh `AgentRouterBuilder` instance. Avoids the post-build mutation race where an in-flight request could observe a half-swapped runnable.
 - **SSE backpressure honours `tower_http::limit::ResponseBodyLimitLayer`** — operators wire it explicitly per deployment policy. Server crate doesn't pick a default cap.
 - **No filesystem / shell** (invariant 9) — server is a thin axum integration, never exposes its own sandbox.
 - **Builder-error vs handler-error split is load-bearing** — `BuildError` flows to the operator at startup (no `IntoResponse`); `ServerError` flows to the HTTP caller (JSON envelope). Adding a startup-only failure mode? extend `BuildError`. Adding a request-time failure? extend `ServerError`. Don't conflate the two.

@@ -17,6 +17,3 @@ Companion crate (vendor-neutral). Bridges the MCP `sampling/createMessage` serve
 
 - Mutating the wrapped `ChatModel` between calls — overrides flow through the per-call clone.
 - Dropping `model_preferences` silently — at least the `tracing::debug!` must fire so operators can audit which advisory hints arrived.
-
-
-- `crates/entelix/examples/17_mcp_sampling_provider.rs` — integration demo.

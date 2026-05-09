@@ -4,7 +4,7 @@ Multi-tenant operational primitives. Composes through `tower::Layer<S>` over `en
 
 ## Surface
 
-- **`RateLimiter` trait** + `TokenBucketLimiter` — async, per-key, time-injectable (`Clock` trait + `SystemClock`).
+- **`RateLimiter` trait** + `TokenBucketLimiter` — async, per-key, time-injectable. Time abstraction (`Clock` trait + `SystemClock`) lives in `entelix-core::time` so any sub-crate can take a time source without depending on `entelix-policy`.
 - **`PiiRedactor` trait** + `RegexRedactor` — bidirectional. Runs `pre_request` AND `post_response`.
 - **`CostMeter`** + `PricingTable` / `ModelPricing` — `rust_decimal` arithmetic (no float). `charge(tenant, model, usage)` runs only after the response decoder succeeds (transactional, invariant 12).
 - **`QuotaLimiter`** — composite gate: rate (RPS) + budget ceiling (per-tenant cumulative spend cap). Runs *before* the request.

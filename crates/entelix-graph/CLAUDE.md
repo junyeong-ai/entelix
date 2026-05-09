@@ -5,10 +5,10 @@ Control-flow contract (invariant 8). LangGraph parity surface.
 ## Surface
 
 - **`StateGraph<S>`** — typed state, builder methods: `add_node` (full state) / `add_node_with(name, runnable, merger)` (delta + bespoke merger) / `add_contributing_node` (declarative per-field merge via `S: StateMerge`) / `add_edge` / `add_conditional_edges` / `add_send_edges` (parallel fan-out, joins via `S::merge`) / `set_entry_point` / `set_finish_point`. Verb prefixes follow the naming exception (`add_*` for collection inserts, `set_*` for named role).
-- **`CompiledGraph<S>`** — `Runnable<S, S>` impl (`invoke` / `stream`) + `resume(ctx)` / `resume_with(command, ctx)` / `resume_from(checkpoint_id, ctx)`. Enforces `recursion_limit` (default 25) and emits `GraphRecursionError` on overflow.
+- **`CompiledGraph<S>`** — `Runnable<S, S>` impl (`invoke` / `stream`) + `resume(ctx)` / `resume_with(command, ctx)` / `resume_from(checkpoint_id, ctx)`. Enforces `recursion_limit` (default 25) and raises `Error::InvalidRequest` on overflow.
 - **`Reducer<T>` trait** — pure state-merge function. Built-ins: `Replace`, `Append`, `MergeMap`, `Max`. `add_node_with` lets a node return a typed delta merged through the reducer.
-- **`Checkpointer<S>` trait** + `InMemoryCheckpointer<S>` — write-after-each-node persistence. `CheckpointGranularity::{PerNode (default), Off}`. Postgres / Redis impls live in `entelix-persistence`.
-- **HITL** — `interrupt(payload)` raises `Error::Interrupted`; caller resumes with `CompiledGraph::resume_with(Command, &ctx)` where `Command<S>` is `Resume` / `Update(S)` / `GoTo(node)` / `ApproveTool { tool_use_id, decision }` ( typed approval primitive). `interrupt_before(nodes)` / `interrupt_after(nodes)` schedule pauses without code-level interrupts.
+- **`Checkpointer<S>` trait** + `InMemoryCheckpointer<S>` — write-after-each-node persistence. Verb-family read methods (`get_latest` / `get_by_id` / `list_history` per `.claude/rules/naming.md`). `CheckpointGranularity::{PerNode (default), Off}`. Postgres / Redis impls live in `entelix-persistence`.
+- **HITL** — pause primitive lives in `entelix-core::interruption` (`interrupt(payload)` / `interrupt_with(kind, payload)` raise `Error::Interrupted { kind: InterruptionKind, payload }`). This crate's `interrupt_before(nodes)` / `interrupt_after(nodes)` schedule pauses with `kind: InterruptionKind::ScheduledPause { phase, node }`. Resume via `CompiledGraph::resume_with(Command, &ctx)` where `Command<S>` is `Resume` / `Update(S)` / `GoTo(node)` / `ApproveTool { tool_use_id, decision }` (typed approval primitive).
 
 ## Crate-local rules
 

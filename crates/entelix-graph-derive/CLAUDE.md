@@ -14,13 +14,10 @@ Proc-macro for `#[derive(StateMerge)]`. Emits a `<Name>Contribution` companion s
 
 - **Per-field `Annotated<T, R>` semantics** — fields whose type is `Annotated<T, R>` get `Annotated::merge` composition; plain `T` fields default to `Replace` (right-bias). Mixing the two on one struct is the canonical pattern.
 - **Generated identifiers are deterministic** — `<S>Contribution` (concat suffix) so the companion is always discoverable. No randomized suffixes.
-- **Default-overrides bug structurally avoided** — the `Contribution` variant distinguishes "wrote the default" from "didn't write at all" via `Option<T>`. The derive does NOT collapse `None` into the field's `Default` value at merge time. Slice 53 supersedes 's `add_reducing_node` shape that had this bug.
+- **Default-overrides bug structurally avoided** — the `Contribution` variant distinguishes "wrote the default" from "didn't write at all" via `Option<T>`. The derive does NOT collapse `None` into the field's `Default` value at merge time. Supersedes the prior `add_reducing_node` shape that had this bug.
 - **proc-macro hygiene** — every emitted item is `pub`-visible to callers but uses `::entelix_graph::` absolute paths internally so a state struct in any crate can derive without re-exporting graph internals.
 
 ## Forbidden
 
 - A field type the derive cannot reason about (e.g., a generic `T` without a `StateMerge` bound). The macro emits a clear compile error pointing at the offending field.
 - Re-introducing `add_reducing_node` style merge (silent default-collapse). Use `add_contributing_node` + the `Contribution` shape.
-
-
-- `crates/entelix-graph-derive/tests/derive_state_merge.rs` — emit-shape regression suite.

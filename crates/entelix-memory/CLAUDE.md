@@ -5,12 +5,12 @@ Tier-3 cross-thread persistent knowledge. Trait surface + zero-dependency refere
 ## Surface
 
 - **`Namespace`** — `Namespace::new(tenant_id)` (mandatory non-empty `tenant_id`, runtime-asserted) + `with_scope(segment)` builder for nested scopes. No constructor exists that omits `tenant_id` (invariant 11).
-- **`Store<V>` trait** — KV with TTL (`PutOptions { expires_at }`). Methods take `(&self, ctx, namespace, …)` (ctx-first per naming taxonomy).
-- **`VectorStore` trait** — vector + metadata storage. `add` / `search_filtered` keyed on `Namespace`. Reference: `InMemoryVectorStore` (brute-force cosine, namespace-isolated).
-- **`Embedder` trait** + `MeteredEmbedder<E>` — `Arc<Self>` constraint (F10 — pool-shared, no per-call client construction). `MeteredEmbedder` records `gen_ai.embedding.cost` only on `Ok` (invariant 12).
+- **`Store<V>` trait** — KV with TTL (`PutOptions { expires_at }`). Methods take `(&self, ctx, namespace, …)` (ctx-first per naming taxonomy). Read methods follow the `get_*` / `list_*` verb-family per `.claude/rules/naming.md`.
+- **`VectorStore` trait** — vector + metadata storage (tier 1 of the three-tier semantic-memory layering — see `semantic.rs` module docs). `add` / `add_batch` (suffix form) / `search_filtered` keyed on `Namespace`. Reference: `InMemoryVectorStore` (brute-force cosine, namespace-isolated).
+- **`Embedder` trait** + `MeteredEmbedder<E>` — `Arc<Self>` constraint so pools are shared, never per-call constructed. `MeteredEmbedder` records `gen_ai.embedding.cost` only on `Ok` (invariant 12).
 - **`Retriever` trait** + `Reranker` trait + `MmrReranker` — diversity-aware retrieval composition.
 - **Memory patterns** — `BufferMemory`, `SummaryMemory`, `EntityMemory`, `SemanticMemory<E, V>`, `EpisodicMemory<V>`, `ConsolidatingBufferMemory` (LangChain-style facades over `Store<V>`).
-- **`GraphMemory<N, E>` trait** + `InMemoryGraphMemory<N, E>` — typed-node + timestamped-edge knowledge graph (BFS traversal, shortest-path). Postgres-backed `PgGraphMemory` companion folds traversal into a single `WITH RECURSIVE` round-trip.
+- **`GraphMemory<N, E>` trait** + `InMemoryGraphMemory<N, E>` — typed-node + timestamped-edge knowledge graph. Read methods follow the `get_*` verb-family (`get_node` / `get_edge`); BFS traversal via `traverse(start, max_depth, direction)` and `find_path(from, to, max_depth)`. Postgres-backed `PgGraphMemory` companion folds traversal into a single `WITH RECURSIVE` round-trip.
 
 ## Companion crates (1.0)
 

@@ -92,28 +92,28 @@ OTel emits `gen_ai.usage.cached_input_tokens` and `gen_ai.usage.cache_creation_i
 
 Cost emission (`gen_ai.usage.cost`) fires on the terminal `StreamDelta::Stop` after `StreamAggregator::finalize()` produces the final `ModelResponse`. A stream that errors mid-flight surfaces the error and never charges (invariant 12).
 
-## Trait production-impl status (1.0)
+## Trait production-impl status
 
-Operator-extension traits ship with a documented "production impl status" so 1.0 expectations stay honest:
+Operator-extension traits ship with a documented "production impl status" so expectations stay honest:
 
 | Trait | Status | First-party impl(s) | Companion crate(s) |
 |---|---|---|---|
 | `Codec` | ✅ shipped | `AnthropicMessagesCodec`, `OpenAiChatCodec`, `OpenAiResponsesCodec`, `GeminiCodec`, `BedrockConverseCodec` | — |
 | `Transport` | ✅ shipped | `DirectTransport` | `entelix-cloud` (Bedrock SigV4, Vertex GCP, Azure Foundry) |
 | `Tool<D>` | ✅ shipped | `Calculator`, `HttpFetchTool`, `SchemaToolAdapter`, sandboxed-* | — |
-| `Embedder` | ✅ shipped | `MockEmbedder` (test) | `entelix-memory-openai` |
-| `VectorStore` | ✅ shipped | `InMemoryVectorStore` (test) | `entelix-memory-pgvector`, `entelix-memory-qdrant` |
+| `Embedder` | ✅ shipped | `MeteredEmbedder<E>` (cost-tracking decorator) | `entelix-memory-openai` |
+| `VectorStore` | ✅ shipped | `InMemoryVectorStore` | `entelix-memory-pgvector`, `entelix-memory-qdrant` |
 | `GraphMemory<N, E>` | ✅ shipped | `InMemoryGraphMemory` | `entelix-graphmemory-pg` |
 | `Checkpointer<S>` | ✅ shipped | `InMemoryCheckpointer` | `entelix-persistence` (Postgres + Redis) |
 | `SessionLog` | ✅ shipped | `InMemorySessionLog` | `entelix-persistence` (Postgres + Redis) |
 | `Approver` | ✅ shipped | `AlwaysApprove`, `ChannelApprover` | — |
 | `AuditSink` | ✅ shipped | `SessionAuditSink` (in `entelix-session`) | — |
-| `Sandbox` | ⚠️ **BYO at 1.0** | `MockSandbox` (test only) | companion planned post-1.0 (`entelix-sandbox-e2b`, `entelix-sandbox-modal`) |
-| `SearchProvider` | ⚠️ **BYO at 1.0** | `MockProvider` (test only) | companion planned post-1.0 (`entelix-search-tavily`, `entelix-search-brave`) |
+| `Sandbox` | ⚠️ **BYO** | `MockSandbox` (in-memory, for tests) | companion crate (e2b, modal, …) when ecosystem demand lines up |
+| `SearchProvider` | ⚠️ **BYO** | — | companion crate (Tavily, Brave, …) when ecosystem demand lines up |
 | `RootsProvider` / `ElicitationProvider` / `SamplingProvider` | ✅ shipped | `Static*` impls | `entelix-mcp` `chatmodel-sampling` feature (closes the `Sampling` operator side) |
 | `RateLimiter` | ✅ shipped | `TokenBucketLimiter` | — |
 | `PiiRedactor` | ✅ shipped | `RegexRedactor` | — |
-| `DistributedLock` | ✅ shipped | (in-memory test fixture) | `entelix-persistence` (Postgres advisory lock, Redis lock) |
+| `DistributedLock` | ✅ shipped | — | `entelix-persistence` (Postgres advisory lock, Redis lock) |
 | `Clock` | ✅ shipped | `SystemClock` | — |
 
-**BYO traits** — operators implementing `Sandbox` and `SearchProvider` themselves at 1.0 wire whatever backend (e2b, Tavily, Brave) their deployment requires. No first-party companion ships at 1.0 — shipping a fake `Mock*` companion would violate invariant 14 (no production-shaped placeholders). Companions land post-1.0 once a stable backend choice emerges.
+**BYO traits** — operators implementing `Sandbox` and `SearchProvider` themselves wire whatever backend (e2b, Tavily, Brave) their deployment requires. No first-party companion ships today — a placeholder companion would violate invariant 14 (no production-shaped fakes). Companions land per-vendor when a stable backend choice consolidates in the ecosystem.

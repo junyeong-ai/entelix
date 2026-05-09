@@ -72,7 +72,7 @@ impl SemanticMemoryBackend for FakeBackend {
         Ok(())
     }
 
-    async fn batch_add(&self, _ctx: &ExecutionContext, documents: Vec<Document>) -> Result<()> {
+    async fn add_batch(&self, _ctx: &ExecutionContext, documents: Vec<Document>) -> Result<()> {
         self.docs.lock().extend(documents);
         Ok(())
     }
@@ -192,7 +192,7 @@ impl AuditSink for RecordingAuditSink {
             .lock()
             .push((tier.to_owned(), namespace_key.to_owned(), hits));
     }
-    fn record_usage_limit_exceeded(&self, _axis: &str, _limit: u64, _observed: u64) {}
+    fn record_usage_limit_exceeded(&self, _breach: &entelix_core::UsageLimitBreach) {}
 }
 
 #[tokio::test]

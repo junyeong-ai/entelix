@@ -1,16 +1,14 @@
-//! `RunBudget` — five-axis usage cap checked across one logical
+//! `RunBudget` — six-axis usage cap checked across one logical
 //! run, including sub-agent fan-out.
 //!
-//! Mirrors pydantic-ai 1.90's `UsageLimits` shape (Fork 1 audit
-//! synthesis on `project_entelix_2026_05_05_master_plan.md`):
-//!
-//! | Axis                    | Type | Pre-call check | Post-call accumulation |
-//! |-------------------------|------|----------------|------------------------|
-//! | `request_limit`         | u32  | ✓              | accumulate on Ok       |
-//! | `input_tokens_limit`    | u64  | —              | check on Ok            |
-//! | `output_tokens_limit`   | u64  | —              | check on Ok            |
-//! | `total_tokens_limit`    | u64  | —              | check on Ok            |
-//! | `tool_calls_limit`      | u32  | ✓              | accumulate on Ok       |
+//! | Axis                    | Type      | Pre-call check | Post-call accumulation |
+//! |-------------------------|-----------|----------------|------------------------|
+//! | `request_limit`         | u32       | ✓              | accumulate on Ok       |
+//! | `input_tokens_limit`    | u64       | —              | check on Ok            |
+//! | `output_tokens_limit`   | u64       | —              | check on Ok            |
+//! | `total_tokens_limit`    | u64       | —              | check on Ok            |
+//! | `tool_calls_limit`      | u32       | ✓              | accumulate on Ok       |
+//! | `cost_usd_limit`        | `Decimal` | —              | check on Ok            |
 //!
 //! Pre-call axes (`request_limit`, `tool_calls_limit`) are checked
 //! before the dispatch reaches the wire — the SDK knows the
@@ -45,44 +43,133 @@
 //! and observed value.
 
 use std::sync::Arc;
+use std::sync::Mutex;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
 use crate::ir::Usage;
 
-/// Which [`RunBudget`] axis surfaced a breach.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
+/// One [`RunBudget`] axis breach — typed pair of axis-discriminator
+/// and magnitude. Each variant carries the magnitude shape the axis
+/// uses (`u64` count for token / request / tool-call axes,
+/// [`Decimal`] USD for the cost axis), so axis-magnitude pairing is
+/// type-enforced rather than runtime-validated.
+///
+/// Carried on [`crate::Error::UsageLimitExceeded`] and
+/// `entelix_session::GraphEvent::UsageLimitExceeded`; emitted to
+/// `AuditSink::record_usage_limit_exceeded` for compliance /
+/// billing replay.
+///
+/// `non_exhaustive` so post-1.0 axes ship as MINOR. Construct via
+/// the typed variants directly — `UsageLimitBreach::Requests {
+/// limit, observed }` is the canonical shape.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "axis", rename_all = "snake_case")]
 #[non_exhaustive]
-pub enum UsageLimitAxis {
-    /// `request_limit` — number of model dispatches per run.
-    Requests,
-    /// `input_tokens_limit` — cumulative input tokens across the run.
-    InputTokens,
-    /// `output_tokens_limit` — cumulative output tokens.
-    OutputTokens,
-    /// `total_tokens_limit` — cumulative input + output tokens.
-    TotalTokens,
-    /// `tool_calls_limit` — number of tool dispatches per run.
-    ToolCalls,
+pub enum UsageLimitBreach {
+    /// Request-count cap breached. Pre-call check fired.
+    Requests {
+        /// Configured cap (model dispatches per run).
+        limit: u64,
+        /// Counter value when the cap was hit.
+        observed: u64,
+    },
+    /// Cumulative-input-tokens cap breached. Post-call check fired.
+    InputTokens {
+        /// Configured cap (cumulative input tokens).
+        limit: u64,
+        /// Cumulative input tokens after the breaching call.
+        observed: u64,
+    },
+    /// Cumulative-output-tokens cap breached. Post-call check fired.
+    OutputTokens {
+        /// Configured cap (cumulative output tokens).
+        limit: u64,
+        /// Cumulative output tokens after the breaching call.
+        observed: u64,
+    },
+    /// Cumulative input + output tokens cap breached.
+    TotalTokens {
+        /// Configured cap (cumulative input + output tokens).
+        limit: u64,
+        /// Cumulative total after the breaching call.
+        observed: u64,
+    },
+    /// Tool-call-count cap breached. Pre-call check fired.
+    ToolCalls {
+        /// Configured cap (tool dispatches per run).
+        limit: u64,
+        /// Counter value when the cap was hit.
+        observed: u64,
+    },
+    /// USD cost cap breached. Post-call check fired after
+    /// [`RunBudget::observe_cost`] accumulated the per-call charge.
+    CostUsd {
+        /// Configured cap in USD.
+        limit: Decimal,
+        /// Cumulative cost after the breaching charge.
+        observed: Decimal,
+    },
 }
 
-impl std::fmt::Display for UsageLimitAxis {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::Requests => "requests",
-            Self::InputTokens => "input_tokens",
-            Self::OutputTokens => "output_tokens",
-            Self::TotalTokens => "total_tokens",
-            Self::ToolCalls => "tool_calls",
-        };
-        f.write_str(s)
+impl UsageLimitBreach {
+    /// Stable axis-name string used for OTel attribute keys,
+    /// dashboards, and `AuditSink` filtering. Matches the
+    /// snake-case `serde` tag.
+    ///
+    /// Operator-facing API even though [`std::fmt::Display`] also
+    /// encodes the axis — dashboards, log filters, and serde-keyed
+    /// attribute emitters need a stable `&'static str` they can
+    /// compare without parsing the human-readable Display
+    /// rendering.
+    #[must_use]
+    pub const fn axis_name(&self) -> &'static str {
+        match self {
+            Self::Requests { .. } => "requests",
+            Self::InputTokens { .. } => "input_tokens",
+            Self::OutputTokens { .. } => "output_tokens",
+            Self::TotalTokens { .. } => "total_tokens",
+            Self::ToolCalls { .. } => "tool_calls",
+            Self::CostUsd { .. } => "cost_usd",
+        }
     }
 }
 
-/// Five-axis usage cap shared across one logical run (parent
+impl std::fmt::Display for UsageLimitBreach {
+    /// Grep-consistent rendering across every axis:
+    /// `run budget exceeded on <axis> axis: observed <N>, limit <N>`.
+    /// Token / request / tool-call axes render `<N>` as a bare
+    /// number; the cost axis renders `<N>` as a `Decimal` rendered
+    /// in plain (un-prefixed) form. Dashboards regex-extracting
+    /// `observed (\S+), limit (\S+)` get the magnitude on every
+    /// axis without a polarity-by-axis branch.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let axis = self.axis_name();
+        match self {
+            Self::Requests { limit, observed }
+            | Self::InputTokens { limit, observed }
+            | Self::OutputTokens { limit, observed }
+            | Self::TotalTokens { limit, observed }
+            | Self::ToolCalls { limit, observed } => {
+                write!(
+                    f,
+                    "run budget exceeded on {axis} axis: observed {observed}, limit {limit}"
+                )
+            }
+            Self::CostUsd { limit, observed } => {
+                write!(
+                    f,
+                    "run budget exceeded on {axis} axis: observed {observed}, limit {limit}"
+                )
+            }
+        }
+    }
+}
+
+/// Six-axis usage cap shared across one logical run (parent
 /// agent + every sub-agent it dispatches). Cloning the budget —
 /// done implicitly per `ExecutionContext` clone — bumps the
 /// internal `Arc` refcount; sub-agent calls accumulate into the
@@ -100,6 +187,7 @@ pub struct RunBudget {
     output_tokens_limit: Option<u64>,
     total_tokens_limit: Option<u64>,
     tool_calls_limit: Option<u32>,
+    cost_usd_limit: Option<Decimal>,
     state: Arc<RunBudgetState>,
 }
 
@@ -109,6 +197,7 @@ struct RunBudgetState {
     input_tokens: AtomicU64,
     output_tokens: AtomicU64,
     tool_calls: AtomicU32,
+    cost_usd: Mutex<Decimal>,
 }
 
 impl RunBudget {
@@ -164,12 +253,25 @@ impl RunBudget {
         self
     }
 
+    /// Cap cumulative USD cost across the run. Operators wire a
+    /// [`crate::CostCalculator`] (the same one
+    /// `entelix-policy::CostMeter` consumes); the dispatch site
+    /// calls [`Self::observe_cost`] on the `Ok` branch with the
+    /// per-call charge, and the budget surfaces a breach when the
+    /// running total crosses `limit`. Decimal precision matches
+    /// the cost meter's `rust_decimal` precision.
+    #[must_use]
+    pub const fn with_cost_limit_usd(mut self, limit: Decimal) -> Self {
+        self.cost_usd_limit = Some(limit);
+        self
+    }
+
     /// Pre-request gate — checks the request-count cap and, on
     /// success, increments the request counter. Call from the
     /// dispatch site **before** the wire roundtrip. Returns
-    /// [`Error::UsageLimitExceeded`] when the cap is hit; the
-    /// counter is not incremented on failure (the request did
-    /// not actually fire).
+    /// `Error::UsageLimitExceeded(UsageLimitBreach::Requests {.})`
+    /// when the cap is hit; the counter is not incremented on
+    /// failure (the request did not actually fire).
     pub fn check_pre_request(&self) -> Result<()> {
         if let Some(limit) = self.request_limit {
             // Atomic compare-and-swap loop: read current, refuse
@@ -180,11 +282,10 @@ impl RunBudget {
             loop {
                 let current = self.state.requests.load(Ordering::Acquire);
                 if u64::from(current) >= u64::from(limit) {
-                    return Err(Error::UsageLimitExceeded {
-                        axis: UsageLimitAxis::Requests,
+                    return Err(Error::UsageLimitExceeded(UsageLimitBreach::Requests {
                         limit: u64::from(limit),
                         observed: u64::from(current),
-                    });
+                    }));
                 }
                 if self
                     .state
@@ -214,11 +315,10 @@ impl RunBudget {
             loop {
                 let current = self.state.tool_calls.load(Ordering::Acquire);
                 if u64::from(current) >= u64::from(limit) {
-                    return Err(Error::UsageLimitExceeded {
-                        axis: UsageLimitAxis::ToolCalls,
+                    return Err(Error::UsageLimitExceeded(UsageLimitBreach::ToolCalls {
                         limit: u64::from(limit),
                         observed: u64::from(current),
-                    });
+                    }));
                 }
                 if self
                     .state
@@ -265,30 +365,54 @@ impl RunBudget {
         if let Some(limit) = self.input_tokens_limit
             && new_in > limit
         {
-            return Err(Error::UsageLimitExceeded {
-                axis: UsageLimitAxis::InputTokens,
+            return Err(Error::UsageLimitExceeded(UsageLimitBreach::InputTokens {
                 limit,
                 observed: new_in,
-            });
+            }));
         }
         if let Some(limit) = self.output_tokens_limit
             && new_out > limit
         {
-            return Err(Error::UsageLimitExceeded {
-                axis: UsageLimitAxis::OutputTokens,
+            return Err(Error::UsageLimitExceeded(UsageLimitBreach::OutputTokens {
                 limit,
                 observed: new_out,
-            });
+            }));
         }
         if let Some(limit) = self.total_tokens_limit {
             let total = new_in.saturating_add(new_out);
             if total > limit {
-                return Err(Error::UsageLimitExceeded {
-                    axis: UsageLimitAxis::TotalTokens,
+                return Err(Error::UsageLimitExceeded(UsageLimitBreach::TotalTokens {
                     limit,
                     observed: total,
-                });
+                }));
             }
+        }
+        Ok(())
+    }
+
+    /// Post-call cost accumulation — adds the per-call USD charge
+    /// to the running total and surfaces a breach if it crossed
+    /// `cost_usd_limit`. Call from the dispatch site on the **`Ok`
+    /// branch only** (invariant 12 — failed calls never drain the
+    /// budget). Operators integrate by computing the charge from a
+    /// [`crate::CostCalculator`] and threading the result here.
+    pub fn observe_cost(&self, charge_usd: Decimal) -> Result<()> {
+        let observed = {
+            let mut accumulated = self
+                .state
+                .cost_usd
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            *accumulated = accumulated.saturating_add(charge_usd);
+            *accumulated
+        };
+        if let Some(limit) = self.cost_usd_limit
+            && observed > limit
+        {
+            return Err(Error::UsageLimitExceeded(UsageLimitBreach::CostUsd {
+                limit,
+                observed,
+            }));
         }
         Ok(())
     }
@@ -301,11 +425,17 @@ impl RunBudget {
     /// usage to callers without leaking the live `Arc`.
     #[must_use]
     pub fn snapshot(&self) -> UsageSnapshot {
+        let cost_usd = *self
+            .state
+            .cost_usd
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         UsageSnapshot {
             requests: self.state.requests.load(Ordering::Acquire),
             input_tokens: self.state.input_tokens.load(Ordering::Acquire),
             output_tokens: self.state.output_tokens.load(Ordering::Acquire),
             tool_calls: self.state.tool_calls.load(Ordering::Acquire),
+            cost_usd,
         }
     }
 }
@@ -313,7 +443,7 @@ impl RunBudget {
 /// Frozen snapshot of [`RunBudget`] counters at one point in
 /// time. Carried in `AgentRunResult<S>::usage` (B-5) so callers
 /// see the final tally without needing to clone the budget.
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct UsageSnapshot {
     /// Total model dispatches the run made.
@@ -324,6 +454,10 @@ pub struct UsageSnapshot {
     pub output_tokens: u64,
     /// Total tool dispatches.
     pub tool_calls: u32,
+    /// Cumulative USD cost across the run (sum of every
+    /// `observe_cost` charge). Operators that don't wire a
+    /// [`crate::CostCalculator`] see [`Decimal::ZERO`].
+    pub cost_usd: Decimal,
 }
 
 impl UsageSnapshot {
@@ -356,14 +490,13 @@ mod tests {
         budget.check_pre_request().unwrap();
         budget.check_pre_request().unwrap();
         let err = budget.check_pre_request().unwrap_err();
-        assert!(matches!(
-            err,
-            Error::UsageLimitExceeded {
-                axis: UsageLimitAxis::Requests,
+        match err {
+            Error::UsageLimitExceeded(UsageLimitBreach::Requests {
                 limit: 2,
                 observed: 2,
-            }
-        ));
+            }) => {}
+            other => panic!("unexpected: {other:?}"),
+        }
         // Counter was not incremented past the cap.
         assert_eq!(budget.snapshot().requests, 2);
     }
@@ -375,10 +508,7 @@ mod tests {
         let err = budget.check_pre_tool_call().unwrap_err();
         assert!(matches!(
             err,
-            Error::UsageLimitExceeded {
-                axis: UsageLimitAxis::ToolCalls,
-                ..
-            }
+            Error::UsageLimitExceeded(UsageLimitBreach::ToolCalls { .. })
         ));
     }
 
@@ -387,14 +517,13 @@ mod tests {
         let budget = RunBudget::unlimited().with_input_tokens_limit(100);
         budget.observe_usage(&Usage::new(50, 0)).unwrap();
         let err = budget.observe_usage(&Usage::new(60, 0)).unwrap_err();
-        assert!(matches!(
-            err,
-            Error::UsageLimitExceeded {
-                axis: UsageLimitAxis::InputTokens,
+        match err {
+            Error::UsageLimitExceeded(UsageLimitBreach::InputTokens {
                 limit: 100,
                 observed: 110,
-            }
-        ));
+            }) => {}
+            other => panic!("unexpected: {other:?}"),
+        }
     }
 
     #[test]
@@ -404,10 +533,7 @@ mod tests {
         let err = budget.observe_usage(&Usage::new(0, 2)).unwrap_err();
         assert!(matches!(
             err,
-            Error::UsageLimitExceeded {
-                axis: UsageLimitAxis::OutputTokens,
-                ..
-            }
+            Error::UsageLimitExceeded(UsageLimitBreach::OutputTokens { .. })
         ));
     }
 
@@ -416,14 +542,39 @@ mod tests {
         let budget = RunBudget::unlimited().with_total_tokens_limit(100);
         budget.observe_usage(&Usage::new(40, 40)).unwrap();
         let err = budget.observe_usage(&Usage::new(20, 20)).unwrap_err();
-        assert!(matches!(
-            err,
-            Error::UsageLimitExceeded {
-                axis: UsageLimitAxis::TotalTokens,
+        match err {
+            Error::UsageLimitExceeded(UsageLimitBreach::TotalTokens {
                 limit: 100,
                 observed: 120,
+            }) => {}
+            other => panic!("unexpected: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn cost_usd_limit_post_observe_breaks() {
+        use rust_decimal::Decimal;
+        let cap = Decimal::new(50, 2); // $0.50
+        let budget = RunBudget::unlimited().with_cost_limit_usd(cap);
+        budget.observe_cost(Decimal::new(30, 2)).unwrap(); // $0.30
+        let err = budget.observe_cost(Decimal::new(25, 2)).unwrap_err();
+        match err {
+            Error::UsageLimitExceeded(UsageLimitBreach::CostUsd { limit, observed }) => {
+                assert_eq!(limit, cap);
+                assert_eq!(observed, Decimal::new(55, 2)); // $0.55
             }
-        ));
+            other => panic!("unexpected: {other:?}"),
+        }
+        assert_eq!(budget.snapshot().cost_usd, Decimal::new(55, 2));
+    }
+
+    #[test]
+    fn cost_unlimited_accumulates_without_breaching() {
+        use rust_decimal::Decimal;
+        let budget = RunBudget::unlimited();
+        budget.observe_cost(Decimal::new(100, 2)).unwrap(); // $1.00
+        budget.observe_cost(Decimal::new(200, 2)).unwrap(); // $2.00
+        assert_eq!(budget.snapshot().cost_usd, Decimal::new(300, 2));
     }
 
     #[test]
@@ -440,11 +591,35 @@ mod tests {
         let err = parent.check_pre_request().unwrap_err();
         assert!(matches!(
             err,
-            Error::UsageLimitExceeded {
-                axis: UsageLimitAxis::Requests,
-                ..
-            }
+            Error::UsageLimitExceeded(UsageLimitBreach::Requests { .. })
         ));
+    }
+
+    #[test]
+    fn cost_clone_shares_arc_state() {
+        // Sub-agent fan-out for cost — parent + child share the
+        // same `Mutex<Decimal>` accumulator via `Arc`. A cost
+        // observation on either side accumulates into the
+        // single logical-run total, and the cap fires from
+        // whichever side pushes it over (audit gap noted in
+        // post-S104 review).
+        use rust_decimal::Decimal;
+        let cap = Decimal::new(100, 2); // $1.00
+        let parent = RunBudget::unlimited().with_cost_limit_usd(cap);
+        let child = parent.clone();
+        parent.observe_cost(Decimal::new(60, 2)).unwrap(); // $0.60
+        child.observe_cost(Decimal::new(30, 2)).unwrap(); // $0.30 — total $0.90, under
+        let err = child.observe_cost(Decimal::new(20, 2)).unwrap_err();
+        match err {
+            Error::UsageLimitExceeded(UsageLimitBreach::CostUsd { limit, observed }) => {
+                assert_eq!(limit, cap);
+                // $0.60 + $0.30 + $0.20 = $1.10
+                assert_eq!(observed, Decimal::new(110, 2));
+            }
+            other => panic!("unexpected: {other:?}"),
+        }
+        assert_eq!(parent.snapshot().cost_usd, Decimal::new(110, 2));
+        assert_eq!(child.snapshot().cost_usd, Decimal::new(110, 2));
     }
 
     #[test]

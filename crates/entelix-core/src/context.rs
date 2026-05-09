@@ -129,7 +129,7 @@ impl ExecutionContext {
         self
     }
 
-    /// Attach a [`crate::RunBudget`] — five-axis usage cap shared
+    /// Attach a [`crate::RunBudget`] — six-axis usage cap shared
     /// across the run (parent agent + every sub-agent it
     /// dispatches). Cloning the context bumps the budget's
     /// internal `Arc` refcount so sub-agent dispatches accumulate

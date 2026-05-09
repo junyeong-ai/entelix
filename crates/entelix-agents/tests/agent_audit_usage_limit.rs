@@ -16,12 +16,12 @@ use parking_lot::Mutex;
 
 #[derive(Default)]
 struct CapturingAuditSink {
-    breaches: Mutex<Vec<(String, u64, u64)>>,
+    breaches: Mutex<Vec<entelix_core::UsageLimitBreach>>,
     other_calls: Mutex<usize>,
 }
 
 impl CapturingAuditSink {
-    fn breaches(&self) -> Vec<(String, u64, u64)> {
+    fn breaches(&self) -> Vec<entelix_core::UsageLimitBreach> {
         self.breaches.lock().clone()
     }
     fn other_call_count(&self) -> usize {
@@ -42,10 +42,8 @@ impl AuditSink for CapturingAuditSink {
     fn record_memory_recall(&self, _tier: &str, _namespace_key: &str, _hits: usize) {
         *self.other_calls.lock() += 1;
     }
-    fn record_usage_limit_exceeded(&self, axis: &str, limit: u64, observed: u64) {
-        self.breaches
-            .lock()
-            .push((axis.to_owned(), limit, observed));
+    fn record_usage_limit_exceeded(&self, breach: &entelix_core::UsageLimitBreach) {
+        self.breaches.lock().push(breach.clone());
     }
 }
 
@@ -75,21 +73,23 @@ async fn breach_emits_record_usage_limit_exceeded_with_typed_fields() {
         .with_audit_sink(AuditSinkHandle::new(audit.clone()));
 
     let err = agent.execute(0, &ctx).await.unwrap_err();
-    assert!(matches!(
-        err,
-        Error::UsageLimitExceeded {
+    match &err {
+        Error::UsageLimitExceeded(entelix_core::UsageLimitBreach::Requests {
             limit: 1,
             observed: 1,
-            ..
-        }
-    ));
+        }) => {}
+        other => panic!("unexpected: {other:?}"),
+    }
 
     let breaches = audit.breaches();
     assert_eq!(breaches.len(), 1);
-    let (axis, limit, observed) = &breaches[0];
-    assert_eq!(axis, "requests");
-    assert_eq!(*limit, 1);
-    assert_eq!(*observed, 1);
+    assert_eq!(
+        breaches[0],
+        entelix_core::UsageLimitBreach::Requests {
+            limit: 1,
+            observed: 1,
+        }
+    );
     assert_eq!(audit.other_call_count(), 0);
 }
 

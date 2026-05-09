@@ -54,15 +54,13 @@ pub trait AuditSink: Send + Sync + 'static {
 
     /// Record that a [`crate::RunBudget`] axis hit its cap and
     /// short-circuited the run with `Error::UsageLimitExceeded`.
-    /// `axis` is the lower-snake-case rendering of
-    /// [`crate::run_budget::UsageLimitAxis`] (`"requests"`,
-    /// `"input_tokens"`, `"output_tokens"`, `"total_tokens"`,
-    /// `"tool_calls"`) — strings rather than the typed enum so
-    /// `entelix-tools` / `entelix-graph` emit sites stay free of
-    /// the `UsageLimitAxis` import. `limit` and `observed` carry
-    /// the raw counter values for compliance / billing audits that
-    /// need to attribute breaches per-tenant per-run.
-    fn record_usage_limit_exceeded(&self, axis: &str, limit: u64, observed: u64);
+    /// The typed [`crate::run_budget::UsageLimitBreach`] carries
+    /// both the breaching axis (variant) and the magnitude (typed
+    /// per variant: `u64` count for tokens / requests / tool
+    /// calls, `Decimal` USD for the cost axis), so emit sites
+    /// pass the breach value straight through from the matching
+    /// `Error::UsageLimitExceeded(breach)` arm.
+    fn record_usage_limit_exceeded(&self, breach: &crate::run_budget::UsageLimitBreach);
 }
 
 /// `Arc`-shaped handle the [`crate::context::ExecutionContext`]

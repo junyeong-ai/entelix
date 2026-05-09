@@ -215,17 +215,11 @@ pub enum GraphEvent {
     /// channel's role here is the durable record, not the only
     /// breach signal.
     UsageLimitExceeded {
-        /// Axis that breached — `"requests"`, `"input_tokens"`,
-        /// `"output_tokens"`, `"total_tokens"`, or `"tool_calls"`.
-        /// Stable wire string matching
-        /// `entelix_core::run_budget::UsageLimitAxis`'s `Display`
-        /// rendering; dashboards key off these without depending
-        /// on the typed enum.
-        axis: String,
-        /// Cap that was set on the breached axis.
-        limit: u64,
-        /// Counter value at the moment the cap was hit.
-        observed: u64,
+        /// Typed axis-and-magnitude pair carried straight through
+        /// from the matching `Error::UsageLimitExceeded(breach)`.
+        /// The axis variant carries its own magnitude shape
+        /// (`u64` for counts, `Decimal` for cost).
+        breach: entelix_core::UsageLimitBreach,
         /// Wall-clock time the event was appended.
         timestamp: DateTime<Utc>,
     },

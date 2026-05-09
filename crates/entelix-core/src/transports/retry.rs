@@ -155,7 +155,7 @@ impl RetryClassifier for DefaultRetryClassifier {
             // on the way (the pre-call CAS still increments before
             // the cap check). Explicit match defends against future
             // variants accidentally landing on the retry path.
-            Error::UsageLimitExceeded { .. } => RetryDecision::STOP,
+            Error::UsageLimitExceeded(_) => RetryDecision::STOP,
             // Everything else is deterministic, caller-intent, or HITL —
             // retrying produces the same outcome (or violates intent).
             _ => RetryDecision::STOP,
@@ -545,13 +545,12 @@ mod tests {
         // classification so a future variant inserted between
         // `Provider` and the wildcard cannot accidentally land
         // budget breach on the retry path.
-        use crate::run_budget::UsageLimitAxis;
+        use crate::run_budget::UsageLimitBreach;
         let c = DefaultRetryClassifier;
-        let err = Error::UsageLimitExceeded {
-            axis: UsageLimitAxis::Requests,
+        let err = Error::UsageLimitExceeded(UsageLimitBreach::Requests {
             limit: 5,
             observed: 5,
-        };
+        });
         let decision = c.should_retry(&err, 0);
         assert!(!decision.retry);
         assert_eq!(decision.after, None);

@@ -39,6 +39,7 @@ mod router;
 mod runnable;
 mod sequence;
 pub mod stream;
+mod structured;
 mod timed;
 
 pub use adapter::ToolToRunnableAdapter;
@@ -56,4 +57,5 @@ pub use router::RunnableRouter;
 pub use runnable::Runnable;
 pub use sequence::RunnableSequence;
 pub use stream::{BoxStream, DebugEvent, RunnableEvent, StreamChunk, StreamMode};
+pub use structured::{ChatModelExt, StructuredOutputAdapter};
 pub use timed::Timed;

@@ -55,6 +55,19 @@ pub struct SearchResult {
 }
 
 /// Adapter trait the [`SearchTool`] dispatches to.
+///
+/// ## Production impl status (1.0)
+///
+/// **BYO at 1.0** — no first-party production search-provider
+/// companion ships in the 1.0 release. Operators implement
+/// `SearchProvider` against their chosen vendor (Brave / Tavily /
+/// Perplexity / Bing / …); the SDK ships only the trait surface
+/// plus `SearchTool` for binding it into `ToolRegistry`.
+///
+/// Companion crates (`entelix-search-tavily`, `entelix-search-brave`,
+/// …) are planned post-1.0 once a stable vendor choice
+/// consolidates. Shipping a placeholder companion at 1.0 would
+/// violate invariant 14 (no production-shaped fakes).
 #[async_trait]
 pub trait SearchProvider: Send + Sync {
     /// Run a query and return up to `max_results` hits, in

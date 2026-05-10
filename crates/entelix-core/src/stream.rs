@@ -46,6 +46,14 @@ pub enum StreamDelta {
         id: String,
         /// Resolved model identifier.
         model: String,
+        /// Response-level vendor opaque round-trip tokens — OpenAI
+        /// Responses `Response.id` (so the next request can chain via
+        /// `previous_response_id` from `ModelRequest::continued_from`),
+        /// or anything else the codec wants to carry at response root
+        /// rather than on a single content part. The aggregator
+        /// surfaces these on [`ModelResponse::provider_echoes`] at
+        /// finalize time, mirroring the non-streaming decode path.
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
     /// Append text to the in-progress text block. Consecutive `TextDelta`s
     /// fold into a single `ContentPart::Text` in the output.
@@ -167,6 +175,11 @@ pub struct StreamAggregator {
     rate_limit: Option<RateLimitSnapshot>,
     stop_reason: Option<StopReason>,
     warnings: Vec<ModelWarning>,
+    /// Response-level vendor opaque round-trip tokens captured from
+    /// the streaming `Start` delta. Surfaced on
+    /// [`ModelResponse::provider_echoes`] at finalize so streaming
+    /// and non-streaming decode produce equivalent IR.
+    response_echoes: Vec<ProviderEchoSnapshot>,
 }
 
 impl StreamAggregator {
@@ -180,7 +193,11 @@ impl StreamAggregator {
     /// `ToolUseStop`, double `ToolUseStart`).
     pub fn push(&mut self, delta: StreamDelta) -> Result<()> {
         match delta {
-            StreamDelta::Start { id, model } => {
+            StreamDelta::Start {
+                id,
+                model,
+                provider_echoes,
+            } => {
                 if !self.id.is_empty() || !self.model.is_empty() {
                     return Err(Error::invalid_request(
                         "StreamAggregator: duplicate Start delta",
@@ -188,6 +205,7 @@ impl StreamAggregator {
                 }
                 self.id = id;
                 self.model = model;
+                self.response_echoes.extend(provider_echoes);
             }
             StreamDelta::TextDelta {
                 text,
@@ -308,7 +326,7 @@ impl StreamAggregator {
             usage: self.usage.unwrap_or_default(),
             rate_limit: self.rate_limit,
             warnings: self.warnings,
-            provider_echoes: Vec::new(),
+            provider_echoes: self.response_echoes,
         })
     }
 

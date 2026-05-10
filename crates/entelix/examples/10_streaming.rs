@@ -51,7 +51,20 @@ async fn main() -> Result<()> {
     while let Some(item) = stream.next().await {
         let delta = item?;
         match &delta {
-            StreamDelta::Start { id, model } => println!("  start  id={id} model={model}"),
+            StreamDelta::Start {
+                id,
+                model,
+                provider_echoes,
+            } => {
+                println!(
+                    "  start  id={id} model={model}{}",
+                    if provider_echoes.is_empty() {
+                        ""
+                    } else {
+                        " [echo]"
+                    }
+                );
+            }
             StreamDelta::TextDelta {
                 text,
                 provider_echoes,

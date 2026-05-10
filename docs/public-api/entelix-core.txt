@@ -514,6 +514,32 @@ impl core::marker::Unpin for entelix_core::codecs::VertexAnthropicCodec
 impl core::marker::UnsafeUnpin for entelix_core::codecs::VertexAnthropicCodec
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::codecs::VertexAnthropicCodec
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::codecs::VertexAnthropicCodec
+pub struct entelix_core::codecs::VertexGeminiCodec
+impl entelix_core::codecs::VertexGeminiCodec
+pub const fn entelix_core::codecs::VertexGeminiCodec::new() -> Self
+impl core::clone::Clone for entelix_core::codecs::VertexGeminiCodec
+pub fn entelix_core::codecs::VertexGeminiCodec::clone(&self) -> entelix_core::codecs::VertexGeminiCodec
+impl core::default::Default for entelix_core::codecs::VertexGeminiCodec
+pub fn entelix_core::codecs::VertexGeminiCodec::default() -> entelix_core::codecs::VertexGeminiCodec
+impl core::fmt::Debug for entelix_core::codecs::VertexGeminiCodec
+pub fn entelix_core::codecs::VertexGeminiCodec::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_core::codecs::VertexGeminiCodec
+impl entelix_core::codecs::Codec for entelix_core::codecs::VertexGeminiCodec
+pub fn entelix_core::codecs::VertexGeminiCodec::auto_output_strategy(&self, model: &str) -> entelix_core::ir::OutputStrategy
+pub fn entelix_core::codecs::VertexGeminiCodec::capabilities(&self, model: &str) -> entelix_core::ir::Capabilities
+pub fn entelix_core::codecs::VertexGeminiCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
+pub fn entelix_core::codecs::VertexGeminiCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
+pub fn entelix_core::codecs::VertexGeminiCodec::encode(&self, request: &entelix_core::ir::ModelRequest) -> entelix_core::error::Result<entelix_core::codecs::EncodedRequest>
+pub fn entelix_core::codecs::VertexGeminiCodec::encode_streaming(&self, request: &entelix_core::ir::ModelRequest) -> entelix_core::error::Result<entelix_core::codecs::EncodedRequest>
+pub fn entelix_core::codecs::VertexGeminiCodec::extract_rate_limit(&self, headers: &http::header::map::HeaderMap) -> core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
+pub fn entelix_core::codecs::VertexGeminiCodec::name(&self) -> &'static str
+impl core::marker::Freeze for entelix_core::codecs::VertexGeminiCodec
+impl core::marker::Send for entelix_core::codecs::VertexGeminiCodec
+impl core::marker::Sync for entelix_core::codecs::VertexGeminiCodec
+impl core::marker::Unpin for entelix_core::codecs::VertexGeminiCodec
+impl core::marker::UnsafeUnpin for entelix_core::codecs::VertexGeminiCodec
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::codecs::VertexGeminiCodec
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::codecs::VertexGeminiCodec
 pub const entelix_core::codecs::VERTEX_ANTHROPIC_VERSION: &str
 pub trait entelix_core::codecs::Codec: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::codecs::Codec::auto_output_strategy(&self, _model: &str) -> entelix_core::ir::OutputStrategy
@@ -578,6 +604,15 @@ pub fn entelix_core::codecs::VertexAnthropicCodec::encode(&self, request: &entel
 pub fn entelix_core::codecs::VertexAnthropicCodec::encode_streaming(&self, request: &entelix_core::ir::ModelRequest) -> entelix_core::error::Result<entelix_core::codecs::EncodedRequest>
 pub fn entelix_core::codecs::VertexAnthropicCodec::extract_rate_limit(&self, headers: &http::header::map::HeaderMap) -> core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
 pub fn entelix_core::codecs::VertexAnthropicCodec::name(&self) -> &'static str
+impl entelix_core::codecs::Codec for entelix_core::codecs::VertexGeminiCodec
+pub fn entelix_core::codecs::VertexGeminiCodec::auto_output_strategy(&self, model: &str) -> entelix_core::ir::OutputStrategy
+pub fn entelix_core::codecs::VertexGeminiCodec::capabilities(&self, model: &str) -> entelix_core::ir::Capabilities
+pub fn entelix_core::codecs::VertexGeminiCodec::decode(&self, body: &[u8], warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::error::Result<entelix_core::ir::ModelResponse>
+pub fn entelix_core::codecs::VertexGeminiCodec::decode_stream<'a>(&'a self, bytes: entelix_core::codecs::BoxByteStream<'a>, warnings_in: alloc::vec::Vec<entelix_core::ir::ModelWarning>) -> entelix_core::codecs::BoxDeltaStream<'a>
+pub fn entelix_core::codecs::VertexGeminiCodec::encode(&self, request: &entelix_core::ir::ModelRequest) -> entelix_core::error::Result<entelix_core::codecs::EncodedRequest>
+pub fn entelix_core::codecs::VertexGeminiCodec::encode_streaming(&self, request: &entelix_core::ir::ModelRequest) -> entelix_core::error::Result<entelix_core::codecs::EncodedRequest>
+pub fn entelix_core::codecs::VertexGeminiCodec::extract_rate_limit(&self, headers: &http::header::map::HeaderMap) -> core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
+pub fn entelix_core::codecs::VertexGeminiCodec::name(&self) -> &'static str
 pub fn entelix_core::codecs::extract_openai_rate_limit(headers: &http::header::map::HeaderMap) -> core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
 pub fn entelix_core::codecs::service_tier_str(tier: entelix_core::ir::ServiceTier) -> &'static str
 pub type entelix_core::codecs::BoxByteStream<'a> = core::pin::Pin<alloc::boxed::Box<(dyn futures_core::stream::Stream<Item = entelix_core::error::Result<bytes::bytes::Bytes>> + core::marker::Send + 'a)>>
@@ -895,52 +930,67 @@ impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::CitationSource
 #[non_exhaustive] pub enum entelix_core::ir::ContentPart
 pub entelix_core::ir::ContentPart::Audio
 pub entelix_core::ir::ContentPart::Audio::cache_control: core::option::Option<entelix_core::ir::CacheControl>
+pub entelix_core::ir::ContentPart::Audio::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ContentPart::Audio::source: entelix_core::ir::MediaSource
 pub entelix_core::ir::ContentPart::AudioOutput
+pub entelix_core::ir::ContentPart::AudioOutput::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ContentPart::AudioOutput::source: entelix_core::ir::MediaSource
 pub entelix_core::ir::ContentPart::AudioOutput::transcript: core::option::Option<alloc::string::String>
 pub entelix_core::ir::ContentPart::Citation
 pub entelix_core::ir::ContentPart::Citation::cache_control: core::option::Option<entelix_core::ir::CacheControl>
+pub entelix_core::ir::ContentPart::Citation::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ContentPart::Citation::snippet: alloc::string::String
 pub entelix_core::ir::ContentPart::Citation::source: entelix_core::ir::CitationSource
 pub entelix_core::ir::ContentPart::Document
 pub entelix_core::ir::ContentPart::Document::cache_control: core::option::Option<entelix_core::ir::CacheControl>
 pub entelix_core::ir::ContentPart::Document::name: core::option::Option<alloc::string::String>
+pub entelix_core::ir::ContentPart::Document::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ContentPart::Document::source: entelix_core::ir::MediaSource
 pub entelix_core::ir::ContentPart::Image
 pub entelix_core::ir::ContentPart::Image::cache_control: core::option::Option<entelix_core::ir::CacheControl>
+pub entelix_core::ir::ContentPart::Image::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ContentPart::Image::source: entelix_core::ir::MediaSource
 pub entelix_core::ir::ContentPart::ImageOutput
+pub entelix_core::ir::ContentPart::ImageOutput::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ContentPart::ImageOutput::source: entelix_core::ir::MediaSource
+pub entelix_core::ir::ContentPart::RedactedThinking
+pub entelix_core::ir::ContentPart::RedactedThinking::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ContentPart::Text
 pub entelix_core::ir::ContentPart::Text::cache_control: core::option::Option<entelix_core::ir::CacheControl>
+pub entelix_core::ir::ContentPart::Text::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ContentPart::Text::text: alloc::string::String
 pub entelix_core::ir::ContentPart::Thinking
 pub entelix_core::ir::ContentPart::Thinking::cache_control: core::option::Option<entelix_core::ir::CacheControl>
-pub entelix_core::ir::ContentPart::Thinking::signature: core::option::Option<alloc::string::String>
+pub entelix_core::ir::ContentPart::Thinking::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ContentPart::Thinking::text: alloc::string::String
 pub entelix_core::ir::ContentPart::ToolResult
 pub entelix_core::ir::ContentPart::ToolResult::cache_control: core::option::Option<entelix_core::ir::CacheControl>
 pub entelix_core::ir::ContentPart::ToolResult::content: entelix_core::ir::ToolResultContent
 pub entelix_core::ir::ContentPart::ToolResult::is_error: bool
 pub entelix_core::ir::ContentPart::ToolResult::name: alloc::string::String
+pub entelix_core::ir::ContentPart::ToolResult::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ContentPart::ToolResult::tool_use_id: alloc::string::String
 pub entelix_core::ir::ContentPart::ToolUse
 pub entelix_core::ir::ContentPart::ToolUse::id: alloc::string::String
 pub entelix_core::ir::ContentPart::ToolUse::input: serde_json::value::Value
 pub entelix_core::ir::ContentPart::ToolUse::name: alloc::string::String
+pub entelix_core::ir::ContentPart::ToolUse::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ContentPart::Video
 pub entelix_core::ir::ContentPart::Video::cache_control: core::option::Option<entelix_core::ir::CacheControl>
+pub entelix_core::ir::ContentPart::Video::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ContentPart::Video::source: entelix_core::ir::MediaSource
 impl entelix_core::ir::ContentPart
 pub fn entelix_core::ir::ContentPart::audio(source: entelix_core::ir::MediaSource) -> Self
 pub const fn entelix_core::ir::ContentPart::cache_control(&self) -> core::option::Option<&entelix_core::ir::CacheControl>
 pub fn entelix_core::ir::ContentPart::document(source: entelix_core::ir::MediaSource, name: core::option::Option<alloc::string::String>) -> Self
 pub fn entelix_core::ir::ContentPart::image(source: entelix_core::ir::MediaSource) -> Self
+pub fn entelix_core::ir::ContentPart::provider_echoes(&self) -> &[entelix_core::ir::ProviderEchoSnapshot]
+pub fn entelix_core::ir::ContentPart::redacted_thinking() -> Self
 pub fn entelix_core::ir::ContentPart::text(text: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::ir::ContentPart::thinking(text: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::ir::ContentPart::video(source: entelix_core::ir::MediaSource) -> Self
 pub fn entelix_core::ir::ContentPart::with_cache_control(self, cache: entelix_core::ir::CacheControl) -> Self
+pub fn entelix_core::ir::ContentPart::with_provider_echo(self, echo: entelix_core::ir::ProviderEchoSnapshot) -> Self
 impl core::clone::Clone for entelix_core::ir::ContentPart
 pub fn entelix_core::ir::ContentPart::clone(&self) -> entelix_core::ir::ContentPart
 impl core::cmp::Eq for entelix_core::ir::ContentPart
@@ -1621,6 +1671,7 @@ impl core::marker::UnsafeUnpin for entelix_core::ir::Message
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::Message
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::Message
 pub struct entelix_core::ir::ModelRequest
+pub entelix_core::ir::ModelRequest::continued_from: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ModelRequest::end_user_id: core::option::Option<alloc::string::String>
 pub entelix_core::ir::ModelRequest::max_tokens: core::option::Option<u32>
 pub entelix_core::ir::ModelRequest::messages: alloc::vec::Vec<entelix_core::ir::Message>
@@ -1661,6 +1712,7 @@ pub struct entelix_core::ir::ModelResponse
 pub entelix_core::ir::ModelResponse::content: alloc::vec::Vec<entelix_core::ir::ContentPart>
 pub entelix_core::ir::ModelResponse::id: alloc::string::String
 pub entelix_core::ir::ModelResponse::model: alloc::string::String
+pub entelix_core::ir::ModelResponse::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::ir::ModelResponse::rate_limit: core::option::Option<entelix_core::rate_limit::RateLimitSnapshot>
 pub entelix_core::ir::ModelResponse::stop_reason: entelix_core::ir::StopReason
 pub entelix_core::ir::ModelResponse::usage: entelix_core::ir::Usage
@@ -1745,6 +1797,33 @@ impl core::marker::Unpin for entelix_core::ir::OpenAiResponsesExt
 impl core::marker::UnsafeUnpin for entelix_core::ir::OpenAiResponsesExt
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::OpenAiResponsesExt
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::OpenAiResponsesExt
+pub struct entelix_core::ir::ProviderEchoSnapshot
+pub entelix_core::ir::ProviderEchoSnapshot::payload: serde_json::value::Value
+pub entelix_core::ir::ProviderEchoSnapshot::provider: alloc::borrow::Cow<'static, str>
+impl entelix_core::ir::ProviderEchoSnapshot
+pub fn entelix_core::ir::ProviderEchoSnapshot::for_provider(provider: impl core::convert::Into<alloc::borrow::Cow<'static, str>>, field: &str, value: impl core::convert::Into<serde_json::value::Value>) -> Self
+pub fn entelix_core::ir::ProviderEchoSnapshot::new(provider: impl core::convert::Into<alloc::borrow::Cow<'static, str>>, payload: serde_json::value::Value) -> Self
+pub fn entelix_core::ir::ProviderEchoSnapshot::payload_field(&self, field: &str) -> core::option::Option<&serde_json::value::Value>
+pub fn entelix_core::ir::ProviderEchoSnapshot::payload_str(&self, field: &str) -> core::option::Option<&str>
+impl core::clone::Clone for entelix_core::ir::ProviderEchoSnapshot
+pub fn entelix_core::ir::ProviderEchoSnapshot::clone(&self) -> entelix_core::ir::ProviderEchoSnapshot
+impl core::cmp::Eq for entelix_core::ir::ProviderEchoSnapshot
+impl core::cmp::PartialEq for entelix_core::ir::ProviderEchoSnapshot
+pub fn entelix_core::ir::ProviderEchoSnapshot::eq(&self, other: &entelix_core::ir::ProviderEchoSnapshot) -> bool
+impl core::fmt::Debug for entelix_core::ir::ProviderEchoSnapshot
+pub fn entelix_core::ir::ProviderEchoSnapshot::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_core::ir::ProviderEchoSnapshot
+impl serde_core::ser::Serialize for entelix_core::ir::ProviderEchoSnapshot
+pub fn entelix_core::ir::ProviderEchoSnapshot::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_core::ir::ProviderEchoSnapshot
+pub fn entelix_core::ir::ProviderEchoSnapshot::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_core::ir::ProviderEchoSnapshot
+impl core::marker::Send for entelix_core::ir::ProviderEchoSnapshot
+impl core::marker::Sync for entelix_core::ir::ProviderEchoSnapshot
+impl core::marker::Unpin for entelix_core::ir::ProviderEchoSnapshot
+impl core::marker::UnsafeUnpin for entelix_core::ir::ProviderEchoSnapshot
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::ProviderEchoSnapshot
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::ProviderEchoSnapshot
 #[non_exhaustive] pub struct entelix_core::ir::ProviderExtensions
 pub entelix_core::ir::ProviderExtensions::anthropic: core::option::Option<entelix_core::ir::AnthropicExt>
 pub entelix_core::ir::ProviderExtensions::bedrock: core::option::Option<entelix_core::ir::BedrockExt>
@@ -2005,6 +2084,7 @@ impl core::marker::Unpin for entelix_core::ir::Usage
 impl core::marker::UnsafeUnpin for entelix_core::ir::Usage
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::Usage
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::Usage
+pub fn entelix_core::ir::find_provider_echo<'a>(echoes: &'a [entelix_core::ir::ProviderEchoSnapshot], name: &str) -> core::option::Option<&'a entelix_core::ir::ProviderEchoSnapshot>
 pub mod entelix_core::llm_facing
 pub struct entelix_core::llm_facing::LlmFacingSchema
 impl entelix_core::llm_facing::LlmFacingSchema
@@ -2580,18 +2660,20 @@ pub entelix_core::stream::StreamDelta::RateLimit(entelix_core::rate_limit::RateL
 pub entelix_core::stream::StreamDelta::Start
 pub entelix_core::stream::StreamDelta::Start::id: alloc::string::String
 pub entelix_core::stream::StreamDelta::Start::model: alloc::string::String
+pub entelix_core::stream::StreamDelta::Start::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::stream::StreamDelta::Stop
 pub entelix_core::stream::StreamDelta::Stop::stop_reason: entelix_core::ir::StopReason
 pub entelix_core::stream::StreamDelta::TextDelta
 pub entelix_core::stream::StreamDelta::TextDelta::text: alloc::string::String
 pub entelix_core::stream::StreamDelta::ThinkingDelta
-pub entelix_core::stream::StreamDelta::ThinkingDelta::signature: core::option::Option<alloc::string::String>
+pub entelix_core::stream::StreamDelta::ThinkingDelta::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::stream::StreamDelta::ThinkingDelta::text: alloc::string::String
 pub entelix_core::stream::StreamDelta::ToolUseInputDelta
 pub entelix_core::stream::StreamDelta::ToolUseInputDelta::partial_json: alloc::string::String
 pub entelix_core::stream::StreamDelta::ToolUseStart
 pub entelix_core::stream::StreamDelta::ToolUseStart::id: alloc::string::String
 pub entelix_core::stream::StreamDelta::ToolUseStart::name: alloc::string::String
+pub entelix_core::stream::StreamDelta::ToolUseStart::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::stream::StreamDelta::ToolUseStop
 pub entelix_core::stream::StreamDelta::Usage(entelix_core::ir::Usage)
 pub entelix_core::stream::StreamDelta::Warning(entelix_core::ir::ModelWarning)
@@ -2725,6 +2807,8 @@ pub trait entelix_core::time::Clock: core::marker::Send + core::marker::Sync + '
 pub fn entelix_core::time::Clock::now_micros(&self) -> u64
 impl entelix_core::time::Clock for entelix_core::time::SystemClock
 pub fn entelix_core::time::SystemClock::now_micros(&self) -> u64
+pub mod entelix_core::tls
+pub fn entelix_core::tls::install_default_tls()
 pub mod entelix_core::tools
 #[non_exhaustive] pub enum entelix_core::tools::ToolEffect
 pub entelix_core::tools::ToolEffect::Destructive
@@ -4165,6 +4249,7 @@ pub fn entelix_core::Tool::execute<'life0, 'life1, 'async_trait>(&'life0 self, i
 pub fn entelix_core::Tool::metadata(&self) -> &entelix_core::tools::ToolMetadata
 pub trait entelix_core::ToolCostCalculator: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::ToolCostCalculator::compute_cost<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, tool_name: &'life1 str, output: &'life2 serde_json::value::Value, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<f64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_core::install_default_tls()
 pub fn entelix_core::interrupt<T>(payload: serde_json::value::Value) -> core::result::Result<T, entelix_core::error::Error>
 pub fn entelix_core::interrupt_with<T>(kind: entelix_core::interruption::InterruptionKind, payload: serde_json::value::Value) -> core::result::Result<T, entelix_core::error::Error>
 pub fn entelix_core::tap_aggregator(inner: entelix_core::codecs::BoxDeltaStream<'static>) -> entelix_core::service::ModelStream

@@ -12,6 +12,7 @@ fn happy_path_text_only_response() -> Result<()> {
     agg.push(StreamDelta::Start {
         id: "msg_01".into(),
         model: "claude-opus-4-7".into(),
+        provider_echoes: Vec::new(),
     })?;
     agg.push(StreamDelta::TextDelta {
         text: "Hello".into(),
@@ -45,6 +46,7 @@ fn tool_use_block_buffers_then_parses_input() -> Result<()> {
     agg.push(StreamDelta::Start {
         id: "m".into(),
         model: "x".into(),
+        provider_echoes: Vec::new(),
     })?;
     agg.push(StreamDelta::TextDelta {
         text: "Sure, calling tool".into(),
@@ -89,6 +91,7 @@ fn empty_tool_input_defaults_to_empty_object() -> Result<()> {
     agg.push(StreamDelta::Start {
         id: "m".into(),
         model: "x".into(),
+        provider_echoes: Vec::new(),
     })?;
     agg.push(StreamDelta::ToolUseStart {
         id: "t".into(),
@@ -115,6 +118,7 @@ fn multiple_tool_blocks_preserve_order() -> Result<()> {
     agg.push(StreamDelta::Start {
         id: "m".into(),
         model: "x".into(),
+        provider_echoes: Vec::new(),
     })?;
     agg.push(StreamDelta::ToolUseStart {
         id: "a".into(),
@@ -152,6 +156,7 @@ fn warnings_collected_in_order() -> Result<()> {
     agg.push(StreamDelta::Start {
         id: "m".into(),
         model: "x".into(),
+        provider_echoes: Vec::new(),
     })?;
     agg.push(StreamDelta::Warning(ModelWarning::LossyEncode {
         field: "a".into(),
@@ -193,6 +198,7 @@ fn finalize_without_usage_attaches_lossy_warning() {
     agg.push(StreamDelta::Start {
         id: "m".into(),
         model: "x".into(),
+        provider_echoes: Vec::new(),
     })
     .unwrap();
     agg.push(StreamDelta::TextDelta {
@@ -224,6 +230,7 @@ fn finalize_without_stop_returns_invalid_request() {
     agg.push(StreamDelta::Start {
         id: "m".into(),
         model: "x".into(),
+        provider_echoes: Vec::new(),
     })
     .unwrap();
     agg.push(StreamDelta::TextDelta {
@@ -241,6 +248,7 @@ fn finalize_with_open_tool_block_returns_invalid_request() {
     agg.push(StreamDelta::Start {
         id: "m".into(),
         model: "x".into(),
+        provider_echoes: Vec::new(),
     })
     .unwrap();
     agg.push(StreamDelta::ToolUseStart {
@@ -269,6 +277,7 @@ fn malformed_tool_input_json_returns_actionable_invalid_request() {
     agg.push(StreamDelta::Start {
         id: "m".into(),
         model: "x".into(),
+        provider_echoes: Vec::new(),
     })
     .unwrap();
     agg.push(StreamDelta::ToolUseStart {
@@ -301,12 +310,14 @@ fn duplicate_start_returns_invalid_request() {
     agg.push(StreamDelta::Start {
         id: "a".into(),
         model: "x".into(),
+        provider_echoes: Vec::new(),
     })
     .unwrap();
     let err = agg
         .push(StreamDelta::Start {
             id: "b".into(),
             model: "y".into(),
+            provider_echoes: Vec::new(),
         })
         .unwrap_err();
     assert!(matches!(err, Error::InvalidRequest(_)));
@@ -318,6 +329,7 @@ fn text_during_tool_block_returns_invalid_request() {
     agg.push(StreamDelta::Start {
         id: "m".into(),
         model: "x".into(),
+        provider_echoes: Vec::new(),
     })
     .unwrap();
     agg.push(StreamDelta::ToolUseStart {
@@ -342,6 +354,7 @@ fn is_finished_flips_on_stop() {
     agg.push(StreamDelta::Start {
         id: "m".into(),
         model: "x".into(),
+        provider_echoes: Vec::new(),
     })
     .unwrap();
     assert!(!agg.is_finished());
@@ -364,6 +377,7 @@ fn duplicate_stop_delta_with_different_reason_is_rejected() {
     agg.push(StreamDelta::Start {
         id: "msg_01".into(),
         model: "claude-opus-4-7".into(),
+        provider_echoes: Vec::new(),
     })
     .unwrap();
     agg.push(StreamDelta::TextDelta {

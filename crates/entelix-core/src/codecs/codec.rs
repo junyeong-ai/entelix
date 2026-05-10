@@ -237,6 +237,7 @@ fn deltas_from_response(response: &ModelResponse) -> Vec<StreamDelta> {
     deltas.push(StreamDelta::Start {
         id: response.id.clone(),
         model: response.model.clone(),
+        provider_echoes: Vec::new(),
     });
     for part in &response.content {
         match part {

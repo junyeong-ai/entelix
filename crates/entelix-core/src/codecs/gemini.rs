@@ -1120,6 +1120,7 @@ fn stream_gemini(
                     yield Ok(StreamDelta::Start {
                         id: String::new(),
                         model,
+                        provider_echoes: Vec::new(),
                     });
                 }
                 if let Some(usage) = event.get("usageMetadata") {

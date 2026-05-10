@@ -1114,7 +1114,25 @@ fn stream_openai_responses(
                         let model = str_field(response, "model").to_owned();
                         if !started {
                             started = true;
-                            yield Ok(StreamDelta::Start { id, model });
+                            // Capture Response.id at the response root so
+                            // the next ModelRequest can chain via
+                            // `previous_response_id` from
+                            // `continued_from`. Mirrors the non-streaming
+                            // decode path.
+                            let provider_echoes = if id.is_empty() {
+                                Vec::new()
+                            } else {
+                                vec![ProviderEchoSnapshot::for_provider(
+                                    PROVIDER_KEY,
+                                    "response_id",
+                                    id.clone(),
+                                )]
+                            };
+                            yield Ok(StreamDelta::Start {
+                                id,
+                                model,
+                                provider_echoes,
+                            });
                         }
                     }
                     "response.output_item.added" => {

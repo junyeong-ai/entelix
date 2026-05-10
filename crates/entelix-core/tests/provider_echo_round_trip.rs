@@ -28,9 +28,10 @@ use entelix_core::codecs::{
     OpenAiResponsesCodec, VertexAnthropicCodec, VertexGeminiCodec,
 };
 use entelix_core::ir::{
-    ContentPart, Message, ModelRequest, ModelResponse, ProviderEchoSnapshot, Role,
+    CacheControl, ContentPart, Message, ModelRequest, ModelResponse, ProviderEchoSnapshot, Role,
     find_provider_echo,
 };
+use entelix_core::stream::{StreamAggregator, StreamDelta};
 use serde_json::{Value, json};
 
 /// Raw wire bytes for an Anthropic Messages response containing a
@@ -67,7 +68,9 @@ fn parse(body: &[u8]) -> Value {
 }
 
 fn find_thinking(content: &[ContentPart]) -> Option<&ContentPart> {
-    content.iter().find(|p| matches!(p, ContentPart::Thinking { .. }))
+    content
+        .iter()
+        .find(|p| matches!(p, ContentPart::Thinking { .. }))
 }
 
 fn find_redacted(content: &[ContentPart]) -> Option<&ContentPart> {
@@ -324,8 +327,7 @@ fn bedrock_converse_signature_round_trip() {
         .find_map(|b| b.get("reasoningContent"))
         .expect("reasoningContent block must exist on encoded assistant message");
     assert_eq!(
-        reasoning["reasoningText"]["signature"]
-            .as_str(),
+        reasoning["reasoningText"]["signature"].as_str(),
         Some(BEDROCK_SIGNATURE),
     );
 }
@@ -351,7 +353,8 @@ fn bedrock_converse_redacted_content_routes_to_redacted_thinking_variant() {
     let response = codec
         .decode(wire.to_string().as_bytes(), Vec::new())
         .unwrap();
-    let redacted = find_redacted(&response.content).expect("RedactedThinking variant must round-trip");
+    let redacted =
+        find_redacted(&response.content).expect("RedactedThinking variant must round-trip");
     let ContentPart::RedactedThinking { provider_echoes } = redacted else {
         unreachable!()
     };
@@ -418,7 +421,9 @@ fn gemini_thought_signature_round_trips_on_thinking_part() {
         .find(|p| p.get("thought").and_then(Value::as_bool) == Some(true))
         .expect("thinking part must round-trip on wire");
     assert_eq!(
-        thinking_part.get("thought_signature").and_then(Value::as_str),
+        thinking_part
+            .get("thought_signature")
+            .and_then(Value::as_str),
         Some(GEMINI_THOUGHT_SIGNATURE),
         "encoder must emit snake_case thought_signature"
     );
@@ -678,8 +683,8 @@ fn openai_responses_function_call_item_id_round_trips() {
         unreachable!()
     };
     assert_eq!(id, "call_abc", "ContentPart::ToolUse.id is the call_id");
-    let echo_id = find_provider_echo(provider_echoes, "openai-responses")
-        .and_then(|e| e.payload_str("id"));
+    let echo_id =
+        find_provider_echo(provider_echoes, "openai-responses").and_then(|e| e.payload_str("id"));
     assert_eq!(
         echo_id,
         Some("fc_def123"),
@@ -704,7 +709,10 @@ fn openai_responses_function_call_item_id_round_trips() {
         .iter()
         .find(|i| i.get("type").and_then(Value::as_str) == Some("function_call"))
         .expect("function_call item must be re-emitted");
-    assert_eq!(fc_item.get("call_id").and_then(Value::as_str), Some("call_abc"));
+    assert_eq!(
+        fc_item.get("call_id").and_then(Value::as_str),
+        Some("call_abc")
+    );
     assert_eq!(fc_item.get("id").and_then(Value::as_str), Some("fc_def123"));
 }
 
@@ -891,4 +899,243 @@ fn cross_vendor_ir_preserves_foreign_blobs_through_decode() {
     let body_str = body.to_string();
     assert!(body_str.contains(ANTHROPIC_SIGNATURE));
     assert!(!body_str.contains(GEMINI_THOUGHT_SIGNATURE));
+}
+
+// ── Streaming response-level carrier (StreamDelta::Start propagation) ─────
+
+#[test]
+fn stream_aggregator_propagates_start_provider_echoes_to_response() {
+    // The streaming Start delta carries a response-level
+    // ProviderEchoSnapshot (e.g. OpenAI Responses Response.id). The
+    // aggregator must surface it on `ModelResponse.provider_echoes`
+    // at finalize so streaming decode mirrors the non-streaming
+    // decode path — an operator chaining a stateless turn via
+    // `previous_response_id` reads the same field regardless of
+    // streaming mode.
+    let mut agg = StreamAggregator::new();
+    agg.push(StreamDelta::Start {
+        id: OPENAI_RESPONSE_ID.into(),
+        model: "gpt-5".into(),
+        provider_echoes: vec![ProviderEchoSnapshot::for_provider(
+            "openai-responses",
+            "response_id",
+            OPENAI_RESPONSE_ID,
+        )],
+    })
+    .unwrap();
+    agg.push(StreamDelta::TextDelta {
+        text: "ok".into(),
+        provider_echoes: Vec::new(),
+    })
+    .unwrap();
+    agg.push(StreamDelta::Stop {
+        stop_reason: entelix_core::ir::StopReason::EndTurn,
+    })
+    .unwrap();
+    let response = agg.finalize().unwrap();
+
+    let echoed = find_provider_echo(&response.provider_echoes, "openai-responses")
+        .and_then(|e| e.payload_str("response_id"));
+    assert_eq!(
+        echoed,
+        Some(OPENAI_RESPONSE_ID),
+        "Start.provider_echoes must surface on ModelResponse.provider_echoes",
+    );
+}
+
+#[test]
+fn openai_responses_streaming_captures_response_id_for_chain_continuation() {
+    // Full streaming SSE → ModelResponse path: the codec emits Start
+    // carrying the wrapped Response.id; the aggregator surfaces it
+    // on ModelResponse.provider_echoes; an operator can then build
+    // ModelRequest.continued_from from it for the next turn.
+    let codec = OpenAiResponsesCodec::new();
+    let sse = format!(
+        "data: {}\n\ndata: {}\n\ndata: {}\n\ndata: {}\n\ndata: {}\n\n",
+        json!({
+            "type": "response.created",
+            "response": {"id": OPENAI_RESPONSE_ID, "model": "gpt-5"},
+        }),
+        json!({
+            "type": "response.output_text.delta",
+            "delta": "Hello.",
+        }),
+        json!({
+            "type": "response.completed",
+            "response": {
+                "id": OPENAI_RESPONSE_ID,
+                "model": "gpt-5",
+                "status": "completed",
+                "output": [],
+                "usage": {"input_tokens": 5, "output_tokens": 5, "total_tokens": 10},
+            },
+        }),
+        json!({"type": "response.output_text.done"}),
+        json!({"type": "done"}),
+    );
+    let bytes = bytes::Bytes::from(sse);
+    let stream = codec.decode_stream(
+        Box::pin(futures::stream::iter(vec![Ok::<_, entelix_core::Error>(
+            bytes,
+        )])),
+        Vec::new(),
+    );
+    let response = futures::executor::block_on(async {
+        let mut agg = StreamAggregator::new();
+        let mut deltas = stream;
+        while let Some(item) = futures::StreamExt::next(&mut deltas).await {
+            agg.push(item.unwrap()).unwrap();
+        }
+        agg.finalize()
+    })
+    .unwrap();
+
+    // Round-trip continuation: build the next ModelRequest from
+    // ModelResponse.provider_echoes.
+    let req_next = ModelRequest {
+        model: "gpt-5".into(),
+        messages: vec![Message::user("continue")],
+        max_tokens: Some(64),
+        continued_from: response.provider_echoes,
+        ..ModelRequest::default()
+    };
+    let body = parse(&codec.encode(&req_next).unwrap().body);
+    assert_eq!(
+        body.get("previous_response_id").and_then(Value::as_str),
+        Some(OPENAI_RESPONSE_ID),
+        "streaming-decoded Response.id must survive into the next request's previous_response_id chain",
+    );
+}
+
+// ── cache_control + provider_echoes co-existence ──────────────────────────
+
+#[test]
+fn cache_control_and_provider_echoes_coexist_on_same_part() {
+    // A `Thinking` part may carry BOTH a `cache_control` directive
+    // (operator-set) AND `provider_echoes` (model-emitted opaque
+    // token). Each ride on its own native wire field; encode must
+    // emit both without interference.
+    let codec = AnthropicMessagesCodec::new();
+    let part = ContentPart::Thinking {
+        text: "step-by-step plan".into(),
+        cache_control: Some(CacheControl::one_hour()),
+        provider_echoes: vec![ProviderEchoSnapshot::for_provider(
+            "anthropic-messages",
+            "signature",
+            ANTHROPIC_SIGNATURE,
+        )],
+    };
+    let req = ModelRequest {
+        model: "claude-opus-4-7".into(),
+        messages: vec![
+            Message::user("hi"),
+            Message::new(Role::Assistant, vec![part]),
+            Message::user("more"),
+        ],
+        max_tokens: Some(1024),
+        ..ModelRequest::default()
+    };
+    let body = parse(&codec.encode(&req).unwrap().body);
+    let blocks = body["messages"][1]["content"].as_array().unwrap();
+    let thinking_block = blocks
+        .iter()
+        .find(|b| b.get("type").and_then(Value::as_str) == Some("thinking"))
+        .unwrap();
+    // signature on the thinking block.
+    assert_eq!(
+        thinking_block.get("signature").and_then(Value::as_str),
+        Some(ANTHROPIC_SIGNATURE),
+    );
+    // cache_control on the same block, ttl: 1h tier.
+    assert_eq!(thinking_block["cache_control"]["type"], "ephemeral");
+    assert_eq!(thinking_block["cache_control"]["ttl"], "1h");
+}
+
+// ── Structured output (ResponseFormat) round-trip with vendor opaque ─────
+
+#[test]
+fn structured_output_request_with_thinking_history_preserves_signature() {
+    // Common multi-turn pattern: model emitted a Thinking block on
+    // turn 1, the harness re-submits the conversation on turn 2 with
+    // ResponseFormat::Json for typed extraction. The Thinking part's
+    // signature must round-trip onto the next request's wire body
+    // alongside the response_format directive.
+    use entelix_core::ir::{JsonSchemaSpec, ResponseFormat};
+
+    let codec = AnthropicMessagesCodec::new();
+    let thinking_with_signature = ContentPart::Thinking {
+        text: "let me reason".into(),
+        cache_control: None,
+        provider_echoes: vec![ProviderEchoSnapshot::for_provider(
+            "anthropic-messages",
+            "signature",
+            ANTHROPIC_SIGNATURE,
+        )],
+    };
+    let schema = JsonSchemaSpec::new(
+        "Reply",
+        json!({
+            "type": "object",
+            "properties": {"answer": {"type": "string"}},
+            "required": ["answer"],
+        }),
+    )
+    .unwrap();
+    let req = ModelRequest {
+        model: "claude-opus-4-7".into(),
+        messages: vec![
+            Message::user("question"),
+            Message::new(Role::Assistant, vec![thinking_with_signature]),
+            Message::user("emit JSON"),
+        ],
+        max_tokens: Some(1024),
+        response_format: Some(ResponseFormat::strict(schema)),
+        ..ModelRequest::default()
+    };
+    let body = parse(&codec.encode(&req).unwrap().body);
+    // Signature must survive the round-trip even when the request
+    // also sets a structured-output format (different IR field; the
+    // two must be orthogonal).
+    let body_str = body.to_string();
+    assert!(
+        body_str.contains(ANTHROPIC_SIGNATURE),
+        "thinking signature must round-trip even when ResponseFormat is set"
+    );
+}
+
+// ── ContentPart::clone preserves provider_echoes ──────────────────────────
+
+#[test]
+fn content_part_clone_preserves_provider_echoes_verbatim() {
+    // The auto-compaction adapter and audit replay both route through
+    // `ContentPart::clone()` + reconstruction. If clone ever lost
+    // `provider_echoes`, model-emitted opaque tokens would silently
+    // disappear after one compaction pass. Pinning the clone semantics
+    // here catches the regression at the smallest possible surface
+    // (no compactor / session machinery needed — that's covered in
+    // entelix-session's own integration tests).
+    let original = ContentPart::Thinking {
+        text: "internal".into(),
+        cache_control: None,
+        provider_echoes: vec![ProviderEchoSnapshot::for_provider(
+            "anthropic-messages",
+            "signature",
+            ANTHROPIC_SIGNATURE,
+        )],
+    };
+    let cloned = original.clone();
+    // Both the original and the clone must carry identical
+    // provider_echoes payloads — pinning the structural clone
+    // contract that compaction and audit replay rely on.
+    assert_eq!(
+        find_provider_echo(original.provider_echoes(), "anthropic-messages")
+            .and_then(|e| e.payload_str("signature")),
+        find_provider_echo(cloned.provider_echoes(), "anthropic-messages")
+            .and_then(|e| e.payload_str("signature")),
+    );
+    assert_eq!(
+        find_provider_echo(cloned.provider_echoes(), "anthropic-messages")
+            .and_then(|e| e.payload_str("signature")),
+        Some(ANTHROPIC_SIGNATURE),
+    );
 }

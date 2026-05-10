@@ -239,6 +239,7 @@ async fn aggregator_thinking_then_text_preserves_intra_turn_order() {
     agg.push(StreamDelta::Start {
         id: "x".into(),
         model: "m".into(),
+        provider_echoes: Vec::new(),
     })
     .unwrap();
     agg.push(StreamDelta::ThinkingDelta {

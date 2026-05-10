@@ -1270,7 +1270,11 @@ fn stream_anthropic_sse(
                             accumulated_usage.cache_creation_input_tokens =
                                 u_field(Some(usage), "cache_creation_input_tokens");
                         }
-                        yield Ok(StreamDelta::Start { id, model });
+                        yield Ok(StreamDelta::Start {
+                            id,
+                            model,
+                            provider_echoes: Vec::new(),
+                        });
                     }
                     "content_block_start" => {
                         let idx = if let Some(n) = event.get("index").and_then(Value::as_u64) {

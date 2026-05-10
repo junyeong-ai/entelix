@@ -46,7 +46,7 @@ pub entelix_session::GraphEvent::SubAgentInvoked::agent_id: alloc::string::Strin
 pub entelix_session::GraphEvent::SubAgentInvoked::sub_thread_id: alloc::string::String
 pub entelix_session::GraphEvent::SubAgentInvoked::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
 pub entelix_session::GraphEvent::ThinkingDelta
-pub entelix_session::GraphEvent::ThinkingDelta::signature: core::option::Option<alloc::string::String>
+pub entelix_session::GraphEvent::ThinkingDelta::provider_echoes: alloc::vec::Vec<entelix_core::ir::provider_echo::ProviderEchoSnapshot>
 pub entelix_session::GraphEvent::ThinkingDelta::text: alloc::string::String
 pub entelix_session::GraphEvent::ThinkingDelta::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
 pub entelix_session::GraphEvent::ToolCall

@@ -68,6 +68,7 @@ impl Service<StreamingModelInvocation> for StubStreamingService {
                     Ok(StreamDelta::Start {
                         id: "msg_01".into(),
                         model: "claude-opus-4-7".into(),
+                        provider_echoes: Vec::new(),
                     }),
                     Ok(StreamDelta::TextDelta {
                         text: "hello".into(),
@@ -83,6 +84,7 @@ impl Service<StreamingModelInvocation> for StubStreamingService {
                         Ok(StreamDelta::Start {
                             id: "msg_01".into(),
                             model: "claude-opus-4-7".into(),
+                            provider_echoes: Vec::new(),
                         }),
                         Ok(StreamDelta::TextDelta {
                             text: "partial".into(),

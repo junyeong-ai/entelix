@@ -915,7 +915,11 @@ fn stream_openai_chat(
                     started = true;
                     let id = str_field(&event, "id").to_owned();
                     let model = str_field(&event, "model").to_owned();
-                    yield Ok(StreamDelta::Start { id, model });
+                    yield Ok(StreamDelta::Start {
+                        id,
+                        model,
+                        provider_echoes: Vec::new(),
+                    });
                 }
                 if let Some(usage) = event.get("usage").filter(|v| !v.is_null()) {
                     yield Ok(StreamDelta::Usage(decode_usage(Some(usage))));

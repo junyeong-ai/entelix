@@ -195,6 +195,12 @@ pub use entelix_prompt::{
     FewShotPromptTemplate, FixedExampleSelector, LengthBasedExampleSelector, MessagesPlaceholder,
     PromptTemplate, PromptValue, PromptVars, SharedExampleSelector,
 };
+#[cfg(feature = "tokenizer-hf")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tokenizer-hf")))]
+pub use entelix_tokenizer_hf::{HfTokenCounter, HfTokenizerError};
+#[cfg(feature = "tokenizer-tiktoken")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tokenizer-tiktoken")))]
+pub use entelix_tokenizer_tiktoken::{TiktokenCounter, TiktokenEncoding, TiktokenError};
 pub use entelix_runnable::{
     AnyRunnable, AnyRunnableHandle, BoxStream, ChatModelExt, Configured, DebugEvent, Fallback,
     JsonOutputParser, Mapping, Retrying, Runnable, RunnableEvent, RunnableExt, RunnableLambda,

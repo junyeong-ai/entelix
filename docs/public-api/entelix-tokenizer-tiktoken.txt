@@ -1,0 +1,60 @@
+pub mod entelix_tokenizer_tiktoken
+#[non_exhaustive] pub enum entelix_tokenizer_tiktoken::TiktokenEncoding
+pub entelix_tokenizer_tiktoken::TiktokenEncoding::Cl100kBase
+pub entelix_tokenizer_tiktoken::TiktokenEncoding::O200kBase
+pub entelix_tokenizer_tiktoken::TiktokenEncoding::P50kBase
+pub entelix_tokenizer_tiktoken::TiktokenEncoding::R50kBase
+impl entelix_tokenizer_tiktoken::TiktokenEncoding
+pub const fn entelix_tokenizer_tiktoken::TiktokenEncoding::name(self) -> &'static str
+impl core::clone::Clone for entelix_tokenizer_tiktoken::TiktokenEncoding
+pub fn entelix_tokenizer_tiktoken::TiktokenEncoding::clone(&self) -> entelix_tokenizer_tiktoken::TiktokenEncoding
+impl core::cmp::Eq for entelix_tokenizer_tiktoken::TiktokenEncoding
+impl core::cmp::PartialEq for entelix_tokenizer_tiktoken::TiktokenEncoding
+pub fn entelix_tokenizer_tiktoken::TiktokenEncoding::eq(&self, other: &entelix_tokenizer_tiktoken::TiktokenEncoding) -> bool
+impl core::fmt::Debug for entelix_tokenizer_tiktoken::TiktokenEncoding
+pub fn entelix_tokenizer_tiktoken::TiktokenEncoding::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_tokenizer_tiktoken::TiktokenEncoding
+pub fn entelix_tokenizer_tiktoken::TiktokenEncoding::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_tokenizer_tiktoken::TiktokenEncoding
+impl core::marker::StructuralPartialEq for entelix_tokenizer_tiktoken::TiktokenEncoding
+impl core::marker::Freeze for entelix_tokenizer_tiktoken::TiktokenEncoding
+impl core::marker::Send for entelix_tokenizer_tiktoken::TiktokenEncoding
+impl core::marker::Sync for entelix_tokenizer_tiktoken::TiktokenEncoding
+impl core::marker::Unpin for entelix_tokenizer_tiktoken::TiktokenEncoding
+impl core::marker::UnsafeUnpin for entelix_tokenizer_tiktoken::TiktokenEncoding
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tokenizer_tiktoken::TiktokenEncoding
+impl core::panic::unwind_safe::UnwindSafe for entelix_tokenizer_tiktoken::TiktokenEncoding
+#[non_exhaustive] pub enum entelix_tokenizer_tiktoken::TiktokenError
+pub entelix_tokenizer_tiktoken::TiktokenError::Load
+pub entelix_tokenizer_tiktoken::TiktokenError::Load::encoding_name: &'static str
+pub entelix_tokenizer_tiktoken::TiktokenError::Load::message: alloc::string::String
+impl core::error::Error for entelix_tokenizer_tiktoken::TiktokenError
+impl core::fmt::Debug for entelix_tokenizer_tiktoken::TiktokenError
+pub fn entelix_tokenizer_tiktoken::TiktokenError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_tokenizer_tiktoken::TiktokenError
+pub fn entelix_tokenizer_tiktoken::TiktokenError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tokenizer_tiktoken::TiktokenError
+impl core::marker::Send for entelix_tokenizer_tiktoken::TiktokenError
+impl core::marker::Sync for entelix_tokenizer_tiktoken::TiktokenError
+impl core::marker::Unpin for entelix_tokenizer_tiktoken::TiktokenError
+impl core::marker::UnsafeUnpin for entelix_tokenizer_tiktoken::TiktokenError
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tokenizer_tiktoken::TiktokenError
+impl core::panic::unwind_safe::UnwindSafe for entelix_tokenizer_tiktoken::TiktokenError
+pub struct entelix_tokenizer_tiktoken::TiktokenCounter
+impl entelix_tokenizer_tiktoken::TiktokenCounter
+pub const fn entelix_tokenizer_tiktoken::TiktokenCounter::encoding(&self) -> entelix_tokenizer_tiktoken::TiktokenEncoding
+pub fn entelix_tokenizer_tiktoken::TiktokenCounter::for_encoding(encoding: entelix_tokenizer_tiktoken::TiktokenEncoding) -> core::result::Result<Self, entelix_tokenizer_tiktoken::TiktokenError>
+impl core::clone::Clone for entelix_tokenizer_tiktoken::TiktokenCounter
+pub fn entelix_tokenizer_tiktoken::TiktokenCounter::clone(&self) -> entelix_tokenizer_tiktoken::TiktokenCounter
+impl core::fmt::Debug for entelix_tokenizer_tiktoken::TiktokenCounter
+pub fn entelix_tokenizer_tiktoken::TiktokenCounter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tokens::TokenCounter for entelix_tokenizer_tiktoken::TiktokenCounter
+pub fn entelix_tokenizer_tiktoken::TiktokenCounter::count(&self, text: &str) -> u64
+pub fn entelix_tokenizer_tiktoken::TiktokenCounter::encoding_name(&self) -> &'static str
+impl core::marker::Freeze for entelix_tokenizer_tiktoken::TiktokenCounter
+impl core::marker::Send for entelix_tokenizer_tiktoken::TiktokenCounter
+impl core::marker::Sync for entelix_tokenizer_tiktoken::TiktokenCounter
+impl core::marker::Unpin for entelix_tokenizer_tiktoken::TiktokenCounter
+impl core::marker::UnsafeUnpin for entelix_tokenizer_tiktoken::TiktokenCounter
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tokenizer_tiktoken::TiktokenCounter
+impl core::panic::unwind_safe::UnwindSafe for entelix_tokenizer_tiktoken::TiktokenCounter

@@ -1,0 +1,35 @@
+pub mod entelix_tokenizer_hf
+#[non_exhaustive] pub enum entelix_tokenizer_hf::HfTokenizerError
+pub entelix_tokenizer_hf::HfTokenizerError::Load
+pub entelix_tokenizer_hf::HfTokenizerError::Load::encoding_name: alloc::string::String
+pub entelix_tokenizer_hf::HfTokenizerError::Load::message: alloc::string::String
+impl core::error::Error for entelix_tokenizer_hf::HfTokenizerError
+impl core::fmt::Debug for entelix_tokenizer_hf::HfTokenizerError
+pub fn entelix_tokenizer_hf::HfTokenizerError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_tokenizer_hf::HfTokenizerError
+pub fn entelix_tokenizer_hf::HfTokenizerError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tokenizer_hf::HfTokenizerError
+impl core::marker::Send for entelix_tokenizer_hf::HfTokenizerError
+impl core::marker::Sync for entelix_tokenizer_hf::HfTokenizerError
+impl core::marker::Unpin for entelix_tokenizer_hf::HfTokenizerError
+impl core::marker::UnsafeUnpin for entelix_tokenizer_hf::HfTokenizerError
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tokenizer_hf::HfTokenizerError
+impl core::panic::unwind_safe::UnwindSafe for entelix_tokenizer_hf::HfTokenizerError
+pub struct entelix_tokenizer_hf::HfTokenCounter
+impl entelix_tokenizer_hf::HfTokenCounter
+pub const fn entelix_tokenizer_hf::HfTokenCounter::encoding(&self) -> &'static str
+pub fn entelix_tokenizer_hf::HfTokenCounter::from_bytes(bytes: &[u8], encoding_name: impl core::convert::Into<alloc::string::String>) -> core::result::Result<Self, entelix_tokenizer_hf::HfTokenizerError>
+impl core::clone::Clone for entelix_tokenizer_hf::HfTokenCounter
+pub fn entelix_tokenizer_hf::HfTokenCounter::clone(&self) -> entelix_tokenizer_hf::HfTokenCounter
+impl core::fmt::Debug for entelix_tokenizer_hf::HfTokenCounter
+pub fn entelix_tokenizer_hf::HfTokenCounter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tokens::TokenCounter for entelix_tokenizer_hf::HfTokenCounter
+pub fn entelix_tokenizer_hf::HfTokenCounter::count(&self, text: &str) -> u64
+pub fn entelix_tokenizer_hf::HfTokenCounter::encoding_name(&self) -> &'static str
+impl core::marker::Freeze for entelix_tokenizer_hf::HfTokenCounter
+impl core::marker::Send for entelix_tokenizer_hf::HfTokenCounter
+impl core::marker::Sync for entelix_tokenizer_hf::HfTokenCounter
+impl core::marker::Unpin for entelix_tokenizer_hf::HfTokenCounter
+impl core::marker::UnsafeUnpin for entelix_tokenizer_hf::HfTokenCounter
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tokenizer_hf::HfTokenCounter
+impl core::panic::unwind_safe::UnwindSafe for entelix_tokenizer_hf::HfTokenCounter

@@ -31,7 +31,9 @@ embedders-openai = ["dep:entelix-memory-openai"]
 vectorstores-qdrant = ["dep:entelix-memory-qdrant"]
 vectorstores-pgvector = ["dep:entelix-memory-pgvector"]
 graphmemory-pg = ["dep:entelix-graphmemory-pg"]
-full = ["mcp", "mcp-chatmodel", "postgres", "redis", "otel", "aws", "gcp", "azure", "policy", "server", "embedders-openai", "vectorstores-qdrant", "vectorstores-pgvector", "graphmemory-pg"]
+tokenizer-tiktoken = ["dep:entelix-tokenizer-tiktoken"]
+tokenizer-hf = ["dep:entelix-tokenizer-hf"]
+full = ["mcp", "mcp-chatmodel", "postgres", "redis", "otel", "aws", "gcp", "azure", "policy", "server", "embedders-openai", "vectorstores-qdrant", "vectorstores-pgvector", "graphmemory-pg", "tokenizer-tiktoken", "tokenizer-hf"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -52,6 +54,8 @@ entelix-memory-openai = { workspace = true, optional = true }
 entelix-memory-pgvector = { workspace = true, optional = true }
 entelix-memory-qdrant = { workspace = true, optional = true }
 entelix-graphmemory-pg = { workspace = true, optional = true }
+entelix-tokenizer-tiktoken = { workspace = true, optional = true }
+entelix-tokenizer-hf = { workspace = true, optional = true }
 entelix-otel = { workspace = true, optional = true }
 entelix-persistence = { workspace = true, optional = true }
 entelix-policy = { workspace = true, optional = true }

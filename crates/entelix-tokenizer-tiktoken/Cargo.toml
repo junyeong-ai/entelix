@@ -1,0 +1,28 @@
+[package]
+name = "entelix-tokenizer-tiktoken"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+documentation.workspace = true
+description = "entelix vendor-accurate TokenCounter for OpenAI BPE encodings (cl100k_base, o200k_base, p50k_base, r50k_base) — wraps tiktoken-rs with eager preload"
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+entelix-core = { workspace = true }
+thiserror = { workspace = true }
+tiktoken-rs = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

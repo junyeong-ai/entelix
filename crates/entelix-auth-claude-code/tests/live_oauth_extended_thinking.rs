@@ -116,7 +116,7 @@ async fn claude_code_oauth_extended_thinking_signature_round_trip() {
         model: model.clone(),
         messages: transcript.clone(),
         max_tokens: Some(2048),
-        tools: vec![weather_tool.clone()],
+        tools: std::sync::Arc::from([weather_tool.clone()]),
         reasoning_effort: Some(ReasoningEffort::Low),
         provider_extensions: ProviderExtensions::default()
             .with_anthropic(AnthropicExt::default().with_betas([CLAUDE_CODE_BETA])),
@@ -207,7 +207,7 @@ async fn claude_code_oauth_extended_thinking_signature_round_trip() {
         model,
         messages: transcript,
         max_tokens: Some(2048),
-        tools: vec![weather_tool],
+        tools: std::sync::Arc::from([weather_tool]),
         reasoning_effort: Some(ReasoningEffort::Low),
         provider_extensions: ProviderExtensions::default()
             .with_anthropic(AnthropicExt::default().with_betas([CLAUDE_CODE_BETA])),

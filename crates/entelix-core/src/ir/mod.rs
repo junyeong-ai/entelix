@@ -29,7 +29,7 @@ pub use cache::{CacheControl, CacheTtl};
 pub use capabilities::Capabilities;
 pub use content::{ContentPart, ToolResultContent};
 pub use message::{Message, Role};
-pub use provider_echo::{ProviderEchoSnapshot, find_provider_echo};
+pub use provider_echo::ProviderEchoSnapshot;
 pub use provider_extensions::{
     AnthropicExt, BedrockExt, BedrockGuardrail, GeminiExt, GeminiSafetyOverride, OpenAiChatExt,
     OpenAiResponsesExt, ProviderExtensions, ReasoningSummary, ServiceTier, UrlContext,

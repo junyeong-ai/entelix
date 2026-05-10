@@ -33,7 +33,6 @@ use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
     ModelWarning, OutputStrategy, ProviderEchoSnapshot, ReasoningEffort, RefusalReason,
     ResponseFormat, Role, StopReason, ToolChoice, ToolKind, ToolResultContent, Usage,
-    find_provider_echo,
 };
 use crate::rate_limit::RateLimitSnapshot;
 use crate::stream::StreamDelta;
@@ -60,7 +59,7 @@ impl AnthropicMessagesCodec {
 
 impl Codec for AnthropicMessagesCodec {
     fn name(&self) -> &'static str {
-        "anthropic-messages"
+        PROVIDER_KEY
     }
 
     fn capabilities(&self, _model: &str) -> Capabilities {
@@ -731,7 +730,7 @@ fn encode_content_parts(
                 let mut block = Map::new();
                 block.insert("type".into(), Value::String("thinking".into()));
                 block.insert("thinking".into(), Value::String(text.clone()));
-                if let Some(sig) = find_provider_echo(provider_echoes, PROVIDER_KEY)
+                if let Some(sig) = ProviderEchoSnapshot::find_in(provider_echoes, PROVIDER_KEY)
                     .and_then(|e| e.payload_str("signature"))
                 {
                     block.insert("signature".into(), Value::String(sig.to_owned()));
@@ -740,7 +739,7 @@ fn encode_content_parts(
                 out.push(Value::Object(block));
             }
             ContentPart::RedactedThinking { provider_echoes } => {
-                let Some(data) = find_provider_echo(provider_echoes, PROVIDER_KEY)
+                let Some(data) = ProviderEchoSnapshot::find_in(provider_echoes, PROVIDER_KEY)
                     .and_then(|e| e.payload_str("data"))
                 else {
                     // No matching opaque blob — without the original

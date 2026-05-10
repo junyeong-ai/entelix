@@ -36,7 +36,7 @@ use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
     ModelWarning, OutputStrategy, ProviderEchoSnapshot, ReasoningEffort, ReasoningSummary,
     RefusalReason, ResponseFormat, Role, StopReason, ToolChoice, ToolKind, ToolResultContent,
-    Usage, find_provider_echo,
+    Usage,
 };
 use crate::rate_limit::RateLimitSnapshot;
 use crate::stream::StreamDelta;
@@ -64,7 +64,7 @@ impl OpenAiResponsesCodec {
 
 impl Codec for OpenAiResponsesCodec {
     fn name(&self) -> &'static str {
-        "openai-responses"
+        PROVIDER_KEY
     }
 
     fn capabilities(&self, _model: &str) -> Capabilities {
@@ -196,7 +196,7 @@ fn build_body(request: &ModelRequest, streaming: bool) -> Result<(Value, Vec<Mod
     if streaming {
         body.insert("stream".into(), Value::Bool(true));
     }
-    if let Some(prev) = find_provider_echo(&request.continued_from, PROVIDER_KEY)
+    if let Some(prev) = ProviderEchoSnapshot::find_in(&request.continued_from, PROVIDER_KEY)
         .and_then(|e| e.payload_str("response_id"))
     {
         body.insert(
@@ -653,7 +653,7 @@ fn split_assistant_content(
                 entry.insert("call_id".into(), Value::String(id.clone()));
                 entry.insert("name".into(), Value::String(name.clone()));
                 entry.insert("arguments".into(), Value::String(input.to_string()));
-                if let Some(fc_id) = find_provider_echo(provider_echoes, PROVIDER_KEY)
+                if let Some(fc_id) = ProviderEchoSnapshot::find_in(provider_echoes, PROVIDER_KEY)
                     .and_then(|e| e.payload_str("id"))
                 {
                     entry.insert("id".into(), Value::String(fc_id.to_owned()));
@@ -683,7 +683,7 @@ fn split_assistant_content(
                     "summary".into(),
                     json!([{ "type": "summary_text", "text": text }]),
                 );
-                if let Some(echo) = find_provider_echo(provider_echoes, PROVIDER_KEY) {
+                if let Some(echo) = ProviderEchoSnapshot::find_in(provider_echoes, PROVIDER_KEY) {
                     if let Some(rid) = echo.payload_str("id") {
                         entry.insert("id".into(), Value::String(rid.to_owned()));
                     }

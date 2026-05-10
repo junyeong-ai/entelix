@@ -29,7 +29,6 @@ use entelix_core::codecs::{
 };
 use entelix_core::ir::{
     CacheControl, ContentPart, Message, ModelRequest, ModelResponse, ProviderEchoSnapshot, Role,
-    find_provider_echo,
 };
 use entelix_core::stream::{StreamAggregator, StreamDelta};
 use serde_json::{Value, json};
@@ -117,7 +116,7 @@ fn anthropic_signature_round_trip_preserves_value_verbatim() {
         unreachable!()
     };
     assert_eq!(text, "Let me work this out step by step.");
-    let echoed_sig = find_provider_echo(provider_echoes, "anthropic-messages")
+    let echoed_sig = ProviderEchoSnapshot::find_in(provider_echoes, "anthropic-messages")
         .and_then(|e| e.payload_str("signature"))
         .expect("anthropic-messages signature must round-trip onto provider_echoes");
     assert_eq!(echoed_sig, ANTHROPIC_SIGNATURE);
@@ -206,7 +205,7 @@ fn anthropic_redacted_thinking_round_trips_data_field() {
     let ContentPart::RedactedThinking { provider_echoes } = redacted else {
         unreachable!()
     };
-    let echoed_data = find_provider_echo(provider_echoes, "anthropic-messages")
+    let echoed_data = ProviderEchoSnapshot::find_in(provider_echoes, "anthropic-messages")
         .and_then(|e| e.payload_str("data"))
         .expect("redacted data must round-trip");
     assert_eq!(echoed_data, ANTHROPIC_REDACTED_DATA);
@@ -263,7 +262,7 @@ fn vertex_anthropic_signature_inherits_anthropic_provider_key() {
     // Vertex Anthropic shares the `anthropic-messages` provider key
     // because the wire shape is identical to first-party Anthropic
     // and Anthropic documents cross-platform signature compatibility.
-    let echoed = find_provider_echo(provider_echoes, "anthropic-messages")
+    let echoed = ProviderEchoSnapshot::find_in(provider_echoes, "anthropic-messages")
         .and_then(|e| e.payload_str("signature"));
     assert_eq!(echoed, Some(ANTHROPIC_SIGNATURE));
 }
@@ -304,7 +303,7 @@ fn bedrock_converse_signature_round_trip() {
         unreachable!()
     };
     assert_eq!(text, "Considering the question…");
-    let echoed = find_provider_echo(provider_echoes, "bedrock-converse")
+    let echoed = ProviderEchoSnapshot::find_in(provider_echoes, "bedrock-converse")
         .and_then(|e| e.payload_str("signature"))
         .expect("bedrock-converse signature must round-trip");
     assert_eq!(echoed, BEDROCK_SIGNATURE);
@@ -358,7 +357,7 @@ fn bedrock_converse_redacted_content_routes_to_redacted_thinking_variant() {
     let ContentPart::RedactedThinking { provider_echoes } = redacted else {
         unreachable!()
     };
-    let echoed = find_provider_echo(provider_echoes, "bedrock-converse")
+    let echoed = ProviderEchoSnapshot::find_in(provider_echoes, "bedrock-converse")
         .and_then(|e| e.payload_str("redacted_content"))
         .expect("redacted_content must ride on provider_echoes");
     assert_eq!(echoed, BEDROCK_REDACTED);
@@ -396,7 +395,7 @@ fn gemini_thought_signature_round_trips_on_thinking_part() {
     else {
         unreachable!()
     };
-    let echoed = find_provider_echo(provider_echoes, "gemini")
+    let echoed = ProviderEchoSnapshot::find_in(provider_echoes, "gemini")
         .and_then(|e| e.payload_str("thought_signature"))
         .expect("gemini thought_signature must round-trip");
     assert_eq!(echoed, GEMINI_THOUGHT_SIGNATURE);
@@ -471,7 +470,7 @@ fn gemini_thought_signature_round_trips_on_function_call_part() {
         unreachable!()
     };
     assert_eq!(name, "get_weather");
-    let echoed = find_provider_echo(provider_echoes, "gemini")
+    let echoed = ProviderEchoSnapshot::find_in(provider_echoes, "gemini")
         .and_then(|e| e.payload_str("thought_signature"))
         .expect("thought_signature must ride on functionCall ToolUse");
     assert_eq!(echoed, GEMINI_THOUGHT_SIGNATURE);
@@ -529,7 +528,7 @@ fn gemini_decoder_tolerates_legacy_camelcase_thoughtsignature_on_wire() {
     else {
         unreachable!()
     };
-    let echoed = find_provider_echo(provider_echoes, "gemini")
+    let echoed = ProviderEchoSnapshot::find_in(provider_echoes, "gemini")
         .and_then(|e| e.payload_str("thought_signature"));
     assert_eq!(echoed, Some(GEMINI_THOUGHT_SIGNATURE));
 }
@@ -559,7 +558,7 @@ fn vertex_gemini_inherits_gemini_provider_key_through_composition() {
     else {
         unreachable!()
     };
-    let echoed = find_provider_echo(provider_echoes, "gemini")
+    let echoed = ProviderEchoSnapshot::find_in(provider_echoes, "gemini")
         .and_then(|e| e.payload_str("thought_signature"));
     assert_eq!(echoed, Some(GEMINI_THOUGHT_SIGNATURE));
 }
@@ -605,7 +604,7 @@ fn openai_responses_encrypted_content_round_trips_on_reasoning_item() {
         unreachable!()
     };
     assert_eq!(text, "Step 1: parse input.");
-    let echo = find_provider_echo(provider_echoes, "openai-responses")
+    let echo = ProviderEchoSnapshot::find_in(provider_echoes, "openai-responses")
         .expect("reasoning item must carry openai-responses echo");
     assert_eq!(
         echo.payload_str("encrypted_content"),
@@ -614,8 +613,9 @@ fn openai_responses_encrypted_content_round_trips_on_reasoning_item() {
     assert_eq!(echo.payload_str("id"), Some(OPENAI_REASONING_ITEM_ID));
 
     // Per-response: Response.id captured at the response root.
-    let response_echo = find_provider_echo(&response.provider_echoes, "openai-responses")
-        .expect("Response.id must ride on ModelResponse.provider_echoes");
+    let response_echo =
+        ProviderEchoSnapshot::find_in(&response.provider_echoes, "openai-responses")
+            .expect("Response.id must ride on ModelResponse.provider_echoes");
     assert_eq!(
         response_echo.payload_str("response_id"),
         Some(OPENAI_RESPONSE_ID),
@@ -683,8 +683,8 @@ fn openai_responses_function_call_item_id_round_trips() {
         unreachable!()
     };
     assert_eq!(id, "call_abc", "ContentPart::ToolUse.id is the call_id");
-    let echo_id =
-        find_provider_echo(provider_echoes, "openai-responses").and_then(|e| e.payload_str("id"));
+    let echo_id = ProviderEchoSnapshot::find_in(provider_echoes, "openai-responses")
+        .and_then(|e| e.payload_str("id"));
     assert_eq!(
         echo_id,
         Some("fc_def123"),
@@ -934,7 +934,7 @@ fn stream_aggregator_propagates_start_provider_echoes_to_response() {
     .unwrap();
     let response = agg.finalize().unwrap();
 
-    let echoed = find_provider_echo(&response.provider_echoes, "openai-responses")
+    let echoed = ProviderEchoSnapshot::find_in(&response.provider_echoes, "openai-responses")
         .and_then(|e| e.payload_str("response_id"));
     assert_eq!(
         echoed,
@@ -1128,13 +1128,13 @@ fn content_part_clone_preserves_provider_echoes_verbatim() {
     // provider_echoes payloads — pinning the structural clone
     // contract that compaction and audit replay rely on.
     assert_eq!(
-        find_provider_echo(original.provider_echoes(), "anthropic-messages")
+        ProviderEchoSnapshot::find_in(original.provider_echoes(), "anthropic-messages")
             .and_then(|e| e.payload_str("signature")),
-        find_provider_echo(cloned.provider_echoes(), "anthropic-messages")
+        ProviderEchoSnapshot::find_in(cloned.provider_echoes(), "anthropic-messages")
             .and_then(|e| e.payload_str("signature")),
     );
     assert_eq!(
-        find_provider_echo(cloned.provider_echoes(), "anthropic-messages")
+        ProviderEchoSnapshot::find_in(cloned.provider_echoes(), "anthropic-messages")
             .and_then(|e| e.payload_str("signature")),
         Some(ANTHROPIC_SIGNATURE),
     );

@@ -126,9 +126,11 @@ async fn anthropic_stream_yields_thinking_with_signature() {
             ..
         } => {
             assert_eq!(text, "Let me reason. Two plus two.");
-            let signature =
-                entelix_core::ir::find_provider_echo(provider_echoes, "anthropic-messages")
-                    .and_then(|e| e.payload_str("signature"));
+            let signature = entelix_core::ir::ProviderEchoSnapshot::find_in(
+                provider_echoes,
+                "anthropic-messages",
+            )
+            .and_then(|e| e.payload_str("signature"));
             assert_eq!(signature, Some("sig-001"));
         }
         other => panic!("expected Thinking, got {other:?}"),
@@ -176,7 +178,7 @@ async fn gemini_stream_yields_thinking_when_part_is_thought() {
     } = thinking
     {
         assert!(text.contains("Reasoning step 1"));
-        let signature = entelix_core::ir::find_provider_echo(provider_echoes, "gemini")
+        let signature = entelix_core::ir::ProviderEchoSnapshot::find_in(provider_echoes, "gemini")
             .and_then(|e| e.payload_str("thought_signature"));
         assert_eq!(signature, Some("sig-g1"));
     }

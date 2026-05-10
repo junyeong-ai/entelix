@@ -1801,6 +1801,7 @@ pub struct entelix_core::ir::ProviderEchoSnapshot
 pub entelix_core::ir::ProviderEchoSnapshot::payload: serde_json::value::Value
 pub entelix_core::ir::ProviderEchoSnapshot::provider: alloc::borrow::Cow<'static, str>
 impl entelix_core::ir::ProviderEchoSnapshot
+pub fn entelix_core::ir::ProviderEchoSnapshot::find_in<'a>(echoes: &'a [Self], name: &str) -> core::option::Option<&'a Self>
 pub fn entelix_core::ir::ProviderEchoSnapshot::for_provider(provider: impl core::convert::Into<alloc::borrow::Cow<'static, str>>, field: &str, value: impl core::convert::Into<serde_json::value::Value>) -> Self
 pub fn entelix_core::ir::ProviderEchoSnapshot::new(provider: impl core::convert::Into<alloc::borrow::Cow<'static, str>>, payload: serde_json::value::Value) -> Self
 pub fn entelix_core::ir::ProviderEchoSnapshot::payload_field(&self, field: &str) -> core::option::Option<&serde_json::value::Value>
@@ -2084,7 +2085,6 @@ impl core::marker::Unpin for entelix_core::ir::Usage
 impl core::marker::UnsafeUnpin for entelix_core::ir::Usage
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::ir::Usage
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::ir::Usage
-pub fn entelix_core::ir::find_provider_echo<'a>(echoes: &'a [entelix_core::ir::ProviderEchoSnapshot], name: &str) -> core::option::Option<&'a entelix_core::ir::ProviderEchoSnapshot>
 pub mod entelix_core::llm_facing
 pub struct entelix_core::llm_facing::LlmFacingSchema
 impl entelix_core::llm_facing::LlmFacingSchema
@@ -2664,6 +2664,7 @@ pub entelix_core::stream::StreamDelta::Start::provider_echoes: alloc::vec::Vec<e
 pub entelix_core::stream::StreamDelta::Stop
 pub entelix_core::stream::StreamDelta::Stop::stop_reason: entelix_core::ir::StopReason
 pub entelix_core::stream::StreamDelta::TextDelta
+pub entelix_core::stream::StreamDelta::TextDelta::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>
 pub entelix_core::stream::StreamDelta::TextDelta::text: alloc::string::String
 pub entelix_core::stream::StreamDelta::ThinkingDelta
 pub entelix_core::stream::StreamDelta::ThinkingDelta::provider_echoes: alloc::vec::Vec<entelix_core::ir::ProviderEchoSnapshot>

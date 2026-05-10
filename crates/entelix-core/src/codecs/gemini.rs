@@ -32,7 +32,7 @@ use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
     ModelWarning, OutputStrategy, ProviderEchoSnapshot, ReasoningEffort, RefusalReason,
     ResponseFormat, Role, SafetyCategory, SafetyLevel, SafetyRating, StopReason, ToolChoice,
-    ToolKind, ToolResultContent, Usage, find_provider_echo,
+    ToolKind, ToolResultContent, Usage,
 };
 use crate::stream::StreamDelta;
 
@@ -73,7 +73,8 @@ fn decode_thought_signature(obj: &Value) -> Option<ProviderEchoSnapshot> {
 /// echoes. Returns the raw signature string so the caller can stamp
 /// it onto the appropriate wire-format object.
 fn encode_thought_signature(echoes: &[ProviderEchoSnapshot]) -> Option<&str> {
-    find_provider_echo(echoes, PROVIDER_KEY).and_then(|e| e.payload_str(WIRE_THOUGHT_SIGNATURE))
+    ProviderEchoSnapshot::find_in(echoes, PROVIDER_KEY)
+        .and_then(|e| e.payload_str(WIRE_THOUGHT_SIGNATURE))
 }
 
 /// Stateless codec for the Gemini `generateContent` family of endpoints.
@@ -89,7 +90,7 @@ impl GeminiCodec {
 
 impl Codec for GeminiCodec {
     fn name(&self) -> &'static str {
-        "gemini"
+        PROVIDER_KEY
     }
 
     fn capabilities(&self, _model: &str) -> Capabilities {

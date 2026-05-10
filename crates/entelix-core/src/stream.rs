@@ -65,7 +65,6 @@ pub enum StreamDelta {
         /// reasoning turns). The aggregator extends the open-text
         /// block's accumulated echoes — a single `ContentPart::Text`
         /// finalises with the union of every delta's echoes.
-        #[doc(hidden)] // surface stays terse — most call sites use Vec::new()
         provider_echoes: Vec<ProviderEchoSnapshot>,
     },
     /// Append text (or vendor opaque tokens) to the in-progress

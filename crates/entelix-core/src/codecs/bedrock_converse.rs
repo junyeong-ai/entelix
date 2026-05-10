@@ -34,7 +34,7 @@ use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, ContentPart, MediaSource, ModelRequest, ModelResponse, ModelWarning,
     OutputStrategy, ProviderEchoSnapshot, ReasoningEffort, RefusalReason, ResponseFormat, Role,
-    StopReason, ToolChoice, ToolKind, ToolResultContent, Usage, find_provider_echo,
+    StopReason, ToolChoice, ToolKind, ToolResultContent, Usage,
 };
 use crate::rate_limit::RateLimitSnapshot;
 
@@ -60,7 +60,7 @@ impl BedrockConverseCodec {
 
 impl Codec for BedrockConverseCodec {
     fn name(&self) -> &'static str {
-        "bedrock-converse"
+        PROVIDER_KEY
     }
 
     fn capabilities(&self, _model: &str) -> Capabilities {
@@ -773,14 +773,14 @@ fn encode_assistant_content(
             } => {
                 let mut inner = Map::new();
                 inner.insert("text".into(), Value::String(text.clone()));
-                if let Some(sig) = find_provider_echo(provider_echoes, PROVIDER_KEY)
+                if let Some(sig) = ProviderEchoSnapshot::find_in(provider_echoes, PROVIDER_KEY)
                     .and_then(|snap| snap.payload_str("signature"))
                 {
                     inner.insert("signature".into(), Value::String(sig.to_owned()));
                 }
                 let mut reasoning = Map::new();
                 reasoning.insert("reasoningText".into(), Value::Object(inner));
-                if let Some(redacted) = find_provider_echo(provider_echoes, PROVIDER_KEY)
+                if let Some(redacted) = ProviderEchoSnapshot::find_in(provider_echoes, PROVIDER_KEY)
                     .and_then(|e| e.payload_str("redacted_content"))
                 {
                     reasoning.insert("redactedContent".into(), Value::String(redacted.to_owned()));
@@ -788,7 +788,7 @@ fn encode_assistant_content(
                 out.push(json!({ "reasoningContent": Value::Object(reasoning) }));
             }
             ContentPart::RedactedThinking { provider_echoes } => {
-                let Some(redacted) = find_provider_echo(provider_echoes, PROVIDER_KEY)
+                let Some(redacted) = ProviderEchoSnapshot::find_in(provider_echoes, PROVIDER_KEY)
                     .and_then(|e| e.payload_str("redacted_content"))
                 else {
                     warnings.push(ModelWarning::LossyEncode {

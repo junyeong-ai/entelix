@@ -10,9 +10,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::doc_markdown)]
 
 use chrono::Utc;
-use entelix_core::ir::{
-    ContentPart, ProviderEchoSnapshot, Role, ToolResultContent, find_provider_echo,
-};
+use entelix_core::ir::{ContentPart, ProviderEchoSnapshot, Role, ToolResultContent};
 use entelix_session::{GraphEvent, SessionGraph};
 
 const ANTHROPIC_SIGNATURE: &str = "WaUjzkypQ2mUEVM36O2TxuC06KN8xyfbJwyem2dw3UR";
@@ -46,7 +44,7 @@ fn replay_preserves_thinking_provider_echoes_through_assistant_message_event() {
         .expect("replayed assistant message must exist");
     let part = assistant.content.first().expect("part must exist");
     assert_eq!(
-        find_provider_echo(part.provider_echoes(), "anthropic-messages")
+        ProviderEchoSnapshot::find_in(part.provider_echoes(), "anthropic-messages")
             .and_then(|e| e.payload_str("signature")),
         Some(ANTHROPIC_SIGNATURE),
     );
@@ -88,7 +86,7 @@ fn replay_preserves_tool_use_provider_echoes_through_assistant_message_event() {
         .unwrap();
     let tool_use = assistant.content.first().expect("tool_use must exist");
     assert_eq!(
-        find_provider_echo(tool_use.provider_echoes(), "gemini")
+        ProviderEchoSnapshot::find_in(tool_use.provider_echoes(), "gemini")
             .and_then(|e| e.payload_str("thought_signature")),
         Some(GEMINI_THOUGHT_SIGNATURE),
     );

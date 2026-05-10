@@ -120,19 +120,22 @@ impl ProviderEchoSnapshot {
         self.payload_field(field)
             .and_then(serde_json::Value::as_str)
     }
-}
 
-/// Find the first snapshot in `echoes` whose `provider` matches
-/// `name` — used by codecs on the encode side to recover their own
-/// blob from a cross-vendor IR. Returns `None` when no entry
-/// matches; the codec then emits no wire-side opaque field for that
-/// part.
-#[must_use]
-pub fn find_provider_echo<'a>(
-    echoes: &'a [ProviderEchoSnapshot],
-    name: &str,
-) -> Option<&'a ProviderEchoSnapshot> {
-    echoes.iter().find(|e| e.provider.as_ref() == name)
+    /// Find the first snapshot in `echoes` whose `provider` matches
+    /// `name`. Codecs call this on the encode side to recover their
+    /// own opaque blob from a part's cross-vendor carrier; `None`
+    /// means no entry for this codec, so no wire-side opaque field
+    /// is emitted.
+    ///
+    /// **Codec single-emit invariant**: a codec MUST attach at most
+    /// one entry per `(part, provider key)` pair on decode. Multiple
+    /// matches in `echoes` would indicate the IR was hand-built or a
+    /// codec violated the invariant — `find_in` returns the first
+    /// match, leaving subsequent entries inert.
+    #[must_use]
+    pub fn find_in<'a>(echoes: &'a [Self], name: &str) -> Option<&'a Self> {
+        echoes.iter().find(|e| e.provider.as_ref() == name)
+    }
 }
 
 #[cfg(test)]
@@ -170,14 +173,15 @@ mod tests {
             ProviderEchoSnapshot::for_provider("gemini", "thought_signature", "g"),
         ];
         assert_eq!(
-            find_provider_echo(&echoes, "anthropic-messages")
+            ProviderEchoSnapshot::find_in(&echoes, "anthropic-messages")
                 .and_then(|s| s.payload_str("signature")),
             Some("a"),
         );
         assert_eq!(
-            find_provider_echo(&echoes, "gemini").and_then(|s| s.payload_str("thought_signature")),
+            ProviderEchoSnapshot::find_in(&echoes, "gemini")
+                .and_then(|s| s.payload_str("thought_signature")),
             Some("g"),
         );
-        assert!(find_provider_echo(&echoes, "openai-responses").is_none());
+        assert!(ProviderEchoSnapshot::find_in(&echoes, "openai-responses").is_none());
     }
 }

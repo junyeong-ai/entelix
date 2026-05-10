@@ -243,14 +243,6 @@ pub use entelix_tools::{
     SearchResult, SearchTool, SsrfSafeDnsResolver, StaticResource, ToolError, ToolResult,
     is_ssrf_blocked, tool,
 };
-#[cfg(feature = "sandboxed")]
-#[cfg_attr(docsrs, doc(cfg(feature = "sandboxed")))]
-pub use entelix_tools::{
-    CodePolicy, SandboxResource, SandboxSkill, SandboxedCodeTool, SandboxedListDirTool,
-    SandboxedReadFileTool, SandboxedShellTool, SandboxedWriteFileTool, ShellPolicy,
-    ShellPolicyError,
-};
-
 /// Common imports for typical SDK usage.
 ///
 /// ```ignore

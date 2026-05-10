@@ -142,7 +142,7 @@ async fn add(_ctx: &AgentContext<()>, a: i64, b: i64) -> Result<i64> {
 // Generates `Add` unit struct + `SchemaTool` impl + JSON Schema.
 ```
 
-Built-ins: `HttpFetchTool` (3-layer SSRF defense), `Calculator`, `SchemaTool` typed-I/O adapter, sandboxed shell / file / code / list-dir delegating syscalls through the `Sandbox` trait.
+Built-ins: `HttpFetchTool` (3-layer SSRF defense), `Calculator`, `SchemaTool` typed-I/O adapter. Sandboxed shell / file / code / list-dir tools live in the `entelix-tools-coding` companion crate and delegate syscalls through the `Sandbox` trait.
 
 ### Memory patterns
 
@@ -183,7 +183,7 @@ let server = McpServerConfig::http("https://server.example/mcp")
 
 ## What entelix is NOT
 
-- **No direct filesystem / shell calls in first-party crates** — sandboxed wrappers (`SandboxedShellTool`, `SandboxedReadFileTool`, …) exist but every syscall delegates through the `Sandbox` trait. Concrete `Sandbox` impls (Landlock / Seatbelt / e2b / modal) live as companion crates, not in core.
+- **No direct filesystem / shell calls in first-party crates** — sandboxed wrappers (`SandboxedShellTool`, `SandboxedReadFileTool`, …) ship in the `entelix-tools-coding` companion crate and every syscall delegates through the `Sandbox` trait. Concrete `Sandbox` impls (Landlock / Seatbelt / e2b / modal) live as companion crates, not in core.
 - **No local inference** — application-layer SDK; pair with `candle` / `mistral.rs` if you need it.
 - **No vector DB reimplementation** — production `VectorStore` impls ship as `entelix-memory-qdrant` / `entelix-memory-pgvector`; bring your own via the trait.
 - **No document loaders** — that's `swiftide`'s job.
@@ -211,7 +211,7 @@ entelix-rag              — RAG primitives (Document/Lineage, splitters, Chunke
 entelix-persistence      — Postgres + Redis Checkpointer/Store/SessionLog with row-level security + advisory lock
 entelix-tokenizer-tiktoken — Vendor-accurate TokenCounter wrapping tiktoken-rs (OpenAI BPE: cl100k_base / o200k_base / p50k_base / r50k_base)
 entelix-tokenizer-hf     — Vendor-accurate TokenCounter wrapping HuggingFace `tokenizers` (Llama / Qwen / Mistral / DeepSeek / Gemma / Phi)
-entelix-tools            — HttpFetchTool, Calculator, SchemaTool, sandboxed tools, skills, memory tools
+entelix-tools            — HttpFetchTool, Calculator, SchemaTool, skills, memory tools
 entelix-tools-coding     — Sandbox-trait-backed shell / code / fs tools + Anthropic Skills layout (vertical companion)
 entelix-mcp              — native JSON-RPC 2.0 over MCP streamable-http; Roots + Elicitation + Sampling channels; ChatModelSamplingProvider behind `chatmodel-sampling` feature
 entelix-cloud            — Bedrock (SigV4) / Vertex (gcp_auth) / Foundry (AAD) transports

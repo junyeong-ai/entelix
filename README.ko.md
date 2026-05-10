@@ -141,7 +141,7 @@ async fn add(_ctx: &AgentContext<()>, a: i64, b: i64) -> Result<i64> {
 // `Add` unit struct + `SchemaTool` impl + JSON Schema 자동 생성.
 ```
 
-Built-ins: `HttpFetchTool` (3-layer SSRF 방어), `Calculator`, `SchemaTool` 타입 I/O 어댑터, `Sandbox` trait 통해 syscall delegate 하는 sandboxed shell / file / code / list-dir.
+Built-ins: `HttpFetchTool` (3-layer SSRF 방어), `Calculator`, `SchemaTool` 타입 I/O 어댑터. sandboxed shell / file / code / list-dir 도구는 `entelix-tools-coding` 컴패니언 crate 가 제공하고 모든 syscall 은 `Sandbox` trait 통해 delegate.
 
 ### Memory 패턴
 
@@ -182,7 +182,7 @@ let server = McpServerConfig::http("https://server.example/mcp")
 
 ## entelix 가 하지 않는 것
 
-- **first-party crate 에서 직접 filesystem / shell 호출 없음** — sandboxed wrapper (`SandboxedShellTool`, `SandboxedReadFileTool`, …) 는 있지만 모든 syscall 은 `Sandbox` trait 통해 delegate. 구체 `Sandbox` impl (Landlock / Seatbelt / e2b / modal) 은 컴패니언 crate, core 에 없음.
+- **first-party crate 에서 직접 filesystem / shell 호출 없음** — sandboxed wrapper (`SandboxedShellTool`, `SandboxedReadFileTool`, …) 는 `entelix-tools-coding` 컴패니언 crate 가 제공하고 모든 syscall 은 `Sandbox` trait 통해 delegate. 구체 `Sandbox` impl (Landlock / Seatbelt / e2b / modal) 은 컴패니언 crate, core 에 없음.
 - **로컬 추론 없음** — application layer SDK; 필요 시 `candle` / `mistral.rs` 와 페어링.
 - **벡터 DB 재구현 없음** — 프로덕션 `VectorStore` impl 은 `entelix-memory-qdrant` / `entelix-memory-pgvector` 컴패니언으로 ship; trait 통해 BYO.
 - **document loader 없음** — `swiftide` 영역.
@@ -210,7 +210,7 @@ entelix-rag              — RAG 프리미티브 (Document/Lineage, splitter, Ch
 entelix-persistence      — Postgres + Redis Checkpointer/Store/SessionLog + row-level security + advisory lock
 entelix-tokenizer-tiktoken — tiktoken-rs 래핑 vendor-accurate TokenCounter (OpenAI BPE: cl100k_base / o200k_base / p50k_base / r50k_base)
 entelix-tokenizer-hf     — HuggingFace `tokenizers` 래핑 vendor-accurate TokenCounter (Llama / Qwen / Mistral / DeepSeek / Gemma / Phi)
-entelix-tools            — HttpFetchTool, Calculator, SchemaTool, sandboxed tool, skill, memory tool
+entelix-tools            — HttpFetchTool, Calculator, SchemaTool, skill, memory tool
 entelix-tools-coding     — Sandbox trait 기반 shell / code / fs 도구 + Anthropic Skills 레이아웃 (수직 컴패니언)
 entelix-mcp              — 네이티브 JSON-RPC 2.0 over MCP streamable-http; Roots + Elicitation + Sampling 채널; ChatModelSamplingProvider 가 `chatmodel-sampling` feature 뒤
 entelix-cloud            — Bedrock (SigV4) / Vertex (gcp_auth) / Foundry (AAD) transport

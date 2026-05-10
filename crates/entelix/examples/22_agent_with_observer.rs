@@ -55,7 +55,7 @@ async fn main() -> Result<()> {
     let agent = Agent::<u32>::builder()
         .with_name("counter-agent")
         .with_runnable(counter)
-        .with_sink(sink.clone())
+        .add_sink(sink.clone())
         .with_observer(PrintingObserver)
         .build()?;
 
@@ -69,8 +69,15 @@ async fn main() -> Result<()> {
     println!("\n=== events ===");
     for event in sink.events() {
         match event {
-            AgentEvent::Started { run_id, agent } => {
-                println!("Started   | run_id={run_id} agent={agent}");
+            AgentEvent::Started {
+                run_id,
+                parent_run_id,
+                agent,
+            } => {
+                let parent = parent_run_id
+                    .as_deref()
+                    .map_or_else(String::new, |p| format!(" parent={p}"));
+                println!("Started   | run_id={run_id}{parent} agent={agent}");
             }
             AgentEvent::Complete { run_id, state, .. } => {
                 println!("Complete  | run_id={run_id} state={state}");

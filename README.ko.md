@@ -201,18 +201,23 @@ entelix-graph            — StateGraph, Reducer, StateMerge trait, Dispatch, Ch
 entelix-graph-derive     — proc-macro: #[derive(StateMerge)] 가 Contribution + builder + impl emit
 entelix-tool-derive      — proc-macro: #[tool] 이 async fn 시그니처에서 SchemaTool impl 생성
 entelix-session          — SessionGraph 이벤트 로그 + Compactor + SessionAuditSink, fork, archival watermark
-entelix-memory           — Store + Embedder/Retriever/VectorStore/GraphMemory trait + memory pattern
+entelix-memory           — Store + Embedder/Retriever/EmbeddingRetriever/VectorStore/GraphMemory trait + memory pattern
 entelix-memory-openai    — OpenAI Embeddings 구체 Embedder (컴패니언)
 entelix-memory-qdrant    — qdrant gRPC 구체 VectorStore (컴패니언)
 entelix-memory-pgvector  — Postgres + pgvector 구체 VectorStore + row-level security (컴패니언)
 entelix-graphmemory-pg   — Postgres 구체 GraphMemory + WITH RECURSIVE BFS + UNNEST bulk insert (컴패니언)
+entelix-rag              — RAG 프리미티브 (Document/Lineage, splitter, Chunker, IngestionPipeline) + corrective-RAG (CRAG) 레시피
 entelix-persistence      — Postgres + Redis Checkpointer/Store/SessionLog + row-level security + advisory lock
+entelix-tokenizer-tiktoken — tiktoken-rs 래핑 vendor-accurate TokenCounter (OpenAI BPE: cl100k_base / o200k_base / p50k_base / r50k_base)
+entelix-tokenizer-hf     — HuggingFace `tokenizers` 래핑 vendor-accurate TokenCounter (Llama / Qwen / Mistral / DeepSeek / Gemma / Phi)
 entelix-tools            — HttpFetchTool, Calculator, SchemaTool, sandboxed tool, skill, memory tool
+entelix-tools-coding     — Sandbox trait 기반 shell / code / fs 도구 + Anthropic Skills 레이아웃 (수직 컴패니언)
 entelix-mcp              — 네이티브 JSON-RPC 2.0 over MCP streamable-http; Roots + Elicitation + Sampling 채널; ChatModelSamplingProvider 가 `chatmodel-sampling` feature 뒤
 entelix-cloud            — Bedrock (SigV4) / Vertex (gcp_auth) / Foundry (AAD) transport
 entelix-policy           — TenantPolicy, RateLimiter, PiiRedactor, CostMeter, QuotaLimiter, PolicyLayer
 entelix-otel             — OpenTelemetry GenAI semconv tower::Layer + cache token telemetry + agent root span
 entelix-server           — axum HTTP + 5-mode SSE + tenant middleware
+entelix-auth-claude-code — Claude.ai OAuth credential provider (Claude Code CLI 공유 저장소)
 entelix-agents           — ReAct, Supervisor, Hierarchical, Chat 레시피 + Subagent
 ```
 

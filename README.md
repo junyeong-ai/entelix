@@ -202,18 +202,23 @@ entelix-graph            — StateGraph, Reducer, StateMerge trait, Dispatch, Ch
 entelix-graph-derive     — proc-macro: #[derive(StateMerge)] emits Contribution + builders + impl
 entelix-tool-derive      — proc-macro: #[tool] generates SchemaTool impl from an async fn signature
 entelix-session          — SessionGraph event log + Compactor + SessionAuditSink, fork, archival watermark
-entelix-memory           — Store + Embedder/Retriever/VectorStore/GraphMemory traits + memory patterns
+entelix-memory           — Store + Embedder/Retriever/EmbeddingRetriever/VectorStore/GraphMemory traits + memory patterns
 entelix-memory-openai    — OpenAI Embeddings concrete Embedder (companion)
 entelix-memory-qdrant    — qdrant gRPC concrete VectorStore (companion)
 entelix-memory-pgvector  — Postgres + pgvector concrete VectorStore with row-level security (companion)
 entelix-graphmemory-pg   — Postgres concrete GraphMemory with WITH RECURSIVE BFS + UNNEST bulk insert (companion)
+entelix-rag              — RAG primitives (Document/Lineage, splitters, Chunker, IngestionPipeline) + corrective-RAG (CRAG) recipe
 entelix-persistence      — Postgres + Redis Checkpointer/Store/SessionLog with row-level security + advisory lock
+entelix-tokenizer-tiktoken — Vendor-accurate TokenCounter wrapping tiktoken-rs (OpenAI BPE: cl100k_base / o200k_base / p50k_base / r50k_base)
+entelix-tokenizer-hf     — Vendor-accurate TokenCounter wrapping HuggingFace `tokenizers` (Llama / Qwen / Mistral / DeepSeek / Gemma / Phi)
 entelix-tools            — HttpFetchTool, Calculator, SchemaTool, sandboxed tools, skills, memory tools
+entelix-tools-coding     — Sandbox-trait-backed shell / code / fs tools + Anthropic Skills layout (vertical companion)
 entelix-mcp              — native JSON-RPC 2.0 over MCP streamable-http; Roots + Elicitation + Sampling channels; ChatModelSamplingProvider behind `chatmodel-sampling` feature
 entelix-cloud            — Bedrock (SigV4) / Vertex (gcp_auth) / Foundry (AAD) transports
 entelix-policy           — TenantPolicy, RateLimiter, PiiRedactor, CostMeter, QuotaLimiter, PolicyLayer
 entelix-otel             — OpenTelemetry GenAI semconv tower::Layer + cache token telemetry + agent root span
 entelix-server           — axum HTTP + 5-mode SSE + tenant middleware
+entelix-auth-claude-code — Claude.ai OAuth credential provider (Claude Code CLI shared storage)
 entelix-agents           — ReAct, Supervisor, Hierarchical, Chat recipes + Subagent
 ```
 

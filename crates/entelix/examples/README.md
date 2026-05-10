@@ -47,7 +47,6 @@ file for the full walkthrough.
 | 22 | `22_agent_with_observer.rs` | Headline `Agent::builder()` + `AgentObserver` + `CaptureSink` lifecycle observation | (default) |
 | 23 | `23_typed_tool_macro.rs` | `#[tool]` proc-macro typed-input tool authoring + dispatch | (default) |
 | 24 | `24_file_id_attachments.rs` | `MediaSource::FileId` for large-attachment workflows (Anthropic Files / OpenAI Files / `GeminiExt::cached_content`) | (default) |
-| 25 | `25_claude_code_oauth.rs` | `ClaudeCodeOAuthProvider` + `FileCredentialStore` — drive entelix with the OAuth token the `claude` CLI manages | `auth-claude-code` |
 
 ## Running
 

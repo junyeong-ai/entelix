@@ -1,1 +1,18 @@
-../../README.md
+# entelix-memory-pgvector
+
+[![docs.rs](https://docs.rs/entelix-memory-pgvector/badge.svg)](https://docs.rs/entelix-memory-pgvector)
+[![crates.io](https://img.shields.io/crates/v/entelix-memory-pgvector.svg)](https://crates.io/crates/entelix-memory-pgvector)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](https://github.com/junyeong-ai/entelix/blob/main/LICENSE)
+
+Companion crate. Concrete `VectorStore` impl backed by Postgres + pgvector — production vector store with row-level security, SQL filter projection, and operator-tunable distance metric + index kind.
+
+Part of the [`entelix`](https://github.com/junyeong-ai/entelix) agentic-AI SDK workspace — see the [workspace README](https://github.com/junyeong-ai/entelix#readme) for project overview, quickstart, examples, and architecture.
+
+## Documentation
+
+- API reference: <https://docs.rs/entelix-memory-pgvector>
+- Workspace overview: <https://github.com/junyeong-ai/entelix>
+
+## License
+
+MIT — see [LICENSE](https://github.com/junyeong-ai/entelix/blob/main/LICENSE).

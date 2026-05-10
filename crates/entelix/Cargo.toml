@@ -45,6 +45,7 @@ entelix-runnable = { workspace = true }
 entelix-prompt = { workspace = true }
 entelix-graph = { workspace = true }
 entelix-memory = { workspace = true }
+entelix-rag = { workspace = true }
 entelix-session = { workspace = true }
 entelix-agents = { workspace = true }
 entelix-cloud = { workspace = true }

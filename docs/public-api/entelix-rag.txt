@@ -1,0 +1,484 @@
+pub mod entelix_rag
+#[non_exhaustive] pub enum entelix_rag::FailurePolicy
+pub entelix_rag::FailurePolicy::Abort
+pub entelix_rag::FailurePolicy::KeepOriginal
+pub entelix_rag::FailurePolicy::Skip
+impl core::clone::Clone for entelix_rag::FailurePolicy
+pub fn entelix_rag::FailurePolicy::clone(&self) -> entelix_rag::FailurePolicy
+impl core::cmp::Eq for entelix_rag::FailurePolicy
+impl core::cmp::PartialEq for entelix_rag::FailurePolicy
+pub fn entelix_rag::FailurePolicy::eq(&self, other: &entelix_rag::FailurePolicy) -> bool
+impl core::default::Default for entelix_rag::FailurePolicy
+pub fn entelix_rag::FailurePolicy::default() -> entelix_rag::FailurePolicy
+impl core::fmt::Debug for entelix_rag::FailurePolicy
+pub fn entelix_rag::FailurePolicy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for entelix_rag::FailurePolicy
+impl core::marker::StructuralPartialEq for entelix_rag::FailurePolicy
+impl core::marker::Freeze for entelix_rag::FailurePolicy
+impl core::marker::Send for entelix_rag::FailurePolicy
+impl core::marker::Sync for entelix_rag::FailurePolicy
+impl core::marker::Unpin for entelix_rag::FailurePolicy
+impl core::marker::UnsafeUnpin for entelix_rag::FailurePolicy
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_rag::FailurePolicy
+impl core::panic::unwind_safe::UnwindSafe for entelix_rag::FailurePolicy
+#[non_exhaustive] pub enum entelix_rag::GradeVerdict
+pub entelix_rag::GradeVerdict::Ambiguous
+pub entelix_rag::GradeVerdict::Correct
+pub entelix_rag::GradeVerdict::Incorrect
+impl entelix_rag::GradeVerdict
+pub const fn entelix_rag::GradeVerdict::as_label(self) -> &'static str
+pub const fn entelix_rag::GradeVerdict::is_actionable(self) -> bool
+impl core::clone::Clone for entelix_rag::GradeVerdict
+pub fn entelix_rag::GradeVerdict::clone(&self) -> entelix_rag::GradeVerdict
+impl core::cmp::Eq for entelix_rag::GradeVerdict
+impl core::cmp::PartialEq for entelix_rag::GradeVerdict
+pub fn entelix_rag::GradeVerdict::eq(&self, other: &entelix_rag::GradeVerdict) -> bool
+impl core::fmt::Debug for entelix_rag::GradeVerdict
+pub fn entelix_rag::GradeVerdict::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_rag::GradeVerdict
+pub fn entelix_rag::GradeVerdict::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_rag::GradeVerdict
+impl core::marker::StructuralPartialEq for entelix_rag::GradeVerdict
+impl serde_core::ser::Serialize for entelix_rag::GradeVerdict
+pub fn entelix_rag::GradeVerdict::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_rag::GradeVerdict
+pub fn entelix_rag::GradeVerdict::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_rag::GradeVerdict
+impl core::marker::Send for entelix_rag::GradeVerdict
+impl core::marker::Sync for entelix_rag::GradeVerdict
+impl core::marker::Unpin for entelix_rag::GradeVerdict
+impl core::marker::UnsafeUnpin for entelix_rag::GradeVerdict
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_rag::GradeVerdict
+impl core::panic::unwind_safe::UnwindSafe for entelix_rag::GradeVerdict
+pub struct entelix_rag::ContextualChunker<M>
+impl<M> entelix_rag::ContextualChunker<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_rag::ContextualChunker<M>::builder(model: alloc::sync::Arc<M>) -> entelix_rag::ContextualChunkerBuilder<M>
+pub const fn entelix_rag::ContextualChunker<M>::failure_policy(&self) -> entelix_rag::FailurePolicy
+impl<M> core::clone::Clone for entelix_rag::ContextualChunker<M>
+pub fn entelix_rag::ContextualChunker<M>::clone(&self) -> Self
+impl<M> core::fmt::Debug for entelix_rag::ContextualChunker<M>
+pub fn entelix_rag::ContextualChunker<M>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<M> entelix_rag::Chunker for entelix_rag::ContextualChunker<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_rag::ContextualChunker<M>::name(&self) -> &'static str
+pub fn entelix_rag::ContextualChunker<M>::process<'life0, 'life1, 'async_trait>(&'life0 self, chunks: alloc::vec::Vec<entelix_rag::Document>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_rag::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<M> core::marker::Freeze for entelix_rag::ContextualChunker<M>
+impl<M> core::marker::Send for entelix_rag::ContextualChunker<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Sync for entelix_rag::ContextualChunker<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Unpin for entelix_rag::ContextualChunker<M>
+impl<M> core::marker::UnsafeUnpin for entelix_rag::ContextualChunker<M>
+impl<M> core::panic::unwind_safe::RefUnwindSafe for entelix_rag::ContextualChunker<M> where M: core::panic::unwind_safe::RefUnwindSafe
+impl<M> core::panic::unwind_safe::UnwindSafe for entelix_rag::ContextualChunker<M> where M: core::panic::unwind_safe::RefUnwindSafe
+pub struct entelix_rag::ContextualChunkerBuilder<M>
+impl<M> entelix_rag::ContextualChunkerBuilder<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_rag::ContextualChunkerBuilder<M>::build(self) -> entelix_rag::ContextualChunker<M>
+pub const fn entelix_rag::ContextualChunkerBuilder<M>::with_cache_control(self, cache: entelix_core::ir::cache::CacheControl) -> Self
+pub const fn entelix_rag::ContextualChunkerBuilder<M>::with_failure_policy(self, policy: entelix_rag::FailurePolicy) -> Self
+pub fn entelix_rag::ContextualChunkerBuilder<M>::with_instruction(self, instruction: impl core::convert::Into<alloc::string::String>) -> Self
+impl<M> core::marker::Freeze for entelix_rag::ContextualChunkerBuilder<M>
+impl<M> core::marker::Send for entelix_rag::ContextualChunkerBuilder<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Sync for entelix_rag::ContextualChunkerBuilder<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Unpin for entelix_rag::ContextualChunkerBuilder<M>
+impl<M> core::marker::UnsafeUnpin for entelix_rag::ContextualChunkerBuilder<M>
+impl<M> core::panic::unwind_safe::RefUnwindSafe for entelix_rag::ContextualChunkerBuilder<M> where M: core::panic::unwind_safe::RefUnwindSafe
+impl<M> core::panic::unwind_safe::UnwindSafe for entelix_rag::ContextualChunkerBuilder<M> where M: core::panic::unwind_safe::RefUnwindSafe
+#[non_exhaustive] pub struct entelix_rag::CorrectiveRagState
+pub entelix_rag::CorrectiveRagState::answer: core::option::Option<alloc::string::String>
+pub entelix_rag::CorrectiveRagState::attempt: u32
+pub entelix_rag::CorrectiveRagState::correct_documents: alloc::vec::Vec<entelix_memory::traits::Document>
+pub entelix_rag::CorrectiveRagState::graded: alloc::vec::Vec<(entelix_memory::traits::Document, entelix_rag::GradeVerdict)>
+pub entelix_rag::CorrectiveRagState::original_query: alloc::string::String
+pub entelix_rag::CorrectiveRagState::previous_attempts: alloc::vec::Vec<alloc::string::String>
+pub entelix_rag::CorrectiveRagState::query: alloc::string::String
+impl entelix_rag::CorrectiveRagState
+pub fn entelix_rag::CorrectiveRagState::from_query(query: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for entelix_rag::CorrectiveRagState
+pub fn entelix_rag::CorrectiveRagState::clone(&self) -> entelix_rag::CorrectiveRagState
+impl core::fmt::Debug for entelix_rag::CorrectiveRagState
+pub fn entelix_rag::CorrectiveRagState::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_rag::CorrectiveRagState
+impl core::marker::Send for entelix_rag::CorrectiveRagState
+impl core::marker::Sync for entelix_rag::CorrectiveRagState
+impl core::marker::Unpin for entelix_rag::CorrectiveRagState
+impl core::marker::UnsafeUnpin for entelix_rag::CorrectiveRagState
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_rag::CorrectiveRagState
+impl core::panic::unwind_safe::UnwindSafe for entelix_rag::CorrectiveRagState
+#[non_exhaustive] pub struct entelix_rag::CragConfig
+impl entelix_rag::CragConfig
+pub const fn entelix_rag::CragConfig::generator_system_prompt(&self) -> &entelix_core::ir::system::SystemPrompt
+pub const fn entelix_rag::CragConfig::max_rewrite_attempts(&self) -> u32
+pub const fn entelix_rag::CragConfig::min_correct_fraction(&self) -> f32
+pub fn entelix_rag::CragConfig::new() -> Self
+pub const fn entelix_rag::CragConfig::retrieval_top_k(&self) -> usize
+pub fn entelix_rag::CragConfig::with_generator_system_prompt(self, prompt: entelix_core::ir::system::SystemPrompt) -> Self
+pub const fn entelix_rag::CragConfig::with_max_rewrite_attempts(self, max: u32) -> Self
+pub const fn entelix_rag::CragConfig::with_min_correct_fraction(self, fraction: f32) -> Self
+pub const fn entelix_rag::CragConfig::with_retrieval_top_k(self, top_k: usize) -> Self
+impl core::clone::Clone for entelix_rag::CragConfig
+pub fn entelix_rag::CragConfig::clone(&self) -> entelix_rag::CragConfig
+impl core::default::Default for entelix_rag::CragConfig
+pub fn entelix_rag::CragConfig::default() -> Self
+impl core::fmt::Debug for entelix_rag::CragConfig
+pub fn entelix_rag::CragConfig::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_rag::CragConfig
+impl core::marker::Send for entelix_rag::CragConfig
+impl core::marker::Sync for entelix_rag::CragConfig
+impl core::marker::Unpin for entelix_rag::CragConfig
+impl core::marker::UnsafeUnpin for entelix_rag::CragConfig
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_rag::CragConfig
+impl core::panic::unwind_safe::UnwindSafe for entelix_rag::CragConfig
+#[non_exhaustive] pub struct entelix_rag::Document
+pub entelix_rag::Document::content: alloc::string::String
+pub entelix_rag::Document::id: entelix_rag::DocumentId
+pub entelix_rag::Document::lineage: core::option::Option<entelix_rag::Lineage>
+pub entelix_rag::Document::metadata: serde_json::value::Value
+pub entelix_rag::Document::namespace: entelix_memory::namespace::Namespace
+pub entelix_rag::Document::source: entelix_rag::Source
+impl entelix_rag::Document
+pub fn entelix_rag::Document::child(&self, content: impl core::convert::Into<alloc::string::String>, lineage: entelix_rag::Lineage) -> Self
+pub fn entelix_rag::Document::root(id: impl core::convert::Into<entelix_rag::DocumentId>, content: impl core::convert::Into<alloc::string::String>, source: entelix_rag::Source, namespace: entelix_memory::namespace::Namespace) -> Self
+pub fn entelix_rag::Document::with_metadata(self, metadata: serde_json::value::Value) -> Self
+impl core::clone::Clone for entelix_rag::Document
+pub fn entelix_rag::Document::clone(&self) -> entelix_rag::Document
+impl core::cmp::Eq for entelix_rag::Document
+impl core::cmp::PartialEq for entelix_rag::Document
+pub fn entelix_rag::Document::eq(&self, other: &entelix_rag::Document) -> bool
+impl core::fmt::Debug for entelix_rag::Document
+pub fn entelix_rag::Document::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_rag::Document
+impl serde_core::ser::Serialize for entelix_rag::Document
+pub fn entelix_rag::Document::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_rag::Document
+pub fn entelix_rag::Document::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_rag::Document
+impl core::marker::Send for entelix_rag::Document
+impl core::marker::Sync for entelix_rag::Document
+impl core::marker::Unpin for entelix_rag::Document
+impl core::marker::UnsafeUnpin for entelix_rag::Document
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_rag::Document
+impl core::panic::unwind_safe::UnwindSafe for entelix_rag::Document
+pub struct entelix_rag::DocumentId(_)
+impl entelix_rag::DocumentId
+pub fn entelix_rag::DocumentId::as_str(&self) -> &str
+pub fn entelix_rag::DocumentId::new(id: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for entelix_rag::DocumentId
+pub fn entelix_rag::DocumentId::clone(&self) -> entelix_rag::DocumentId
+impl core::cmp::Eq for entelix_rag::DocumentId
+impl core::cmp::PartialEq for entelix_rag::DocumentId
+pub fn entelix_rag::DocumentId::eq(&self, other: &entelix_rag::DocumentId) -> bool
+impl core::convert::From<&str> for entelix_rag::DocumentId
+pub fn entelix_rag::DocumentId::from(s: &str) -> Self
+impl core::convert::From<alloc::string::String> for entelix_rag::DocumentId
+pub fn entelix_rag::DocumentId::from(s: alloc::string::String) -> Self
+impl core::fmt::Debug for entelix_rag::DocumentId
+pub fn entelix_rag::DocumentId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_rag::DocumentId
+pub fn entelix_rag::DocumentId::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_rag::DocumentId
+pub fn entelix_rag::DocumentId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for entelix_rag::DocumentId
+impl serde_core::ser::Serialize for entelix_rag::DocumentId
+pub fn entelix_rag::DocumentId::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_rag::DocumentId
+pub fn entelix_rag::DocumentId::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_rag::DocumentId
+impl core::marker::Send for entelix_rag::DocumentId
+impl core::marker::Sync for entelix_rag::DocumentId
+impl core::marker::Unpin for entelix_rag::DocumentId
+impl core::marker::UnsafeUnpin for entelix_rag::DocumentId
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_rag::DocumentId
+impl core::panic::unwind_safe::UnwindSafe for entelix_rag::DocumentId
+#[non_exhaustive] pub struct entelix_rag::IngestError
+pub entelix_rag::IngestError::document_id: alloc::string::String
+pub entelix_rag::IngestError::message: alloc::string::String
+pub entelix_rag::IngestError::stage: alloc::string::String
+impl core::clone::Clone for entelix_rag::IngestError
+pub fn entelix_rag::IngestError::clone(&self) -> entelix_rag::IngestError
+impl core::fmt::Debug for entelix_rag::IngestError
+pub fn entelix_rag::IngestError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for entelix_rag::IngestError
+pub fn entelix_rag::IngestError::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_rag::IngestError
+pub fn entelix_rag::IngestError::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_rag::IngestError
+impl core::marker::Send for entelix_rag::IngestError
+impl core::marker::Sync for entelix_rag::IngestError
+impl core::marker::Unpin for entelix_rag::IngestError
+impl core::marker::UnsafeUnpin for entelix_rag::IngestError
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_rag::IngestError
+impl core::panic::unwind_safe::UnwindSafe for entelix_rag::IngestError
+#[non_exhaustive] pub struct entelix_rag::IngestReport
+pub entelix_rag::IngestReport::chunks_indexed: u64
+pub entelix_rag::IngestReport::documents_loaded: u64
+pub entelix_rag::IngestReport::embedding_calls: u64
+pub entelix_rag::IngestReport::errors: alloc::vec::Vec<entelix_rag::IngestError>
+impl entelix_rag::IngestReport
+pub const fn entelix_rag::IngestReport::is_clean(&self) -> bool
+impl core::clone::Clone for entelix_rag::IngestReport
+pub fn entelix_rag::IngestReport::clone(&self) -> entelix_rag::IngestReport
+impl core::default::Default for entelix_rag::IngestReport
+pub fn entelix_rag::IngestReport::default() -> entelix_rag::IngestReport
+impl core::fmt::Debug for entelix_rag::IngestReport
+pub fn entelix_rag::IngestReport::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for entelix_rag::IngestReport
+pub fn entelix_rag::IngestReport::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_rag::IngestReport
+pub fn entelix_rag::IngestReport::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_rag::IngestReport
+impl core::marker::Send for entelix_rag::IngestReport
+impl core::marker::Sync for entelix_rag::IngestReport
+impl core::marker::Unpin for entelix_rag::IngestReport
+impl core::marker::UnsafeUnpin for entelix_rag::IngestReport
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_rag::IngestReport
+impl core::panic::unwind_safe::UnwindSafe for entelix_rag::IngestReport
+pub struct entelix_rag::IngestionPipeline<L, S, E: ?core::marker::Sized, V: ?core::marker::Sized>
+impl<L, S, E, V> entelix_rag::IngestionPipeline<L, S, E, V> where L: entelix_rag::DocumentLoader, S: entelix_rag::TextSplitter, E: entelix_memory::traits::Embedder + ?core::marker::Sized, V: entelix_memory::traits::VectorStore + ?core::marker::Sized
+pub fn entelix_rag::IngestionPipeline<L, S, E, V>::builder(loader: L, splitter: S, embedder: alloc::sync::Arc<E>, store: alloc::sync::Arc<V>, namespace: entelix_memory::namespace::Namespace) -> entelix_rag::IngestionPipelineBuilder<L, S, E, V>
+pub async fn entelix_rag::IngestionPipeline<L, S, E, V>::run(&self, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_rag::IngestReport>
+impl<L, S, E, V> core::marker::Freeze for entelix_rag::IngestionPipeline<L, S, E, V> where L: core::marker::Freeze, S: core::marker::Freeze, E: ?core::marker::Sized, V: ?core::marker::Sized
+impl<L, S, E, V> core::marker::Send for entelix_rag::IngestionPipeline<L, S, E, V> where L: core::marker::Send, S: core::marker::Send, E: core::marker::Sync + core::marker::Send + ?core::marker::Sized, V: core::marker::Sync + core::marker::Send + ?core::marker::Sized
+impl<L, S, E, V> core::marker::Sync for entelix_rag::IngestionPipeline<L, S, E, V> where L: core::marker::Sync, S: core::marker::Sync, E: core::marker::Sync + core::marker::Send + ?core::marker::Sized, V: core::marker::Sync + core::marker::Send + ?core::marker::Sized
+impl<L, S, E, V> core::marker::Unpin for entelix_rag::IngestionPipeline<L, S, E, V> where L: core::marker::Unpin, S: core::marker::Unpin, E: ?core::marker::Sized, V: ?core::marker::Sized
+impl<L, S, E, V> core::marker::UnsafeUnpin for entelix_rag::IngestionPipeline<L, S, E, V> where L: core::marker::UnsafeUnpin, S: core::marker::UnsafeUnpin, E: ?core::marker::Sized, V: ?core::marker::Sized
+impl<L, S, E, V> !core::panic::unwind_safe::RefUnwindSafe for entelix_rag::IngestionPipeline<L, S, E, V>
+impl<L, S, E, V> !core::panic::unwind_safe::UnwindSafe for entelix_rag::IngestionPipeline<L, S, E, V>
+pub struct entelix_rag::IngestionPipelineBuilder<L, S, E: ?core::marker::Sized, V: ?core::marker::Sized>
+impl<L, S, E, V> entelix_rag::IngestionPipelineBuilder<L, S, E, V> where L: entelix_rag::DocumentLoader, S: entelix_rag::TextSplitter, E: entelix_memory::traits::Embedder + ?core::marker::Sized, V: entelix_memory::traits::VectorStore + ?core::marker::Sized
+pub fn entelix_rag::IngestionPipelineBuilder<L, S, E, V>::add_chunker(self, chunker: alloc::sync::Arc<dyn entelix_rag::Chunker>) -> Self
+pub fn entelix_rag::IngestionPipelineBuilder<L, S, E, V>::build(self) -> entelix_rag::IngestionPipeline<L, S, E, V>
+impl<L, S, E, V> core::marker::Freeze for entelix_rag::IngestionPipelineBuilder<L, S, E, V> where L: core::marker::Freeze, S: core::marker::Freeze, E: ?core::marker::Sized, V: ?core::marker::Sized
+impl<L, S, E, V> core::marker::Send for entelix_rag::IngestionPipelineBuilder<L, S, E, V> where L: core::marker::Send, S: core::marker::Send, E: core::marker::Sync + core::marker::Send + ?core::marker::Sized, V: core::marker::Sync + core::marker::Send + ?core::marker::Sized
+impl<L, S, E, V> core::marker::Sync for entelix_rag::IngestionPipelineBuilder<L, S, E, V> where L: core::marker::Sync, S: core::marker::Sync, E: core::marker::Sync + core::marker::Send + ?core::marker::Sized, V: core::marker::Sync + core::marker::Send + ?core::marker::Sized
+impl<L, S, E, V> core::marker::Unpin for entelix_rag::IngestionPipelineBuilder<L, S, E, V> where L: core::marker::Unpin, S: core::marker::Unpin, E: ?core::marker::Sized, V: ?core::marker::Sized
+impl<L, S, E, V> core::marker::UnsafeUnpin for entelix_rag::IngestionPipelineBuilder<L, S, E, V> where L: core::marker::UnsafeUnpin, S: core::marker::UnsafeUnpin, E: ?core::marker::Sized, V: ?core::marker::Sized
+impl<L, S, E, V> !core::panic::unwind_safe::RefUnwindSafe for entelix_rag::IngestionPipelineBuilder<L, S, E, V>
+impl<L, S, E, V> !core::panic::unwind_safe::UnwindSafe for entelix_rag::IngestionPipelineBuilder<L, S, E, V>
+#[non_exhaustive] pub struct entelix_rag::Lineage
+pub entelix_rag::Lineage::chunk_index: u32
+pub entelix_rag::Lineage::chunker_chain: alloc::vec::Vec<alloc::string::String>
+pub entelix_rag::Lineage::parent_id: entelix_rag::DocumentId
+pub entelix_rag::Lineage::splitter: alloc::string::String
+pub entelix_rag::Lineage::total_chunks: u32
+impl entelix_rag::Lineage
+pub fn entelix_rag::Lineage::from_split(parent_id: entelix_rag::DocumentId, chunk_index: u32, total_chunks: u32, splitter: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_rag::Lineage::push_chunker(&mut self, chunker: impl core::convert::Into<alloc::string::String>)
+impl core::clone::Clone for entelix_rag::Lineage
+pub fn entelix_rag::Lineage::clone(&self) -> entelix_rag::Lineage
+impl core::cmp::Eq for entelix_rag::Lineage
+impl core::cmp::PartialEq for entelix_rag::Lineage
+pub fn entelix_rag::Lineage::eq(&self, other: &entelix_rag::Lineage) -> bool
+impl core::fmt::Debug for entelix_rag::Lineage
+pub fn entelix_rag::Lineage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_rag::Lineage
+impl serde_core::ser::Serialize for entelix_rag::Lineage
+pub fn entelix_rag::Lineage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_rag::Lineage
+pub fn entelix_rag::Lineage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_rag::Lineage
+impl core::marker::Send for entelix_rag::Lineage
+impl core::marker::Sync for entelix_rag::Lineage
+impl core::marker::Unpin for entelix_rag::Lineage
+impl core::marker::UnsafeUnpin for entelix_rag::Lineage
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_rag::Lineage
+impl core::panic::unwind_safe::UnwindSafe for entelix_rag::Lineage
+pub struct entelix_rag::LlmQueryRewriter<M>
+impl<M> entelix_rag::LlmQueryRewriter<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_rag::LlmQueryRewriter<M>::builder(model: alloc::sync::Arc<M>) -> entelix_rag::LlmQueryRewriterBuilder<M>
+impl<M> core::clone::Clone for entelix_rag::LlmQueryRewriter<M>
+pub fn entelix_rag::LlmQueryRewriter<M>::clone(&self) -> Self
+impl<M> core::fmt::Debug for entelix_rag::LlmQueryRewriter<M>
+pub fn entelix_rag::LlmQueryRewriter<M>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<M> entelix_rag::QueryRewriter for entelix_rag::LlmQueryRewriter<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_rag::LlmQueryRewriter<M>::name(&self) -> &'static str
+pub fn entelix_rag::LlmQueryRewriter<M>::rewrite<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, original: &'life1 str, previous_attempts: &'life2 [alloc::string::String], ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::string::String>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl<M> core::marker::Freeze for entelix_rag::LlmQueryRewriter<M>
+impl<M> core::marker::Send for entelix_rag::LlmQueryRewriter<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Sync for entelix_rag::LlmQueryRewriter<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Unpin for entelix_rag::LlmQueryRewriter<M>
+impl<M> core::marker::UnsafeUnpin for entelix_rag::LlmQueryRewriter<M>
+impl<M> core::panic::unwind_safe::RefUnwindSafe for entelix_rag::LlmQueryRewriter<M> where M: core::panic::unwind_safe::RefUnwindSafe
+impl<M> core::panic::unwind_safe::UnwindSafe for entelix_rag::LlmQueryRewriter<M> where M: core::panic::unwind_safe::RefUnwindSafe
+pub struct entelix_rag::LlmQueryRewriterBuilder<M>
+impl<M> entelix_rag::LlmQueryRewriterBuilder<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_rag::LlmQueryRewriterBuilder<M>::build(self) -> entelix_rag::LlmQueryRewriter<M>
+pub fn entelix_rag::LlmQueryRewriterBuilder<M>::with_instruction(self, instruction: impl core::convert::Into<alloc::string::String>) -> Self
+impl<M> core::marker::Freeze for entelix_rag::LlmQueryRewriterBuilder<M>
+impl<M> core::marker::Send for entelix_rag::LlmQueryRewriterBuilder<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Sync for entelix_rag::LlmQueryRewriterBuilder<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Unpin for entelix_rag::LlmQueryRewriterBuilder<M>
+impl<M> core::marker::UnsafeUnpin for entelix_rag::LlmQueryRewriterBuilder<M>
+impl<M> core::panic::unwind_safe::RefUnwindSafe for entelix_rag::LlmQueryRewriterBuilder<M> where M: core::panic::unwind_safe::RefUnwindSafe
+impl<M> core::panic::unwind_safe::UnwindSafe for entelix_rag::LlmQueryRewriterBuilder<M> where M: core::panic::unwind_safe::RefUnwindSafe
+pub struct entelix_rag::LlmRetrievalGrader<M>
+impl<M> entelix_rag::LlmRetrievalGrader<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_rag::LlmRetrievalGrader<M>::builder(model: alloc::sync::Arc<M>) -> entelix_rag::LlmRetrievalGraderBuilder<M>
+impl<M> core::clone::Clone for entelix_rag::LlmRetrievalGrader<M>
+pub fn entelix_rag::LlmRetrievalGrader<M>::clone(&self) -> Self
+impl<M> core::fmt::Debug for entelix_rag::LlmRetrievalGrader<M>
+pub fn entelix_rag::LlmRetrievalGrader<M>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<M> entelix_rag::RetrievalGrader for entelix_rag::LlmRetrievalGrader<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_rag::LlmRetrievalGrader<M>::grade<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, query: &'life1 str, document: &'life2 entelix_memory::traits::Document, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_rag::GradeVerdict>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_rag::LlmRetrievalGrader<M>::name(&self) -> &'static str
+impl<M> core::marker::Freeze for entelix_rag::LlmRetrievalGrader<M>
+impl<M> core::marker::Send for entelix_rag::LlmRetrievalGrader<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Sync for entelix_rag::LlmRetrievalGrader<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Unpin for entelix_rag::LlmRetrievalGrader<M>
+impl<M> core::marker::UnsafeUnpin for entelix_rag::LlmRetrievalGrader<M>
+impl<M> core::panic::unwind_safe::RefUnwindSafe for entelix_rag::LlmRetrievalGrader<M> where M: core::panic::unwind_safe::RefUnwindSafe
+impl<M> core::panic::unwind_safe::UnwindSafe for entelix_rag::LlmRetrievalGrader<M> where M: core::panic::unwind_safe::RefUnwindSafe
+pub struct entelix_rag::LlmRetrievalGraderBuilder<M>
+impl<M> entelix_rag::LlmRetrievalGraderBuilder<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_rag::LlmRetrievalGraderBuilder<M>::build(self) -> entelix_rag::LlmRetrievalGrader<M>
+pub fn entelix_rag::LlmRetrievalGraderBuilder<M>::with_instruction(self, instruction: impl core::convert::Into<alloc::string::String>) -> Self
+impl<M> core::marker::Freeze for entelix_rag::LlmRetrievalGraderBuilder<M>
+impl<M> core::marker::Send for entelix_rag::LlmRetrievalGraderBuilder<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Sync for entelix_rag::LlmRetrievalGraderBuilder<M> where M: core::marker::Sync + core::marker::Send
+impl<M> core::marker::Unpin for entelix_rag::LlmRetrievalGraderBuilder<M>
+impl<M> core::marker::UnsafeUnpin for entelix_rag::LlmRetrievalGraderBuilder<M>
+impl<M> core::panic::unwind_safe::RefUnwindSafe for entelix_rag::LlmRetrievalGraderBuilder<M> where M: core::panic::unwind_safe::RefUnwindSafe
+impl<M> core::panic::unwind_safe::UnwindSafe for entelix_rag::LlmRetrievalGraderBuilder<M> where M: core::panic::unwind_safe::RefUnwindSafe
+pub struct entelix_rag::MarkdownStructureSplitter
+impl entelix_rag::MarkdownStructureSplitter
+pub fn entelix_rag::MarkdownStructureSplitter::heading_levels(&self) -> &[u8]
+pub fn entelix_rag::MarkdownStructureSplitter::new() -> Self
+pub fn entelix_rag::MarkdownStructureSplitter::with_heading_levels<I>(self, levels: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = u8>
+impl core::clone::Clone for entelix_rag::MarkdownStructureSplitter
+pub fn entelix_rag::MarkdownStructureSplitter::clone(&self) -> entelix_rag::MarkdownStructureSplitter
+impl core::default::Default for entelix_rag::MarkdownStructureSplitter
+pub fn entelix_rag::MarkdownStructureSplitter::default() -> Self
+impl core::fmt::Debug for entelix_rag::MarkdownStructureSplitter
+pub fn entelix_rag::MarkdownStructureSplitter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_rag::TextSplitter for entelix_rag::MarkdownStructureSplitter
+pub fn entelix_rag::MarkdownStructureSplitter::name(&self) -> &'static str
+pub fn entelix_rag::MarkdownStructureSplitter::split(&self, document: &entelix_rag::Document) -> alloc::vec::Vec<entelix_rag::Document>
+impl core::marker::Freeze for entelix_rag::MarkdownStructureSplitter
+impl core::marker::Send for entelix_rag::MarkdownStructureSplitter
+impl core::marker::Sync for entelix_rag::MarkdownStructureSplitter
+impl core::marker::Unpin for entelix_rag::MarkdownStructureSplitter
+impl core::marker::UnsafeUnpin for entelix_rag::MarkdownStructureSplitter
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_rag::MarkdownStructureSplitter
+impl core::panic::unwind_safe::UnwindSafe for entelix_rag::MarkdownStructureSplitter
+pub struct entelix_rag::RecursiveCharacterSplitter
+impl entelix_rag::RecursiveCharacterSplitter
+pub const fn entelix_rag::RecursiveCharacterSplitter::chunk_overlap(&self) -> usize
+pub const fn entelix_rag::RecursiveCharacterSplitter::chunk_size(&self) -> usize
+pub fn entelix_rag::RecursiveCharacterSplitter::new() -> Self
+pub const fn entelix_rag::RecursiveCharacterSplitter::with_chunk_overlap(self, chunk_overlap: usize) -> Self
+pub const fn entelix_rag::RecursiveCharacterSplitter::with_chunk_size(self, chunk_size: usize) -> Self
+pub fn entelix_rag::RecursiveCharacterSplitter::with_separators<I, S>(self, separators: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::Into<alloc::string::String>
+impl core::clone::Clone for entelix_rag::RecursiveCharacterSplitter
+pub fn entelix_rag::RecursiveCharacterSplitter::clone(&self) -> entelix_rag::RecursiveCharacterSplitter
+impl core::default::Default for entelix_rag::RecursiveCharacterSplitter
+pub fn entelix_rag::RecursiveCharacterSplitter::default() -> Self
+impl core::fmt::Debug for entelix_rag::RecursiveCharacterSplitter
+pub fn entelix_rag::RecursiveCharacterSplitter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_rag::TextSplitter for entelix_rag::RecursiveCharacterSplitter
+pub fn entelix_rag::RecursiveCharacterSplitter::name(&self) -> &'static str
+pub fn entelix_rag::RecursiveCharacterSplitter::split(&self, document: &entelix_rag::Document) -> alloc::vec::Vec<entelix_rag::Document>
+impl core::marker::Freeze for entelix_rag::RecursiveCharacterSplitter
+impl core::marker::Send for entelix_rag::RecursiveCharacterSplitter
+impl core::marker::Sync for entelix_rag::RecursiveCharacterSplitter
+impl core::marker::Unpin for entelix_rag::RecursiveCharacterSplitter
+impl core::marker::UnsafeUnpin for entelix_rag::RecursiveCharacterSplitter
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_rag::RecursiveCharacterSplitter
+impl core::panic::unwind_safe::UnwindSafe for entelix_rag::RecursiveCharacterSplitter
+#[non_exhaustive] pub struct entelix_rag::Source
+pub entelix_rag::Source::etag: core::option::Option<alloc::string::String>
+pub entelix_rag::Source::fetched_at: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub entelix_rag::Source::loader: alloc::string::String
+pub entelix_rag::Source::uri: alloc::string::String
+impl entelix_rag::Source
+pub fn entelix_rag::Source::now(uri: impl core::convert::Into<alloc::string::String>, loader: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_rag::Source::with_etag(self, etag: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for entelix_rag::Source
+pub fn entelix_rag::Source::clone(&self) -> entelix_rag::Source
+impl core::cmp::Eq for entelix_rag::Source
+impl core::cmp::PartialEq for entelix_rag::Source
+pub fn entelix_rag::Source::eq(&self, other: &entelix_rag::Source) -> bool
+impl core::fmt::Debug for entelix_rag::Source
+pub fn entelix_rag::Source::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_rag::Source
+impl serde_core::ser::Serialize for entelix_rag::Source
+pub fn entelix_rag::Source::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for entelix_rag::Source
+pub fn entelix_rag::Source::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for entelix_rag::Source
+impl core::marker::Send for entelix_rag::Source
+impl core::marker::Sync for entelix_rag::Source
+impl core::marker::Unpin for entelix_rag::Source
+impl core::marker::UnsafeUnpin for entelix_rag::Source
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_rag::Source
+impl core::panic::unwind_safe::UnwindSafe for entelix_rag::Source
+pub struct entelix_rag::TokenCountSplitter<C: entelix_core::tokens::TokenCounter + ?core::marker::Sized + 'static>
+impl<C: entelix_core::tokens::TokenCounter + ?core::marker::Sized + 'static> entelix_rag::TokenCountSplitter<C>
+pub const fn entelix_rag::TokenCountSplitter<C>::chunk_overlap(&self) -> usize
+pub const fn entelix_rag::TokenCountSplitter<C>::chunk_size(&self) -> usize
+pub const fn entelix_rag::TokenCountSplitter<C>::counter(&self) -> &alloc::sync::Arc<C>
+pub fn entelix_rag::TokenCountSplitter<C>::new(counter: alloc::sync::Arc<C>) -> Self
+pub const fn entelix_rag::TokenCountSplitter<C>::with_chunk_overlap(self, chunk_overlap: usize) -> Self
+pub const fn entelix_rag::TokenCountSplitter<C>::with_chunk_size(self, chunk_size: usize) -> Self
+pub fn entelix_rag::TokenCountSplitter<C>::with_separators<I, S>(self, separators: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::Into<alloc::string::String>
+impl<C: core::clone::Clone + entelix_core::tokens::TokenCounter + ?core::marker::Sized + 'static> core::clone::Clone for entelix_rag::TokenCountSplitter<C>
+pub fn entelix_rag::TokenCountSplitter<C>::clone(&self) -> entelix_rag::TokenCountSplitter<C>
+impl<C: entelix_core::tokens::TokenCounter + ?core::marker::Sized + 'static> core::fmt::Debug for entelix_rag::TokenCountSplitter<C>
+pub fn entelix_rag::TokenCountSplitter<C>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<C: entelix_core::tokens::TokenCounter + ?core::marker::Sized + 'static> entelix_rag::TextSplitter for entelix_rag::TokenCountSplitter<C>
+pub fn entelix_rag::TokenCountSplitter<C>::name(&self) -> &'static str
+pub fn entelix_rag::TokenCountSplitter<C>::split(&self, document: &entelix_rag::Document) -> alloc::vec::Vec<entelix_rag::Document>
+impl<C> core::marker::Freeze for entelix_rag::TokenCountSplitter<C> where C: ?core::marker::Sized
+impl<C> core::marker::Send for entelix_rag::TokenCountSplitter<C> where C: ?core::marker::Sized
+impl<C> core::marker::Sync for entelix_rag::TokenCountSplitter<C> where C: ?core::marker::Sized
+impl<C> core::marker::Unpin for entelix_rag::TokenCountSplitter<C> where C: ?core::marker::Sized
+impl<C> core::marker::UnsafeUnpin for entelix_rag::TokenCountSplitter<C> where C: ?core::marker::Sized
+impl<C> core::panic::unwind_safe::RefUnwindSafe for entelix_rag::TokenCountSplitter<C> where C: core::panic::unwind_safe::RefUnwindSafe + ?core::marker::Sized
+impl<C> core::panic::unwind_safe::UnwindSafe for entelix_rag::TokenCountSplitter<C> where C: core::panic::unwind_safe::RefUnwindSafe + ?core::marker::Sized
+pub const entelix_rag::CONTEXTUAL_CHUNKER_DEFAULT_INSTRUCTION: &str
+pub const entelix_rag::CORRECTIVE_RAG_AGENT_NAME: &str
+pub const entelix_rag::DEFAULT_CHUNK_OVERLAP_CHARS: usize
+pub const entelix_rag::DEFAULT_CHUNK_OVERLAP_TOKENS: usize
+pub const entelix_rag::DEFAULT_CHUNK_SIZE_CHARS: usize
+pub const entelix_rag::DEFAULT_CHUNK_SIZE_TOKENS: usize
+pub const entelix_rag::DEFAULT_GENERATOR_SYSTEM_PROMPT: &str
+pub const entelix_rag::DEFAULT_GRADER_INSTRUCTION: &str
+pub const entelix_rag::DEFAULT_MARKDOWN_HEADING_LEVELS: &[u8]
+pub const entelix_rag::DEFAULT_MAX_REWRITE_ATTEMPTS: u32
+pub const entelix_rag::DEFAULT_MIN_CORRECT_FRACTION: f32
+pub const entelix_rag::DEFAULT_RECURSIVE_SEPARATORS: &[&str]
+pub const entelix_rag::DEFAULT_RETRIEVAL_TOP_K: usize
+pub const entelix_rag::DEFAULT_REWRITER_INSTRUCTION: &str
+pub const entelix_rag::PROVENANCE_METADATA_KEY: &str
+pub trait entelix_rag::Chunker: core::marker::Send + core::marker::Sync
+pub fn entelix_rag::Chunker::name(&self) -> &'static str
+pub fn entelix_rag::Chunker::process<'life0, 'life1, 'async_trait>(&'life0 self, chunks: alloc::vec::Vec<entelix_rag::Document>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_rag::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<M> entelix_rag::Chunker for entelix_rag::ContextualChunker<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_rag::ContextualChunker<M>::name(&self) -> &'static str
+pub fn entelix_rag::ContextualChunker<M>::process<'life0, 'life1, 'async_trait>(&'life0 self, chunks: alloc::vec::Vec<entelix_rag::Document>, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_rag::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub trait entelix_rag::DocumentLoader: core::marker::Send + core::marker::Sync
+pub fn entelix_rag::DocumentLoader::load<'a, 'async_trait>(&'a self, ctx: &'a entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_rag::DocumentStream<'a>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'a: 'async_trait
+pub fn entelix_rag::DocumentLoader::name(&self) -> &'static str
+pub trait entelix_rag::QueryRewriter: core::marker::Send + core::marker::Sync
+pub fn entelix_rag::QueryRewriter::name(&self) -> &'static str
+pub fn entelix_rag::QueryRewriter::rewrite<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, original: &'life1 str, previous_attempts: &'life2 [alloc::string::String], ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::string::String>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl<M> entelix_rag::QueryRewriter for entelix_rag::LlmQueryRewriter<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_rag::LlmQueryRewriter<M>::name(&self) -> &'static str
+pub fn entelix_rag::LlmQueryRewriter<M>::rewrite<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, original: &'life1 str, previous_attempts: &'life2 [alloc::string::String], ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::string::String>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub trait entelix_rag::RetrievalGrader: core::marker::Send + core::marker::Sync
+pub fn entelix_rag::RetrievalGrader::grade<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, query: &'life1 str, document: &'life2 entelix_memory::traits::Document, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_rag::GradeVerdict>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_rag::RetrievalGrader::name(&self) -> &'static str
+impl<M> entelix_rag::RetrievalGrader for entelix_rag::LlmRetrievalGrader<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_rag::LlmRetrievalGrader<M>::grade<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, query: &'life1 str, document: &'life2 entelix_memory::traits::Document, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_rag::GradeVerdict>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_rag::LlmRetrievalGrader<M>::name(&self) -> &'static str
+pub trait entelix_rag::TextSplitter: core::marker::Send + core::marker::Sync
+pub fn entelix_rag::TextSplitter::name(&self) -> &'static str
+pub fn entelix_rag::TextSplitter::split(&self, document: &entelix_rag::Document) -> alloc::vec::Vec<entelix_rag::Document>
+impl entelix_rag::TextSplitter for entelix_rag::MarkdownStructureSplitter
+pub fn entelix_rag::MarkdownStructureSplitter::name(&self) -> &'static str
+pub fn entelix_rag::MarkdownStructureSplitter::split(&self, document: &entelix_rag::Document) -> alloc::vec::Vec<entelix_rag::Document>
+impl entelix_rag::TextSplitter for entelix_rag::RecursiveCharacterSplitter
+pub fn entelix_rag::RecursiveCharacterSplitter::name(&self) -> &'static str
+pub fn entelix_rag::RecursiveCharacterSplitter::split(&self, document: &entelix_rag::Document) -> alloc::vec::Vec<entelix_rag::Document>
+impl<C: entelix_core::tokens::TokenCounter + ?core::marker::Sized + 'static> entelix_rag::TextSplitter for entelix_rag::TokenCountSplitter<C>
+pub fn entelix_rag::TokenCountSplitter<C>::name(&self) -> &'static str
+pub fn entelix_rag::TokenCountSplitter<C>::split(&self, document: &entelix_rag::Document) -> alloc::vec::Vec<entelix_rag::Document>
+pub fn entelix_rag::build_corrective_rag_graph<Ret, G, R, M>(retriever: alloc::sync::Arc<Ret>, grader: G, rewriter: R, generator: M, config: entelix_rag::CragConfig) -> entelix_core::error::Result<entelix_graph::compiled::CompiledGraph<entelix_rag::CorrectiveRagState>> where Ret: entelix_memory::traits::Retriever + ?core::marker::Sized + 'static, G: entelix_rag::RetrievalGrader + 'static, R: entelix_rag::QueryRewriter + 'static, M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_rag::create_corrective_rag_agent<Ret, G, R, M>(retriever: alloc::sync::Arc<Ret>, grader: G, rewriter: R, generator: M, config: entelix_rag::CragConfig) -> entelix_core::error::Result<entelix_agents::agent::Agent<entelix_rag::CorrectiveRagState>> where Ret: entelix_memory::traits::Retriever + ?core::marker::Sized + 'static, G: entelix_rag::RetrievalGrader + 'static, R: entelix_rag::QueryRewriter + 'static, M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub type entelix_rag::DocumentStream<'a> = core::pin::Pin<alloc::boxed::Box<(dyn futures_core::stream::Stream<Item = entelix_core::error::Result<entelix_rag::Document>> + core::marker::Send + 'a)>>

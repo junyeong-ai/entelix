@@ -27,6 +27,7 @@
 mod buffer;
 mod consolidating;
 mod consolidation;
+mod embedding_retriever;
 mod entity;
 mod episodic;
 mod graph;
@@ -45,6 +46,7 @@ pub use consolidating::{ConsolidatingBufferMemory, Summarizer};
 pub use consolidation::{
     ConsolidationContext, ConsolidationPolicy, NeverConsolidate, OnMessageCount, OnTokenBudget,
 };
+pub use embedding_retriever::EmbeddingRetriever;
 pub use entity::{EntityMemory, EntityRecord};
 pub use episodic::{Episode, EpisodeId, EpisodicMemory};
 pub use graph::{Direction, EdgeId, GraphHop, GraphMemory, InMemoryGraphMemory, NodeId};

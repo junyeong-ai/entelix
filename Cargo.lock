@@ -1557,6 +1557,7 @@ dependencies = [
  "entelix-persistence",
  "entelix-policy",
  "entelix-prompt",
+ "entelix-rag",
  "entelix-runnable",
  "entelix-server",
  "entelix-session",
@@ -1893,6 +1894,24 @@ dependencies = [
  "entelix-runnable",
  "http 1.4.0",
  "minijinja",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "entelix-rag"
+version = "0.3.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "entelix-agents",
+ "entelix-core",
+ "entelix-graph",
+ "entelix-memory",
+ "entelix-runnable",
+ "futures",
+ "regex",
  "serde",
  "serde_json",
  "tokio",

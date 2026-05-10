@@ -9,6 +9,7 @@ Tier-3 cross-thread persistent knowledge. Trait surface + zero-dependency refere
 - **`VectorStore` trait** — vector + metadata storage (tier 1 of the three-tier semantic-memory layering — see `semantic.rs` module docs). `add` / `add_batch` (suffix form) / `search_filtered` keyed on `Namespace`. Reference: `InMemoryVectorStore` (brute-force cosine, namespace-isolated).
 - **`Embedder` trait** + `MeteredEmbedder<E>` — `Arc<Self>` constraint so pools are shared, never per-call constructed. `MeteredEmbedder` records `gen_ai.embedding.cost` only on `Ok` (invariant 12).
 - **`Retriever` trait** + `Reranker` trait + `MmrReranker` — diversity-aware retrieval composition.
+- **`EmbeddingRetriever<E, V>`** — adapter wiring `Embedder` + `VectorStore` (scoped to one `Namespace`) into the `Retriever` shape. `RetrievalQuery::filter` routes through `search_filtered`; `min_score` post-filters locally so floor semantics stay portable across cosine / dot / L2 backends.
 - **Memory patterns** — `BufferMemory`, `SummaryMemory`, `EntityMemory`, `SemanticMemory<E, V>`, `EpisodicMemory<V>`, `ConsolidatingBufferMemory` (LangChain-style facades over `Store<V>`).
 - **`GraphMemory<N, E>` trait** + `InMemoryGraphMemory<N, E>` — typed-node + timestamped-edge knowledge graph. Read methods follow the `get_*` verb-family (`get_node` / `get_edge`); BFS traversal via `traverse(start, max_depth, direction)` and `find_path(from, to, max_depth)`. Postgres-backed `PgGraphMemory` companion folds traversal into a single `WITH RECURSIVE` round-trip.
 

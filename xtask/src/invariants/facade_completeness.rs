@@ -54,6 +54,7 @@ const SUBCRATES: &[&str] = &[
     "entelix-memory-qdrant",
     "entelix-memory-pgvector",
     "entelix-graphmemory-pg",
+    "entelix-rag",
     "entelix-persistence",
     "entelix-tools",
     "entelix-mcp",

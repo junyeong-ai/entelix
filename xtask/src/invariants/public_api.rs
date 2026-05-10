@@ -22,6 +22,7 @@ const CRATES: &[&str] = &[
     "entelix-memory-pgvector",
     "entelix-memory-qdrant",
     "entelix-graphmemory-pg",
+    "entelix-rag",
     "entelix-persistence",
     "entelix-tools",
     "entelix-tools-coding",

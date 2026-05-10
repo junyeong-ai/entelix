@@ -127,8 +127,9 @@ pub use entelix_mcp::{
 };
 pub use entelix_memory::{
     BufferMemory, ConsolidatingBufferMemory, ConsolidationContext, ConsolidationPolicy,
-    CostCalculatorAdapter, Direction, Document, DocumentId, EdgeId, Embedder, Embedding,
-    EmbeddingCostCalculator, EmbeddingUsage, EntityMemory, EntityRecord, Episode, EpisodeId,
+    CostCalculatorAdapter, Direction, Document as RetrievedDocument,
+    DocumentId as RetrievedDocumentId, EdgeId, Embedder, Embedding, EmbeddingCostCalculator,
+    EmbeddingRetriever, EmbeddingUsage, EntityMemory, EntityRecord, Episode, EpisodeId,
     EpisodicMemory, GraphHop, GraphMemory, IdentityReranker, InMemoryGraphMemory, InMemoryStore,
     InMemoryVectorStore, MeteredEmbedder, MmrReranker, Namespace, NamespacePrefix,
     NeverConsolidate, NodeId, OnMessageCount, OnTokenBudget, PolicyExtras, PutOptions,
@@ -201,6 +202,19 @@ pub use entelix_tokenizer_hf::{HfTokenCounter, HfTokenizerError};
 #[cfg(feature = "tokenizer-tiktoken")]
 #[cfg_attr(docsrs, doc(cfg(feature = "tokenizer-tiktoken")))]
 pub use entelix_tokenizer_tiktoken::{TiktokenCounter, TiktokenEncoding, TiktokenError};
+pub use entelix_rag::{
+    CONTEXTUAL_CHUNKER_DEFAULT_INSTRUCTION, CORRECTIVE_RAG_AGENT_NAME, Chunker, ContextualChunker,
+    ContextualChunkerBuilder, CorrectiveRagState, CragConfig, DEFAULT_CHUNK_OVERLAP_CHARS,
+    DEFAULT_CHUNK_OVERLAP_TOKENS, DEFAULT_CHUNK_SIZE_CHARS, DEFAULT_CHUNK_SIZE_TOKENS,
+    DEFAULT_GENERATOR_SYSTEM_PROMPT, DEFAULT_GRADER_INSTRUCTION, DEFAULT_MARKDOWN_HEADING_LEVELS,
+    DEFAULT_MAX_REWRITE_ATTEMPTS, DEFAULT_MIN_CORRECT_FRACTION, DEFAULT_RECURSIVE_SEPARATORS,
+    DEFAULT_RETRIEVAL_TOP_K, DEFAULT_REWRITER_INSTRUCTION, Document, DocumentId, DocumentLoader,
+    DocumentStream, FailurePolicy, GradeVerdict, IngestError, IngestReport, IngestionPipeline,
+    IngestionPipelineBuilder, Lineage, LlmQueryRewriter, LlmQueryRewriterBuilder,
+    LlmRetrievalGrader, LlmRetrievalGraderBuilder, MarkdownStructureSplitter,
+    PROVENANCE_METADATA_KEY, QueryRewriter, RecursiveCharacterSplitter, RetrievalGrader, Source,
+    TextSplitter, TokenCountSplitter, build_corrective_rag_graph, create_corrective_rag_agent,
+};
 pub use entelix_runnable::{
     AnyRunnable, AnyRunnableHandle, BoxStream, ChatModelExt, Configured, DebugEvent, Fallback,
     JsonOutputParser, Mapping, Retrying, Runnable, RunnableEvent, RunnableExt, RunnableLambda,
@@ -246,5 +260,18 @@ pub mod prelude {
     pub use entelix_core::ir::{ContentPart, Message, Role};
     pub use entelix_core::{AgentContext, ChatModel, Error, ExecutionContext, Result};
     pub use entelix_prompt::{ChatPromptPart, ChatPromptTemplate, PromptValue, PromptVars};
-    pub use entelix_runnable::{JsonOutputParser, Runnable, RunnableExt};
+    pub use entelix_rag::{
+    CONTEXTUAL_CHUNKER_DEFAULT_INSTRUCTION, CORRECTIVE_RAG_AGENT_NAME, Chunker, ContextualChunker,
+    ContextualChunkerBuilder, CorrectiveRagState, CragConfig, DEFAULT_CHUNK_OVERLAP_CHARS,
+    DEFAULT_CHUNK_OVERLAP_TOKENS, DEFAULT_CHUNK_SIZE_CHARS, DEFAULT_CHUNK_SIZE_TOKENS,
+    DEFAULT_GENERATOR_SYSTEM_PROMPT, DEFAULT_GRADER_INSTRUCTION, DEFAULT_MARKDOWN_HEADING_LEVELS,
+    DEFAULT_MAX_REWRITE_ATTEMPTS, DEFAULT_MIN_CORRECT_FRACTION, DEFAULT_RECURSIVE_SEPARATORS,
+    DEFAULT_RETRIEVAL_TOP_K, DEFAULT_REWRITER_INSTRUCTION, Document, DocumentId, DocumentLoader,
+    DocumentStream, FailurePolicy, GradeVerdict, IngestError, IngestReport, IngestionPipeline,
+    IngestionPipelineBuilder, Lineage, LlmQueryRewriter, LlmQueryRewriterBuilder,
+    LlmRetrievalGrader, LlmRetrievalGraderBuilder, MarkdownStructureSplitter,
+    PROVENANCE_METADATA_KEY, QueryRewriter, RecursiveCharacterSplitter, RetrievalGrader, Source,
+    TextSplitter, TokenCountSplitter, build_corrective_rag_graph, create_corrective_rag_agent,
+};
+pub use entelix_runnable::{JsonOutputParser, Runnable, RunnableExt};
 }

@@ -218,6 +218,25 @@ impl core::marker::Unpin for entelix_memory::Embedding
 impl core::marker::UnsafeUnpin for entelix_memory::Embedding
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_memory::Embedding
 impl core::panic::unwind_safe::UnwindSafe for entelix_memory::Embedding
+pub struct entelix_memory::EmbeddingRetriever<E, V>
+impl<E, V> entelix_memory::EmbeddingRetriever<E, V> where E: entelix_memory::Embedder, V: entelix_memory::VectorStore
+pub const fn entelix_memory::EmbeddingRetriever<E, V>::embedder(&self) -> &alloc::sync::Arc<E>
+pub const fn entelix_memory::EmbeddingRetriever<E, V>::namespace(&self) -> &entelix_memory::Namespace
+pub const fn entelix_memory::EmbeddingRetriever<E, V>::new(embedder: alloc::sync::Arc<E>, store: alloc::sync::Arc<V>, namespace: entelix_memory::Namespace) -> Self
+pub const fn entelix_memory::EmbeddingRetriever<E, V>::store(&self) -> &alloc::sync::Arc<V>
+impl<E, V> core::clone::Clone for entelix_memory::EmbeddingRetriever<E, V>
+pub fn entelix_memory::EmbeddingRetriever<E, V>::clone(&self) -> Self
+impl<E, V> core::fmt::Debug for entelix_memory::EmbeddingRetriever<E, V>
+pub fn entelix_memory::EmbeddingRetriever<E, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<E, V> entelix_memory::Retriever for entelix_memory::EmbeddingRetriever<E, V> where E: entelix_memory::Embedder + 'static, V: entelix_memory::VectorStore + 'static
+pub fn entelix_memory::EmbeddingRetriever<E, V>::retrieve<'life0, 'life1, 'async_trait>(&'life0 self, query: entelix_memory::RetrievalQuery, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<E, V> core::marker::Freeze for entelix_memory::EmbeddingRetriever<E, V>
+impl<E, V> core::marker::Send for entelix_memory::EmbeddingRetriever<E, V> where E: core::marker::Sync + core::marker::Send, V: core::marker::Sync + core::marker::Send
+impl<E, V> core::marker::Sync for entelix_memory::EmbeddingRetriever<E, V> where E: core::marker::Sync + core::marker::Send, V: core::marker::Sync + core::marker::Send
+impl<E, V> core::marker::Unpin for entelix_memory::EmbeddingRetriever<E, V>
+impl<E, V> core::marker::UnsafeUnpin for entelix_memory::EmbeddingRetriever<E, V>
+impl<E, V> core::panic::unwind_safe::RefUnwindSafe for entelix_memory::EmbeddingRetriever<E, V> where E: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<E, V> core::panic::unwind_safe::UnwindSafe for entelix_memory::EmbeddingRetriever<E, V> where E: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 #[non_exhaustive] pub struct entelix_memory::EmbeddingUsage
 pub entelix_memory::EmbeddingUsage::input_tokens: u32
 impl entelix_memory::EmbeddingUsage
@@ -848,6 +867,8 @@ impl entelix_memory::Reranker for entelix_memory::MmrReranker
 pub fn entelix_memory::MmrReranker::rerank<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, query: &'life1 str, candidates: alloc::vec::Vec<entelix_memory::Document>, top_k: usize, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::RerankedDocument>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
 pub trait entelix_memory::Retriever: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_memory::Retriever::retrieve<'life0, 'life1, 'async_trait>(&'life0 self, query: entelix_memory::RetrievalQuery, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl<E, V> entelix_memory::Retriever for entelix_memory::EmbeddingRetriever<E, V> where E: entelix_memory::Embedder + 'static, V: entelix_memory::VectorStore + 'static
+pub fn entelix_memory::EmbeddingRetriever<E, V>::retrieve<'life0, 'life1, 'async_trait>(&'life0 self, query: entelix_memory::RetrievalQuery, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_memory::Document>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub trait entelix_memory::SemanticMemoryBackend: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_memory::SemanticMemoryBackend::add<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, document: entelix_memory::Document) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub fn entelix_memory::SemanticMemoryBackend::add_batch<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext, documents: alloc::vec::Vec<entelix_memory::Document>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait

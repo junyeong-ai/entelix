@@ -28,6 +28,7 @@ members = [
     "crates/entelix-memory-qdrant",   # concrete VectorStore — qdrant-client gRPC
     "crates/entelix-memory-pgvector", # concrete VectorStore — sqlx + pgvector extension
     "crates/entelix-graphmemory-pg",  # concrete GraphMemory — sqlx + Postgres (nodes + typed edges)
+    "crates/entelix-rag",             # RAG primitives — Document w/ provenance + lineage, DocumentLoader / TextSplitter / Chunker traits
     "crates/entelix-persistence",     # Postgres + Redis impls (Checkpointer + Store + SessionLog), distributed lock
 
     # ── tokenization ────────────────────────────────────────────────────
@@ -183,6 +184,7 @@ entelix-memory-openai   = { version = "0.3.0", path = "crates/entelix-memory-ope
 entelix-memory-qdrant   = { version = "0.3.0", path = "crates/entelix-memory-qdrant" }
 entelix-memory-pgvector = { version = "0.3.0", path = "crates/entelix-memory-pgvector" }
 entelix-graphmemory-pg  = { version = "0.3.0", path = "crates/entelix-graphmemory-pg" }
+entelix-rag         = { version = "0.3.0", path = "crates/entelix-rag" }
 entelix-tokenizer-tiktoken = { version = "0.3.0", path = "crates/entelix-tokenizer-tiktoken" }
 entelix-tokenizer-hf = { version = "0.3.0", path = "crates/entelix-tokenizer-hf" }
 entelix-persistence = { version = "0.3.0", path = "crates/entelix-persistence" }

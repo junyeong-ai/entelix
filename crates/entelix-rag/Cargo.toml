@@ -1,0 +1,36 @@
+[package]
+name = "entelix-rag"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+documentation.workspace = true
+description = "entelix RAG primitives — Document with provenance + lineage, DocumentLoader / TextSplitter / Chunker traits. Algorithmic primitives for retrieval-augmented generation pipelines; concrete source connectors ship as companion crates."
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+entelix-core = { workspace = true }
+entelix-agents = { workspace = true }
+entelix-graph = { workspace = true }
+entelix-memory = { workspace = true }
+entelix-runnable = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+futures = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }

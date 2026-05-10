@@ -13,7 +13,7 @@
 //! `LengthBasedExampleSelector`.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-prompt/0.3.0")]
+#![doc(html_root_url = "https://docs.rs/entelix-prompt/0.4.0")]
 #![deny(missing_docs)]
 
 mod chat;

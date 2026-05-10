@@ -52,7 +52,7 @@ pub use entelix_core::{
     InterruptionPhase, LlmFacingSchema, LlmRenderable, OutputValidator, PendingApprovalDecisions,
     ProviderErrorKind, RenderedForLlm, RequestOverrides, Result, RunBudget, RunOverrides,
     SystemClock, TenantId, ThreadKey, ToolCostCalculator, TypedModelStream, UsageLimitBreach,
-    UsageSnapshot, interrupt, interrupt_with,
+    UsageSnapshot, install_default_tls, interrupt, interrupt_with,
 };
 
 // ── Sub-crate re-exports — the 90% surface for crates that don't

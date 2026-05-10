@@ -52,6 +52,27 @@ impl VertexTransport {
         &self.location
     }
 
+    /// Resolve the on-wire URL from the codec's emitted path.
+    ///
+    /// Codecs are project-agnostic by contract (invariant 5) — they
+    /// emit *what* resource the request targets without knowing
+    /// *which* GCP project / location hosts it. Vertex publisher-
+    /// model paths (`/publishers/{provider}/models/{model}:{action}`)
+    /// receive the `/v1/projects/{project}/locations/{location}`
+    /// prefix here; absolute paths (already carrying the project /
+    /// location segments, or codec-internal endpoints that bypass
+    /// the publisher routing) flow through verbatim.
+    fn resolve_url(&self, path: &str) -> String {
+        if path.starts_with("/publishers/") {
+            format!(
+                "{}/v1/projects/{}/locations/{}{}",
+                self.base_url, self.project_id, self.location, path
+            )
+        } else {
+            format!("{}{}", self.base_url, path)
+        }
+    }
+
     async fn build_headers(
         &self,
         request_headers: &http::HeaderMap,
@@ -99,7 +120,7 @@ impl Transport for VertexTransport {
         if ctx.is_cancelled() {
             return Err(Error::Cancelled);
         }
-        let url = format!("{}{}", self.base_url, request.path);
+        let url = self.resolve_url(&request.path);
         // Header build can stall on OAuth token refresh — race the
         // caller's cancellation token so a cancel surfaces within
         // one HTTP round-trip instead of waiting for the full
@@ -145,7 +166,7 @@ impl Transport for VertexTransport {
         if ctx.is_cancelled() {
             return Err(Error::Cancelled);
         }
-        let url = format!("{}{}", self.base_url, request.path);
+        let url = self.resolve_url(&request.path);
         // Header build can stall on OAuth token refresh — race the
         // caller's cancellation token so a cancel surfaces within
         // one HTTP round-trip instead of waiting for the full

@@ -63,3 +63,7 @@ time = { workspace = true, optional = true }
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
 wiremock = { workspace = true }
+serde_json = { workspace = true }
+futures = { workspace = true }
+serde = { workspace = true }
+schemars = { workspace = true }

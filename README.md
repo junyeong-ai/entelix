@@ -39,6 +39,7 @@ use entelix::{ChatModel, ExecutionContext};
 
 #[tokio::main]
 async fn main() -> entelix::Result<()> {
+    entelix::install_default_tls();
     let creds = Arc::new(ApiKeyProvider::anthropic(std::env::var("ANTHROPIC_API_KEY")?));
     let transport = DirectTransport::anthropic(creds)?;
     let model = ChatModel::new(AnthropicMessagesCodec, transport, "claude-opus-4-7")

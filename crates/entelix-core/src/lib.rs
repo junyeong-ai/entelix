@@ -61,10 +61,12 @@ pub mod stream;
 pub mod tenant_id;
 pub mod thread_key;
 pub mod time;
+pub mod tls;
 pub mod tools;
 pub mod transports;
 
 pub use agent_context::AgentContext;
+pub use tls::install_default_tls;
 pub use approval::{ApprovalDecision, PendingApprovalDecisions};
 pub use audit::{AuditSink, AuditSinkHandle};
 pub use auth::{

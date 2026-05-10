@@ -17,6 +17,7 @@ mod gemini;
 mod openai_chat;
 mod openai_responses;
 mod vertex_anthropic;
+mod vertex_gemini;
 
 pub use anthropic::AnthropicMessagesCodec;
 pub use bedrock_converse::BedrockConverseCodec;
@@ -28,3 +29,4 @@ pub use gemini::GeminiCodec;
 pub use openai_chat::OpenAiChatCodec;
 pub use openai_responses::OpenAiResponsesCodec;
 pub use vertex_anthropic::{VERTEX_ANTHROPIC_VERSION, VertexAnthropicCodec};
+pub use vertex_gemini::VertexGeminiCodec;

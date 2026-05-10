@@ -72,13 +72,13 @@ impl Codec for VertexAnthropicCodec {
 
     fn encode(&self, request: &ModelRequest) -> Result<EncodedRequest> {
         let mut encoded = self.inner.encode(request)?;
-        rewrite_for_vertex(&mut encoded)?;
+        rewrite_for_vertex(&mut encoded, &request.model, false)?;
         Ok(encoded)
     }
 
     fn encode_streaming(&self, request: &ModelRequest) -> Result<EncodedRequest> {
         let mut encoded = self.inner.encode_streaming(request)?;
-        rewrite_for_vertex(&mut encoded)?;
+        rewrite_for_vertex(&mut encoded, &request.model, true)?;
         Ok(encoded)
     }
 
@@ -107,17 +107,26 @@ impl Codec for VertexAnthropicCodec {
     }
 }
 
-/// Apply the two Vertex-Anthropic wire deltas to an encoded request
-/// the inner [`AnthropicMessagesCodec`] just produced:
+/// Apply the Vertex-Anthropic wire deltas to an encoded request the
+/// inner [`AnthropicMessagesCodec`] just produced:
 ///
 /// - drop the `model` body field (Vertex routes by URL path),
 /// - inject `anthropic_version: "vertex-2023-10-16"`,
 /// - strip the `anthropic-version` header (Vertex carries the
-///   marker in the body instead).
+///   marker in the body instead),
+/// - rewrite the path to the publisher-model resource the
+///   `:rawPredict` / `:streamRawPredict` endpoints expect.
 ///
 /// `anthropic-beta` headers are left in place — Vertex honours them
 /// for extended-thinking / computer-use / cache-control variants.
-fn rewrite_for_vertex(encoded: &mut EncodedRequest) -> Result<()> {
+///
+/// The emitted path is partial (`/publishers/anthropic/models/{model}:rawPredict`)
+/// — the GCP project + location prefix
+/// (`/v1/projects/{project}/locations/{location}`) is the
+/// `VertexTransport`'s responsibility because the codec is
+/// project-agnostic by contract (invariant 5 — codecs operate on
+/// neutral IR, transports own connection identity).
+fn rewrite_for_vertex(encoded: &mut EncodedRequest, model: &str, streaming: bool) -> Result<()> {
     let mut body: Value = serde_json::from_slice(&encoded.body)?;
     let Value::Object(ref mut obj) = body else {
         return Err(crate::error::Error::invalid_request(
@@ -133,6 +142,13 @@ fn rewrite_for_vertex(encoded: &mut EncodedRequest) -> Result<()> {
     encoded
         .headers
         .remove(HeaderName::from_static("anthropic-version"));
+
+    let action = if streaming {
+        "streamRawPredict"
+    } else {
+        "rawPredict"
+    };
+    encoded.path = format!("/publishers/anthropic/models/{model}:{action}");
     Ok(())
 }
 

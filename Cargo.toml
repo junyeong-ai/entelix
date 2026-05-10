@@ -66,6 +66,12 @@ categories = ["api-bindings", "asynchronous"]
 # ── Async / HTTP ─────────────────────────────────────────────────────────
 tokio = { version = "1.52", features = ["rt-multi-thread", "macros", "sync", "time", "io-util", "signal"] }
 reqwest = { version = "0.13", default-features = false, features = ["json", "stream", "rustls", "http2", "multipart"] }
+# Pinned for live-API tests so the integration suite can install a
+# concrete `CryptoProvider` before the first reqwest call (rustls
+# 0.23+ panics otherwise). Production applications install their
+# own provider in `main`; the workspace `dev-dependencies` of
+# `entelix-cloud` and `entelix-auth-claude-code` re-use this pin.
+rustls = { version = "0.23", default-features = false, features = ["aws-lc-rs"] }
 http = "1.4"
 axum = { version = "0.8", features = ["macros", "tokio", "http2"] }
 tower = { version = "0.5", features = ["util"] }

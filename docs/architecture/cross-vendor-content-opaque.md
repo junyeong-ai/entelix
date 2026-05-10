@@ -45,9 +45,13 @@ One vendor-keyed opaque carrier rides on every IR site that may transport a roun
 /// next turn. Codecs decode their own vendor's blob into this carrier
 /// and read it back verbatim on the encode side. The harness never
 /// inspects the payload — it forwards whichever blob lands at decode
-/// time, untouched (mirrors the sealed-constructor pattern of
-/// `RenderedForLlm<T>` from invariant 16: opaque to consumers,
-/// constructable only by the codec that owns the vendor wire).
+/// time, untouched. The type is open-constructable (no sealed
+/// constructor bottleneck) so external codec crates can stamp their
+/// own provider key — a prerequisite for invariant 22's "new vendor =
+/// one codec impl, zero IR change" promise. Codec autonomy is
+/// enforced by convention plus the `cross_vendor_*_isolation_*`
+/// regression suite (`tests/provider_echo_round_trip.rs`), not by
+/// type-level visibility.
 ///
 /// Cross-vendor: a transcript may carry entries for multiple vendors
 /// after a transport switch; each codec only emits its own entries on
@@ -411,7 +415,7 @@ This document is the deliverable. Decisions locked: carrier name `ProviderEchoSn
 - [ ] `cargo clippy --workspace --all-features --all-targets -- -D warnings` green
 - [ ] `cargo test --workspace --all-features` green
 - [ ] `cargo xtask invariants` green
-- [ ] `crates/entelix-core/tests/provider_echo_round_trip.rs` covers all 7 vendors (Anthropic Messages, Bedrock Converse Anthropic, Bedrock Converse Nova 2, Vertex Anthropic, Gemini, Vertex Gemini, OpenAI Responses) plus cross-vendor isolation
+- [ ] `crates/entelix-core/tests/provider_echo_round_trip.rs` covers every codec wire-shape — Anthropic Messages (signature + redacted_thinking), Bedrock Converse (single codec hosting Anthropic + Nova 2 under one shape; one fixture exercises both), Vertex Anthropic (composition delegate), Gemini (snake_case wire, Text + ToolUse + Thinking parts, legacy camelCase decode tolerance), Vertex Gemini (composition delegate), OpenAI Responses (3-tier — part `encrypted_content` + response `Response.id` + request `previous_response_id`), OpenAI Chat (foreign-echo silent drop) — plus cross-vendor isolation in both directions and IR-preserves-foreign-blob through decode
 - [ ] `live_vertex_gemini_tool_round_trip.rs` passes against a Gemini 3.x reasoning model
 - [ ] `live_anthropic.rs` passes (where credentials available)
 - [ ] `live_bedrock.rs` passes (where credentials available)

@@ -27,17 +27,26 @@
 //!
 //! ## Invariants
 //!
-//! - **Codec autonomy.** A codec only reads and writes entries whose
-//!   `provider` matches its own [`Codec::name`](crate::codecs::Codec::name).
-//!   Cross-codec passthrough is a structural property: a transcript with
-//!   entries for multiple vendors round-trips through any codec without
-//!   affecting wire bytes.
-//! - **Harness never inspects.** The harness forwards whichever blob
-//!   lands at decode time, untouched. Mirrors the sealed-constructor
-//!   pattern of [`crate::LlmRenderable`] (invariant 16).
-//! - **`Vec`, not `Option`.** A transcript that has crossed transports
-//!   may carry blobs from multiple vendors simultaneously; the IR is an
-//!   audit-faithful record, not a single-vendor projection.
+//! - **Codec autonomy.** Each codec reads and writes only entries
+//!   whose `provider` matches its own
+//!   [`Codec::name`](crate::codecs::Codec::name). Cross-codec
+//!   passthrough is a structural property: a transcript with
+//!   entries for multiple vendors round-trips through any codec
+//!   without affecting wire bytes. Enforced by convention + the
+//!   `cross_vendor_*_isolation_*` regression suite in
+//!   `tests/provider_echo_round_trip.rs`; the type itself is
+//!   open-constructable so external codec crates can stamp their
+//!   own provider key without a sealed-trait bottleneck (a
+//!   prerequisite for invariant 22's "new vendor = one codec impl,
+//!   zero IR change" promise).
+//! - **Harness never inspects.** The harness forwards whichever
+//!   blob lands at decode time, untouched. The single-emit
+//!   invariant — at most one entry per `(part, provider key)` pair
+//!   — is documented on [`Self::find_in`].
+//! - **`Vec`, not `Option`.** A transcript that has crossed
+//!   transports may carry blobs from multiple vendors
+//!   simultaneously; the IR is an audit-faithful record, not a
+//!   single-vendor projection.
 
 use std::borrow::Cow;
 

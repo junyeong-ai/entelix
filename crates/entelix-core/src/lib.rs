@@ -62,6 +62,7 @@ pub mod tenant_id;
 pub mod thread_key;
 pub mod time;
 pub mod tls;
+pub mod tokens;
 pub mod tools;
 pub mod transports;
 
@@ -94,4 +95,5 @@ pub use tenant_id::{DEFAULT_TENANT_ID, TenantId};
 pub use thread_key::ThreadKey;
 pub use time::{Clock, SystemClock};
 pub use tls::install_default_tls;
-pub use tools::{Tool, ToolRegistry};
+pub use tokens::{ByteCountTokenCounter, TokenCounter};
+pub use tools::{Tool, ToolErrorKind, ToolRegistry};

@@ -66,7 +66,7 @@ where
     model: Arc<M>,
     tool_registry: ToolRegistry,
     skills: SkillRegistry,
-    sink: Option<Arc<dyn AgentEventSink<ReActState>>>,
+    sinks: Vec<Arc<dyn AgentEventSink<ReActState>>>,
     approver: Option<Arc<dyn Approver>>,
 }
 
@@ -106,7 +106,7 @@ where
             .field("description", &self.description)
             .field("tool_count", &self.tool_registry.len())
             .field("skill_count", &self.skills.len())
-            .field("has_sink", &self.sink.is_some())
+            .field("sinks", &self.sinks.len())
             .field("has_approver", &self.approver.is_some())
             .finish_non_exhaustive()
     }
@@ -209,7 +209,7 @@ where
             model,
             tool_registry,
             skills,
-            sink,
+            sinks,
             approver,
         } = self;
         let model = ArcRunnable::new(model);
@@ -234,9 +234,18 @@ where
             }
             None => registry_with_skills,
         };
-        let mut builder = react_agent_builder(model, registry)?;
-        if let Some(sink) = sink {
-            builder = builder.with_sink_arc(sink);
+        // Sub-agents auto-advertise their narrowed tool catalogue —
+        // the parent's `RunOverrides::with_tool_specs` ensures the
+        // planner sees exactly the tools it can dispatch.
+        let tool_specs = registry.tool_specs();
+        let defaults = if tool_specs.is_empty() {
+            None
+        } else {
+            Some(entelix_core::RunOverrides::new().with_tool_specs(tool_specs))
+        };
+        let mut builder = react_agent_builder(model, registry, defaults)?;
+        for sink in sinks {
+            builder = builder.add_sink_arc(sink);
         }
         if let Some(approver) = approver {
             builder = builder
@@ -304,7 +313,7 @@ impl SubagentSelection {
 ///
 /// The builder is the sole construction path — the sub-agent's
 /// authority bounds (`restrict_to` / `filter`) and optional wiring
-/// (`with_sink` / `with_approver` / `with_skills`) compose fluently
+/// (`add_sink` / `with_approver` / `with_skills`) compose fluently
 /// before [`Self::build`] finalises a [`Subagent`]. Authority bounds
 /// are mandatory in spirit (F7 mitigation): a builder that never
 /// calls `restrict_to` / `filter` produces a sub-agent inheriting
@@ -320,7 +329,7 @@ where
     description: String,
     selection: SubagentSelection,
     skills_request: Option<(&'a SkillRegistry, Vec<String>)>,
-    sink: Option<Arc<dyn AgentEventSink<ReActState>>>,
+    sinks: Vec<Arc<dyn AgentEventSink<ReActState>>>,
     approver: Option<Arc<dyn Approver>>,
 }
 
@@ -336,7 +345,7 @@ where
             description,
             selection: SubagentSelection::All,
             skills_request: None,
-            sink: None,
+            sinks: Vec::new(),
             approver: None,
         }
     }
@@ -366,13 +375,17 @@ where
         self
     }
 
-    /// Forward the sub-agent's lifecycle events into the parent's
-    /// sink. Without this call the resulting agent uses
-    /// [`crate::agent::DroppingSink`] (the AgentBuilder default) and
-    /// the parent loses visibility into child runs.
+    /// Append a sink that consumes the sub-agent's lifecycle
+    /// events. Multiple calls accumulate via the inner
+    /// [`crate::agent::FanOutSink`] — operators forward to the
+    /// parent's sink, an audit recorder, and a separate telemetry
+    /// pipeline by chaining `add_sink` calls. Without any call the
+    /// resulting agent uses [`crate::agent::DroppingSink`] (the
+    /// `AgentBuilder` default) and the parent loses visibility into
+    /// child runs.
     #[must_use]
-    pub fn with_sink(mut self, sink: Arc<dyn AgentEventSink<ReActState>>) -> Self {
-        self.sink = Some(sink);
+    pub fn add_sink(mut self, sink: Arc<dyn AgentEventSink<ReActState>>) -> Self {
+        self.sinks.push(sink);
         self
     }
 
@@ -407,7 +420,7 @@ where
             description,
             selection,
             skills_request,
-            sink,
+            sinks,
             approver,
         } = self;
         if name.is_empty() {
@@ -452,7 +465,7 @@ where
             model: Arc::new(model),
             tool_registry,
             skills,
-            sink,
+            sinks,
             approver,
         })
     }

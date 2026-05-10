@@ -116,7 +116,7 @@ async fn breach_audit_emit_orders_before_failed_sink_event() {
     let agent = Agent::<i32>::builder()
         .with_name("audit-ordering-test")
         .with_runnable(TwoRequestRunnable)
-        .with_sink(event_sink.clone())
+        .add_sink(event_sink.clone())
         .build()
         .unwrap();
 

@@ -60,6 +60,9 @@ fn apply_overrides(request: &mut ModelRequest, ctx: &ExecutionContext) {
         if let Some(system) = run.system_prompt() {
             request.system = system.clone();
         }
+        if let Some(specs) = run.tool_specs() {
+            request.tools = Arc::clone(specs);
+        }
     }
     if let Some(req) = ctx.extension::<RequestOverrides>() {
         if let Some(t) = req.temperature() {
@@ -118,7 +121,7 @@ pub struct ChatModelConfig {
     top_p: Option<f32>,
     top_k: Option<u32>,
     stop_sequences: Vec<String>,
-    tools: Vec<ToolSpec>,
+    tools: Arc<[ToolSpec]>,
     tool_choice: ToolChoice,
     reasoning_effort: Option<ReasoningEffort>,
     /// `complete_typed<O>` retry budget — schema-mismatch failures
@@ -128,6 +131,17 @@ pub struct ChatModelConfig {
     ///. Distinct from [`crate::Error::Provider`]'s
     /// transport retries (handled by `RetryService`).
     validation_retries: u32,
+    /// Operator-supplied token counter for pre-flight budget checks
+    /// and content-economy estimation. `None` (the default) means
+    /// the SDK relies on the vendor's post-flight `Usage` block;
+    /// pre-flight enforcement (refusing a call that would exceed
+    /// the configured `RunBudget` ceiling before sending) requires
+    /// an explicit counter. Concrete counters ship as companion
+    /// crates (`entelix-tokenizer-tiktoken`,
+    /// `entelix-tokenizer-hf`, locale-aware companions);
+    /// [`crate::ByteCountTokenCounter`] is the zero-dependency
+    /// English-biased default.
+    token_counter: Option<std::sync::Arc<dyn crate::tokens::TokenCounter>>,
 }
 
 impl ChatModelConfig {
@@ -143,11 +157,20 @@ impl ChatModelConfig {
             top_p: None,
             top_k: None,
             stop_sequences: Vec::new(),
-            tools: Vec::new(),
+            tools: Arc::from([]),
             tool_choice: ToolChoice::default(),
             reasoning_effort: None,
             validation_retries: 0,
+            token_counter: None,
         }
+    }
+
+    /// Borrow the configured token counter, if any. Returns `None`
+    /// when the operator has not wired one — pre-flight budget
+    /// enforcement falls back to vendor `Usage` post-response.
+    #[must_use]
+    pub fn token_counter(&self) -> Option<&std::sync::Arc<dyn crate::tokens::TokenCounter>> {
+        self.token_counter.as_ref()
     }
 
     /// `complete_typed<O>` retry budget. Default `0` — the first
@@ -231,7 +254,7 @@ impl ChatModelConfig {
             top_p: self.top_p,
             top_k: self.top_k,
             stop_sequences: self.stop_sequences.clone(),
-            tools: self.tools.clone(),
+            tools: Arc::clone(&self.tools),
             tool_choice: self.tool_choice.clone(),
             reasoning_effort: self.reasoning_effort.clone(),
             ..ModelRequest::default()
@@ -497,6 +520,24 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         self
     }
 
+    /// Wire an operator-supplied [`TokenCounter`](crate::TokenCounter)
+    /// for pre-flight budget checks and content-economy estimation.
+    /// Replaces any previously-configured counter.
+    ///
+    /// Vendor-accurate counters (tiktoken, HuggingFace, ko-mecab)
+    /// ship as companion crates so the core stays
+    /// zero-dependency. [`crate::ByteCountTokenCounter`] is the
+    /// English-biased zero-dependency default for development
+    /// scaffolding.
+    #[must_use]
+    pub fn with_token_counter(
+        mut self,
+        counter: std::sync::Arc<dyn crate::tokens::TokenCounter>,
+    ) -> Self {
+        self.config.token_counter = Some(counter);
+        self
+    }
+
     /// Set nucleus sampling parameter.
     #[must_use]
     pub const fn with_top_p(mut self, p: f32) -> Self {
@@ -527,17 +568,15 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         self
     }
 
-    /// Append a tool to the advertised set.
+    /// Replace the advertised tools list. Accepts anything that
+    /// converts into `Arc<[ToolSpec]>` — `Vec<ToolSpec>` and
+    /// `[ToolSpec; N]` literals both qualify, so caller ergonomics
+    /// match the previous `Vec` shape while per-dispatch
+    /// `build_request` clones become an atomic refcount bump rather
+    /// than a deep walk of every tool's JSON schema.
     #[must_use]
-    pub fn with_tool(mut self, t: ToolSpec) -> Self {
-        self.config.tools.push(t);
-        self
-    }
-
-    /// Replace the full tools list.
-    #[must_use]
-    pub fn with_tools(mut self, tools: Vec<ToolSpec>) -> Self {
-        self.config.tools = tools;
+    pub fn with_tools(mut self, tools: impl Into<Arc<[ToolSpec]>>) -> Self {
+        self.config.tools = tools.into();
         self
     }
 

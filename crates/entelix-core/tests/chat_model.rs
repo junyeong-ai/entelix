@@ -126,11 +126,11 @@ async fn complete_propagates_builder_defaults_into_request() -> Result<()> {
         .with_temperature(0.3)
         .with_top_p(0.9)
         .with_stop_sequence("###")
-        .with_tool(ToolSpec::function(
+        .with_tools([ToolSpec::function(
             "calc",
             "Calculator",
             serde_json::json!({}),
-        ));
+        )]);
 
     model
         .complete(vec![Message::user("hi")], &ExecutionContext::new())

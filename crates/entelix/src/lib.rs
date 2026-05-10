@@ -47,12 +47,13 @@ pub use entelix_core::transports;
 // matching, LLM-facing error rendering) reaches them. Keep them at
 // the top so callers don't need to memorise an internal module name.
 pub use entelix_core::{
-    AgentContext, ApprovalDecision, AuditSink, AuditSinkHandle, ChatModel, ChatModelConfig, Clock,
-    CostCalculator, DEFAULT_TENANT_ID, Error, ExecutionContext, Extensions, InterruptionKind,
-    InterruptionPhase, LlmFacingSchema, LlmRenderable, OutputValidator, PendingApprovalDecisions,
-    ProviderErrorKind, RenderedForLlm, RequestOverrides, Result, RunBudget, RunOverrides,
-    SystemClock, TenantId, ThreadKey, ToolCostCalculator, TypedModelStream, UsageLimitBreach,
-    UsageSnapshot, install_default_tls, interrupt, interrupt_with,
+    AgentContext, ApprovalDecision, AuditSink, AuditSinkHandle, ByteCountTokenCounter, ChatModel,
+    ChatModelConfig, Clock, CostCalculator, DEFAULT_TENANT_ID, Error, ExecutionContext, Extensions,
+    InterruptionKind, InterruptionPhase, LlmFacingSchema, LlmRenderable, OutputValidator,
+    PendingApprovalDecisions, ProviderErrorKind, RenderedForLlm, RequestOverrides, Result,
+    RunBudget, RunOverrides, SystemClock, TenantId, ThreadKey, TokenCounter, ToolCostCalculator,
+    TypedModelStream, UsageLimitBreach, UsageSnapshot, install_default_tls, interrupt,
+    interrupt_with,
 };
 
 // ── Sub-crate re-exports — the 90% surface for crates that don't
@@ -63,9 +64,10 @@ pub use entelix_agents::{
     AlwaysApprove, ApprovalLayer, ApprovalRequest, ApprovalService, Approver, BroadcastSink,
     CaptureSink, ChannelApprover, ChannelApproverConfig, ChannelSink, ChatState,
     DEFAULT_SUMMARY_KEEP_RECENT_TURNS, DEFAULT_SUMMARY_SYSTEM_PROMPT, DroppingSink, DynObserver,
-    ExecutionMode, MessageRunnableCompactionExt, PendingApproval, ReActAgentBuilder, ReActState,
-    RunnableCompacting, RunnableToSummarizerAdapter, Subagent, SubagentBuilder, SubagentMetadata,
-    SubagentTool, SummaryCompactor, SupervisorDecision, SupervisorState, ToolApprovalEventSink,
+    EffectGate, ExecutionMode, FailOpenSink, FanOutSink, MessageRunnableCompactionExt,
+    PendingApproval, ReActAgentBuilder, ReActState, RunnableCompacting,
+    RunnableToSummarizerAdapter, Subagent, SubagentBuilder, SubagentMetadata, SubagentTool,
+    SummaryCompactor, SupervisorDecision, SupervisorState, ToolApprovalEventSink,
     ToolApprovalEventSinkHandle, ToolEventLayer, ToolEventService, ToolHook, ToolHookDecision,
     ToolHookLayer, ToolHookRegistry, ToolHookRequest, ToolHookService, build_chat_graph,
     build_react_graph, build_supervisor_graph, create_chat_agent, create_react_agent,

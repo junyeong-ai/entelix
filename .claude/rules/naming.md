@@ -85,7 +85,8 @@ Trait-to-trait converters keep `*Adapter` (`ToolToRunnableAdapter`); output extr
 | `with_xxx(self, x) -> Self` | builder option setter |
 | `Builder::build() -> Result<T>` | builder finalizer — always `Result` even when validation cannot fail today, so adding validation later is non-breaking |
 | `name(&self) -> &str` | accessor — **never `get_name`** |
-| `set_name(&mut self, n: String)` | mutator |
+| `set_name(&mut self, n: String)` | mutator (uniquely-owned `&mut self`) |
+| `replace_name(&self, n: T)` | interior-mutable hot-swap of a single field on a share-cloneable type (`Arc<Self>` clones can replace from any holder). Pairs with a `RwLock` / `ArcSwap` field. Distinct from `set_*` so the call site signals share-mutation, not exclusive ownership. |
 | `try_xxx(...) -> Result<T>` | fallible variant |
 | `xxx_async(...)` | only if a sync `xxx()` also exists |
 | `xxx_dyn(...)` | object-safe sibling of a generic `xxx<T>(...)` method on the same type — present only when the generic version exists and an `Arc<dyn …>` consumer needs to dispatch dynamically |

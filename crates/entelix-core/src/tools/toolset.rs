@@ -101,7 +101,7 @@ where
     /// manifests. Agents should still derive their final advertised
     /// tool catalogue from the installed [`ToolRegistry`].
     #[must_use]
-    pub fn tool_specs(&self) -> Vec<ToolSpec> {
+    pub fn tool_specs(&self) -> Arc<[ToolSpec]> {
         self.by_name
             .values()
             .map(|tool| tool.metadata().to_tool_spec())

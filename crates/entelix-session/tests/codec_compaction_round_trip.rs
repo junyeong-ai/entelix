@@ -93,7 +93,7 @@ fn assert_clean_encode<C: Codec>(codec: &C, messages: Vec<Message>) -> Result<()
     let request = ModelRequest {
         model: "test-model".to_owned(),
         messages,
-        tools: vec![calculator_tool_spec()],
+        tools: std::sync::Arc::from([calculator_tool_spec()]),
         max_tokens: Some(1024),
         ..ModelRequest::default()
     };

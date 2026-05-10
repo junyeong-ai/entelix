@@ -61,6 +61,12 @@ pub enum AgentEvent<S> {
         /// duration of the run; matches the id on every subsequent
         /// event for this same call.
         run_id: String,
+        /// Run id of the calling agent when this run was dispatched
+        /// from a parent (sub-agent fan-out, supervisor handoff).
+        /// `None` for top-level runs. LangSmith-style trace-tree
+        /// consumers reconstruct the hierarchy from
+        /// `(run_id, parent_run_id)` edges across these events.
+        parent_run_id: Option<String>,
         /// Agent identifier configured on `AgentBuilder::name(...)`.
         agent: String,
     },
@@ -289,6 +295,7 @@ mod tests {
     fn lifecycle_variants_have_no_audit_projection() {
         let started: AgentEvent<u32> = AgentEvent::Started {
             run_id: "r1".into(),
+            parent_run_id: None,
             agent: "a".into(),
         };
         let complete: AgentEvent<u32> = AgentEvent::Complete {

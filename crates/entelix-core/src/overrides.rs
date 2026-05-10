@@ -53,7 +53,9 @@
 //!   (compile-time cap stays authoritative — operators can lower but
 //!   never raise).
 
-use crate::ir::{ReasoningEffort, ResponseFormat, SystemPrompt, ToolChoice};
+use std::sync::Arc;
+
+use crate::ir::{ReasoningEffort, ResponseFormat, SystemPrompt, ToolChoice, ToolSpec};
 
 /// Agent-loop overrides — model identifier, system prompt, recursion
 /// cap. Patched onto the call's [`crate::context::ExecutionContext`]
@@ -68,6 +70,7 @@ pub struct RunOverrides {
     model: Option<String>,
     system_prompt: Option<SystemPrompt>,
     max_iterations: Option<usize>,
+    tool_specs: Option<Arc<[ToolSpec]>>,
 }
 
 impl RunOverrides {
@@ -110,6 +113,27 @@ impl RunOverrides {
         self
     }
 
+    /// Replace the advertised tool catalogue on every `ChatModel`
+    /// call observing this `RunOverrides`. Used by recipes
+    /// (`ReActAgentBuilder`, `create_react_agent`) to stamp the
+    /// active `ToolRegistry::tool_specs()` onto every dispatch
+    /// without forcing operators to thread the spec list through
+    /// `ChatModel::with_tools` separately. Replaces (not merges)
+    /// the configured tools; an empty slice means "advertise no
+    /// tools" — the `Some(_)` shape distinguishes it from `None`
+    /// ("inherit `ChatModelConfig` default").
+    ///
+    /// Accepts anything that converts into `Arc<[ToolSpec]>` —
+    /// `Vec<ToolSpec>` and array literals both qualify. The Arc
+    /// shape lets the per-dispatch `apply_overrides` swap the
+    /// catalogue with an atomic refcount bump rather than a deep
+    /// walk of every spec's JSON schema.
+    #[must_use]
+    pub fn with_tool_specs(mut self, specs: impl Into<Arc<[ToolSpec]>>) -> Self {
+        self.tool_specs = Some(specs.into());
+        self
+    }
+
     /// Borrow the model override if set.
     #[must_use]
     pub fn model(&self) -> Option<&str> {
@@ -126,6 +150,12 @@ impl RunOverrides {
     #[must_use]
     pub const fn max_iterations(&self) -> Option<usize> {
         self.max_iterations
+    }
+
+    /// Borrow the tool-specs override if set.
+    #[must_use]
+    pub fn tool_specs(&self) -> Option<&Arc<[ToolSpec]>> {
+        self.tool_specs.as_ref()
     }
 }
 

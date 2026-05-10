@@ -316,9 +316,9 @@ impl RegexRedactor {
 #[async_trait]
 impl PiiRedactor for RegexRedactor {
     async fn redact_request(&self, request: &mut ModelRequest) -> PolicyResult<()> {
-        for block in request.system.blocks_mut() {
+        request.system = request.system.map_blocks(|block| {
             self.redact_text(&mut block.text);
-        }
+        });
         for msg in &mut request.messages {
             self.redact_parts(&mut msg.content);
         }

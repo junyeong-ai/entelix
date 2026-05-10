@@ -287,3 +287,75 @@ async fn deadline_already_past_at_call_time_short_circuits_immediately() {
         "past-deadline must skip the inner call entirely"
     );
 }
+
+// Invariant 17 — vendor `Retry-After` is the authoritative cooldown.
+// The classifier surfaces it on `RetryDecision::after`; the loop must
+// honour it even when its own configured backoff would fire much
+// sooner.
+#[tokio::test]
+async fn vendor_retry_after_beats_configured_backoff() {
+    let (svc, calls) = ScriptedService::new(vec![
+        Err(Error::provider_http(429, "rate limited").with_retry_after(Duration::from_millis(120))),
+        Ok(ok_response()),
+    ]);
+    // Configured backoff would normally retry within ~1–2 ms; the
+    // vendor hint of 120 ms must override it.
+    let policy =
+        RetryPolicy::standard()
+            .with_max_attempts(3)
+            .with_backoff(ExponentialBackoff::new(
+                Duration::from_millis(1),
+                Duration::from_millis(500),
+            ));
+    let layered = RetryLayer::new(policy).layer(svc);
+    let started = tokio::time::Instant::now();
+    tower::ServiceExt::oneshot(layered, invocation(ExecutionContext::new()))
+        .await
+        .unwrap();
+    let elapsed = started.elapsed();
+
+    assert!(
+        elapsed >= Duration::from_millis(110),
+        "vendor Retry-After (120ms) must beat self-jitter; waited only {elapsed:?}"
+    );
+    assert!(
+        elapsed < Duration::from_millis(400),
+        "wait should land near Retry-After, not stretch unboundedly: {elapsed:?}"
+    );
+    assert_eq!(
+        calls.load(Ordering::SeqCst),
+        2,
+        "exactly one retry after the 429"
+    );
+}
+
+// Invariant 17 — vendor hints are bounded by `backoff.max()` so a
+// stuck or hostile upstream cannot pin the loop indefinitely.
+#[tokio::test]
+async fn vendor_retry_after_capped_at_backoff_max() {
+    let (svc, calls) = ScriptedService::new(vec![
+        Err(Error::provider_http(503, "service unavailable")
+            .with_retry_after(Duration::from_secs(60))),
+        Ok(ok_response()),
+    ]);
+    // Cap is 50ms; vendor "asks" for 60s. The loop must clamp.
+    let policy =
+        RetryPolicy::standard()
+            .with_max_attempts(3)
+            .with_backoff(ExponentialBackoff::new(
+                Duration::from_millis(1),
+                Duration::from_millis(50),
+            ));
+    let layered = RetryLayer::new(policy).layer(svc);
+    let started = tokio::time::Instant::now();
+    tower::ServiceExt::oneshot(layered, invocation(ExecutionContext::new()))
+        .await
+        .unwrap();
+    let elapsed = started.elapsed();
+
+    assert!(
+        elapsed < Duration::from_millis(500),
+        "vendor hint must be capped at backoff.max() = 50ms; actual {elapsed:?} suggests no cap"
+    );
+    assert_eq!(calls.load(Ordering::SeqCst), 2);
+}

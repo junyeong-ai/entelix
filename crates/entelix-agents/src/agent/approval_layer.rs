@@ -71,6 +71,7 @@ use entelix_core::PendingApprovalDecisions;
 use entelix_core::error::{Error, Result};
 use entelix_core::interruption::InterruptionKind;
 use entelix_core::service::ToolInvocation;
+use entelix_core::tools::ToolEffect;
 
 use crate::agent::approver::{ApprovalDecision, ApprovalRequest, Approver};
 use crate::agent::event::AgentEvent;
@@ -171,19 +172,78 @@ where
     }
 }
 
+/// Selector for which tool dispatches the [`ApprovalLayer`] gates
+/// through the [`Approver`]. Routes by the calling tool's
+/// [`ToolMetadata::effect`](entelix_core::tools::ToolMetadata) so
+/// operators express *intent* once at metadata time and the layer
+/// honours it without per-tool wiring.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[non_exhaustive]
+pub enum EffectGate {
+    /// Every dispatch reaches the approver — the original behaviour
+    /// (and the safe default for deployments where every tool call
+    /// must have an explicit go-ahead).
+    #[default]
+    Always,
+    /// Only [`ToolEffect::Destructive`] tools reach the approver.
+    /// `ReadOnly` and `Mutating` calls auto-approve. The narrowest
+    /// gate that still requires confirmation for irreversible
+    /// operations — typical "agent has free rein except for the
+    /// dangerous handful" deployments.
+    DestructiveOnly,
+    /// Both [`ToolEffect::Mutating`] and [`ToolEffect::Destructive`]
+    /// reach the approver. `ReadOnly` calls auto-approve.
+    /// Appropriate when even reversible writes need a human in the
+    /// loop (regulated workloads, compliance-bound flows).
+    MutatingAndAbove,
+}
+
+impl EffectGate {
+    /// Whether a tool with the given effect should be gated by the
+    /// approver under this policy.
+    #[must_use]
+    pub const fn requires_approval(self, effect: ToolEffect) -> bool {
+        match self {
+            Self::Always => true,
+            Self::DestructiveOnly => matches!(effect, ToolEffect::Destructive),
+            Self::MutatingAndAbove => {
+                matches!(effect, ToolEffect::Mutating | ToolEffect::Destructive)
+            }
+        }
+    }
+}
+
 /// `tower::Layer<S>` that gates a `Service<ToolInvocation, Response = Value, Error = Error>`
 /// through an [`Approver`]. Construct via [`ApprovalLayer::new`];
 /// attach to a `ToolRegistry` via
 /// [`entelix_core::tools::ToolRegistry::layer`].
 pub struct ApprovalLayer {
     approver: Arc<dyn Approver>,
+    gate: EffectGate,
 }
 
 impl ApprovalLayer {
-    /// Wrap an `Arc<dyn Approver>` for layer attachment. Cloning
-    /// the layer bumps the inner refcount.
-    pub const fn new(approver: Arc<dyn Approver>) -> Self {
-        Self { approver }
+    /// Wrap an `Arc<dyn Approver>` for layer attachment with the
+    /// default [`EffectGate::Always`] policy — every dispatch
+    /// reaches the approver. Cloning the layer bumps the inner
+    /// refcount.
+    pub fn new(approver: Arc<dyn Approver>) -> Self {
+        Self {
+            approver,
+            gate: EffectGate::default(),
+        }
+    }
+
+    /// Narrow the gate so only tools matching the supplied
+    /// [`EffectGate`] reach the approver. Tools whose effect falls
+    /// outside the gate auto-approve through the inner service
+    /// without consulting the approver — operators express
+    /// "approve everything destructive, autopilot the rest"
+    /// declaratively at metadata time.
+    #[must_use]
+    pub const fn with_effect_gate(mut self, gate: EffectGate) -> Self {
+        self.gate = gate;
+        self
     }
 }
 
@@ -191,6 +251,7 @@ impl Clone for ApprovalLayer {
     fn clone(&self) -> Self {
         Self {
             approver: Arc::clone(&self.approver),
+            gate: self.gate.clone(),
         }
     }
 }
@@ -202,6 +263,7 @@ impl<S> Layer<S> for ApprovalLayer {
         ApprovalService {
             inner,
             approver: Arc::clone(&self.approver),
+            gate: self.gate.clone(),
         }
     }
 }
@@ -212,6 +274,7 @@ impl<S> Layer<S> for ApprovalLayer {
 pub struct ApprovalService<S> {
     inner: S,
     approver: Arc<dyn Approver>,
+    gate: EffectGate,
 }
 
 impl<S: Clone> Clone for ApprovalService<S> {
@@ -219,6 +282,7 @@ impl<S: Clone> Clone for ApprovalService<S> {
         Self {
             inner: self.inner.clone(),
             approver: Arc::clone(&self.approver),
+            gate: self.gate.clone(),
         }
     }
 }
@@ -239,19 +303,24 @@ where
 
     fn call(&mut self, invocation: ToolInvocation) -> Self::Future {
         let approver = Arc::clone(&self.approver);
+        let gate = self.gate.clone();
         let mut inner = self.inner.clone();
         Box::pin(async move {
-            // Override lookup runs first — when the resume path
-            // (`Command::ApproveTool`) has attached
-            // `PendingApprovalDecisions` carrying a decision for
-            // this `tool_use_id`, skip the approver entirely. This
-            // is how the AwaitExternal pause-and-resume flow
-            // short-circuits on re-entry after the operator's
-            // out-of-band decision lands.
+            // Effect-gate short-circuit — tools whose effect lies
+            // outside the configured gate skip the approver entirely
+            // and auto-approve at the inner service. The gate is
+            // applied AFTER the override lookup so an explicit
+            // pending decision (resume path) still takes precedence
+            // over the auto-approval — operators that paused on a
+            // gated tool see their decision honoured even after a
+            // policy change narrows the gate mid-flight.
             let override_decision = invocation
                 .ctx
                 .extension::<PendingApprovalDecisions>()
                 .and_then(|o| o.get(&invocation.tool_use_id).cloned());
+            if override_decision.is_none() && !gate.requires_approval(invocation.metadata.effect) {
+                return inner.call(invocation).await;
+            }
             let decision = if let Some(d) = override_decision {
                 d
             } else {

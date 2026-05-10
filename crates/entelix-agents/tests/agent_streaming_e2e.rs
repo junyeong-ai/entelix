@@ -124,7 +124,7 @@ async fn react_session_round_trips_canonical_event_sequence() {
     let agent = Agent::<entelix_agents::ReActState>::builder()
         .with_name("react")
         .with_runnable_arc(Arc::clone(agent.inner()))
-        .with_sink(sink.clone())
+        .add_sink(sink.clone())
         .build()
         .unwrap();
 

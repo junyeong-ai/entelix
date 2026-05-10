@@ -110,11 +110,11 @@ fn encode_tools_and_tool_choice() {
     let req = ModelRequest {
         model: "gpt-4.1".into(),
         messages: vec![Message::user("calc")],
-        tools: vec![ToolSpec::function(
+        tools: std::sync::Arc::from([ToolSpec::function(
             "double",
             "doubles n",
             json!({"type": "object"}),
-        )],
+        )]),
         tool_choice: ToolChoice::Required,
         ..ModelRequest::default()
     };

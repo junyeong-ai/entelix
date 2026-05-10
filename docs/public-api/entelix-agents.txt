@@ -10,6 +10,7 @@ pub entelix_agents::AgentEvent::Failed::error: alloc::string::String
 pub entelix_agents::AgentEvent::Failed::run_id: alloc::string::String
 pub entelix_agents::AgentEvent::Started
 pub entelix_agents::AgentEvent::Started::agent: alloc::string::String
+pub entelix_agents::AgentEvent::Started::parent_run_id: core::option::Option<alloc::string::String>
 pub entelix_agents::AgentEvent::Started::run_id: alloc::string::String
 pub entelix_agents::AgentEvent::ToolCallApproved
 pub entelix_agents::AgentEvent::ToolCallApproved::run_id: alloc::string::String
@@ -58,6 +59,29 @@ impl<S> core::marker::Unpin for entelix_agents::AgentEvent<S> where S: core::mar
 impl<S> core::marker::UnsafeUnpin for entelix_agents::AgentEvent<S> where S: core::marker::UnsafeUnpin
 impl<S> core::panic::unwind_safe::RefUnwindSafe for entelix_agents::AgentEvent<S> where S: core::panic::unwind_safe::RefUnwindSafe
 impl<S> core::panic::unwind_safe::UnwindSafe for entelix_agents::AgentEvent<S> where S: core::panic::unwind_safe::UnwindSafe
+#[non_exhaustive] pub enum entelix_agents::EffectGate
+pub entelix_agents::EffectGate::Always
+pub entelix_agents::EffectGate::DestructiveOnly
+pub entelix_agents::EffectGate::MutatingAndAbove
+impl entelix_agents::EffectGate
+pub const fn entelix_agents::EffectGate::requires_approval(self, effect: entelix_core::tools::effect::ToolEffect) -> bool
+impl core::clone::Clone for entelix_agents::EffectGate
+pub fn entelix_agents::EffectGate::clone(&self) -> entelix_agents::EffectGate
+impl core::cmp::Eq for entelix_agents::EffectGate
+impl core::cmp::PartialEq for entelix_agents::EffectGate
+pub fn entelix_agents::EffectGate::eq(&self, other: &entelix_agents::EffectGate) -> bool
+impl core::default::Default for entelix_agents::EffectGate
+pub fn entelix_agents::EffectGate::default() -> entelix_agents::EffectGate
+impl core::fmt::Debug for entelix_agents::EffectGate
+pub fn entelix_agents::EffectGate::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_agents::EffectGate
+impl core::marker::Freeze for entelix_agents::EffectGate
+impl core::marker::Send for entelix_agents::EffectGate
+impl core::marker::Sync for entelix_agents::EffectGate
+impl core::marker::Unpin for entelix_agents::EffectGate
+impl core::marker::UnsafeUnpin for entelix_agents::EffectGate
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_agents::EffectGate
+impl core::panic::unwind_safe::UnwindSafe for entelix_agents::EffectGate
 #[non_exhaustive] pub enum entelix_agents::ExecutionMode
 pub entelix_agents::ExecutionMode::Auto
 pub entelix_agents::ExecutionMode::Supervised
@@ -151,6 +175,8 @@ impl<S> !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::Agent<S>
 impl<S> !core::panic::unwind_safe::UnwindSafe for entelix_agents::Agent<S>
 pub struct entelix_agents::AgentBuilder<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
 impl<S> entelix_agents::AgentBuilder<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::AgentBuilder<S>::add_sink<K>(self, sink: K) -> Self where K: entelix_agents::AgentEventSink<S> + 'static
+pub fn entelix_agents::AgentBuilder<S>::add_sink_arc(self, sink: alloc::sync::Arc<dyn entelix_agents::AgentEventSink<S>>) -> Self
 pub fn entelix_agents::AgentBuilder<S>::build(self) -> entelix_core::error::Result<entelix_agents::Agent<S>>
 pub fn entelix_agents::AgentBuilder<S>::with_approver<A>(self, approver: A) -> Self where A: entelix_agents::Approver + 'static
 pub fn entelix_agents::AgentBuilder<S>::with_approver_arc(self, approver: alloc::sync::Arc<dyn entelix_agents::Approver>) -> Self
@@ -160,8 +186,6 @@ pub fn entelix_agents::AgentBuilder<S>::with_observer<O>(self, observer: O) -> S
 pub fn entelix_agents::AgentBuilder<S>::with_observer_arc(self, observer: entelix_agents::DynObserver<S>) -> Self
 pub fn entelix_agents::AgentBuilder<S>::with_runnable<R>(self, runnable: R) -> Self where R: entelix_runnable::runnable::Runnable<S, S> + 'static
 pub fn entelix_agents::AgentBuilder<S>::with_runnable_arc(self, runnable: alloc::sync::Arc<dyn entelix_runnable::runnable::Runnable<S, S>>) -> Self
-pub fn entelix_agents::AgentBuilder<S>::with_sink<K>(self, sink: K) -> Self where K: entelix_agents::AgentEventSink<S> + 'static
-pub fn entelix_agents::AgentBuilder<S>::with_sink_arc(self, sink: alloc::sync::Arc<dyn entelix_agents::AgentEventSink<S>>) -> Self
 impl<S> core::default::Default for entelix_agents::AgentBuilder<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_agents::AgentBuilder<S>::default() -> Self
 impl<S> core::marker::Freeze for entelix_agents::AgentBuilder<S>
@@ -219,7 +243,8 @@ impl core::panic::unwind_safe::RefUnwindSafe for entelix_agents::AlwaysApprove
 impl core::panic::unwind_safe::UnwindSafe for entelix_agents::AlwaysApprove
 pub struct entelix_agents::ApprovalLayer
 impl entelix_agents::ApprovalLayer
-pub const fn entelix_agents::ApprovalLayer::new(approver: alloc::sync::Arc<dyn entelix_agents::Approver>) -> Self
+pub fn entelix_agents::ApprovalLayer::new(approver: alloc::sync::Arc<dyn entelix_agents::Approver>) -> Self
+pub const fn entelix_agents::ApprovalLayer::with_effect_gate(self, gate: entelix_agents::EffectGate) -> Self
 impl core::clone::Clone for entelix_agents::ApprovalLayer
 pub fn entelix_agents::ApprovalLayer::clone(&self) -> Self
 impl<S> tower_layer::Layer<S> for entelix_agents::ApprovalLayer
@@ -391,6 +416,43 @@ impl core::marker::Unpin for entelix_agents::DroppingSink
 impl core::marker::UnsafeUnpin for entelix_agents::DroppingSink
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_agents::DroppingSink
 impl core::panic::unwind_safe::UnwindSafe for entelix_agents::DroppingSink
+pub struct entelix_agents::FailOpenSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+impl<S> entelix_agents::FailOpenSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::FailOpenSink<S>::new(inner: alloc::sync::Arc<dyn entelix_agents::AgentEventSink<S>>) -> Self
+impl<S> core::clone::Clone for entelix_agents::FailOpenSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::FailOpenSink<S>::clone(&self) -> Self
+impl<S> core::fmt::Debug for entelix_agents::FailOpenSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::FailOpenSink<S>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<S> entelix_agents::AgentEventSink<S> for entelix_agents::FailOpenSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::FailOpenSink<S>::send<'life0, 'async_trait>(&'life0 self, event: entelix_agents::AgentEvent<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl<S> core::marker::Freeze for entelix_agents::FailOpenSink<S>
+impl<S> core::marker::Send for entelix_agents::FailOpenSink<S>
+impl<S> core::marker::Sync for entelix_agents::FailOpenSink<S>
+impl<S> core::marker::Unpin for entelix_agents::FailOpenSink<S>
+impl<S> core::marker::UnsafeUnpin for entelix_agents::FailOpenSink<S>
+impl<S> !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::FailOpenSink<S>
+impl<S> !core::panic::unwind_safe::UnwindSafe for entelix_agents::FailOpenSink<S>
+pub struct entelix_agents::FanOutSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+impl<S> entelix_agents::FanOutSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::FanOutSink<S>::is_empty(&self) -> bool
+pub fn entelix_agents::FanOutSink<S>::len(&self) -> usize
+pub fn entelix_agents::FanOutSink<S>::new() -> Self
+pub fn entelix_agents::FanOutSink<S>::push(self, sink: alloc::sync::Arc<dyn entelix_agents::AgentEventSink<S>>) -> Self
+impl<S> core::clone::Clone for entelix_agents::FanOutSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::FanOutSink<S>::clone(&self) -> Self
+impl<S> core::default::Default for entelix_agents::FanOutSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::FanOutSink<S>::default() -> Self
+impl<S> core::fmt::Debug for entelix_agents::FanOutSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::FanOutSink<S>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<S> entelix_agents::AgentEventSink<S> for entelix_agents::FanOutSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::FanOutSink<S>::send<'life0, 'async_trait>(&'life0 self, event: entelix_agents::AgentEvent<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl<S> core::marker::Freeze for entelix_agents::FanOutSink<S>
+impl<S> core::marker::Send for entelix_agents::FanOutSink<S>
+impl<S> core::marker::Sync for entelix_agents::FanOutSink<S>
+impl<S> core::marker::Unpin for entelix_agents::FanOutSink<S>
+impl<S> core::marker::UnsafeUnpin for entelix_agents::FanOutSink<S>
+impl<S> !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::FanOutSink<S>
+impl<S> !core::panic::unwind_safe::UnwindSafe for entelix_agents::FanOutSink<S>
 pub struct entelix_agents::PendingApproval
 pub entelix_agents::PendingApproval::reply: tokio::sync::oneshot::Sender<entelix_core::approval::ApprovalDecision>
 pub entelix_agents::PendingApproval::request: entelix_agents::ApprovalRequest
@@ -405,6 +467,7 @@ impl !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::PendingApprova
 impl !core::panic::unwind_safe::UnwindSafe for entelix_agents::PendingApproval
 pub struct entelix_agents::ReActAgentBuilder<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
 impl<M> entelix_agents::ReActAgentBuilder<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_agents::ReActAgentBuilder<M>::add_sink(self, sink: alloc::sync::Arc<dyn entelix_agents::AgentEventSink<entelix_agents::ReActState>>) -> Self
 pub fn entelix_agents::ReActAgentBuilder<M>::build(self) -> entelix_core::error::Result<entelix_agents::Agent<entelix_agents::ReActState>>
 pub fn entelix_agents::ReActAgentBuilder<M>::new(model: M, tools: entelix_core::tools::registry::ToolRegistry) -> Self
 pub fn entelix_agents::ReActAgentBuilder<M>::with_approver(self, approver: alloc::sync::Arc<dyn entelix_agents::Approver>) -> Self
@@ -412,7 +475,7 @@ pub const fn entelix_agents::ReActAgentBuilder<M>::with_execution_mode(self, mod
 pub fn entelix_agents::ReActAgentBuilder<M>::with_name(self, name: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_agents::ReActAgentBuilder<M>::with_observer(self, observer: entelix_agents::DynObserver<entelix_agents::ReActState>) -> Self
 pub const fn entelix_agents::ReActAgentBuilder<M>::with_recursion_limit(self, n: usize) -> Self
-pub fn entelix_agents::ReActAgentBuilder<M>::with_sink(self, sink: alloc::sync::Arc<dyn entelix_agents::AgentEventSink<entelix_agents::ReActState>>) -> Self
+pub fn entelix_agents::ReActAgentBuilder<M>::with_system(self, system: entelix_core::ir::system::SystemPrompt) -> Self
 impl<M> core::marker::Freeze for entelix_agents::ReActAgentBuilder<M> where M: core::marker::Freeze
 impl<M> core::marker::Send for entelix_agents::ReActAgentBuilder<M>
 impl<M> core::marker::Sync for entelix_agents::ReActAgentBuilder<M>
@@ -492,11 +555,11 @@ impl<M> !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::Subagent<M>
 impl<M> !core::panic::unwind_safe::UnwindSafe for entelix_agents::Subagent<M>
 pub struct entelix_agents::SubagentBuilder<'a, M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
 impl<'a, M> entelix_agents::SubagentBuilder<'a, M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
+pub fn entelix_agents::SubagentBuilder<'a, M>::add_sink(self, sink: alloc::sync::Arc<dyn entelix_agents::AgentEventSink<entelix_agents::ReActState>>) -> Self
 pub fn entelix_agents::SubagentBuilder<'a, M>::build(self) -> entelix_core::error::Result<entelix_agents::Subagent<M>>
 pub fn entelix_agents::SubagentBuilder<'a, M>::filter<F>(self, predicate: F) -> Self where F: core::ops::function::Fn(&dyn entelix_core::tools::tool::Tool) -> bool + core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_agents::SubagentBuilder<'a, M>::restrict_to(self, allowed: &[&str]) -> Self
 pub fn entelix_agents::SubagentBuilder<'a, M>::with_approver(self, approver: alloc::sync::Arc<dyn entelix_agents::Approver>) -> Self
-pub fn entelix_agents::SubagentBuilder<'a, M>::with_sink(self, sink: alloc::sync::Arc<dyn entelix_agents::AgentEventSink<entelix_agents::ReActState>>) -> Self
 pub fn entelix_agents::SubagentBuilder<'a, M>::with_skills(self, parent_skills: &'a entelix_core::skills::registry::SkillRegistry, allowed: &[&str]) -> Self
 impl<'a, M> core::marker::Freeze for entelix_agents::SubagentBuilder<'a, M> where M: core::marker::Freeze
 impl<'a, M> core::marker::Send for entelix_agents::SubagentBuilder<'a, M>
@@ -701,6 +764,10 @@ impl<S> entelix_agents::AgentEventSink<S> for entelix_agents::ChannelSink<S> whe
 pub fn entelix_agents::ChannelSink<S>::send<'life0, 'async_trait>(&'life0 self, event: entelix_agents::AgentEvent<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 impl<S> entelix_agents::AgentEventSink<S> for entelix_agents::DroppingSink where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_agents::DroppingSink::send<'life0, 'async_trait>(&'life0 self, _event: entelix_agents::AgentEvent<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl<S> entelix_agents::AgentEventSink<S> for entelix_agents::FailOpenSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::FailOpenSink<S>::send<'life0, 'async_trait>(&'life0 self, event: entelix_agents::AgentEvent<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl<S> entelix_agents::AgentEventSink<S> for entelix_agents::FanOutSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::FanOutSink<S>::send<'life0, 'async_trait>(&'life0 self, event: entelix_agents::AgentEvent<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 pub trait entelix_agents::AgentObserver<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static: core::marker::Send + core::marker::Sync
 pub fn entelix_agents::AgentObserver::name(&self) -> &'static str
 pub fn entelix_agents::AgentObserver::on_complete<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _state: &'life1 S, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait

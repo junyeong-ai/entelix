@@ -61,12 +61,12 @@ fn req_with_tool(kind: ToolKind) -> ModelRequest {
         model: "model".into(),
         messages: vec![Message::user("hi")],
         max_tokens: Some(1024),
-        tools: vec![ToolSpec {
+        tools: std::sync::Arc::from([ToolSpec {
             name: "search".into(),
             description: "vendor built-in search".into(),
             kind,
             cache_control: None,
-        }],
+        }]),
         ..ModelRequest::default()
     }
 }

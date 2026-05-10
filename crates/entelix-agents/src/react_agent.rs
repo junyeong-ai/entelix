@@ -9,10 +9,10 @@
 
 use std::sync::Arc;
 
-use entelix_core::ir::{ContentPart, Message, Role, ToolResultContent};
-use entelix_core::{Error, ExecutionContext, LlmRenderable, Result, ToolRegistry};
+use entelix_core::ir::{ContentPart, Message, Role, SystemPrompt, ToolResultContent};
+use entelix_core::{Error, ExecutionContext, LlmRenderable, Result, RunOverrides, ToolRegistry};
 use entelix_graph::{CompiledGraph, StateGraph};
-use entelix_runnable::{Runnable, RunnableLambda};
+use entelix_runnable::{Configured, Runnable, RunnableLambda};
 
 use crate::agent::{Agent, AgentBuilder};
 use crate::state::ReActState;
@@ -27,7 +27,7 @@ use crate::state::ReActState;
 /// let agent = Agent::<ReActState>::builder()
 ///     .with_name("research")
 ///     .with_runnable(graph)
-///     .with_sink(my_sink)
+///     .add_sink(my_sink)
 ///     .with_approver(my_approver)
 ///     .build()?;
 /// ```
@@ -173,27 +173,78 @@ pub fn create_react_agent<M>(model: M, tools: ToolRegistry) -> Result<Agent<ReAc
 where
     M: Runnable<Vec<Message>, Message> + 'static,
 {
-    let graph = build_react_graph(model, tools)?;
-    Agent::<ReActState>::builder()
-        .with_name("react")
-        .with_runnable(graph)
-        .build()
+    let defaults = build_run_overrides(None, tools.tool_specs());
+    react_agent_builder(model, tools, defaults)?.build()
+}
+
+/// Build [`RunOverrides`] from the recipe's optional system prompt
+/// and the auto-derived tool catalogue. Returns `None` when both
+/// inputs are empty — operators who didn't ask for system stamping
+/// and registered no tools get a bare graph with no
+/// `RunOverrides` wrapping (zero overhead).
+fn build_run_overrides(
+    system: Option<SystemPrompt>,
+    tool_specs: Arc<[entelix_core::ir::ToolSpec]>,
+) -> Option<RunOverrides> {
+    if system.is_none() && tool_specs.is_empty() {
+        return None;
+    }
+    let mut overrides = RunOverrides::new();
+    if let Some(system) = system {
+        overrides = overrides.with_system_prompt(system);
+    }
+    if !tool_specs.is_empty() {
+        overrides = overrides.with_tool_specs(tool_specs);
+    }
+    Some(overrides)
+}
+
+/// Wrap a compiled ReAct graph with [`RunOverrides`] defaults that
+/// every model dispatch the planner makes will observe — unless the
+/// caller's [`ExecutionContext`] already carries a `RunOverrides`
+/// extension, in which case the caller's overrides win and the
+/// recipe defaults are skipped (no clobber).
+fn wrap_with_run_overrides(
+    graph: CompiledGraph<ReActState>,
+    defaults: RunOverrides,
+) -> Configured<
+    CompiledGraph<ReActState>,
+    impl Fn(&mut ExecutionContext) + Send + Sync + 'static,
+    ReActState,
+    ReActState,
+> {
+    Configured::new(graph, move |ctx: &mut ExecutionContext| {
+        if ctx.extension::<RunOverrides>().is_none() {
+            // Replace the borrowed `&mut` with a freshly-built
+            // context that carries the recipe defaults — `Extensions`
+            // exposes a consume-self builder, not a `&mut` mutator,
+            // so the closure rebuilds rather than patches in place.
+            let scoped = std::mem::take(ctx).add_extension(defaults.clone());
+            *ctx = scoped;
+        }
+    })
 }
 
 /// Internal: start an `AgentBuilder` for a ReAct agent. Used by
 /// `Subagent::into_react_agent` to apply parent-supplied sink and
-/// approver before finalising.
+/// approver before finalising. `defaults` carries optional recipe
+/// defaults (system prompt, auto-derived tool specs) — `None` for
+/// the zero-overhead path.
 pub(crate) fn react_agent_builder<M>(
     model: M,
     tools: ToolRegistry,
+    defaults: Option<RunOverrides>,
 ) -> Result<AgentBuilder<ReActState>>
 where
     M: Runnable<Vec<Message>, Message> + 'static,
 {
     let graph = build_react_graph(model, tools)?;
-    Ok(Agent::<ReActState>::builder()
-        .with_name("react")
-        .with_runnable(graph))
+    let builder = Agent::<ReActState>::builder().with_name("react");
+    let builder = match defaults {
+        Some(defaults) => builder.with_runnable(wrap_with_run_overrides(graph, defaults)),
+        None => builder.with_runnable(graph),
+    };
+    Ok(builder)
 }
 
 /// Variant of [`react_agent_builder`] that overrides the graph's
@@ -202,14 +253,18 @@ pub(crate) fn react_agent_builder_with_recursion_limit<M>(
     model: M,
     tools: ToolRegistry,
     recursion_limit: usize,
+    defaults: Option<RunOverrides>,
 ) -> Result<AgentBuilder<ReActState>>
 where
     M: Runnable<Vec<Message>, Message> + 'static,
 {
     let graph = build_react_graph_with_recursion_limit(model, tools, recursion_limit)?;
-    Ok(Agent::<ReActState>::builder()
-        .with_name("react")
-        .with_runnable(graph))
+    let builder = Agent::<ReActState>::builder().with_name("react");
+    let builder = match defaults {
+        Some(defaults) => builder.with_runnable(wrap_with_run_overrides(graph, defaults)),
+        None => builder.with_runnable(graph),
+    };
+    Ok(builder)
 }
 
 /// Fluent builder for a ReAct-style [`Agent<ReActState>`].
@@ -223,7 +278,7 @@ where
 /// ```ignore
 /// let agent = ReActAgentBuilder::new(model, tools)
 ///     .with_name("research-agent")
-///     .with_sink(my_broadcast_sink)
+///     .add_sink(my_broadcast_sink)
 ///     .with_approver(my_approver)
 ///     .build()?;
 /// ```
@@ -234,7 +289,8 @@ where
     model: M,
     tools: ToolRegistry,
     name: Option<String>,
-    sink: Option<Arc<dyn crate::agent::AgentEventSink<ReActState>>>,
+    system: Option<SystemPrompt>,
+    sinks: Vec<Arc<dyn crate::agent::AgentEventSink<ReActState>>>,
     approver: Option<Arc<dyn crate::agent::Approver>>,
     execution_mode: Option<crate::agent::ExecutionMode>,
     observers: Vec<crate::agent::DynObserver<ReActState>>,
@@ -251,12 +307,29 @@ where
             model,
             tools,
             name: None,
-            sink: None,
+            system: None,
+            sinks: Vec::new(),
             approver: None,
             execution_mode: None,
             observers: Vec::new(),
             recursion_limit: None,
         }
+    }
+
+    /// Stamp `system` onto every model dispatch the planner makes.
+    /// Replaces (not merges) the model's configured `SystemPrompt`
+    /// for the duration of any call observing the resulting agent.
+    /// Operators that want to extend the model's existing system
+    /// prompt rather than replace it pre-compose the desired
+    /// [`SystemPrompt`] before passing it here.
+    ///
+    /// Without this call the planner inherits whatever
+    /// [`crate::agent::ChatModel`]-side default the operator
+    /// configured on the model (or empty if none).
+    #[must_use]
+    pub fn with_system(mut self, system: SystemPrompt) -> Self {
+        self.system = Some(system);
+        self
     }
 
     /// Override the agent name (defaults to `"react"`).
@@ -268,8 +341,8 @@ where
 
     /// Forward lifecycle events to `sink`.
     #[must_use]
-    pub fn with_sink(mut self, sink: Arc<dyn crate::agent::AgentEventSink<ReActState>>) -> Self {
-        self.sink = Some(sink);
+    pub fn add_sink(mut self, sink: Arc<dyn crate::agent::AgentEventSink<ReActState>>) -> Self {
+        self.sinks.push(sink);
         self
     }
 
@@ -323,15 +396,23 @@ where
                 .layer(crate::agent::ApprovalLayer::new(Arc::clone(approver))),
             None => self.tools,
         };
+        // Auto-derive the advertised tool catalogue from the
+        // (possibly approval-wrapped) registry so the planner sees
+        // the exact dispatch surface. `with_system` overrides
+        // become defaults the planner stamps onto every model call.
+        let tool_specs = tools.tool_specs();
+        let defaults = build_run_overrides(self.system, tool_specs);
         let mut builder = match self.recursion_limit {
-            Some(limit) => react_agent_builder_with_recursion_limit(self.model, tools, limit)?,
-            None => react_agent_builder(self.model, tools)?,
+            Some(limit) => {
+                react_agent_builder_with_recursion_limit(self.model, tools, limit, defaults)?
+            }
+            None => react_agent_builder(self.model, tools, defaults)?,
         };
         if let Some(name) = self.name {
             builder = builder.with_name(name);
         }
-        if let Some(sink) = self.sink {
-            builder = builder.with_sink_arc(sink);
+        for sink in self.sinks {
+            builder = builder.add_sink_arc(sink);
         }
         let mode = self.execution_mode.unwrap_or_else(|| {
             if self.approver.is_some() {

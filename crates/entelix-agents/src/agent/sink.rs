@@ -1,8 +1,7 @@
 //! `AgentEventSink<S>` — consumer trait for [`AgentEvent<S>`] emissions.
 //!
-//! Three production patterns + one test capture, all behind a single
-//! `async fn send(&self, event)` signature so the agent runtime can
-//! drive any sink uniformly:
+//! All sinks share one `async fn send(&self, event)` signature so the
+//! agent runtime can drive any of them uniformly:
 //!
 //! - [`DroppingSink`] — silently discards. Default for tests and
 //!   CLI flows that only consume the awaited result of
@@ -11,11 +10,35 @@
 //!   owns the receiver. Bounded capacity gives backpressure; if
 //!   the consumer falls behind, `send` returns an error.
 //! - [`BroadcastSink`] — `tokio::sync::broadcast` backed for
-//!   multi-consumer fan-out (e.g. `SSE` clients + `OTel` exporter).
-//!   Slow consumers receive `Lagged` errors but the agent never
-//!   blocks.
+//!   multi-consumer subscribe-shaped fan-out (`SSE` clients +
+//!   `OTel` exporter via `subscribe()`). Slow consumers receive
+//!   `Lagged` errors but the agent never blocks.
 //! - [`CaptureSink`] — captures every event into an
 //!   `Arc<Mutex<Vec<_>>>` for assertions in integration tests.
+//! - [`FanOutSink`] — callback-shaped composition primitive that
+//!   dispatches every event to a fixed set of inner sinks
+//!   sequentially. Stops at the first failing sink — wrap
+//!   best-effort sinks with [`FailOpenSink`] to keep
+//!   higher-priority sinks downstream.
+//! - [`FailOpenSink`] — composition adapter that swallows the
+//!   inner sink's `Err` (logs once via `tracing::warn!`) and
+//!   always returns `Ok(())`. Lifts an observe-only sink
+//!   (embedding indexer, billing, anomaly detector) into the
+//!   `must-succeed` semantics that bare [`AgentEventSink::send`]
+//!   contract demands.
+//!
+//! Composition pattern for production deployments — audit must
+//! succeed, telemetry is best-effort:
+//!
+//! ```ignore
+//! use std::sync::Arc;
+//! use entelix_agents::{FanOutSink, FailOpenSink};
+//!
+//! let sink = FanOutSink::<MyState>::new()
+//!     .push(audit_sink)                          // must succeed → propagates Err
+//!     .push(Arc::new(FailOpenSink::new(otel)))   // observe-only → swallowed
+//!     .push(Arc::new(FailOpenSink::new(billing))); // observe-only → swallowed
+//! ```
 //!
 //! [`AgentEvent<S>`]: crate::agent::event::AgentEvent
 
@@ -47,16 +70,16 @@ where
 /// No-op sink — the agent runs to completion without surfacing
 /// per-event telemetry. Default when no sink is configured.
 ///
-/// Operators wiring OpenTelemetry / SSE / log forwarding without
-/// also calling `Agent::builder().with_sink(...)` end up here by
-/// accident: the agent runs, telemetry is silently discarded,
-/// alerts never fire because no data arrives.
-///
 /// To surface the misconfiguration in real deployments without
 /// adding overhead to test-only paths, the first event a process
 /// drops emits a single `tracing::debug!` naming the alternative
 /// sinks. One line is enough for an operator grepping the output
 /// to discover that telemetry isn't wired.
+///
+/// Operators wiring OpenTelemetry / SSE / log forwarding without
+/// also calling `Agent::builder().add_sink(...)` end up here by
+/// accident: the agent runs, telemetry is silently discarded,
+/// alerts never fire because no data arrives.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct DroppingSink;
 
@@ -87,8 +110,8 @@ fn warn_dropped_first_event() {
         tracing::debug!(
             target: "entelix_agents",
             "DroppingSink dropped first agent event — telemetry is not wired. \
-             Pass an explicit sink via Agent::builder().with_sink(...) — see \
-             ChannelSink, BroadcastSink, CaptureSink, or wire OtelLayer."
+             Pass an explicit sink via Agent::builder().add_sink(...) — see \
+             ChannelSink, BroadcastSink, CaptureSink, FanOutSink, or wire OtelLayer."
         );
     }
 }
@@ -337,6 +360,180 @@ where
     }
 }
 
+/// Callback-shaped fan-out — every emitted event reaches every
+/// inner sink in registration order.
+///
+/// Stops at the first failing sink: subsequent sinks do **not** see
+/// the event. Operators add sinks in priority order — highest-priority
+/// (must-succeed: audit, compliance) first, lower-priority (telemetry,
+/// embedding indexer) wrapped in [`FailOpenSink`] later. A failing
+/// must-succeed sink halts the run before the lower-priority work
+/// runs at all.
+///
+/// Sequential, not parallel — events arrive at sinks in stable
+/// registration order so debugging traces stay reproducible across
+/// runs. Fan-out across many sinks is bounded by the slowest sink;
+/// observe-only sinks that may stall (HTTP exporter, remote DB)
+/// belong behind a [`ChannelSink`] in front of [`FanOutSink`] so the
+/// agent loop never blocks on their I/O.
+///
+/// Distinct from [`BroadcastSink`]: `FanOutSink` is callback-shaped
+/// (every sink runs synchronously inside `send`), `BroadcastSink` is
+/// subscribe-shaped (consumers pull from their own `Receiver`).
+/// Compose freely — a `FanOutSink` whose pushed sinks include a
+/// `BroadcastSink` gives both shapes simultaneously.
+pub struct FanOutSink<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    sinks: Vec<Arc<dyn AgentEventSink<S>>>,
+}
+
+impl<S> FanOutSink<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    /// Empty fan-out — `send` is a no-op until at least one inner
+    /// sink is pushed.
+    #[must_use]
+    pub fn new() -> Self {
+        Self { sinks: Vec::new() }
+    }
+
+    /// Append an inner sink. Builder-style — chains naturally with
+    /// `Arc::new(MySink::new()).into()`.
+    #[must_use]
+    pub fn push(mut self, sink: Arc<dyn AgentEventSink<S>>) -> Self {
+        self.sinks.push(sink);
+        self
+    }
+
+    /// Number of registered inner sinks.
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.sinks.len()
+    }
+
+    /// Whether no inner sinks are registered (`send` is a no-op).
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.sinks.is_empty()
+    }
+}
+
+impl<S> Default for FanOutSink<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<S> Clone for FanOutSink<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    fn clone(&self) -> Self {
+        Self {
+            sinks: self.sinks.clone(),
+        }
+    }
+}
+
+impl<S> std::fmt::Debug for FanOutSink<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FanOutSink")
+            .field("sinks", &self.sinks.len())
+            .finish()
+    }
+}
+
+#[async_trait]
+impl<S> AgentEventSink<S> for FanOutSink<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    async fn send(&self, event: AgentEvent<S>) -> Result<()> {
+        for sink in &self.sinks {
+            sink.send(event.clone()).await?;
+        }
+        Ok(())
+    }
+}
+
+/// Composition adapter that swallows the inner sink's errors and
+/// always returns `Ok(())`.
+///
+/// `AgentEventSink::send` returning `Err` halts the agent (the
+/// trait's contract). For sinks whose failure should NOT propagate
+/// — embedding indexer, billing meter, anomaly detector,
+/// best-effort telemetry — wrap in `FailOpenSink` so a transient
+/// downstream failure logs once and the run continues.
+///
+/// The lift is one-way and explicit: there is no `is_observe_only`
+/// flag on the sink itself. Operators express intent at the
+/// composition site (`FailOpenSink::new(my_sink)`) so the dispatch
+/// loop stays simple — every sink is treated identically.
+pub struct FailOpenSink<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    inner: Arc<dyn AgentEventSink<S>>,
+}
+
+impl<S> FailOpenSink<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    /// Wrap an inner sink — its errors will be logged via
+    /// `tracing::warn!` and never propagated to the agent runtime.
+    #[must_use]
+    pub fn new(inner: Arc<dyn AgentEventSink<S>>) -> Self {
+        Self { inner }
+    }
+}
+
+impl<S> Clone for FailOpenSink<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    fn clone(&self) -> Self {
+        Self {
+            inner: Arc::clone(&self.inner),
+        }
+    }
+}
+
+impl<S> std::fmt::Debug for FailOpenSink<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FailOpenSink").finish_non_exhaustive()
+    }
+}
+
+#[async_trait]
+impl<S> AgentEventSink<S> for FailOpenSink<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    async fn send(&self, event: AgentEvent<S>) -> Result<()> {
+        if let Err(err) = self.inner.send(event).await {
+            tracing::warn!(
+                target: "entelix_agents::sink",
+                error = %err,
+                "FailOpenSink: inner sink errored — discarding event and continuing"
+            );
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::indexing_slicing)]
 mod tests {
@@ -347,6 +544,7 @@ mod tests {
     fn started(agent: impl Into<String>) -> TestEvent {
         TestEvent::Started {
             run_id: "test-run".into(),
+            parent_run_id: None,
             agent: agent.into(),
         }
     }
@@ -430,5 +628,79 @@ mod tests {
         sink_b.send(complete(2)).await.unwrap();
         assert_eq!(sink_a.len(), 2);
         assert_eq!(sink_b.len(), 2);
+    }
+
+    /// Sink that always returns `Err` for `FailOpenSink` and
+    /// `FanOutSink` regression coverage.
+    #[derive(Default)]
+    struct FailingSink {
+        calls: parking_lot::Mutex<u32>,
+    }
+
+    #[async_trait]
+    impl AgentEventSink<i32> for FailingSink {
+        async fn send(&self, _event: AgentEvent<i32>) -> Result<()> {
+            *self.calls.lock() += 1;
+            Err(Error::Cancelled)
+        }
+    }
+
+    #[tokio::test]
+    async fn fan_out_sink_dispatches_in_registration_order() {
+        let a = CaptureSink::<i32>::new();
+        let b = CaptureSink::<i32>::new();
+        let fan = FanOutSink::<i32>::new()
+            .push(Arc::new(a.clone()))
+            .push(Arc::new(b.clone()));
+        fan.send(complete(1)).await.unwrap();
+        fan.send(complete(2)).await.unwrap();
+        assert_eq!(a.len(), 2);
+        assert_eq!(b.len(), 2);
+        assert!(matches!(
+            a.events()[0],
+            AgentEvent::Complete { state: 1, .. }
+        ));
+    }
+
+    #[tokio::test]
+    async fn fan_out_sink_propagates_first_error_and_stops() {
+        let recorded = CaptureSink::<i32>::new();
+        let failing = Arc::new(FailingSink::default());
+        let fan = FanOutSink::<i32>::new()
+            .push(Arc::clone(&failing) as Arc<dyn AgentEventSink<i32>>)
+            .push(Arc::new(recorded.clone()));
+        let err = fan.send(complete(1)).await.unwrap_err();
+        assert!(matches!(err, Error::Cancelled));
+        assert_eq!(*failing.calls.lock(), 1, "failing sink saw the event");
+        assert_eq!(
+            recorded.len(),
+            0,
+            "downstream sinks must not see the event after an upstream failure"
+        );
+    }
+
+    #[tokio::test]
+    async fn fail_open_sink_swallows_inner_error() {
+        let failing: Arc<dyn AgentEventSink<i32>> = Arc::new(FailingSink::default());
+        let lifted = FailOpenSink::new(failing);
+        // Three failing sends — every one returns Ok.
+        for _ in 0..3 {
+            lifted.send(complete(0)).await.unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn fail_open_sink_lifts_into_fan_out_to_isolate_observe_only() {
+        let recorded = CaptureSink::<i32>::new();
+        let failing: Arc<dyn AgentEventSink<i32>> = Arc::new(FailingSink::default());
+        let fan = FanOutSink::<i32>::new()
+            .push(Arc::new(FailOpenSink::new(failing))) // observe-only — lifted
+            .push(Arc::new(recorded.clone())); // must-succeed — sees the event
+        fan.send(complete(7)).await.unwrap();
+        assert_eq!(
+            recorded.len(),
+            1,
+            "lifting the failing sink with FailOpenSink must keep downstream sinks reachable"
+        );
     }
 }

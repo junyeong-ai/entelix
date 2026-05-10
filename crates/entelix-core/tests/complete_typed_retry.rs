@@ -278,6 +278,56 @@ async fn validator_persistent_rejection_exhausts_budget_and_surfaces_model_retry
     assert_eq!(codec.call_count(), 3, "initial + 2 retries");
 }
 
+// Invariant 20 — schema-mismatch and `OutputValidator` failures share
+// a single retry budget. The distinguishing case: `validation_retries(1)`
+// + a mixed (schema, validator) failure pair must exhaust on the second
+// call. A regression that splits the counter into per-kind budgets
+// would let the validator retry independently and run a third call,
+// returning success — both visible from `codec.call_count()` and the
+// final error variant.
+#[tokio::test]
+async fn mixed_schema_and_validator_failures_share_one_budget() {
+    let codec = std::sync::Arc::new(ScriptedCodec::new(vec![
+        // Call 1: schema-mismatch failure (no `answer` key).
+        r#"{"not_the_schema": true}"#,
+        // Call 2: parses, validator rejects (score > 100).
+        r#"{"answer":"yes","score":250}"#,
+        // Call 3: would succeed under a (hypothetical) split budget —
+        //         must NEVER be reached under the shared budget.
+        r#"{"answer":"yes","score":50}"#,
+    ]));
+    let model = ChatModel::from_arc(codec.clone(), std::sync::Arc::new(EmptyTransport), "test")
+        .with_validation_retries(1);
+    let ctx = ExecutionContext::new();
+    let err = model
+        .complete_typed_validated(
+            vec![Message::new(Role::User, vec![ContentPart::text("ask")])],
+            |out: &Reply| {
+                if out.score <= 100 {
+                    Ok(())
+                } else {
+                    Err(Error::model_retry(
+                        format!("score {} > 100", out.score).for_llm(),
+                        0,
+                    ))
+                }
+            },
+            &ctx,
+        )
+        .await
+        .unwrap_err();
+    assert!(
+        matches!(err, Error::ModelRetry { .. }),
+        "shared budget must surface the last ModelRetry; got: {err:?}"
+    );
+    assert_eq!(
+        codec.call_count(),
+        2,
+        "shared budget(1) + (schema-fail, validator-fail) must stop after exactly 2 calls; \
+         a 3rd call would prove a split budget"
+    );
+}
+
 #[tokio::test]
 async fn validator_non_model_retry_error_bubbles_unchanged() {
     let codec = std::sync::Arc::new(ScriptedCodec::new(vec![r#"{"answer":"x","score":50}"#]));

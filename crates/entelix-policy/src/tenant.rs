@@ -12,6 +12,8 @@
 use std::sync::Arc;
 
 use dashmap::DashMap;
+use parking_lot::RwLock;
+
 use entelix_core::{Result, TenantId};
 
 use crate::cost::CostMeter;
@@ -118,11 +120,14 @@ impl TenantPolicyBuilder {
 
 /// Runtime registry mapping `tenant_id` → [`TenantPolicy`].
 ///
-/// Cloning is cheap — internal state lives behind `Arc`s.
+/// Cloning is cheap — internal state lives behind `Arc`s. Both
+/// per-tenant entries and the fallback are interior-mutable, so
+/// every clone of a registry observes (and can update) the same
+/// policy state without coordinating exclusive ownership.
 #[derive(Clone)]
 pub struct PolicyRegistry {
     per_tenant: Arc<DashMap<TenantId, Arc<TenantPolicy>>>,
-    fallback: Arc<TenantPolicy>,
+    fallback: Arc<RwLock<Arc<TenantPolicy>>>,
 }
 
 impl Default for PolicyRegistry {
@@ -138,21 +143,22 @@ impl PolicyRegistry {
     pub fn new() -> Self {
         Self {
             per_tenant: Arc::new(DashMap::new()),
-            fallback: Arc::new(TenantPolicy::default()),
+            fallback: Arc::new(RwLock::new(Arc::new(TenantPolicy::default()))),
         }
     }
 
-    /// Replace the fallback policy used when a tenant has no
+    /// Hot-swap the fallback policy used when a tenant has no
     /// explicit registration. Useful for "zero-configured tenants
-    /// still get a basic redactor" deployments.
-    pub fn set_fallback(&mut self, fallback: TenantPolicy) {
-        self.fallback = Arc::new(fallback);
+    /// still get a basic redactor" deployments and for config-reload
+    /// flows that update defaults without a process restart.
+    pub fn replace_fallback(&self, fallback: TenantPolicy) {
+        *self.fallback.write() = Arc::new(fallback);
     }
 
-    /// Builder-style fallback setter.
+    /// Builder-style fallback installer.
     #[must_use]
-    pub fn with_fallback(mut self, fallback: TenantPolicy) -> Self {
-        self.set_fallback(fallback);
+    pub fn with_fallback(self, fallback: TenantPolicy) -> Self {
+        self.replace_fallback(fallback);
         self
     }
 
@@ -180,7 +186,7 @@ impl PolicyRegistry {
     pub fn policy_for(&self, tenant_id: &TenantId) -> Arc<TenantPolicy> {
         self.per_tenant
             .get(tenant_id)
-            .map_or_else(|| self.fallback.clone(), |entry| entry.clone())
+            .map_or_else(|| self.fallback.read().clone(), |entry| entry.clone())
     }
 
     /// Number of explicitly registered tenants. Excludes the
@@ -193,9 +199,10 @@ impl PolicyRegistry {
 
 impl std::fmt::Debug for PolicyRegistry {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let fallback = self.fallback.read().clone();
         f.debug_struct("PolicyRegistry")
             .field("tenants", &self.per_tenant.len())
-            .field("has_fallback", &!self.fallback.is_empty())
+            .field("has_fallback", &!fallback.is_empty())
             .finish()
     }
 }
@@ -231,7 +238,7 @@ mod tests {
     }
 
     #[test]
-    fn fallback_can_be_set_to_a_real_policy() {
+    fn fallback_can_be_replaced_with_a_real_policy() {
         let fb = TenantPolicy::builder()
             .with_cost_meter(Arc::new(CostMeter::new(PricingTable::new())))
             .build()
@@ -239,6 +246,25 @@ mod tests {
         let mgr = PolicyRegistry::new().with_fallback(fb);
         let p = mgr.policy_for(&TenantId::new("never-registered"));
         assert!(p.cost_meter.is_some());
+    }
+
+    #[test]
+    fn fallback_replacement_is_observed_by_cloned_registries() {
+        let mgr = PolicyRegistry::new();
+        let cloned = mgr.clone();
+
+        let fb = TenantPolicy::builder()
+            .with_cost_meter(Arc::new(CostMeter::new(PricingTable::new())))
+            .build()
+            .unwrap();
+        cloned.replace_fallback(fb);
+
+        assert!(
+            mgr.policy_for(&TenantId::new("never-registered"))
+                .cost_meter
+                .is_some(),
+            "the original registry must observe a fallback installed via a clone"
+        );
     }
 
     #[test]

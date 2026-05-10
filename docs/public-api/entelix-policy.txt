@@ -74,7 +74,7 @@ pub fn entelix_policy::CostMeter::charge(&self, tenant_id: &entelix_core::tenant
 pub fn entelix_policy::CostMeter::drain(&self, tenant_id: &entelix_core::tenant_id::TenantId) -> rust_decimal::decimal::Decimal
 pub const fn entelix_policy::CostMeter::max_tenants(&self) -> usize
 pub fn entelix_policy::CostMeter::new(pricing: entelix_policy::PricingTable) -> Self
-pub fn entelix_policy::CostMeter::set_pricing(&self, pricing: entelix_policy::PricingTable)
+pub fn entelix_policy::CostMeter::replace_pricing(&self, pricing: entelix_policy::PricingTable)
 pub fn entelix_policy::CostMeter::spent_by(&self, tenant_id: &entelix_core::tenant_id::TenantId) -> rust_decimal::decimal::Decimal
 pub fn entelix_policy::CostMeter::tracked_tenant_count(&self) -> usize
 pub const fn entelix_policy::CostMeter::with_max_tenants(self, cap: usize) -> Self
@@ -161,7 +161,7 @@ impl entelix_policy::PolicyRegistry
 pub fn entelix_policy::PolicyRegistry::new() -> Self
 pub fn entelix_policy::PolicyRegistry::policy_for(&self, tenant_id: &entelix_core::tenant_id::TenantId) -> alloc::sync::Arc<entelix_policy::TenantPolicy>
 pub fn entelix_policy::PolicyRegistry::register(&self, tenant_id: entelix_core::tenant_id::TenantId, policy: entelix_policy::TenantPolicy)
-pub fn entelix_policy::PolicyRegistry::set_fallback(&mut self, fallback: entelix_policy::TenantPolicy)
+pub fn entelix_policy::PolicyRegistry::replace_fallback(&self, fallback: entelix_policy::TenantPolicy)
 pub fn entelix_policy::PolicyRegistry::tenant_count(&self) -> usize
 pub fn entelix_policy::PolicyRegistry::unregister(&self, tenant_id: &entelix_core::tenant_id::TenantId)
 pub fn entelix_policy::PolicyRegistry::with_fallback(self, fallback: entelix_policy::TenantPolicy) -> Self

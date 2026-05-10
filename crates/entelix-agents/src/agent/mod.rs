@@ -62,7 +62,7 @@ use entelix_runnable::stream::BoxStream;
 use tracing::Instrument;
 
 pub use self::approval_layer::{
-    ApprovalLayer, ApprovalService, ToolApprovalEventSink, ToolApprovalEventSinkHandle,
+    ApprovalLayer, ApprovalService, EffectGate, ToolApprovalEventSink, ToolApprovalEventSinkHandle,
 };
 pub use self::approver::{
     AlwaysApprove, ApprovalDecision, ApprovalRequest, Approver, ChannelApprover,
@@ -72,7 +72,9 @@ pub use self::event::AgentEvent;
 pub use self::mode::ExecutionMode;
 pub use self::observer::{AgentObserver, DynObserver};
 pub use self::result::AgentRunResult;
-pub use self::sink::{AgentEventSink, BroadcastSink, CaptureSink, ChannelSink, DroppingSink};
+pub use self::sink::{
+    AgentEventSink, BroadcastSink, CaptureSink, ChannelSink, DroppingSink, FailOpenSink, FanOutSink,
+};
 pub use self::tool_event_layer::{ToolEventLayer, ToolEventService};
 pub use self::tool_hook_layer::{
     ToolHook, ToolHookDecision, ToolHookLayer, ToolHookRegistry, ToolHookRequest, ToolHookService,
@@ -134,7 +136,8 @@ where
     /// inner runnable through a cloned context.
     pub async fn execute(&self, input: S, ctx: &ExecutionContext) -> Result<AgentRunResult<S>> {
         let (run_id, scoped_ctx) = Self::scoped_run_context(ctx);
-        let ctx = scoped_ctx.as_ref().map_or(ctx, |scoped| scoped);
+        let parent_run_id = scoped_ctx.parent_run_id().map(str::to_owned);
+        let ctx = &scoped_ctx;
 
         // Attach the type-erased approval-event sink handle so any
         // `ApprovalLayer` deeper in the dispatch stack can emit
@@ -150,7 +153,8 @@ where
                     &self.sink,
                 )));
 
-        self.execute_inner(input, run_id, &scoped_with_sink).await
+        self.execute_inner(input, run_id, parent_run_id, &scoped_with_sink)
+            .await
     }
 
     /// Convenience entry that attaches a [`entelix_core::RunOverrides`] extension
@@ -188,11 +192,13 @@ where
         &self,
         input: S,
         run_id: String,
+        parent_run_id: Option<String>,
         ctx: &ExecutionContext,
     ) -> Result<AgentRunResult<S>> {
         self.sink
             .send(AgentEvent::Started {
                 run_id: run_id.clone(),
+                parent_run_id: parent_run_id.clone(),
                 agent: self.name.clone(),
             })
             .await?;
@@ -365,18 +371,25 @@ where
     }
 
     /// Compute `(run_id, ctx_with_run_id_when_minted)` for an entry
-    /// boundary. Returns the existing `run_id` if the caller already
-    /// stamped one; otherwise mints UUID v7 and clones the context
-    /// so the inner runnable sees the same id.
-    fn scoped_run_context(ctx: &ExecutionContext) -> (String, Option<ExecutionContext>) {
-        ctx.run_id().map_or_else(
-            || {
-                let fresh = uuid::Uuid::now_v7().to_string();
-                let scoped = ctx.clone().with_run_id(fresh.clone());
-                (fresh, Some(scoped))
-            },
-            |existing| (existing.to_owned(), None),
-        )
+    /// Mint a fresh run id for this `Agent::execute` and rebase the
+    /// context so the inner runnable sees `(run_id = fresh,
+    /// parent_run_id = Some(caller's run_id))`. Top-level runs land
+    /// with `parent_run_id = None`; sub-agent dispatches preserve
+    /// the parent's id under `parent_run_id` so `(run_id,
+    /// parent_run_id)` edges reconstruct the trace tree.
+    ///
+    /// Always mints — never reuses the caller's id. Recipes that
+    /// pre-allocated a `run_id` for an external reservation see
+    /// their id flow through as `parent_run_id` of the agent's run,
+    /// keeping a deterministic correlation without flattening the
+    /// hierarchy.
+    fn scoped_run_context(ctx: &ExecutionContext) -> (String, ExecutionContext) {
+        let fresh = uuid::Uuid::now_v7().to_string();
+        let mut scoped = ctx.clone().with_run_id(fresh.clone());
+        if let Some(parent) = ctx.run_id() {
+            scoped = scoped.with_parent_run_id(parent.to_owned());
+        }
+        (fresh, scoped)
     }
 
     /// Borrow the configured execution mode.
@@ -440,14 +453,15 @@ where
     ) -> impl futures::Stream<Item = Result<AgentEvent<S>>> + Send + 'a {
         async_stream::stream! {
             let (run_id, scoped) = Self::scoped_run_context(ctx);
-            // Bind the borrowed-or-owned ctx as a single `&ExecutionContext`
-            // — keeping `scoped` alive across the `await` boundaries below
+            let parent_run_id = scoped.parent_run_id().map(str::to_owned);
+            // Keep `scoped` alive across the `await` boundaries below
             // so the run-id-stamped child context lives for the whole call.
-            let inner_ctx: &ExecutionContext = scoped.as_ref().map_or(ctx, |child| child);
+            let inner_ctx: &ExecutionContext = &scoped;
 
             // Started book-end (sink + caller stream).
             let started = AgentEvent::Started {
                 run_id: run_id.clone(),
+                parent_run_id,
                 agent: self.name.clone(),
             };
             self.sink.send(started.clone()).await?;
@@ -537,7 +551,7 @@ where
 {
     name: Option<String>,
     runnable: Option<Arc<dyn Runnable<S, S>>>,
-    sink: Option<Arc<dyn AgentEventSink<S>>>,
+    sinks: Vec<Arc<dyn AgentEventSink<S>>>,
     observers: Vec<DynObserver<S>>,
     execution_mode: ExecutionMode,
     approver: Option<Arc<dyn Approver>>,
@@ -551,7 +565,7 @@ where
         Self {
             name: None,
             runnable: None,
-            sink: None,
+            sinks: Vec::new(),
             observers: Vec::new(),
             execution_mode: ExecutionMode::default(),
             approver: None,
@@ -594,20 +608,29 @@ where
         self
     }
 
-    /// Defaults to [`DroppingSink`].
+    /// Append an event sink. Multiple calls accumulate — the agent
+    /// dispatches each emitted event to every registered sink in
+    /// registration order via an internal [`FanOutSink`]. Sinks
+    /// added earlier run first; a sink that returns `Err` halts the
+    /// run before later sinks see the event, so operators add
+    /// must-succeed sinks (audit, compliance) first and wrap
+    /// best-effort sinks (telemetry, embedding indexer) with
+    /// [`FailOpenSink`]. Empty registrations resolve to
+    /// [`DroppingSink`] at build time.
     #[must_use]
-    pub fn with_sink<K>(mut self, sink: K) -> Self
+    pub fn add_sink<K>(mut self, sink: K) -> Self
     where
         K: AgentEventSink<S> + 'static,
     {
-        self.sink = Some(Arc::new(sink));
+        self.sinks.push(Arc::new(sink));
         self
     }
 
-    /// Reuse an `Arc<dyn AgentEventSink<S>>` directly.
+    /// Append a pre-erased `Arc<dyn AgentEventSink<S>>` — useful
+    /// when the sink has already been boxed elsewhere.
     #[must_use]
-    pub fn with_sink_arc(mut self, sink: Arc<dyn AgentEventSink<S>>) -> Self {
-        self.sink = Some(sink);
+    pub fn add_sink_arc(mut self, sink: Arc<dyn AgentEventSink<S>>) -> Self {
+        self.sinks.push(sink);
         self
     }
 
@@ -690,7 +713,21 @@ where
                  (call .with_approver(...) or .with_approver_arc(...))",
             ));
         }
-        let sink = self.sink.unwrap_or_else(|| Arc::new(DroppingSink));
+        let sink: Arc<dyn AgentEventSink<S>> = match self.sinks.len() {
+            0 => Arc::new(DroppingSink),
+            1 => self
+                .sinks
+                .into_iter()
+                .next()
+                .unwrap_or_else(|| unreachable!("len()==1 guarantees a value")),
+            _ => {
+                let mut fan = FanOutSink::<S>::new();
+                for sink in self.sinks {
+                    fan = fan.push(sink);
+                }
+                Arc::new(fan)
+            }
+        };
         Ok(Agent {
             name,
             runnable,
@@ -750,7 +787,7 @@ mod tests {
         let agent = Agent::<i32>::builder()
             .with_name("test-agent")
             .with_runnable(echo_runnable())
-            .with_sink(sink.clone())
+            .add_sink(sink.clone())
             .build()
             .unwrap();
 
@@ -780,7 +817,7 @@ mod tests {
         let agent = Agent::<i32>::builder()
             .with_name("budgeted-agent")
             .with_runnable(echo_runnable())
-            .with_sink(sink.clone())
+            .add_sink(sink.clone())
             .build()
             .unwrap();
 
@@ -841,7 +878,7 @@ mod tests {
         let agent = Agent::<i32>::builder()
             .with_name("streamer")
             .with_runnable(echo_runnable())
-            .with_sink(sink.clone())
+            .add_sink(sink.clone())
             .build()
             .unwrap();
 

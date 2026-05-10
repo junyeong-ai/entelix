@@ -29,7 +29,7 @@ async fn execute_stream_emits_canonical_event_sequence_to_caller_and_sink() {
     let agent = Agent::<i32>::builder()
         .with_name("canonical")
         .with_runnable(step_runnable())
-        .with_sink(sink.clone())
+        .add_sink(sink.clone())
         .build()
         .unwrap();
 
@@ -65,7 +65,7 @@ async fn broadcast_sink_fans_out_to_multiple_subscribers() {
     let agent = Agent::<i32>::builder()
         .with_name("fanout")
         .with_runnable(step_runnable())
-        .with_sink(sink)
+        .add_sink(sink)
         .build()
         .unwrap();
 
@@ -93,7 +93,7 @@ async fn channel_sink_drops_with_receiver_gone() {
     let agent = Agent::<i32>::builder()
         .with_name("dropped-rx")
         .with_runnable(step_runnable())
-        .with_sink(sink)
+        .add_sink(sink)
         .build()
         .unwrap();
 

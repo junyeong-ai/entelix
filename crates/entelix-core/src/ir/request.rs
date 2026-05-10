@@ -2,6 +2,8 @@
 //!
 //! Every model call must pass through this type before reaching a `Codec`.
 
+use std::sync::Arc;
+
 use serde::{Deserialize, Serialize};
 
 use crate::ir::message::Message;
@@ -56,8 +58,13 @@ pub struct ModelRequest {
     #[serde(default)]
     pub stop_sequences: Vec<String>,
     /// Tools advertised to the model. Empty = no tool calls permitted.
+    /// Held as `Arc<[ToolSpec]>` so per-dispatch cloning of the
+    /// request shape is an atomic refcount bump rather than a deep
+    /// walk of every tool's JSON schema. Codecs read through the
+    /// `Deref<Target = [ToolSpec]>` coercion — every `&request.tools`
+    /// site continues to see `&[ToolSpec]` unchanged.
     #[serde(default)]
-    pub tools: Vec<ToolSpec>,
+    pub tools: Arc<[ToolSpec]>,
     /// Constraint on tool selection. Defaults to [`ToolChoice::Auto`].
     #[serde(default)]
     pub tool_choice: ToolChoice,

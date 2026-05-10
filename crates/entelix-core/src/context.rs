@@ -48,6 +48,12 @@ pub struct ExecutionContext {
     thread_id: Option<String>,
     tenant_id: TenantId,
     run_id: Option<String>,
+    /// Run id of the parent that dispatched the call this context
+    /// represents. `None` at the root; `Some(parent_run)` for every
+    /// sub-agent and tool-driven dispatch the parent originates.
+    /// LangSmith-style trace-tree consumers reconstruct the
+    /// hierarchy from `(run_id, parent_run_id)` edges.
+    parent_run_id: Option<String>,
     /// Idempotency key for the current logical call — vendor-side
     /// dedupe identifier shared across every retry attempt of the
     /// same logical call. `RetryService` stamps it on first entry
@@ -75,6 +81,7 @@ impl ExecutionContext {
             thread_id: None,
             tenant_id: TenantId::default(),
             run_id: None,
+            parent_run_id: None,
             idempotency_key: None,
             extensions: Extensions::new(),
         }
@@ -89,6 +96,7 @@ impl ExecutionContext {
             thread_id: None,
             tenant_id: TenantId::default(),
             run_id: None,
+            parent_run_id: None,
             idempotency_key: None,
             extensions: Extensions::new(),
         }
@@ -120,12 +128,30 @@ impl ExecutionContext {
 
     /// Attach a `run_id` — the per-execute correlation key the agent
     /// runtime stamps on every `AgentEvent`, OTel span, and tool
-    /// invocation event. Recipes composing agents inside a larger
-    /// graph pre-allocate the id so all events share a tree;
-    /// otherwise `Agent::execute` generates a fresh UUID v7 on entry.
+    /// invocation event. `Agent::execute` generates a fresh UUID v7
+    /// on entry when none is set; recipes pre-allocate it only when
+    /// they need to correlate the run with an external reservation
+    /// (a workflow id minted by the caller, a database row id chosen
+    /// before dispatch). Sub-agents do not inherit the parent's
+    /// `run_id` — they mint their own and the parent's flows
+    /// through [`Self::with_parent_run_id`] for trace-tree
+    /// reconstruction.
     #[must_use]
     pub fn with_run_id(mut self, run_id: impl Into<String>) -> Self {
         self.run_id = Some(run_id.into());
+        self
+    }
+
+    /// Attach a `parent_run_id` — the run id of the calling agent
+    /// when this context represents a sub-agent dispatch. The
+    /// runtime sets this automatically when a parent `Agent::execute`
+    /// recurses into a child via [`crate::AgentContext`]; recipes
+    /// rarely call this directly. LangSmith-style trace-tree
+    /// consumers reconstruct hierarchy from `(run_id, parent_run_id)`
+    /// edges across `AgentEvent::Started`.
+    #[must_use]
+    pub fn with_parent_run_id(mut self, parent_run_id: impl Into<String>) -> Self {
+        self.parent_run_id = Some(parent_run_id.into());
         self
     }
 
@@ -265,6 +291,13 @@ impl ExecutionContext {
         self.run_id.as_deref()
     }
 
+    /// Borrow the parent run id, if this context represents a
+    /// sub-agent or tool-driven dispatch under a parent
+    /// `Agent::execute`. `None` at the root.
+    pub fn parent_run_id(&self) -> Option<&str> {
+        self.parent_run_id.as_deref()
+    }
+
     /// Borrow the idempotency key for the current logical call, if
     /// one has been stamped (by `RetryService` on first entry of a
     /// retry loop, or by a caller pre-allocating via
@@ -319,6 +352,7 @@ impl ExecutionContext {
             thread_id: self.thread_id.clone(),
             tenant_id: self.tenant_id.clone(),
             run_id: self.run_id.clone(),
+            parent_run_id: self.parent_run_id.clone(),
             idempotency_key: self.idempotency_key.clone(),
             extensions: self.extensions.clone(),
         }

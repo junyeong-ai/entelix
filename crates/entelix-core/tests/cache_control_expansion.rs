@@ -105,14 +105,12 @@ fn anthropic_tool_spec_cache_control_attaches_to_tool_declaration() {
     let req = ModelRequest {
         model: "claude-opus-4-7".into(),
         messages: vec![Message::user("hi")],
-        tools: vec![
-            ToolSpec::function(
-                "stable",
-                "stable tool — cache the declaration",
-                serde_json::json!({"type": "object"}),
-            )
-            .with_cache_control(CacheControl::five_minutes()),
-        ],
+        tools: std::sync::Arc::from([ToolSpec::function(
+            "stable",
+            "stable tool — cache the declaration",
+            serde_json::json!({"type": "object"}),
+        )
+        .with_cache_control(CacheControl::five_minutes())]),
         max_tokens: Some(1024),
         ..ModelRequest::default()
     };
@@ -332,11 +330,11 @@ fn bedrock_tool_spec_cache_control_emits_cache_point_after_tool() {
             Role::User,
             vec![ContentPart::text("call a tool")],
         )],
-        tools: vec![
+        tools: std::sync::Arc::from([
             ToolSpec::function("search", "Search the web", serde_json::json!({})),
             ToolSpec::function("read_file", "Read a file", serde_json::json!({}))
                 .with_cache_control(CacheControl::five_minutes()),
-        ],
+        ]),
         ..ModelRequest::default()
     };
     let encoded = codec.encode(&req).unwrap();

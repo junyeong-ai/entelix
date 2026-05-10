@@ -23,7 +23,9 @@ use tower::{Layer, Service, ServiceExt};
 use crate::agent_context::AgentContext;
 use crate::context::ExecutionContext;
 use crate::error::{Error, Result};
+use crate::ir::ToolSpec;
 use crate::service::{BoxedToolService, ToolInvocation};
+use crate::tools::cache::ToolCacheMode;
 use crate::tools::tool::Tool;
 
 /// `tower::Service` leaf that invokes one specific `Tool`. Cloning
@@ -156,6 +158,10 @@ pub struct ToolRegistry<D = ()> {
     /// means "no layers" — dispatch returns the inner service
     /// boxed.
     factory: Option<LayerFactory<D>>,
+    /// Cache stamping strategy applied at [`Self::tool_specs`]
+    /// materialisation time. Default [`ToolCacheMode::None`] —
+    /// specs leave unchanged.
+    cache_mode: ToolCacheMode,
 }
 
 impl<D: Clone> Clone for ToolRegistry<D> {
@@ -164,6 +170,7 @@ impl<D: Clone> Clone for ToolRegistry<D> {
             by_name: self.by_name.clone(),
             deps: self.deps.clone(),
             factory: self.factory.clone(),
+            cache_mode: self.cache_mode,
         }
     }
 }
@@ -194,7 +201,86 @@ impl<D: Clone + Send + Sync + 'static> ToolRegistry<D> {
             by_name: HashMap::new(),
             deps,
             factory: None,
+            cache_mode: ToolCacheMode::None,
         }
+    }
+
+    /// Set the [`ToolCacheMode`] applied to specs returned by
+    /// [`Self::tool_specs`]. The mode is registry-level rather
+    /// than per-call because operators almost always pick once and
+    /// stick — sub-agents needing a different policy can re-stamp
+    /// post-materialisation via [`ToolCacheMode::apply`].
+    #[must_use]
+    pub fn with_cache_mode(mut self, mode: ToolCacheMode) -> Self {
+        self.cache_mode = mode;
+        self
+    }
+
+    /// Materialise model-facing tool specs in stable lexical order
+    /// and apply the configured [`ToolCacheMode`].
+    ///
+    /// Operators feed the result directly to
+    /// [`ChatModel::with_tools`](crate::ChatModel::with_tools) — the
+    /// canonical path from a registry to an active chat model's
+    /// tool catalogue. The lexical sort makes the marker placement
+    /// for [`ToolCacheMode::Suffix`] deterministic across program
+    /// runs even though the underlying storage is a `HashMap`.
+    #[must_use]
+    pub fn tool_specs(&self) -> Arc<[ToolSpec]> {
+        let mut tools: Vec<&Arc<dyn Tool<D>>> = self.by_name.values().collect();
+        tools.sort_by(|a, b| a.metadata().name.cmp(&b.metadata().name));
+        let specs: Vec<ToolSpec> = tools
+            .into_iter()
+            .map(|tool| tool.metadata().to_tool_spec())
+            .collect();
+        Arc::from(self.cache_mode.apply(specs))
+    }
+
+    /// Deterministic SHA-256 fingerprint of the **advertised** tool
+    /// surface — the identity an audit / replay consumer compares
+    /// across deployments to detect schema drift.
+    ///
+    /// Algorithm (stable across consumers — pin this contract when
+    /// integrating with external audit tooling):
+    ///
+    /// 1. Walk tools in lexical order by `metadata().name`.
+    /// 2. Per tool, build a JSON object with the model-facing
+    ///    surface only: `{name, description, input_schema,
+    ///    output_schema}`. `output_schema` is rendered as `null`
+    ///    when absent so its presence/absence is itself part of the
+    ///    fingerprint.
+    /// 3. Serialize each per-tool object to a string. `serde_json`
+    ///    with default features uses `BTreeMap` for `Map`, so key
+    ///    order within each object is sorted.
+    /// 4. Concatenate (newline-separated) and feed into SHA-256.
+    /// 5. Lower-case hexadecimal digest.
+    ///
+    /// **Excludes** operator-side knobs (`cache_control`,
+    /// `retry_hint`, `effect`, `version`, `idempotent`,
+    /// `typical_duration`) because those are deployment-shaped, not
+    /// identity-shaped — two deployments with different cache
+    /// strategies should still report the same fingerprint.
+    #[must_use]
+    pub fn canonical_fingerprint(&self) -> String {
+        use sha2::{Digest, Sha256};
+        let mut tools: Vec<&Arc<dyn Tool<D>>> = self.by_name.values().collect();
+        tools.sort_by(|a, b| a.metadata().name.cmp(&b.metadata().name));
+        let mut hasher = Sha256::new();
+        for tool in tools {
+            let m = tool.metadata();
+            let payload = serde_json::json!({
+                "name": &m.name,
+                "description": &m.description,
+                "input_schema": &m.input_schema,
+                "output_schema": m.output_schema,
+            });
+            // `Value::to_string` enumerates `Map` keys in BTreeMap
+            // order — canonical sort across the whole nested tree.
+            // The path is total: `Value` is always serialisable.
+            hasher.update(payload.to_string().as_bytes());
+            hasher.update(b"\n");
+        }
+        format!("{:x}", hasher.finalize())
     }
 
     /// Append a tool. Per, `*Registry` types are
@@ -317,6 +403,7 @@ impl<D: Clone + Send + Sync + 'static> ToolRegistry<D> {
             by_name,
             deps: self.deps.clone(),
             factory: self.factory.clone(),
+            cache_mode: self.cache_mode,
         }
     }
 
@@ -412,7 +499,7 @@ impl<D: Send + Sync + 'static> std::fmt::Debug for ToolRegistry<D> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
+#[allow(clippy::unwrap_used, clippy::indexing_slicing)]
 mod tests {
     use async_trait::async_trait;
     use serde_json::json;
@@ -639,5 +726,165 @@ mod tests {
             }
             other => panic!("expected Config error, got {other:?}"),
         }
+    }
+
+    fn registry_with_three_tools() -> ToolRegistry {
+        ToolRegistry::new()
+            .register(Arc::new(NoopTool::new("gamma")))
+            .unwrap()
+            .register(Arc::new(NoopTool::new("alpha")))
+            .unwrap()
+            .register(Arc::new(NoopTool::new("beta")))
+            .unwrap()
+    }
+
+    #[test]
+    fn tool_specs_default_mode_emits_lexically_sorted_specs_with_no_cache() {
+        let specs = registry_with_three_tools().tool_specs();
+        let names: Vec<_> = specs.iter().map(|s| s.name.as_str()).collect();
+        assert_eq!(names, vec!["alpha", "beta", "gamma"]);
+        assert!(specs.iter().all(|s| s.cache_control.is_none()));
+    }
+
+    #[test]
+    fn tool_specs_with_suffix_mode_marks_only_the_last_spec() {
+        let cache = crate::ir::CacheControl::five_minutes();
+        let specs = registry_with_three_tools()
+            .with_cache_mode(ToolCacheMode::Suffix(cache))
+            .tool_specs();
+        assert_eq!(specs[0].cache_control, None, "alpha must be unmarked");
+        assert_eq!(specs[1].cache_control, None, "beta must be unmarked");
+        assert_eq!(
+            specs[2].cache_control,
+            Some(cache),
+            "gamma (last lexical) must carry the suffix cache marker"
+        );
+    }
+
+    #[test]
+    fn tool_specs_with_per_spec_mode_marks_every_spec() {
+        let cache = crate::ir::CacheControl::one_hour();
+        let specs = registry_with_three_tools()
+            .with_cache_mode(ToolCacheMode::PerSpec(cache))
+            .tool_specs();
+        assert!(
+            specs.iter().all(|s| s.cache_control == Some(cache)),
+            "every spec must carry the per-spec cache marker"
+        );
+    }
+
+    #[test]
+    fn cache_mode_is_inherited_through_filter_views() {
+        let cache = crate::ir::CacheControl::five_minutes();
+        let parent = registry_with_three_tools().with_cache_mode(ToolCacheMode::Suffix(cache));
+        let view = parent.filter(|tool| tool.metadata().name != "beta");
+        let specs = view.tool_specs();
+        let names: Vec<_> = specs.iter().map(|s| s.name.as_str()).collect();
+        assert_eq!(names, vec!["alpha", "gamma"]);
+        assert_eq!(
+            specs.last().and_then(|s| s.cache_control),
+            Some(cache),
+            "filtered view must keep the parent's cache mode"
+        );
+    }
+
+    #[test]
+    fn canonical_fingerprint_is_empty_sha256_for_empty_registry() {
+        // SHA-256 of zero-byte input — the canonical "no tools"
+        // fingerprint. Pinned because consumers compare across
+        // deployments; an unexpected hash drift here would silently
+        // break cross-consumer audit comparison.
+        assert_eq!(
+            ToolRegistry::new().canonical_fingerprint(),
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        );
+    }
+
+    #[test]
+    fn canonical_fingerprint_is_order_invariant() {
+        // Same three tools registered in two different orders must
+        // produce the same fingerprint. The lexical sort inside
+        // canonical_fingerprint guarantees this; if the sort is ever
+        // dropped, this test fails.
+        let a = ToolRegistry::new()
+            .register(Arc::new(NoopTool::new("gamma")))
+            .unwrap()
+            .register(Arc::new(NoopTool::new("alpha")))
+            .unwrap()
+            .register(Arc::new(NoopTool::new("beta")))
+            .unwrap();
+        let b = ToolRegistry::new()
+            .register(Arc::new(NoopTool::new("alpha")))
+            .unwrap()
+            .register(Arc::new(NoopTool::new("beta")))
+            .unwrap()
+            .register(Arc::new(NoopTool::new("gamma")))
+            .unwrap();
+        assert_eq!(a.canonical_fingerprint(), b.canonical_fingerprint());
+    }
+
+    #[test]
+    fn canonical_fingerprint_is_insensitive_to_cache_mode() {
+        // cache_control is a deployment-side optimization, not part
+        // of the tool identity — two registries that differ only in
+        // their `ToolCacheMode` must report the same fingerprint.
+        let cache = crate::ir::CacheControl::one_hour();
+        let plain = registry_with_three_tools();
+        let cached = registry_with_three_tools().with_cache_mode(ToolCacheMode::PerSpec(cache));
+        assert_eq!(
+            plain.canonical_fingerprint(),
+            cached.canonical_fingerprint(),
+            "cache_mode changes must NOT shift the fingerprint"
+        );
+    }
+
+    #[test]
+    fn tool_specs_share_arc_across_clones_no_deep_clone() {
+        // Two consecutive calls return distinct allocations (each is
+        // a fresh build), but cloning a `ChatModelConfig`-shaped
+        // `Arc<[ToolSpec]>` is a refcount bump — design property
+        // closing the per-dispatch deep-clone hot path that
+        // pre-`Arc<[T]>` `Vec<ToolSpec>` paid every planner turn.
+        let registry = registry_with_three_tools();
+        let specs = registry.tool_specs();
+        let cloned = Arc::clone(&specs);
+        assert!(
+            Arc::ptr_eq(&specs, &cloned),
+            "Arc::clone must share allocation; deep clone here is a regression"
+        );
+    }
+
+    #[test]
+    fn canonical_fingerprint_changes_when_description_changes() {
+        // Description IS part of the model-facing surface — a change
+        // is a meaningful identity shift. The model sees a different
+        // tool catalogue and an audit consumer should detect it.
+        struct Custom {
+            metadata: ToolMetadata,
+        }
+        #[async_trait::async_trait]
+        impl Tool for Custom {
+            fn metadata(&self) -> &ToolMetadata {
+                &self.metadata
+            }
+            async fn execute(&self, _input: Value, _ctx: &AgentContext<()>) -> Result<Value> {
+                Ok(Value::Null)
+            }
+        }
+        let a = ToolRegistry::new()
+            .register(Arc::new(Custom {
+                metadata: ToolMetadata::function("alpha", "first", json!({"type": "object"})),
+            }))
+            .unwrap();
+        let b = ToolRegistry::new()
+            .register(Arc::new(Custom {
+                metadata: ToolMetadata::function(
+                    "alpha",
+                    "first (rev 2)",
+                    json!({"type": "object"}),
+                ),
+            }))
+            .unwrap();
+        assert_ne!(a.canonical_fingerprint(), b.canonical_fingerprint());
     }
 }

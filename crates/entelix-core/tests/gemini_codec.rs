@@ -146,11 +146,11 @@ fn encode_tools_emits_function_declarations() {
     let req = ModelRequest {
         model: "gemini-2.0-flash".into(),
         messages: vec![Message::user("calc")],
-        tools: vec![ToolSpec::function(
+        tools: std::sync::Arc::from([ToolSpec::function(
             "double",
             "doubles n",
             json!({"type": "object"}),
-        )],
+        )]),
         tool_choice: ToolChoice::Required,
         ..ModelRequest::default()
     };
@@ -203,12 +203,12 @@ fn code_execution_toolkind_emits_native_gemini_entry() {
     let req = ModelRequest {
         model: "gemini-2.5-pro".into(),
         messages: vec![Message::user("compute")],
-        tools: vec![ToolSpec {
+        tools: std::sync::Arc::from([ToolSpec {
             name: "code_execution".into(),
             description: String::new(),
             kind: ToolKind::CodeExecution,
             cache_control: None,
-        }],
+        }]),
         ..ModelRequest::default()
     };
     let body = parse(&codec.encode(&req).unwrap().body);

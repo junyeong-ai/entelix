@@ -248,12 +248,44 @@ fn encode_image_url_and_base64_variants() {
 }
 
 #[test]
+fn encode_tools_emits_per_spec_cache_control_marker() {
+    use entelix_core::ir::CacheControl;
+    let codec = AnthropicMessagesCodec::new();
+    let req = ModelRequest {
+        model: "claude-opus-4-7".into(),
+        messages: vec![Message::user("hi")],
+        tools: std::sync::Arc::from([
+            ToolSpec::function("alpha", "first", json!({"type": "object"})),
+            ToolSpec::function("beta", "second", json!({"type": "object"}))
+                .with_cache_control(CacheControl::one_hour()),
+        ]),
+        max_tokens: Some(1024),
+        ..ModelRequest::default()
+    };
+    let encoded = codec.encode(&req).unwrap();
+    let body = parse(&encoded.body);
+
+    assert!(
+        body["tools"][0].get("cache_control").is_none(),
+        "first tool must remain unmarked"
+    );
+    assert_eq!(
+        body["tools"][1]["cache_control"]["type"], "ephemeral",
+        "second tool must carry the ephemeral marker"
+    );
+    assert_eq!(
+        body["tools"][1]["cache_control"]["ttl"], "1h",
+        "one-hour TTL renders as the wire `ttl: \"1h\"` sibling field"
+    );
+}
+
+#[test]
 fn encode_tools_with_choice_required() {
     let codec = AnthropicMessagesCodec::new();
     let req = ModelRequest {
         model: "claude-opus-4-7".into(),
         messages: vec![Message::user("calc 2+2")],
-        tools: vec![ToolSpec::function(
+        tools: std::sync::Arc::from([ToolSpec::function(
             "calculator",
             "Evaluates arithmetic",
             json!({
@@ -261,7 +293,7 @@ fn encode_tools_with_choice_required() {
                 "properties": { "expr": { "type": "string" } },
                 "required": ["expr"],
             }),
-        )],
+        )]),
         tool_choice: ToolChoice::Required,
         max_tokens: Some(1024),
         ..ModelRequest::default()
@@ -279,7 +311,7 @@ fn encode_tool_choice_specific_includes_name() {
     let req = ModelRequest {
         model: "claude-opus-4-7".into(),
         messages: vec![Message::user("hi")],
-        tools: vec![ToolSpec::function("search", "", json!({}))],
+        tools: std::sync::Arc::from([ToolSpec::function("search", "", json!({}))]),
         tool_choice: ToolChoice::Specific {
             name: "search".into(),
         },
@@ -530,11 +562,11 @@ fn parallel_tool_calls_inverts_into_anthropic_tool_choice() {
     let req = ModelRequest {
         model: "claude-opus-4-7".into(),
         messages: vec![Message::user("call my tool")],
-        tools: vec![ToolSpec::function(
+        tools: std::sync::Arc::from([ToolSpec::function(
             "calc",
             "arithmetic",
             json!({"type": "object"}),
-        )],
+        )]),
         parallel_tool_calls: Some(false),
         max_tokens: Some(1024),
         ..ModelRequest::default()
@@ -553,11 +585,11 @@ fn parallel_tool_calls_true_emits_disable_false_on_anthropic() {
     let req = ModelRequest {
         model: "claude-opus-4-7".into(),
         messages: vec![Message::user("call my tool")],
-        tools: vec![ToolSpec::function(
+        tools: std::sync::Arc::from([ToolSpec::function(
             "calc",
             "arithmetic",
             json!({"type": "object"}),
-        )],
+        )]),
         parallel_tool_calls: Some(true),
         max_tokens: Some(1024),
         ..ModelRequest::default()

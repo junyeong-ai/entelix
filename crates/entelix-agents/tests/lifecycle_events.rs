@@ -8,7 +8,7 @@
 //!   `ToolError` for tool dispatches that flow through the layer
 //!   while a run is in progress.
 
-#![allow(clippy::unwrap_used, clippy::indexing_slicing)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 
 use std::sync::Arc;
 
@@ -38,7 +38,7 @@ async fn started_and_complete_share_the_same_run_id() {
     let agent = Agent::<i32>::builder()
         .with_name("scope")
         .with_runnable(echo_runnable())
-        .with_sink(sink.clone())
+        .add_sink(sink.clone())
         .build()
         .unwrap();
     agent.execute(0, &ExecutionContext::new()).await.unwrap();
@@ -60,23 +60,74 @@ async fn started_and_complete_share_the_same_run_id() {
 }
 
 #[tokio::test]
-async fn caller_supplied_run_id_is_inherited() {
+async fn top_level_run_has_no_parent_run_id() {
+    let sink = CaptureSink::<i32>::new();
+    let agent = Agent::<i32>::builder()
+        .with_name("root")
+        .with_runnable(echo_runnable())
+        .add_sink(sink.clone())
+        .build()
+        .unwrap();
+    agent.execute(0, &ExecutionContext::new()).await.unwrap();
+    let events = sink.events();
+    let started = events
+        .iter()
+        .find(|e| matches!(e, AgentEvent::Started { .. }))
+        .expect("Started event present");
+    match started {
+        AgentEvent::Started {
+            run_id,
+            parent_run_id,
+            ..
+        } => {
+            assert!(!run_id.is_empty(), "fresh run_id minted at root");
+            assert!(
+                parent_run_id.is_none(),
+                "top-level run must have no parent_run_id"
+            );
+        }
+        other => panic!("unexpected first event: {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn caller_supplied_run_id_flows_through_as_parent_run_id() {
+    // Sub-agent dispatch shape: a parent's run_id (or any caller
+    // pre-allocated id) lands on the new run as `parent_run_id`,
+    // and the new run mints its own fresh `run_id`. LangSmith
+    // trace-tree consumers reconstruct the hierarchy from the
+    // (run_id, parent_run_id) edge across `Started`.
     let sink = CaptureSink::<i32>::new();
     let agent = Agent::<i32>::builder()
         .with_name("inherit")
         .with_runnable(echo_runnable())
-        .with_sink(sink.clone())
+        .add_sink(sink.clone())
         .build()
         .unwrap();
     let ctx = ExecutionContext::new().with_run_id("caller-supplied-7");
     agent.execute(0, &ctx).await.unwrap();
     let events = sink.events();
-    for event in &events {
-        let id = match event {
-            AgentEvent::Started { run_id, .. } | AgentEvent::Complete { run_id, .. } => run_id,
-            other => panic!("unexpected event: {other:?}"),
-        };
-        assert_eq!(id, "caller-supplied-7");
+    let started = events
+        .iter()
+        .find(|e| matches!(e, AgentEvent::Started { .. }))
+        .expect("Started event present");
+    match started {
+        AgentEvent::Started {
+            run_id,
+            parent_run_id,
+            ..
+        } => {
+            assert_ne!(
+                run_id, "caller-supplied-7",
+                "agent must mint a fresh run_id, not reuse the caller's"
+            );
+            assert_eq!(
+                parent_run_id.as_deref(),
+                Some("caller-supplied-7"),
+                "caller's run_id must flow through as parent_run_id"
+            );
+        }
+        other => panic!("unexpected first event: {other:?}"),
     }
 }
 
@@ -86,7 +137,7 @@ async fn failed_event_is_emitted_when_inner_runnable_errors() {
     let agent = Agent::<i32>::builder()
         .with_name("fails")
         .with_runnable(failing_runnable())
-        .with_sink(sink.clone())
+        .add_sink(sink.clone())
         .build()
         .unwrap();
     let err = agent
@@ -123,7 +174,7 @@ async fn execute_stream_emits_failed_then_typed_err_on_caller_side() {
     let agent = Agent::<i32>::builder()
         .with_name("stream-fails")
         .with_runnable(failing_runnable())
-        .with_sink(sink.clone())
+        .add_sink(sink.clone())
         .build()
         .unwrap();
     let ctx = ExecutionContext::new();

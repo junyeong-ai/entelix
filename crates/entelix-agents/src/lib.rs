@@ -45,9 +45,9 @@ pub use agent::{
     Agent, AgentBuilder, AgentEvent, AgentEventSink, AgentObserver, AgentRunResult, AlwaysApprove,
     ApprovalDecision, ApprovalLayer, ApprovalRequest, ApprovalService, Approver, BroadcastSink,
     CaptureSink, ChannelApprover, ChannelApproverConfig, ChannelSink, DroppingSink, DynObserver,
-    ExecutionMode, PendingApproval, ToolApprovalEventSink, ToolApprovalEventSinkHandle,
-    ToolEventLayer, ToolEventService, ToolHook, ToolHookDecision, ToolHookLayer, ToolHookRegistry,
-    ToolHookRequest, ToolHookService,
+    EffectGate, ExecutionMode, FailOpenSink, FanOutSink, PendingApproval, ToolApprovalEventSink,
+    ToolApprovalEventSinkHandle, ToolEventLayer, ToolEventService, ToolHook, ToolHookDecision,
+    ToolHookLayer, ToolHookRegistry, ToolHookRequest, ToolHookService,
 };
 pub use chat_agent::{build_chat_graph, create_chat_agent};
 pub use compaction::{

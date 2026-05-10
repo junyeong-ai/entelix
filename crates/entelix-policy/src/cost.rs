@@ -263,8 +263,11 @@ impl CostMeter {
     }
 
     /// Hot-swap the pricing table. Used by operators rolling out
-    /// new vendor rates without a process restart.
-    pub fn set_pricing(&self, pricing: PricingTable) {
+    /// new vendor rates without a process restart. The `&self`
+    /// receiver is intentional — every clone of the `Arc<CostMeter>`
+    /// shares the same pricing slot, so a config-reload thread can
+    /// replace rates without coordinating with charge sites.
+    pub fn replace_pricing(&self, pricing: PricingTable) {
         *self.pricing.write() = pricing;
     }
 
@@ -722,10 +725,32 @@ mod tests {
             "gpt-4.1",
             ModelPricing::new(d("20"), d("80"), Decimal::ZERO, Decimal::ZERO),
         );
-        meter.set_pricing(new_pricing);
+        meter.replace_pricing(new_pricing);
         let cost = meter
             .charge(&TenantId::new("alpha"), "gpt-4.1", &usage(1000, 0))
             .unwrap();
         assert_eq!(cost, d("20"));
+    }
+
+    #[test]
+    fn pricing_replacement_is_observed_by_cloned_meters() {
+        let meter = CostMeter::new(pricing());
+        let cloned = meter.clone();
+
+        let mut new_pricing = pricing();
+        new_pricing.set(
+            "gpt-4.1",
+            ModelPricing::new(d("20"), d("80"), Decimal::ZERO, Decimal::ZERO),
+        );
+        cloned.replace_pricing(new_pricing);
+
+        let cost = meter
+            .charge(&TenantId::new("alpha"), "gpt-4.1", &usage(1000, 0))
+            .unwrap();
+        assert_eq!(
+            cost,
+            d("20"),
+            "the original meter must charge against a pricing table installed via a clone"
+        );
     }
 }

@@ -17,12 +17,10 @@ use serde_json::json;
 fn req_with_cached_system() -> ModelRequest {
     ModelRequest {
         model: "claude-opus-4-7".into(),
-        system: SystemPrompt::default()
-            .with_block(SystemBlock::cached(
-                "stable instructions",
-                CacheControl::one_hour(),
-            ))
-            .with_block(SystemBlock::text("ephemeral context")),
+        system: SystemPrompt::from(vec![
+            SystemBlock::cached("stable instructions", CacheControl::one_hour()),
+            SystemBlock::text("ephemeral context"),
+        ]),
         messages: vec![Message::user("hi")],
         max_tokens: Some(1024),
         ..ModelRequest::default()

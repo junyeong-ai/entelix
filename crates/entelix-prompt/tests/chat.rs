@@ -157,6 +157,7 @@ impl Codec for EchoCodec {
             usage: Usage::default(),
             rate_limit: None,
             warnings: warnings_in,
+            provider_echoes: Vec::new(),
         })
     }
 }

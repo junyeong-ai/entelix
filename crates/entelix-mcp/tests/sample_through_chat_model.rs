@@ -70,10 +70,12 @@ impl Codec for StubCodec {
             content: vec![ContentPart::Text {
                 text: format!("echo: {echo_text}"),
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }],
             usage: Usage::default(),
             rate_limit: None,
             warnings: warnings_in,
+            provider_echoes: Vec::new(),
         })
     }
 }

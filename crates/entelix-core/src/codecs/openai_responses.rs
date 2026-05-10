@@ -34,13 +34,22 @@ use crate::codecs::codec::{
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
-    ModelWarning, OutputStrategy, ReasoningEffort, ReasoningSummary, RefusalReason, ResponseFormat,
-    Role, StopReason, ToolChoice, ToolKind, ToolResultContent, Usage,
+    ModelWarning, OutputStrategy, ProviderEchoSnapshot, ReasoningEffort, ReasoningSummary,
+    RefusalReason, ResponseFormat, Role, StopReason, ToolChoice, ToolKind, ToolResultContent,
+    Usage, find_provider_echo,
 };
 use crate::rate_limit::RateLimitSnapshot;
 use crate::stream::StreamDelta;
 
 const DEFAULT_MAX_CONTEXT_TOKENS: u32 = 256_000;
+
+/// Provider key for [`OpenAiResponsesCodec`] — identifies this
+/// vendor's entries in [`ProviderEchoSnapshot`]. Carriers ride at
+/// three levels: per-content-part (reasoning `encrypted_content` +
+/// item `id`), per-response (`Response.id` for chain pointers), and
+/// per-request (`previous_response_id` chain pointer back to a prior
+/// turn).
+const PROVIDER_KEY: &str = "openai-responses";
 
 /// Stateless codec for the `OpenAI` Responses API.
 #[derive(Clone, Copy, Debug, Default)]
@@ -99,6 +108,21 @@ impl Codec for OpenAiResponsesCodec {
         let model = str_field(&raw, "model").to_owned();
         let usage = decode_usage(raw.get("usage"));
         let (content, stop_reason) = decode_outputs(&raw, &mut warnings);
+        // Response-level chain pointer — the next request can echo
+        // this `Response.id` via `ModelRequest::continued_from` to
+        // continue the conversation server-side without re-sending
+        // the full transcript (`store: true` mode), or as a
+        // belt-and-braces audit handle alongside per-item
+        // `encrypted_content` (`store: false` mode).
+        let response_echoes = if id.is_empty() {
+            Vec::new()
+        } else {
+            vec![ProviderEchoSnapshot::for_provider(
+                PROVIDER_KEY,
+                "response_id",
+                id.clone(),
+            )]
+        };
         Ok(ModelResponse {
             id,
             model,
@@ -107,6 +131,7 @@ impl Codec for OpenAiResponsesCodec {
             usage,
             rate_limit: None,
             warnings,
+            provider_echoes: response_echoes,
         })
     }
 
@@ -170,6 +195,14 @@ fn build_body(request: &ModelRequest, streaming: bool) -> Result<(Value, Vec<Mod
     }
     if streaming {
         body.insert("stream".into(), Value::Bool(true));
+    }
+    if let Some(prev) = find_provider_echo(&request.continued_from, PROVIDER_KEY)
+        .and_then(|e| e.payload_str("response_id"))
+    {
+        body.insert(
+            "previous_response_id".into(),
+            Value::String(prev.to_owned()),
+        );
     }
     apply_provider_extensions(request, &mut body, &mut warnings);
     Ok((Value::Object(body), warnings))
@@ -561,6 +594,14 @@ fn encode_user_content(
                         .into(),
                 });
             }
+            ContentPart::RedactedThinking { .. } => {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: path(),
+                    detail: "OpenAI Responses does not accept redacted_thinking blocks; block \
+                             dropped"
+                        .into(),
+                });
+            }
         }
     }
     out
@@ -601,13 +642,23 @@ fn split_assistant_content(
                     "text": text,
                 }));
             }
-            ContentPart::ToolUse { id, name, input } => {
-                tool_calls.push(json!({
-                    "type": "function_call",
-                    "call_id": id,
-                    "name": name,
-                    "arguments": input.to_string(),
-                }));
+            ContentPart::ToolUse {
+                id,
+                name,
+                input,
+                provider_echoes,
+            } => {
+                let mut entry = Map::new();
+                entry.insert("type".into(), Value::String("function_call".into()));
+                entry.insert("call_id".into(), Value::String(id.clone()));
+                entry.insert("name".into(), Value::String(name.clone()));
+                entry.insert("arguments".into(), Value::String(input.to_string()));
+                if let Some(fc_id) = find_provider_echo(provider_echoes, PROVIDER_KEY)
+                    .and_then(|e| e.payload_str("id"))
+                {
+                    entry.insert("id".into(), Value::String(fc_id.to_owned()));
+                }
+                tool_calls.push(Value::Object(entry));
             }
             ContentPart::Citation { snippet, .. } => {
                 text_parts.push(json!({
@@ -615,14 +666,32 @@ fn split_assistant_content(
                     "text": snippet,
                 }));
             }
-            ContentPart::Thinking { text, .. } => {
-                // Reasoning items round-trip on Responses API as `reasoning`
-                // items — emit them at the appropriate offset preserving
-                // model-produced order.
-                text_parts.push(json!({
-                    "type": "reasoning",
-                    "summary": [{ "type": "summary_text", "text": text }],
-                }));
+            ContentPart::Thinking {
+                text,
+                provider_echoes,
+                ..
+            } => {
+                // Reasoning items round-trip on Responses API as
+                // `reasoning` items. The summary array reconstructs
+                // the reader-facing text; opaque carrier keys
+                // (`id`, `encrypted_content`) ride at the item root
+                // when present so a stateless multi-turn replay
+                // recovers prior CoT continuity.
+                let mut entry = Map::new();
+                entry.insert("type".into(), Value::String("reasoning".into()));
+                entry.insert(
+                    "summary".into(),
+                    json!([{ "type": "summary_text", "text": text }]),
+                );
+                if let Some(echo) = find_provider_echo(provider_echoes, PROVIDER_KEY) {
+                    if let Some(rid) = echo.payload_str("id") {
+                        entry.insert("id".into(), Value::String(rid.to_owned()));
+                    }
+                    if let Some(enc) = echo.payload_str("encrypted_content") {
+                        entry.insert("encrypted_content".into(), Value::String(enc.to_owned()));
+                    }
+                }
+                text_parts.push(Value::Object(entry));
             }
             other => {
                 warnings.push(ModelWarning::LossyEncode {
@@ -651,6 +720,7 @@ const fn debug_part_kind(part: &ContentPart) -> &'static str {
         ContentPart::ToolResult { .. } => "tool_result",
         ContentPart::ImageOutput { .. } => "image_output",
         ContentPart::AudioOutput { .. } => "audio_output",
+        ContentPart::RedactedThinking { .. } => "redacted_thinking",
     }
 }
 
@@ -742,6 +812,94 @@ fn encode_tool_choice(choice: &ToolChoice) -> Value {
 
 // ── decode helpers ─────────────────────────────────────────────────────────
 
+fn decode_function_call_item(
+    item: &Value,
+    idx: usize,
+    warnings: &mut Vec<ModelWarning>,
+) -> ContentPart {
+    let id = str_field(item, "call_id").to_owned();
+    let item_id = item.get("id").and_then(Value::as_str).map(str::to_owned);
+    let name = str_field(item, "name").to_owned();
+    let args_str = item
+        .get("arguments")
+        .and_then(Value::as_str)
+        .unwrap_or("{}"); // silent-fallback-ok: function_call without arguments = empty-args call (vendor sometimes omits when the schema has no required fields)
+    // Invalid-JSON branch routes through ModelWarning::LossyEncode
+    // and preserves the raw string in a `Value::String` so
+    // downstream replay still sees the bytes the vendor emitted
+    // (invariant #15 LossyEncode channel).
+    let input = if let Ok(v) = serde_json::from_str::<Value>(args_str) {
+        v
+    } else {
+        warnings.push(ModelWarning::LossyEncode {
+            field: format!("output[{idx}].arguments"),
+            detail: "function_call arguments not valid JSON; preserved as raw".into(),
+        });
+        Value::String(args_str.to_owned())
+    };
+    let provider_echoes = if let Some(fc_id) = item_id {
+        vec![ProviderEchoSnapshot::for_provider(
+            PROVIDER_KEY,
+            "id",
+            fc_id,
+        )]
+    } else {
+        Vec::new()
+    };
+    ContentPart::ToolUse {
+        id,
+        name,
+        input,
+        provider_echoes,
+    }
+}
+
+/// Translate one OpenAI Responses `reasoning` output item into the IR
+/// `Thinking` shape. Carries both reader-facing summary text and the
+/// opaque round-trip artifacts (`encrypted_content` + per-item `id`)
+/// the harness must echo on stateless multi-turn replay. Returns
+/// `None` when the item is empty in every dimension.
+fn decode_reasoning_item(item: &Value) -> Option<ContentPart> {
+    let item_id = item.get("id").and_then(Value::as_str).map(str::to_owned);
+    let encrypted = item
+        .get("encrypted_content")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let mut payload = Map::new();
+    if let Some(rid) = &item_id {
+        payload.insert("id".into(), Value::String(rid.clone()));
+    }
+    if let Some(enc) = &encrypted {
+        payload.insert("encrypted_content".into(), Value::String(enc.clone()));
+    }
+    let provider_echoes = if payload.is_empty() {
+        Vec::new()
+    } else {
+        vec![ProviderEchoSnapshot::new(
+            PROVIDER_KEY,
+            Value::Object(payload),
+        )]
+    };
+    let summary_text: String = item
+        .get("summary")
+        .and_then(Value::as_array)
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|s| s.get("text").and_then(Value::as_str))
+                .collect::<Vec<_>>()
+                .join("\n")
+        })
+        .unwrap_or_default(); // silent-fallback-ok: reasoning item with no summary array → empty text
+    if summary_text.is_empty() && provider_echoes.is_empty() {
+        return None;
+    }
+    Some(ContentPart::Thinking {
+        text: summary_text,
+        cache_control: None,
+        provider_echoes,
+    })
+}
+
 fn decode_outputs(raw: &Value, warnings: &mut Vec<ModelWarning>) -> (Vec<ContentPart>, StopReason) {
     let outputs = raw
         .get("output")
@@ -777,6 +935,7 @@ fn decode_outputs(raw: &Value, warnings: &mut Vec<ModelWarning>) -> (Vec<Content
                                             .map(str::to_owned),
                                     },
                                     cache_control: None,
+                                    provider_echoes: Vec::new(),
                                 });
                             }
                         }
@@ -787,45 +946,12 @@ fn decode_outputs(raw: &Value, warnings: &mut Vec<ModelWarning>) -> (Vec<Content
                 }
             }
             Some("reasoning") => {
-                // `reasoning` items carry a summary array of summary_text blocks.
-                let summary = item
-                    .get("summary")
-                    .and_then(Value::as_array)
-                    .cloned()
-                    .unwrap_or_default(); // silent-fallback-ok: reasoning item with no summary array → empty (downstream loop iterates over zero items)
-                for s in summary {
-                    if let Some(text) = s.get("text").and_then(Value::as_str)
-                        && !text.is_empty()
-                    {
-                        content.push(ContentPart::Thinking {
-                            text: text.to_owned(),
-                            signature: None,
-                            cache_control: None,
-                        });
-                    }
+                if let Some(part) = decode_reasoning_item(item) {
+                    content.push(part);
                 }
             }
             Some("function_call") => {
-                let id = str_field(item, "call_id").to_owned();
-                let name = str_field(item, "name").to_owned();
-                let args_str = item
-                    .get("arguments")
-                    .and_then(Value::as_str)
-                    .unwrap_or("{}"); // silent-fallback-ok: function_call without arguments = empty-args call (vendor sometimes omits when the schema has no required fields)
-                // Invalid-JSON branch routes through ModelWarning::LossyEncode
-                // and preserves the raw string in a `Value::String` so
-                // downstream replay still sees the bytes the vendor emitted
-                // (invariant #15 LossyEncode channel).
-                let input = if let Ok(v) = serde_json::from_str::<Value>(args_str) {
-                    v
-                } else {
-                    warnings.push(ModelWarning::LossyEncode {
-                        field: format!("output[{idx}].arguments"),
-                        detail: "function_call arguments not valid JSON; preserved as raw".into(),
-                    });
-                    Value::String(args_str.to_owned())
-                };
-                content.push(ContentPart::ToolUse { id, name, input });
+                content.push(decode_function_call_item(item, idx, warnings));
                 tool_use_seen = true;
             }
             Some(other) => {
@@ -999,7 +1125,11 @@ fn stream_openai_responses(
                             }
                             let id = str_field(item, "call_id").to_owned();
                             let name = str_field(item, "name").to_owned();
-                            yield Ok(StreamDelta::ToolUseStart { id, name });
+                            yield Ok(StreamDelta::ToolUseStart {
+                                id,
+                                name,
+                                provider_echoes: Vec::new(),
+                            });
                             current_tool_open = true;
                         }
                     }
@@ -1013,6 +1143,7 @@ fn stream_openai_responses(
                             }
                             yield Ok(StreamDelta::TextDelta {
                                 text: delta.to_owned(),
+                                provider_echoes: Vec::new(),
                             });
                         }
                     }
@@ -1029,7 +1160,7 @@ fn stream_openai_responses(
                         if let Some(text) = event.get("delta").and_then(Value::as_str) {
                             yield Ok(StreamDelta::ThinkingDelta {
                                 text: text.to_owned(),
-                                signature: None,
+                                provider_echoes: Vec::new(),
                             });
                         }
                     }

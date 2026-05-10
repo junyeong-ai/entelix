@@ -85,7 +85,10 @@ where
             })?;
             let mut results: Vec<ContentPart> = Vec::new();
             for part in &last.content {
-                if let ContentPart::ToolUse { id, name, input } = part {
+                if let ContentPart::ToolUse {
+                    id, name, input, ..
+                } = part
+                {
                     let (content, is_error) =
                         match tools.dispatch(id, name, input.clone(), &ctx).await {
                             Ok(value) => (ToolResultContent::Json(value), false),
@@ -118,6 +121,7 @@ where
                         content,
                         is_error,
                         cache_control: None,
+                        provider_echoes: Vec::new(),
                     });
                 }
             }

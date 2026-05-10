@@ -5,6 +5,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::ir::message::Message;
+use crate::ir::provider_echo::ProviderEchoSnapshot;
 use crate::ir::provider_extensions::ProviderExtensions;
 use crate::ir::reasoning::ReasoningEffort;
 use crate::ir::structured::ResponseFormat;
@@ -126,4 +127,12 @@ pub struct ModelRequest {
     /// knob this wire format cannot honour).
     #[serde(default, skip_serializing_if = "ProviderExtensions::is_empty")]
     pub provider_extensions: ProviderExtensions,
+    /// Vendor-keyed opaque round-trip tokens carrying state from a
+    /// prior turn — OpenAI Responses `previous_response_id` is the
+    /// canonical example. Codecs read entries matching their own
+    /// `Codec::name` and translate to the vendor's chain-pointer
+    /// wire field; non-matching entries are ignored. Empty when the
+    /// request does not chain from a prior turn.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub continued_from: Vec<ProviderEchoSnapshot>,
 }

@@ -806,6 +806,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
                         vec![ContentPart::Text {
                             text: assistant_text.unwrap_or_default(),
                             cache_control: None,
+                            provider_echoes: Vec::new(),
                         }],
                     ));
                     conversation.push(Message::new(
@@ -817,6 +818,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
                                  Re-emit the response as a single valid JSON object that conforms to the schema."
                             ),
                             cache_control: None,
+                            provider_echoes: Vec::new(),
                         }],
                     ));
                 }
@@ -909,6 +911,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
                 vec![ContentPart::Text {
                     text: assistant_text.unwrap_or_default(),
                     cache_control: None,
+                    provider_echoes: Vec::new(),
                 }],
             ));
             conversation.push(Message::new(
@@ -916,6 +919,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
                 vec![ContentPart::Text {
                     text: hint,
                     cache_control: None,
+                    provider_echoes: Vec::new(),
                 }],
             ));
         }

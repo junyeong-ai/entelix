@@ -3,6 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::ir::content::ContentPart;
+use crate::ir::provider_echo::ProviderEchoSnapshot;
 use crate::ir::usage::Usage;
 use crate::ir::warning::ModelWarning;
 use crate::rate_limit::RateLimitSnapshot;
@@ -50,7 +51,9 @@ impl ModelResponse {
         self.content
             .iter()
             .filter_map(|part| match part {
-                ContentPart::ToolUse { id, name, input } => Some(ToolUseRef { id, name, input }),
+                ContentPart::ToolUse {
+                    id, name, input, ..
+                } => Some(ToolUseRef { id, name, input }),
                 _ => None,
             })
             .collect()
@@ -103,6 +106,14 @@ pub struct ModelResponse {
     /// Always non-fatal; consumers may surface them in observability.
     #[serde(default)]
     pub warnings: Vec<ModelWarning>,
+    /// Vendor-keyed opaque round-trip tokens that ride at the
+    /// response root (rather than on a single content part) —
+    /// OpenAI Responses `Response.id` is the canonical example,
+    /// captured here so the *next* `ModelRequest::continued_from`
+    /// can chain via `previous_response_id`. Codecs only populate
+    /// entries matching their own `Codec::name`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub provider_echoes: Vec<ProviderEchoSnapshot>,
 }
 
 /// Why a refusal happened, when the model halts on a non-success

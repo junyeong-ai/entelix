@@ -199,7 +199,10 @@ async fn decode_stream_tool_use_round_trips() {
     let response = aggregator.finalize().unwrap();
     assert_eq!(response.stop_reason, StopReason::ToolUse);
     let part = response.content.first().unwrap();
-    if let entelix_core::ir::ContentPart::ToolUse { id, name, input } = part {
+    if let entelix_core::ir::ContentPart::ToolUse {
+        id, name, input, ..
+    } = part
+    {
         assert_eq!(id, "call_1");
         assert_eq!(name, "double");
         assert_eq!(input["n"], 21);

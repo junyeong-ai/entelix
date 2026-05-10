@@ -74,6 +74,7 @@ fn current_branch_messages_includes_tool_results_as_tool_role() {
             id: "u1".into(),
             name: "calc".into(),
             input: serde_json::json!({"expr": "2+2"}),
+            provider_echoes: Vec::new(),
         }],
         usage: None,
         timestamp: Utc::now(),
@@ -229,7 +230,11 @@ fn replay_into_observes_thinking_rate_limit_cancelled_error_interrupt_variants()
     let mut s = SessionGraph::new("t-new-variants");
     s.append(GraphEvent::ThinkingDelta {
         text: "let me think".into(),
-        signature: Some("sig-1".into()),
+        provider_echoes: vec![entelix_core::ir::ProviderEchoSnapshot::for_provider(
+            "anthropic-messages",
+            "signature",
+            "sig-1",
+        )],
         timestamp: Utc::now(),
     });
     s.append(GraphEvent::RateLimit {

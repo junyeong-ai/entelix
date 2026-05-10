@@ -97,11 +97,10 @@ async fn vertex_gemini_system_prompt_multi_turn() {
         .content
         .iter()
         .filter_map(|part| match part {
-            ContentPart::Text { text, .. } => Some(text.clone()),
+            ContentPart::Text { text, .. } => Some(text.as_str()),
             _ => None,
         })
-        .collect::<Vec<_>>()
-        .join("");
+        .collect();
     assert!(
         !visible_text.trim().is_empty(),
         "multi-turn assistant continuation must produce a visible text reply"

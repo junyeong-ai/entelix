@@ -102,9 +102,7 @@ async fn vertex_gemini_image_input_round_trip() {
         Role::User,
         vec![
             ContentPart::image(MediaSource::base64("image/png", ONE_PX_WHITE_PNG_BASE64)),
-            ContentPart::text(
-                "Describe the dominant colour of this image in one short sentence.",
-            ),
+            ContentPart::text("Describe the dominant colour of this image in one short sentence."),
         ],
     );
 
@@ -127,11 +125,10 @@ async fn vertex_gemini_image_input_round_trip() {
         .content
         .iter()
         .filter_map(|part| match part {
-            ContentPart::Text { text, .. } => Some(text.clone()),
+            ContentPart::Text { text, .. } => Some(text.as_str()),
             _ => None,
         })
-        .collect::<Vec<_>>()
-        .join("");
+        .collect();
     assert!(
         !visible_text.trim().is_empty(),
         "multimodal response must include at least one non-empty visible text block; got: {response:?}"

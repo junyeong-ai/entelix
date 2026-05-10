@@ -52,14 +52,38 @@ async fn main() -> Result<()> {
         let delta = item?;
         match &delta {
             StreamDelta::Start { id, model } => println!("  start  id={id} model={model}"),
-            StreamDelta::TextDelta { text } => print!("  text   ┊ {text}"),
-            StreamDelta::ThinkingDelta { text, signature } => {
-                print!("  think  ┊ {text}");
-                if signature.is_some() {
-                    println!(" [sig]");
+            StreamDelta::TextDelta {
+                text,
+                provider_echoes,
+            } => {
+                print!("  text   ┊ {text}");
+                if !provider_echoes.is_empty() {
+                    print!(" [echo]");
                 }
             }
-            StreamDelta::ToolUseStart { id, name } => println!("  tool>  id={id} name={name}"),
+            StreamDelta::ThinkingDelta {
+                text,
+                provider_echoes,
+            } => {
+                print!("  think  ┊ {text}");
+                if !provider_echoes.is_empty() {
+                    println!(" [echo]");
+                }
+            }
+            StreamDelta::ToolUseStart {
+                id,
+                name,
+                provider_echoes,
+            } => {
+                println!(
+                    "  tool>  id={id} name={name}{}",
+                    if provider_echoes.is_empty() {
+                        ""
+                    } else {
+                        " [echo]"
+                    }
+                );
+            }
             StreamDelta::ToolUseInputDelta { partial_json } => {
                 println!("  tool…  {partial_json}");
             }

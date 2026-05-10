@@ -121,10 +121,15 @@ async fn anthropic_stream_yields_thinking_with_signature() {
     assert_eq!(response.content.len(), 2);
     match &response.content[0] {
         ContentPart::Thinking {
-            text, signature, ..
+            text,
+            provider_echoes,
+            ..
         } => {
             assert_eq!(text, "Let me reason. Two plus two.");
-            assert_eq!(signature.as_deref(), Some("sig-001"));
+            let signature =
+                entelix_core::ir::find_provider_echo(provider_echoes, "anthropic-messages")
+                    .and_then(|e| e.payload_str("signature"));
+            assert_eq!(signature, Some("sig-001"));
         }
         other => panic!("expected Thinking, got {other:?}"),
     }
@@ -165,11 +170,15 @@ async fn gemini_stream_yields_thinking_when_part_is_thought() {
         .find_map(|p| matches!(p, ContentPart::Thinking { .. }).then_some(p))
         .expect("thinking block must round-trip");
     if let ContentPart::Thinking {
-        text, signature, ..
+        text,
+        provider_echoes,
+        ..
     } = thinking
     {
         assert!(text.contains("Reasoning step 1"));
-        assert_eq!(signature.as_deref(), Some("sig-g1"));
+        let signature = entelix_core::ir::find_provider_echo(provider_echoes, "gemini")
+            .and_then(|e| e.payload_str("thought_signature"));
+        assert_eq!(signature, Some("sig-g1"));
     }
     let text = response
         .content
@@ -234,11 +243,16 @@ async fn aggregator_thinking_then_text_preserves_intra_turn_order() {
     .unwrap();
     agg.push(StreamDelta::ThinkingDelta {
         text: "thoughts".into(),
-        signature: Some("s".into()),
+        provider_echoes: vec![entelix_core::ir::ProviderEchoSnapshot::for_provider(
+            "anthropic-messages",
+            "signature",
+            "s",
+        )],
     })
     .unwrap();
     agg.push(StreamDelta::TextDelta {
         text: "answer".into(),
+        provider_echoes: Vec::new(),
     })
     .unwrap();
     agg.push(StreamDelta::Stop {

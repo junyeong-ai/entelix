@@ -158,14 +158,17 @@ fn sampling_content_to_part(c: &SamplingContent) -> ContentPart {
         SamplingContent::Text { text } => ContentPart::Text {
             text: text.clone(),
             cache_control: None,
+            provider_echoes: Vec::new(),
         },
         SamplingContent::Image { data, mime_type } => ContentPart::Image {
             source: MediaSource::base64(mime_type.clone(), data.clone()),
             cache_control: None,
+            provider_echoes: Vec::new(),
         },
         SamplingContent::Audio { data, mime_type } => ContentPart::Audio {
             source: MediaSource::base64(mime_type.clone(), data.clone()),
             cache_control: None,
+            provider_echoes: Vec::new(),
         },
     }
 }
@@ -387,12 +390,13 @@ mod tests {
         let parts = vec![
             ContentPart::Thinking {
                 text: "internal".into(),
-                signature: None,
                 cache_control: None,
+                provider_echoes: Vec::new(),
             },
             ContentPart::Text {
                 text: "user-facing".into(),
                 cache_control: None,
+                provider_echoes: Vec::new(),
             },
         ];
         let c = first_emittable_content(&parts);
@@ -403,8 +407,8 @@ mod tests {
     fn first_emittable_content_empty_when_no_emittable() {
         let parts = vec![ContentPart::Thinking {
             text: "internal".into(),
-            signature: None,
             cache_control: None,
+            provider_echoes: Vec::new(),
         }];
         let c = first_emittable_content(&parts);
         assert!(matches!(c, SamplingContent::Text { ref text } if text.is_empty()));

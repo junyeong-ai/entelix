@@ -12,6 +12,7 @@ mod cache;
 mod capabilities;
 mod content;
 mod message;
+mod provider_echo;
 mod provider_extensions;
 mod reasoning;
 mod request;
@@ -28,6 +29,7 @@ pub use cache::{CacheControl, CacheTtl};
 pub use capabilities::Capabilities;
 pub use content::{ContentPart, ToolResultContent};
 pub use message::{Message, Role};
+pub use provider_echo::{ProviderEchoSnapshot, find_provider_echo};
 pub use provider_extensions::{
     AnthropicExt, BedrockExt, BedrockGuardrail, GeminiExt, GeminiSafetyOverride, OpenAiChatExt,
     OpenAiResponsesExt, ProviderExtensions, ReasoningSummary, ServiceTier, UrlContext,

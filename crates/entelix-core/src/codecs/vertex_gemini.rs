@@ -137,8 +137,7 @@ mod tests {
         let codec = VertexGeminiCodec::new();
         let encoded = codec.encode(&req()).unwrap();
         assert_eq!(
-            encoded.path,
-            "/publishers/google/models/gemini-2.5-flash:generateContent",
+            encoded.path, "/publishers/google/models/gemini-3.1-pro:generateContent",
             "Vertex Gemini codec must emit the publisher-partial path so VertexTransport can prefix project + location"
         );
     }
@@ -150,7 +149,7 @@ mod tests {
         assert!(encoded.streaming);
         assert_eq!(
             encoded.path,
-            "/publishers/google/models/gemini-2.5-flash:streamGenerateContent?alt=sse",
+            "/publishers/google/models/gemini-3.1-pro:streamGenerateContent?alt=sse",
         );
     }
 

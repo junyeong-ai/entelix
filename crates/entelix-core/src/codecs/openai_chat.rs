@@ -107,6 +107,7 @@ impl Codec for OpenAiChatCodec {
             usage,
             rate_limit: None,
             warnings,
+            provider_echoes: Vec::new(),
         })
     }
 
@@ -536,6 +537,13 @@ fn encode_user_content(
                         .into(),
                 });
             }
+            ContentPart::RedactedThinking { .. } => {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: path(),
+                    detail: "OpenAI Chat does not accept redacted_thinking blocks; block dropped"
+                        .into(),
+                });
+            }
         }
     }
     Value::Array(arr)
@@ -572,7 +580,9 @@ fn encode_assistant_message(
     for (part_idx, part) in parts.iter().enumerate() {
         match part {
             ContentPart::Text { text, .. } => text_buf.push_str(text),
-            ContentPart::ToolUse { id, name, input } => {
+            ContentPart::ToolUse {
+                id, name, input, ..
+            } => {
                 tool_calls.push(json!({
                     "id": id,
                     "type": "function",
@@ -645,6 +655,7 @@ const fn debug_part_kind(part: &ContentPart) -> &'static str {
         ContentPart::ToolResult { .. } => "tool_result",
         ContentPart::ImageOutput { .. } => "image_output",
         ContentPart::AudioOutput { .. } => "audio_output",
+        ContentPart::RedactedThinking { .. } => "redacted_thinking",
     }
 }
 
@@ -735,6 +746,7 @@ fn decode_assistant_message(message: &Value, warnings: &mut Vec<ModelWarning>) -
                         title: uc.get("title").and_then(Value::as_str).map(str::to_owned),
                     },
                     cache_control: None,
+                    provider_echoes: Vec::new(),
                 });
             }
         }
@@ -764,7 +776,12 @@ fn decode_assistant_message(message: &Value, warnings: &mut Vec<ModelWarning>) -
                 });
                 Value::String(arguments.to_owned())
             };
-            parts.push(ContentPart::ToolUse { id, name, input });
+            parts.push(ContentPart::ToolUse {
+                id,
+                name,
+                input,
+                provider_echoes: Vec::new(),
+            });
         }
     }
     parts
@@ -924,6 +941,7 @@ fn stream_openai_chat(
                     }
                     yield Ok(StreamDelta::TextDelta {
                         text: text.to_owned(),
+                        provider_echoes: Vec::new(),
                     });
                 }
                 if let Some(tool_calls) = delta.get("tool_calls").and_then(Value::as_array) {
@@ -961,6 +979,7 @@ fn stream_openai_chat(
                             yield Ok(StreamDelta::ToolUseStart {
                                 id,
                                 name: name.to_owned(),
+                                provider_echoes: Vec::new(),
                             });
                             current_tool_index = Some(idx);
                         }

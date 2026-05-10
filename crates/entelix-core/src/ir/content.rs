@@ -7,6 +7,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::ir::cache::CacheControl;
+use crate::ir::provider_echo::ProviderEchoSnapshot;
 use crate::ir::source::{CitationSource, MediaSource};
 
 /// One block of content inside a [`Message`](crate::ir::Message).
@@ -17,12 +18,20 @@ use crate::ir::source::{CitationSource, MediaSource};
 /// emitting native wire shape or a `LossyEncode` warning for each.
 ///
 /// Every input-side variant carries an
-/// `Option<CacheControl>` field () — operators mark a
+/// `Option<CacheControl>` field — operators mark a
 /// block as cached and codecs that support per-block caching
 /// (Anthropic, Bedrock-on-Anthropic) emit the directive natively.
 /// Other codecs emit `LossyEncode`. The `ToolUse` variant — the
 /// assistant's outbound call — does not carry caching: the model
 /// emits it, there is nothing to cache.
+///
+/// Every variant also carries
+/// `provider_echoes: Vec<ProviderEchoSnapshot>` — vendor-keyed opaque
+/// round-trip tokens this part must echo back on the next turn
+/// (Gemini 3.x `thought_signature`, Anthropic `signature`, OpenAI
+/// Responses `encrypted_content`, …). Defaults to empty. Codecs
+/// only read / write entries matching their own `Codec::name`. See
+/// [`ProviderEchoSnapshot`] for the cross-vendor design.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -34,6 +43,10 @@ pub enum ContentPart {
         /// Per-block cache directive.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         cache_control: Option<CacheControl>,
+        /// Vendor opaque round-trip tokens (Gemini emits
+        /// `thought_signature` on `text` parts in reasoning turns).
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
 
     /// An image input.
@@ -43,6 +56,9 @@ pub enum ContentPart {
         /// Per-block cache directive.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         cache_control: Option<CacheControl>,
+        /// Vendor opaque round-trip tokens.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
 
     /// An audio input.
@@ -52,6 +68,9 @@ pub enum ContentPart {
         /// Per-block cache directive.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         cache_control: Option<CacheControl>,
+        /// Vendor opaque round-trip tokens.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
 
     /// A video input.
@@ -61,6 +80,9 @@ pub enum ContentPart {
         /// Per-block cache directive.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         cache_control: Option<CacheControl>,
+        /// Vendor opaque round-trip tokens.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
 
     /// A document input (PDF, plain-text file, etc.).
@@ -74,6 +96,9 @@ pub enum ContentPart {
         /// Per-block cache directive.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         cache_control: Option<CacheControl>,
+        /// Vendor opaque round-trip tokens.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
 
     /// A reasoning / extended-thinking block produced by the assistant
@@ -82,17 +107,38 @@ pub enum ContentPart {
     /// Surfaced as its own variant (rather than mixed with `Text`) so
     /// recipes can show / hide / cache reasoning independently. Order
     /// relative to `Text` parts is preserved — vendors that rely on
-    /// chain-of-thought integrity (Anthropic thinking) require the
-    /// original block order on follow-up turns.
+    /// chain-of-thought integrity (Anthropic thinking, Gemini 3.x
+    /// `thought_signature`) require the original block order on
+    /// follow-up turns.
+    ///
+    /// Vendor opaque tokens (Anthropic `signature`, Gemini
+    /// `thought_signature`, OpenAI Responses reasoning-item
+    /// `encrypted_content`) ride on `provider_echoes`.
     Thinking {
         /// The reasoning text.
         text: String,
-        /// Vendor signature for redaction-resistant replay (Anthropic
-        /// supplies; others leave `None`).
-        signature: Option<String>,
         /// Per-block cache directive.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         cache_control: Option<CacheControl>,
+        /// Vendor opaque round-trip tokens.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        provider_echoes: Vec<ProviderEchoSnapshot>,
+    },
+
+    /// A reasoning block the safety system flagged for redaction.
+    /// Carries no harness-readable text — the entire block is an
+    /// opaque round-trip artifact preserved in `provider_echoes`.
+    ///
+    /// Emitted by Anthropic Claude 3.7 Sonnet only; Claude 4.x and
+    /// later do not produce this variant. Codecs that don't recognise
+    /// it on encode emit `LossyEncode` (invariant 6 — the prior
+    /// silent-drop is replaced by a typed channel).
+    RedactedThinking {
+        /// Vendor opaque round-trip tokens. Anthropic emits
+        /// `{ "data": "<base64>" }` here under provider key
+        /// `"anthropic-messages"`.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
 
     /// A grounded citation produced by the assistant — the `snippet`
@@ -105,11 +151,20 @@ pub enum ContentPart {
         /// Per-block cache directive.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         cache_control: Option<CacheControl>,
+        /// Vendor opaque round-trip tokens.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
 
     /// A tool call emitted by the assistant. The harness dispatches it.
     /// Tool calls are model output — they do not carry a cache
     /// directive (the model emits each call afresh).
+    ///
+    /// Vendor opaque tokens (Gemini 3.x `thought_signature` on
+    /// `functionCall` parts, OpenAI Responses `function_call.id`)
+    /// ride on `provider_echoes`. Missing the Gemini token on the
+    /// first `functionCall` of a step yields HTTP 400 on the next
+    /// turn — codecs MUST round-trip it.
     ToolUse {
         /// Stable ID matched against the corresponding `ToolResult`.
         id: String,
@@ -118,6 +173,9 @@ pub enum ContentPart {
         /// JSON arguments for the tool — must validate against the
         /// tool's `input_schema` before dispatch.
         input: serde_json::Value,
+        /// Vendor opaque round-trip tokens.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
 
     /// An image the assistant produced (vendor-managed image
@@ -132,6 +190,9 @@ pub enum ContentPart {
         /// inline base64 ([`MediaSource::Base64`]); some return a
         /// hosted URL.
         source: MediaSource,
+        /// Vendor opaque round-trip tokens.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
 
     /// Audio the assistant produced (text-to-speech reply). Distinct
@@ -144,6 +205,9 @@ pub enum ContentPart {
         /// transcript text through the operator's logging channel
         /// without re-decoding the audio.
         transcript: Option<String>,
+        /// Vendor opaque round-trip tokens.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
 
     /// The harness's reply to a previous `ToolUse` call.
@@ -172,6 +236,9 @@ pub enum ContentPart {
         /// turns is the canonical RAG-cache pattern.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         cache_control: Option<CacheControl>,
+        /// Vendor opaque round-trip tokens.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
 }
 
@@ -182,6 +249,7 @@ impl ContentPart {
         Self::Text {
             text: text.into(),
             cache_control: None,
+            provider_echoes: Vec::new(),
         }
     }
 
@@ -191,6 +259,7 @@ impl ContentPart {
         Self::Image {
             source,
             cache_control: None,
+            provider_echoes: Vec::new(),
         }
     }
 
@@ -200,6 +269,7 @@ impl ContentPart {
         Self::Audio {
             source,
             cache_control: None,
+            provider_echoes: Vec::new(),
         }
     }
 
@@ -209,6 +279,7 @@ impl ContentPart {
         Self::Video {
             source,
             cache_control: None,
+            provider_echoes: Vec::new(),
         }
     }
 
@@ -219,23 +290,35 @@ impl ContentPart {
             source,
             name,
             cache_control: None,
+            provider_echoes: Vec::new(),
         }
     }
 
-    /// Build a thinking part with no signature.
+    /// Build a thinking part with no opaque tokens. Codecs attach
+    /// vendor opaque tokens via [`Self::with_provider_echo`].
     #[must_use]
     pub fn thinking(text: impl Into<String>) -> Self {
         Self::Thinking {
             text: text.into(),
-            signature: None,
             cache_control: None,
+            provider_echoes: Vec::new(),
+        }
+    }
+
+    /// Build a redacted-thinking part. Anthropic Claude 3.7 Sonnet
+    /// emits these for safety-flagged reasoning; the codec attaches
+    /// the opaque `data` payload via [`Self::with_provider_echo`].
+    #[must_use]
+    pub fn redacted_thinking() -> Self {
+        Self::RedactedThinking {
+            provider_echoes: Vec::new(),
         }
     }
 
     /// Borrow the cache directive on this part, when any is set.
     /// Returns `None` for assistant-output variants (`ToolUse`,
-    /// `ImageOutput`, `AudioOutput`) — they are produced fresh per
-    /// turn and have nothing to cache.
+    /// `ImageOutput`, `AudioOutput`, `RedactedThinking`) — they are
+    /// produced fresh per turn and have nothing to cache.
     #[must_use]
     pub const fn cache_control(&self) -> Option<&CacheControl> {
         match self {
@@ -247,57 +330,137 @@ impl ContentPart {
             | Self::Thinking { cache_control, .. }
             | Self::Citation { cache_control, .. }
             | Self::ToolResult { cache_control, .. } => cache_control.as_ref(),
-            Self::ToolUse { .. } | Self::ImageOutput { .. } | Self::AudioOutput { .. } => None,
+            Self::ToolUse { .. }
+            | Self::ImageOutput { .. }
+            | Self::AudioOutput { .. }
+            | Self::RedactedThinking { .. } => None,
+        }
+    }
+
+    /// Borrow this part's vendor opaque round-trip tokens. Codecs use
+    /// this to recover their own blob (matched by `Codec::name`) on
+    /// the encode side.
+    #[must_use]
+    pub fn provider_echoes(&self) -> &[ProviderEchoSnapshot] {
+        match self {
+            Self::Text {
+                provider_echoes, ..
+            }
+            | Self::Image {
+                provider_echoes, ..
+            }
+            | Self::Audio {
+                provider_echoes, ..
+            }
+            | Self::Video {
+                provider_echoes, ..
+            }
+            | Self::Document {
+                provider_echoes, ..
+            }
+            | Self::Thinking {
+                provider_echoes, ..
+            }
+            | Self::RedactedThinking { provider_echoes }
+            | Self::Citation {
+                provider_echoes, ..
+            }
+            | Self::ToolUse {
+                provider_echoes, ..
+            }
+            | Self::ImageOutput {
+                provider_echoes, ..
+            }
+            | Self::AudioOutput {
+                provider_echoes, ..
+            }
+            | Self::ToolResult {
+                provider_echoes, ..
+            } => provider_echoes,
         }
     }
 
     /// Attach (or clear) a cache directive on this part. Returns the
-    /// value back so callers can chain. No-op on `ToolUse` (model
+    /// value back so callers can chain. No-op on `ToolUse` /
+    /// `ImageOutput` / `AudioOutput` / `RedactedThinking` (model
     /// output never carries caching) — the directive is silently
     /// dropped.
     #[must_use]
     pub fn with_cache_control(self, cache: CacheControl) -> Self {
         match self {
-            Self::Text { text, .. } => Self::Text {
+            Self::Text {
+                text,
+                provider_echoes,
+                ..
+            } => Self::Text {
                 text,
                 cache_control: Some(cache),
+                provider_echoes,
             },
-            Self::Image { source, .. } => Self::Image {
+            Self::Image {
+                source,
+                provider_echoes,
+                ..
+            } => Self::Image {
                 source,
                 cache_control: Some(cache),
+                provider_echoes,
             },
-            Self::Audio { source, .. } => Self::Audio {
+            Self::Audio {
+                source,
+                provider_echoes,
+                ..
+            } => Self::Audio {
                 source,
                 cache_control: Some(cache),
+                provider_echoes,
             },
-            Self::Video { source, .. } => Self::Video {
+            Self::Video {
+                source,
+                provider_echoes,
+                ..
+            } => Self::Video {
                 source,
                 cache_control: Some(cache),
+                provider_echoes,
             },
-            Self::Document { source, name, .. } => Self::Document {
+            Self::Document {
+                source,
+                name,
+                provider_echoes,
+                ..
+            } => Self::Document {
                 source,
                 name,
                 cache_control: Some(cache),
+                provider_echoes,
             },
             Self::Thinking {
-                text, signature, ..
+                text,
+                provider_echoes,
+                ..
             } => Self::Thinking {
                 text,
-                signature,
                 cache_control: Some(cache),
+                provider_echoes,
             },
             Self::Citation {
-                snippet, source, ..
+                snippet,
+                source,
+                provider_echoes,
+                ..
             } => Self::Citation {
                 snippet,
                 source,
                 cache_control: Some(cache),
+                provider_echoes,
             },
             Self::ToolResult {
                 tool_use_id,
                 name,
                 content,
                 is_error,
+                provider_echoes,
                 ..
             } => Self::ToolResult {
                 tool_use_id,
@@ -305,10 +468,58 @@ impl ContentPart {
                 content,
                 is_error,
                 cache_control: Some(cache),
+                provider_echoes,
             },
-            other
-            @ (Self::ToolUse { .. } | Self::ImageOutput { .. } | Self::AudioOutput { .. }) => other,
+            other @ (Self::ToolUse { .. }
+            | Self::ImageOutput { .. }
+            | Self::AudioOutput { .. }
+            | Self::RedactedThinking { .. }) => other,
         }
+    }
+
+    /// Append a vendor opaque round-trip token to this part. Codecs
+    /// call this on the decode side after extracting the wire-shape
+    /// signature / encrypted_content / data field. Returns the value
+    /// back so callers can chain.
+    #[must_use]
+    pub fn with_provider_echo(mut self, echo: ProviderEchoSnapshot) -> Self {
+        match &mut self {
+            Self::Text {
+                provider_echoes, ..
+            }
+            | Self::Image {
+                provider_echoes, ..
+            }
+            | Self::Audio {
+                provider_echoes, ..
+            }
+            | Self::Video {
+                provider_echoes, ..
+            }
+            | Self::Document {
+                provider_echoes, ..
+            }
+            | Self::Thinking {
+                provider_echoes, ..
+            }
+            | Self::RedactedThinking { provider_echoes }
+            | Self::Citation {
+                provider_echoes, ..
+            }
+            | Self::ToolUse {
+                provider_echoes, ..
+            }
+            | Self::ImageOutput {
+                provider_echoes, ..
+            }
+            | Self::AudioOutput {
+                provider_echoes, ..
+            }
+            | Self::ToolResult {
+                provider_echoes, ..
+            } => provider_echoes.push(echo),
+        }
+        self
     }
 }
 

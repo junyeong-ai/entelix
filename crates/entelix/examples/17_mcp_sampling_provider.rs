@@ -94,10 +94,12 @@ impl Codec for EchoCodec {
             content: vec![ContentPart::Text {
                 text: format!("(echo) {last_user}"),
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }],
             usage: Usage::default(),
             rate_limit: None,
             warnings: warnings_in,
+            provider_echoes: Vec::new(),
         })
     }
 }

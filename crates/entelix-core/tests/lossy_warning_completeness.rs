@@ -79,6 +79,7 @@ fn rows() -> Vec<Row<'static>> {
             request: req_with_user_part(ContentPart::Audio {
                 source: MediaSource::base64("audio/wav", "AAAA"),
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }),
             native: &["openai-chat", "openai-responses", "gemini"],
             field_hint: "messages[0].content[0]",
@@ -88,6 +89,7 @@ fn rows() -> Vec<Row<'static>> {
             request: req_with_user_part(ContentPart::Video {
                 source: MediaSource::base64("video/mp4", "AAAA"),
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }),
             native: &["gemini"],
             field_hint: "messages[0].content[0]",
@@ -98,6 +100,7 @@ fn rows() -> Vec<Row<'static>> {
                 source: MediaSource::base64("application/pdf", "AAAA"),
                 name: Some("policy.pdf".into()),
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }),
             // Anthropic + Bedrock + Gemini accept inline base64 docs natively;
             // OpenAI Chat / Responses require Files-API FileId so a base64
@@ -109,8 +112,8 @@ fn rows() -> Vec<Row<'static>> {
             label: "thinking_block_on_assistant",
             request: req_with_assistant_part(ContentPart::Thinking {
                 text: "let me reason".into(),
-                signature: None,
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }),
             // Anthropic, Gemini, Bedrock (Anthropic-on-Bedrock), and OpenAI
             // Responses round-trip thinking; OpenAI Chat does not accept it on

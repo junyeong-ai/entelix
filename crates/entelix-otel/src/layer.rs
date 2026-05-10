@@ -800,6 +800,7 @@ mod tests {
             usage: Usage::new(100, 50),
             rate_limit: None,
             warnings: Vec::new(),
+            provider_echoes: Vec::new(),
         }
     }
 

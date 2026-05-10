@@ -38,33 +38,50 @@ fn message_roundtrip() {
 
 #[test]
 fn content_part_roundtrip_all_variants() {
+    let signature_echo = entelix_core::ir::ProviderEchoSnapshot::for_provider(
+        "anthropic-messages",
+        "signature",
+        "sig-001",
+    );
     let parts = vec![
         ContentPart::text("alpha"),
         ContentPart::Image {
             source: MediaSource::url("https://example.com/x.png"),
             cache_control: None,
+            provider_echoes: Vec::new(),
         },
         ContentPart::Image {
             source: MediaSource::base64("image/png", "iVBORw0KGgo="),
             cache_control: None,
+            provider_echoes: Vec::new(),
         },
         ContentPart::Audio {
             source: MediaSource::base64("audio/wav", "AAAA"),
             cache_control: None,
+            provider_echoes: Vec::new(),
         },
         ContentPart::Video {
             source: MediaSource::url("https://example.com/clip.mp4"),
             cache_control: None,
+            provider_echoes: Vec::new(),
         },
         ContentPart::Document {
             source: MediaSource::file_id("file-abc"),
             name: Some("contract.pdf".into()),
             cache_control: None,
+            provider_echoes: Vec::new(),
         },
         ContentPart::Thinking {
             text: "let me reason about this".into(),
-            signature: Some("sig-001".into()),
             cache_control: None,
+            provider_echoes: vec![signature_echo],
+        },
+        ContentPart::RedactedThinking {
+            provider_echoes: vec![entelix_core::ir::ProviderEchoSnapshot::for_provider(
+                "anthropic-messages",
+                "data",
+                "EmwKAhgBEgy3va3pzix",
+            )],
         },
         ContentPart::Citation {
             snippet: "according to the spec".into(),
@@ -73,11 +90,13 @@ fn content_part_roundtrip_all_variants() {
                 title: Some("Spec".into()),
             },
             cache_control: None,
+            provider_echoes: Vec::new(),
         },
         ContentPart::ToolUse {
             id: "tool_1".into(),
             name: "calculator".into(),
             input: serde_json::json!({ "expr": "2+2" }),
+            provider_echoes: Vec::new(),
         },
         ContentPart::ToolResult {
             tool_use_id: "tool_1".into(),
@@ -85,6 +104,7 @@ fn content_part_roundtrip_all_variants() {
             content: ToolResultContent::Text("4".into()),
             is_error: false,
             cache_control: None,
+            provider_echoes: Vec::new(),
         },
         ContentPart::ToolResult {
             tool_use_id: "tool_2".into(),
@@ -92,6 +112,7 @@ fn content_part_roundtrip_all_variants() {
             content: ToolResultContent::Json(serde_json::json!({ "ok": true })),
             is_error: false,
             cache_control: None,
+            provider_echoes: Vec::new(),
         },
     ];
     for p in &parts {
@@ -213,6 +234,7 @@ fn model_response_full_roundtrip() {
         usage: Usage::new(5, 1),
         rate_limit: None,
         warnings: vec![],
+        provider_echoes: Vec::new(),
     };
     assert_eq!(roundtrip(&resp), resp);
 }
@@ -228,6 +250,7 @@ fn model_response_first_text_skips_non_text_blocks() {
                 id: "tu_1".into(),
                 name: "lookup".into(),
                 input: serde_json::json!({"q": "x"}),
+                provider_echoes: Vec::new(),
             },
             ContentPart::text("the answer"),
             ContentPart::text("with a follow-up"),
@@ -235,6 +258,7 @@ fn model_response_first_text_skips_non_text_blocks() {
         usage: Usage::default(),
         rate_limit: None,
         warnings: vec![],
+        provider_echoes: Vec::new(),
     };
     assert_eq!(resp.first_text(), Some("the answer"));
     assert_eq!(resp.full_text(), "the answer\nwith a follow-up");
@@ -255,10 +279,12 @@ fn model_response_accessors_no_text_blocks_return_none() {
             id: "tu_1".into(),
             name: "lookup".into(),
             input: serde_json::json!({}),
+            provider_echoes: Vec::new(),
         }],
         usage: Usage::default(),
         rate_limit: None,
         warnings: vec![],
+        provider_echoes: Vec::new(),
     };
     assert_eq!(resp.first_text(), None);
     assert_eq!(resp.full_text(), "");

@@ -67,6 +67,7 @@ fn encode_assistant_tool_use_emits_separate_function_call_item() {
                     id: "call_1".into(),
                     name: "double".into(),
                     input: json!({"n": 21}),
+                    provider_echoes: Vec::new(),
                 },
             ],
         )],
@@ -96,6 +97,7 @@ fn encode_tool_result_emits_function_call_output_item() {
                 content: ToolResultContent::Text("42".into()),
                 is_error: false,
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }],
         )],
         ..ModelRequest::default()
@@ -186,7 +188,10 @@ fn decode_tool_use_response() {
         .decode(body.to_string().as_bytes(), Vec::new())
         .unwrap();
     assert_eq!(response.stop_reason, StopReason::ToolUse);
-    if let ContentPart::ToolUse { id, name, input } = &response.content[0] {
+    if let ContentPart::ToolUse {
+        id, name, input, ..
+    } = &response.content[0]
+    {
         assert_eq!(id, "call_a");
         assert_eq!(name, "double");
         assert_eq!(input["n"], 21);

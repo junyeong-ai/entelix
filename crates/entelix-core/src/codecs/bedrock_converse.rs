@@ -33,10 +33,17 @@ use crate::codecs::codec::{Codec, EncodedRequest};
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, ContentPart, MediaSource, ModelRequest, ModelResponse, ModelWarning,
-    OutputStrategy, ReasoningEffort, RefusalReason, ResponseFormat, Role, StopReason, ToolChoice,
-    ToolKind, ToolResultContent, Usage,
+    OutputStrategy, ProviderEchoSnapshot, ReasoningEffort, RefusalReason, ResponseFormat, Role,
+    StopReason, ToolChoice, ToolKind, ToolResultContent, Usage, find_provider_echo,
 };
 use crate::rate_limit::RateLimitSnapshot;
+
+/// Provider key for [`BedrockConverseCodec`] — matches `Codec::name`
+/// and identifies this vendor's entries in [`ProviderEchoSnapshot`].
+/// Bedrock Converse hosts both Anthropic Claude and Amazon Nova
+/// reasoning models under the identical `reasoningContent` wire shape;
+/// model-family branching lives inside this codec, not on the IR.
+const PROVIDER_KEY: &str = "bedrock-converse";
 
 const DEFAULT_MAX_CONTEXT_TOKENS: u32 = 200_000;
 
@@ -119,6 +126,7 @@ impl Codec for BedrockConverseCodec {
             usage,
             rate_limit: None,
             warnings,
+            provider_echoes: Vec::new(),
         })
     }
 
@@ -722,6 +730,14 @@ fn encode_user_content(
                         .into(),
                 });
             }
+            ContentPart::RedactedThinking { .. } => {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: path(),
+                    detail: "Bedrock Converse does not accept redacted_thinking blocks on \
+                             user-role input; block dropped"
+                        .into(),
+                });
+            }
         }
         attach_cache_point(&mut out, cache, path, warnings);
     }
@@ -739,7 +755,9 @@ fn encode_assistant_content(
         let cache = content_part_cache_control(part);
         match part {
             ContentPart::Text { text, .. } => out.push(json!({ "text": text })),
-            ContentPart::ToolUse { id, name, input } => {
+            ContentPart::ToolUse {
+                id, name, input, ..
+            } => {
                 out.push(json!({
                     "toolUse": {
                         "toolUseId": id,
@@ -749,14 +767,43 @@ fn encode_assistant_content(
                 }));
             }
             ContentPart::Thinking {
-                text, signature, ..
+                text,
+                provider_echoes,
+                ..
             } => {
                 let mut inner = Map::new();
                 inner.insert("text".into(), Value::String(text.clone()));
-                if let Some(sig) = signature {
-                    inner.insert("signature".into(), Value::String(sig.clone()));
+                if let Some(sig) = find_provider_echo(provider_echoes, PROVIDER_KEY)
+                    .and_then(|snap| snap.payload_str("signature"))
+                {
+                    inner.insert("signature".into(), Value::String(sig.to_owned()));
                 }
-                out.push(json!({ "reasoningContent": { "reasoningText": Value::Object(inner) } }));
+                let mut reasoning = Map::new();
+                reasoning.insert("reasoningText".into(), Value::Object(inner));
+                if let Some(redacted) = find_provider_echo(provider_echoes, PROVIDER_KEY)
+                    .and_then(|e| e.payload_str("redacted_content"))
+                {
+                    reasoning.insert("redactedContent".into(), Value::String(redacted.to_owned()));
+                }
+                out.push(json!({ "reasoningContent": Value::Object(reasoning) }));
+            }
+            ContentPart::RedactedThinking { provider_echoes } => {
+                let Some(redacted) = find_provider_echo(provider_echoes, PROVIDER_KEY)
+                    .and_then(|e| e.payload_str("redacted_content"))
+                else {
+                    warnings.push(ModelWarning::LossyEncode {
+                        field: path(),
+                        detail: "redacted_thinking part missing 'bedrock-converse' \
+                                 provider_echo with 'redacted_content' payload; block dropped"
+                            .into(),
+                    });
+                    continue;
+                };
+                out.push(json!({
+                    "reasoningContent": {
+                        "redactedContent": redacted,
+                    }
+                }));
             }
             ContentPart::Citation { snippet, .. } => out.push(json!({ "text": snippet })),
             other => {
@@ -830,7 +877,8 @@ const fn content_part_cache_control(part: &ContentPart) -> Option<crate::ir::Cac
         | ContentPart::ToolResult { cache_control, .. } => *cache_control,
         ContentPart::ToolUse { .. }
         | ContentPart::ImageOutput { .. }
-        | ContentPart::AudioOutput { .. } => None,
+        | ContentPart::AudioOutput { .. }
+        | ContentPart::RedactedThinking { .. } => None,
     }
 }
 
@@ -923,6 +971,7 @@ const fn debug_part_kind(part: &ContentPart) -> &'static str {
         ContentPart::ToolResult { .. } => "tool_result",
         ContentPart::ImageOutput { .. } => "image_output",
         ContentPart::AudioOutput { .. } => "audio_output",
+        ContentPart::RedactedThinking { .. } => "redacted_thinking",
     }
 }
 
@@ -947,19 +996,44 @@ fn decode_output(raw: &Value, warnings: &mut Vec<ModelWarning>) -> (Vec<ContentP
             parts.push(ContentPart::text(text));
             continue;
         }
-        if let Some(reasoning) = part.get("reasoningContent")
-            && let Some(reasoning_text) = reasoning.get("reasoningText")
-        {
-            let text = str_field(reasoning_text, "text").to_owned();
-            let signature = reasoning_text
-                .get("signature")
+        if let Some(reasoning) = part.get("reasoningContent") {
+            let text = reasoning
+                .get("reasoningText")
+                .and_then(|t| t.get("text"))
+                .and_then(Value::as_str)
+                .unwrap_or("") // silent-fallback-ok: reasoningContent without reasoningText.text → empty body; downstream is_empty() guard suppresses the part
+                .to_owned();
+            let signature = reasoning
+                .get("reasoningText")
+                .and_then(|t| t.get("signature"))
                 .and_then(Value::as_str)
                 .map(str::to_owned);
-            if !text.is_empty() || signature.is_some() {
+            let redacted = reasoning
+                .get("redactedContent")
+                .and_then(Value::as_str)
+                .map(str::to_owned);
+            let mut payload = Map::new();
+            if let Some(s) = &signature {
+                payload.insert("signature".into(), Value::String(s.clone()));
+            }
+            if let Some(r) = &redacted {
+                payload.insert("redacted_content".into(), Value::String(r.clone()));
+            }
+            let provider_echoes = if payload.is_empty() {
+                Vec::new()
+            } else {
+                vec![ProviderEchoSnapshot::new(
+                    PROVIDER_KEY,
+                    Value::Object(payload),
+                )]
+            };
+            if text.is_empty() && signature.is_none() && redacted.is_some() {
+                parts.push(ContentPart::RedactedThinking { provider_echoes });
+            } else if !text.is_empty() || !provider_echoes.is_empty() {
                 parts.push(ContentPart::Thinking {
                     text,
-                    signature,
                     cache_control: None,
+                    provider_echoes,
                 });
             }
             continue;
@@ -968,7 +1042,12 @@ fn decode_output(raw: &Value, warnings: &mut Vec<ModelWarning>) -> (Vec<ContentP
             let id = str_field(tool_use, "toolUseId").to_owned();
             let name = str_field(tool_use, "name").to_owned();
             let input = tool_use.get("input").cloned().unwrap_or_else(|| json!({})); // silent-fallback-ok: toolUse without input = empty-args call (vendor sometimes omits when schema has no required fields)
-            parts.push(ContentPart::ToolUse { id, name, input });
+            parts.push(ContentPart::ToolUse {
+                id,
+                name,
+                input,
+                provider_echoes: Vec::new(),
+            });
             continue;
         }
         warnings.push(ModelWarning::LossyEncode {

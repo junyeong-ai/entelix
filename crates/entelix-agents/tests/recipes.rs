@@ -106,6 +106,7 @@ fn assistant_tool_call(id: &str, name: &str, input: serde_json::Value) -> Messag
             id: id.to_owned(),
             name: name.to_owned(),
             input,
+            provider_echoes: Vec::new(),
         }],
     )
 }
@@ -360,6 +361,7 @@ async fn react_agent_builder_recursion_limit_overrides_graph_default() -> Result
             id: "tu_1".into(),
             name: "loop".into(),
             input: serde_json::json!({}),
+            provider_echoes: Vec::new(),
         }],
     );
     let script = std::iter::repeat_n(template, 200).collect::<Vec<_>>();

@@ -51,6 +51,7 @@ fn anthropic_per_block_cache_control_emits_directive_on_wire() {
                 ContentPart::Image {
                     source: MediaSource::base64("image/png", "AAA"),
                     cache_control: Some(CacheControl::one_hour()),
+                    provider_echoes: Vec::new(),
                 },
             ],
         )],
@@ -83,6 +84,7 @@ fn anthropic_five_minute_cache_omits_ttl_field() {
             vec![ContentPart::Image {
                 source: MediaSource::base64("image/png", "AAA"),
                 cache_control: Some(CacheControl::five_minutes()),
+                provider_echoes: Vec::new(),
             }],
         )],
         max_tokens: Some(1024),
@@ -206,6 +208,7 @@ fn cache_control_helpers_round_trip_on_content_parts() {
     if let ContentPart::Text {
         text,
         cache_control,
+        ..
     } = part
     {
         assert_eq!(text, "hello");
@@ -224,6 +227,7 @@ fn cache_control_helper_is_noop_on_tool_use() {
         id: "x".into(),
         name: "y".into(),
         input: serde_json::json!({}),
+        provider_echoes: Vec::new(),
     };
     let after = original
         .clone()
@@ -246,6 +250,7 @@ fn bedrock_user_message_cache_control_emits_cache_point() {
                 ContentPart::Text {
                     text: "cached prefix".into(),
                     cache_control: Some(CacheControl::five_minutes()),
+                    provider_echoes: Vec::new(),
                 },
                 ContentPart::text("post-marker tail"),
             ],
@@ -273,8 +278,8 @@ fn bedrock_assistant_thinking_cache_control_emits_cache_point() {
             Role::Assistant,
             vec![ContentPart::Thinking {
                 text: "reasoning".into(),
-                signature: None,
                 cache_control: Some(CacheControl::five_minutes()),
+                provider_echoes: Vec::new(),
             }],
         )],
         ..ModelRequest::default()
@@ -302,6 +307,7 @@ fn bedrock_tool_result_cache_control_emits_cache_point() {
                 content: entelix_core::ir::ToolResultContent::Text("retrieval result".into()),
                 is_error: false,
                 cache_control: Some(CacheControl::five_minutes()),
+                provider_echoes: Vec::new(),
             }],
         )],
         ..ModelRequest::default()
@@ -357,6 +363,7 @@ fn bedrock_one_hour_ttl_emits_lossy_encode_warning() {
             vec![ContentPart::Text {
                 text: "long-lived prefix".into(),
                 cache_control: Some(CacheControl::one_hour()),
+                provider_echoes: Vec::new(),
             }],
         )],
         ..ModelRequest::default()

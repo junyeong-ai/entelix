@@ -141,6 +141,7 @@ fn encode_tool_role_becomes_user_with_tool_result() {
                     id: "toolu_01".into(),
                     name: "calculator".into(),
                     input: json!({ "expr": "2+2" }),
+                    provider_echoes: Vec::new(),
                 }],
             ),
             Message::new(
@@ -151,6 +152,7 @@ fn encode_tool_role_becomes_user_with_tool_result() {
                     content: ToolResultContent::Text("4".into()),
                     is_error: false,
                     cache_control: None,
+                    provider_echoes: Vec::new(),
                 }],
             ),
         ],
@@ -186,6 +188,7 @@ fn encode_tool_result_json_payload_emits_warning_and_stringifies() {
                 content: ToolResultContent::Json(json!({ "value": 42 })),
                 is_error: false,
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }],
         )],
         max_tokens: Some(1024),
@@ -219,6 +222,7 @@ fn encode_image_url_and_base64_variants() {
                 ContentPart::Image {
                     source: MediaSource::url("https://example.com/x.png"),
                     cache_control: None,
+                    provider_echoes: Vec::new(),
                 },
                 ContentPart::Image {
                     source: MediaSource::Base64 {
@@ -226,6 +230,7 @@ fn encode_image_url_and_base64_variants() {
                         data: "iVBOR".into(),
                     },
                     cache_control: None,
+                    provider_echoes: Vec::new(),
                 },
             ],
         )],
@@ -371,7 +376,9 @@ fn decode_tool_use_response() {
     assert!(matches!(resp.stop_reason, StopReason::ToolUse));
     assert_eq!(resp.content.len(), 1);
     match &resp.content[0] {
-        ContentPart::ToolUse { id, name, input } => {
+        ContentPart::ToolUse {
+            id, name, input, ..
+        } => {
             assert_eq!(id, "toolu_99");
             assert_eq!(name, "calculator");
             assert_eq!(input["expr"], "2+2");

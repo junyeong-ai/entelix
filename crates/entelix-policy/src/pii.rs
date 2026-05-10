@@ -361,6 +361,7 @@ mod tests {
             usage: Usage::default(),
             rate_limit: None,
             warnings: Vec::new(),
+            provider_echoes: Vec::new(),
         }
     }
 
@@ -425,6 +426,7 @@ mod tests {
                     id: "tu_1".into(),
                     name: "lookup".into(),
                     input: serde_json::json!({"email": "leaks@example.com"}),
+                    provider_echoes: Vec::new(),
                 }],
             )],
             ..req("")

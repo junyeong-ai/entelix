@@ -66,7 +66,6 @@ pub mod tools;
 pub mod transports;
 
 pub use agent_context::AgentContext;
-pub use tls::install_default_tls;
 pub use approval::{ApprovalDecision, PendingApprovalDecisions};
 pub use audit::{AuditSink, AuditSinkHandle};
 pub use auth::{
@@ -94,4 +93,5 @@ pub use stream::tap_aggregator;
 pub use tenant_id::{DEFAULT_TENANT_ID, TenantId};
 pub use thread_key::ThreadKey;
 pub use time::{Clock, SystemClock};
+pub use tls::install_default_tls;
 pub use tools::{Tool, ToolRegistry};

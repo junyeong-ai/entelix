@@ -240,13 +240,26 @@ fn deltas_from_response(response: &ModelResponse) -> Vec<StreamDelta> {
     });
     for part in &response.content {
         match part {
-            ContentPart::Text { text, .. } => {
-                deltas.push(StreamDelta::TextDelta { text: text.clone() });
+            ContentPart::Text {
+                text,
+                provider_echoes,
+                ..
+            } => {
+                deltas.push(StreamDelta::TextDelta {
+                    text: text.clone(),
+                    provider_echoes: provider_echoes.clone(),
+                });
             }
-            ContentPart::ToolUse { id, name, input } => {
+            ContentPart::ToolUse {
+                id,
+                name,
+                input,
+                provider_echoes,
+            } => {
                 deltas.push(StreamDelta::ToolUseStart {
                     id: id.clone(),
                     name: name.clone(),
+                    provider_echoes: provider_echoes.clone(),
                 });
                 deltas.push(StreamDelta::ToolUseInputDelta {
                     partial_json: input.to_string(),
@@ -254,11 +267,13 @@ fn deltas_from_response(response: &ModelResponse) -> Vec<StreamDelta> {
                 deltas.push(StreamDelta::ToolUseStop);
             }
             ContentPart::Thinking {
-                text, signature, ..
+                text,
+                provider_echoes,
+                ..
             } => {
                 deltas.push(StreamDelta::ThinkingDelta {
                     text: text.clone(),
-                    signature: signature.clone(),
+                    provider_echoes: provider_echoes.clone(),
                 });
             }
             // Multimodal inputs, citations, tool results never originate
@@ -272,6 +287,7 @@ fn deltas_from_response(response: &ModelResponse) -> Vec<StreamDelta> {
             | ContentPart::Audio { .. }
             | ContentPart::Video { .. }
             | ContentPart::Document { .. }
+            | ContentPart::RedactedThinking { .. }
             | ContentPart::Citation { .. }
             | ContentPart::ToolResult { .. }
             | ContentPart::ImageOutput { .. }

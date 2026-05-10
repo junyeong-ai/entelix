@@ -58,6 +58,7 @@ async fn ignores_non_text_parts() -> Result<()> {
                 id: "x".into(),
                 name: "calc".into(),
                 input: serde_json::json!({}),
+                provider_echoes: Vec::new(),
             },
             ContentPart::text(r#"{"answer":"ok","confidence":1}"#),
         ],

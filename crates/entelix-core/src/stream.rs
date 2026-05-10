@@ -30,7 +30,9 @@ use tokio::sync::oneshot;
 
 use crate::codecs::BoxDeltaStream;
 use crate::error::{Error, Result};
-use crate::ir::{ContentPart, ModelResponse, ModelWarning, StopReason, Usage};
+use crate::ir::{
+    ContentPart, ModelResponse, ModelWarning, ProviderEchoSnapshot, StopReason, Usage,
+};
 use crate::rate_limit::RateLimitSnapshot;
 use crate::service::ModelStream;
 
@@ -50,20 +52,31 @@ pub enum StreamDelta {
     TextDelta {
         /// Text fragment to append.
         text: String,
+        /// Vendor opaque round-trip tokens this fragment carries
+        /// (Gemini 3.x attaches `thought_signature` to `text` parts on
+        /// reasoning turns). The aggregator extends the open-text
+        /// block's accumulated echoes — a single `ContentPart::Text`
+        /// finalises with the union of every delta's echoes.
+        #[doc(hidden)] // surface stays terse — most call sites use Vec::new()
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
-    /// Append text (or a signature) to the in-progress thinking
-    /// block. Consecutive `ThinkingDelta`s fold into a single
-    /// `ContentPart::Thinking` in the output. A delta carrying only
-    /// a `signature` (empty `text`) attaches the redaction-resistant
-    /// replay marker without growing the body.
+    /// Append text (or vendor opaque tokens) to the in-progress
+    /// thinking block. Consecutive `ThinkingDelta`s fold into a
+    /// single `ContentPart::Thinking` in the output. A delta carrying
+    /// only `provider_echoes` (empty `text`) attaches the round-trip
+    /// marker without growing the body — Anthropic emits the
+    /// signature on a discrete `signature_delta` SSE event with no
+    /// associated text.
     ThinkingDelta {
         /// Text fragment to append. Empty when the delta carries
-        /// only a signature update.
+        /// only a `provider_echoes` update.
         text: String,
-        /// Vendor signature for redaction-resistant replay (Anthropic
-        /// supplies via a discrete `signature_delta` event; other
-        /// vendors leave `None`).
-        signature: Option<String>,
+        /// Vendor opaque round-trip tokens (Anthropic `signature`,
+        /// Gemini `thought_signature`, OpenAI Responses
+        /// `encrypted_content`). Codecs pre-wrap the wire-shape blob
+        /// into [`ProviderEchoSnapshot`] before yielding the delta;
+        /// the aggregator stays codec-agnostic and just accumulates.
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
     /// Begin a new tool-use block. Closes any previously-open text block
     /// so the output preserves the model's intended ordering.
@@ -72,6 +85,11 @@ pub enum StreamDelta {
         id: String,
         /// Tool name to call.
         name: String,
+        /// Vendor opaque round-trip tokens attached to this tool call
+        /// (Gemini 3.x `thought_signature` on `functionCall` parts —
+        /// missing on the next turn yields HTTP 400 on the first
+        /// `functionCall` of a step).
+        provider_echoes: Vec<ProviderEchoSnapshot>,
     },
     /// Append partial JSON to the open tool-use block's input buffer.
     ToolUseInputDelta {
@@ -102,13 +120,21 @@ struct PendingTool {
     id: String,
     name: String,
     input_buffer: String,
+    provider_echoes: Vec<ProviderEchoSnapshot>,
 }
 
 /// Per-thinking-block scratch space.
 #[derive(Default)]
 struct PendingThinking {
     text: String,
-    signature: Option<String>,
+    provider_echoes: Vec<ProviderEchoSnapshot>,
+}
+
+/// Per-text-block scratch space.
+#[derive(Default)]
+struct PendingText {
+    text: String,
+    provider_echoes: Vec<ProviderEchoSnapshot>,
 }
 
 /// Accumulator that turns a sequence of `StreamDelta`s into a
@@ -129,7 +155,7 @@ pub struct StreamAggregator {
     parts: Vec<ContentPart>,
     /// Buffer for the currently-open text block. `None` when the next
     /// `TextDelta` should start a fresh block.
-    open_text: Option<String>,
+    open_text: Option<PendingText>,
     /// Buffer for the currently-open thinking block. `None` when the
     /// next `ThinkingDelta` should start a fresh block. The text and
     /// tool buffers are mutually exclusive with the thinking buffer:
@@ -163,19 +189,24 @@ impl StreamAggregator {
                 self.id = id;
                 self.model = model;
             }
-            StreamDelta::TextDelta { text } => {
+            StreamDelta::TextDelta {
+                text,
+                provider_echoes,
+            } => {
                 if self.pending_tool.is_some() {
                     return Err(Error::invalid_request(
                         "StreamAggregator: TextDelta during open tool_use block",
                     ));
                 }
                 self.flush_thinking();
-                match &mut self.open_text {
-                    Some(buf) => buf.push_str(&text),
-                    None => self.open_text = Some(text),
-                }
+                let pending = self.open_text.get_or_insert_with(PendingText::default);
+                pending.text.push_str(&text);
+                pending.provider_echoes.extend(provider_echoes);
             }
-            StreamDelta::ThinkingDelta { text, signature } => {
+            StreamDelta::ThinkingDelta {
+                text,
+                provider_echoes,
+            } => {
                 if self.pending_tool.is_some() {
                     return Err(Error::invalid_request(
                         "StreamAggregator: ThinkingDelta during open tool_use block",
@@ -186,11 +217,13 @@ impl StreamAggregator {
                     .open_thinking
                     .get_or_insert_with(PendingThinking::default);
                 pending.text.push_str(&text);
-                if let Some(sig) = signature {
-                    pending.signature = Some(sig);
-                }
+                pending.provider_echoes.extend(provider_echoes);
             }
-            StreamDelta::ToolUseStart { id, name } => {
+            StreamDelta::ToolUseStart {
+                id,
+                name,
+                provider_echoes,
+            } => {
                 if self.pending_tool.is_some() {
                     return Err(Error::invalid_request(
                         "StreamAggregator: ToolUseStart while another tool block is open",
@@ -202,6 +235,7 @@ impl StreamAggregator {
                     id,
                     name,
                     input_buffer: String::new(),
+                    provider_echoes,
                 });
             }
             StreamDelta::ToolUseInputDelta { partial_json } => {
@@ -212,36 +246,7 @@ impl StreamAggregator {
                 })?;
                 pending.input_buffer.push_str(&partial_json);
             }
-            StreamDelta::ToolUseStop => {
-                let pending = self.pending_tool.take().ok_or_else(|| {
-                    Error::invalid_request("StreamAggregator: ToolUseStop with no open tool block")
-                })?;
-                let input: serde_json::Value = if pending.input_buffer.is_empty() {
-                    serde_json::json!({})
-                } else {
-                    // Surface the tool name + id and the buffered
-                    // payload so operators can see which tool's
-                    // arguments arrived malformed. The bare
-                    // serde_json::Error message is opaque ("expected
-                    // value at line 1 column 7"); without context,
-                    // a multi-tool agent run leaves the operator
-                    // hunting through logs.
-                    serde_json::from_str(&pending.input_buffer).map_err(|e| {
-                        Error::invalid_request(format!(
-                            "StreamAggregator: ToolUse '{}' (id={}) arguments are not valid JSON: \
-                             {e}; buffered={:?}",
-                            pending.name,
-                            pending.id,
-                            truncate_for_diagnostic(&pending.input_buffer),
-                        ))
-                    })?
-                };
-                self.parts.push(ContentPart::ToolUse {
-                    id: pending.id,
-                    name: pending.name,
-                    input,
-                });
-            }
+            StreamDelta::ToolUseStop => self.close_tool_block()?,
             StreamDelta::Usage(u) => self.usage = Some(u),
             StreamDelta::RateLimit(r) => self.rate_limit = Some(r),
             StreamDelta::Warning(w) => self.warnings.push(w),
@@ -303,17 +308,56 @@ impl StreamAggregator {
             usage: self.usage.unwrap_or_default(),
             rate_limit: self.rate_limit,
             warnings: self.warnings,
+            provider_echoes: Vec::new(),
         })
+    }
+
+    /// Close an open `tool_use` block — parses the buffered JSON
+    /// arguments and pushes the finalised `ContentPart::ToolUse` (with
+    /// any accumulated `provider_echoes`) onto `parts`. Returns
+    /// `Err(Error::invalid_request)` if there is no open tool block or
+    /// the buffered arguments fail to parse.
+    fn close_tool_block(&mut self) -> Result<()> {
+        let pending = self.pending_tool.take().ok_or_else(|| {
+            Error::invalid_request("StreamAggregator: ToolUseStop with no open tool block")
+        })?;
+        let input: serde_json::Value = if pending.input_buffer.is_empty() {
+            serde_json::json!({})
+        } else {
+            // Surface the tool name + id and the buffered payload so
+            // operators can see which tool's arguments arrived
+            // malformed. The bare serde_json::Error message is opaque
+            // ("expected value at line 1 column 7"); without context,
+            // a multi-tool agent run leaves the operator hunting
+            // through logs.
+            serde_json::from_str(&pending.input_buffer).map_err(|e| {
+                Error::invalid_request(format!(
+                    "StreamAggregator: ToolUse '{}' (id={}) arguments are not valid JSON: \
+                     {e}; buffered={:?}",
+                    pending.name,
+                    pending.id,
+                    truncate_for_diagnostic(&pending.input_buffer),
+                ))
+            })?
+        };
+        self.parts.push(ContentPart::ToolUse {
+            id: pending.id,
+            name: pending.name,
+            input,
+            provider_echoes: pending.provider_echoes,
+        });
+        Ok(())
     }
 
     /// Close the open text buffer, if any, into a `ContentPart::Text`.
     fn flush_text(&mut self) {
-        if let Some(text) = self.open_text.take()
-            && !text.is_empty()
+        if let Some(pending) = self.open_text.take()
+            && !(pending.text.is_empty() && pending.provider_echoes.is_empty())
         {
             self.parts.push(ContentPart::Text {
-                text,
+                text: pending.text,
                 cache_control: None,
+                provider_echoes: pending.provider_echoes,
             });
         }
     }
@@ -322,12 +366,12 @@ impl StreamAggregator {
     /// `ContentPart::Thinking`.
     fn flush_thinking(&mut self) {
         if let Some(pending) = self.open_thinking.take()
-            && !(pending.text.is_empty() && pending.signature.is_none())
+            && !(pending.text.is_empty() && pending.provider_echoes.is_empty())
         {
             self.parts.push(ContentPart::Thinking {
                 text: pending.text,
-                signature: pending.signature,
                 cache_control: None,
+                provider_echoes: pending.provider_echoes,
             });
         }
     }

@@ -54,6 +54,7 @@ fn assistant_text(text: &str) -> Message {
         vec![ContentPart::Text {
             text: text.to_owned(),
             cache_control: None,
+            provider_echoes: Vec::new(),
         }],
     )
 }

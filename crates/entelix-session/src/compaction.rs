@@ -195,6 +195,7 @@ impl CompactedHistory {
                                 content: pair.result.clone(),
                                 is_error: pair.is_error,
                                 cache_control: None,
+                                provider_echoes: Vec::new(),
                             }],
                         ));
                     }
@@ -313,7 +314,10 @@ pub fn messages_to_events(messages: &[Message]) -> Result<Vec<GraphEvent>> {
                     timestamp: now,
                 });
                 for part in &msg.content {
-                    if let ContentPart::ToolUse { id, name, input } = part {
+                    if let ContentPart::ToolUse {
+                        id, name, input, ..
+                    } = part
+                    {
                         events.push(GraphEvent::ToolCall {
                             id: id.clone(),
                             name: name.clone(),

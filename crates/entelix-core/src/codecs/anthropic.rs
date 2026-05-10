@@ -31,11 +31,16 @@ use crate::codecs::codec::{BoxByteStream, BoxDeltaStream, Codec, EncodedRequest}
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
-    ModelWarning, OutputStrategy, ReasoningEffort, RefusalReason, ResponseFormat, Role, StopReason,
-    ToolChoice, ToolKind, ToolResultContent, Usage,
+    ModelWarning, OutputStrategy, ProviderEchoSnapshot, ReasoningEffort, RefusalReason,
+    ResponseFormat, Role, StopReason, ToolChoice, ToolKind, ToolResultContent, Usage,
+    find_provider_echo,
 };
 use crate::rate_limit::RateLimitSnapshot;
 use crate::stream::StreamDelta;
+
+/// Provider key for [`AnthropicMessagesCodec`] — matches `Codec::name`
+/// and identifies this vendor's entries in [`ProviderEchoSnapshot`].
+const PROVIDER_KEY: &str = "anthropic-messages";
 
 const ANTHROPIC_VERSION: &str = "2023-06-01";
 
@@ -136,6 +141,7 @@ impl Codec for AnthropicMessagesCodec {
             usage,
             rate_limit: None,
             warnings,
+            provider_echoes: Vec::new(),
         })
     }
 
@@ -676,6 +682,7 @@ fn encode_content_parts(
             ContentPart::Text {
                 text,
                 cache_control,
+                ..
             } => {
                 let mut block = json_block("text", &[("text", Value::String(text.clone()))]);
                 attach_cache_control(&mut block, cache_control.as_ref());
@@ -684,6 +691,7 @@ fn encode_content_parts(
             ContentPart::Image {
                 source,
                 cache_control,
+                ..
             } => {
                 let mut block = json_block(
                     "image",
@@ -704,6 +712,7 @@ fn encode_content_parts(
                 source,
                 name,
                 cache_control,
+                ..
             } => {
                 let mut block = Map::new();
                 block.insert("type".into(), Value::String("document".into()));
@@ -716,22 +725,44 @@ fn encode_content_parts(
             }
             ContentPart::Thinking {
                 text,
-                signature,
                 cache_control,
+                provider_echoes,
             } => {
                 let mut block = Map::new();
                 block.insert("type".into(), Value::String("thinking".into()));
                 block.insert("thinking".into(), Value::String(text.clone()));
-                if let Some(sig) = signature {
-                    block.insert("signature".into(), Value::String(sig.clone()));
+                if let Some(sig) = find_provider_echo(provider_echoes, PROVIDER_KEY)
+                    .and_then(|e| e.payload_str("signature"))
+                {
+                    block.insert("signature".into(), Value::String(sig.to_owned()));
                 }
                 attach_cache_control(&mut block, cache_control.as_ref());
+                out.push(Value::Object(block));
+            }
+            ContentPart::RedactedThinking { provider_echoes } => {
+                let Some(data) = find_provider_echo(provider_echoes, PROVIDER_KEY)
+                    .and_then(|e| e.payload_str("data"))
+                else {
+                    // No matching opaque blob — without the original
+                    // ciphertext the wire shape is unrepresentable.
+                    warnings.push(ModelWarning::LossyEncode {
+                        field: path(),
+                        detail: "redacted_thinking part missing 'anthropic-messages' \
+                                 provider_echo with 'data' payload; block dropped"
+                            .into(),
+                    });
+                    continue;
+                };
+                let mut block = Map::new();
+                block.insert("type".into(), Value::String("redacted_thinking".into()));
+                block.insert("data".into(), Value::String(data.to_owned()));
                 out.push(Value::Object(block));
             }
             ContentPart::Citation {
                 snippet,
                 source,
                 cache_control,
+                ..
             } => {
                 // Anthropic carries citations inline on `text` blocks; round-tripping
                 // a standalone Citation IR variant means re-emitting the cited text
@@ -769,7 +800,9 @@ fn encode_content_parts(
                 attach_cache_control(&mut block, cache_control.as_ref());
                 out.push(Value::Object(block));
             }
-            ContentPart::ToolUse { id, name, input } => out.push(json!({
+            ContentPart::ToolUse {
+                id, name, input, ..
+            } => out.push(json!({
                 "type": "tool_use",
                 "id": id,
                 "name": name,
@@ -781,6 +814,7 @@ fn encode_content_parts(
                 content,
                 is_error,
                 cache_control,
+                ..
             } => out.push(encode_tool_result(
                 tool_use_id,
                 content,
@@ -1013,6 +1047,7 @@ fn decode_content(raw: &Value, warnings: &mut Vec<ModelWarning>) -> Vec<ContentP
                                 snippet: text.clone(),
                                 source,
                                 cache_control: None,
+                                provider_echoes: Vec::new(),
                             });
                         }
                     }
@@ -1023,21 +1058,46 @@ fn decode_content(raw: &Value, warnings: &mut Vec<ModelWarning>) -> Vec<ContentP
             }
             Some("thinking") => {
                 let thinking_text = str_field(block, "thinking").to_owned();
-                let signature = block
+                let mut provider_echoes = Vec::new();
+                if let Some(sig) = block
                     .get("signature")
                     .and_then(Value::as_str)
-                    .map(str::to_owned);
+                    .filter(|s| !s.is_empty())
+                {
+                    provider_echoes.push(ProviderEchoSnapshot::for_provider(
+                        PROVIDER_KEY,
+                        "signature",
+                        sig.to_owned(),
+                    ));
+                }
                 out.push(ContentPart::Thinking {
                     text: thinking_text,
-                    signature,
                     cache_control: None,
+                    provider_echoes,
+                });
+            }
+            Some("redacted_thinking") => {
+                // The entire redacted block is opaque ciphertext —
+                // round-trips through provider_echoes; nothing else.
+                let data = str_field(block, "data").to_owned();
+                out.push(ContentPart::RedactedThinking {
+                    provider_echoes: vec![ProviderEchoSnapshot::for_provider(
+                        PROVIDER_KEY,
+                        "data",
+                        data,
+                    )],
                 });
             }
             Some("tool_use") => {
                 let id = str_field(block, "id").to_owned();
                 let name = str_field(block, "name").to_owned();
                 let input = block.get("input").cloned().unwrap_or_else(|| json!({})); // silent-fallback-ok: tool_use without args = empty-args call (vendor sometimes omits)
-                out.push(ContentPart::ToolUse { id, name, input });
+                out.push(ContentPart::ToolUse {
+                    id,
+                    name,
+                    input,
+                    provider_echoes: Vec::new(),
+                });
             }
             Some(other) => {
                 warnings.push(ModelWarning::LossyEncode {
@@ -1231,6 +1291,7 @@ fn stream_anthropic_sse(
                                 {
                                     yield Ok(StreamDelta::TextDelta {
                                         text: text.to_owned(),
+                                        provider_echoes: Vec::new(),
                                     });
                                 }
                             }
@@ -1241,19 +1302,41 @@ fn stream_anthropic_sse(
                                     .and_then(Value::as_str)
                                     .unwrap_or("") // silent-fallback-ok: missing thinking text → empty body; downstream is_empty() guard suppresses the StreamDelta
                                     .to_owned();
-                                let signature = block
+                                // Anthropic emits an empty `signature: ""`
+                                // placeholder on content_block_start; the
+                                // real signature arrives later via the
+                                // discrete `signature_delta` event. Skip
+                                // the placeholder so the aggregated echo
+                                // list carries only the authoritative
+                                // value.
+                                let provider_echoes = block
                                     .get("signature")
                                     .and_then(Value::as_str)
-                                    .map(str::to_owned);
-                                if !text.is_empty() || signature.is_some() {
-                                    yield Ok(StreamDelta::ThinkingDelta { text, signature });
+                                    .filter(|s| !s.is_empty())
+                                    .map(|sig| {
+                                        vec![ProviderEchoSnapshot::for_provider(
+                                            PROVIDER_KEY,
+                                            "signature",
+                                            sig.to_owned(),
+                                        )]
+                                    })
+                                    .unwrap_or_default();
+                                if !text.is_empty() || !provider_echoes.is_empty() {
+                                    yield Ok(StreamDelta::ThinkingDelta {
+                                        text,
+                                        provider_echoes,
+                                    });
                                 }
                             }
                             Some("tool_use") => {
                                 blocks.insert(idx, BlockKind::ToolUse);
                                 let id = str_field(block, "id").to_owned();
                                 let name = str_field(block, "name").to_owned();
-                                yield Ok(StreamDelta::ToolUseStart { id, name });
+                                yield Ok(StreamDelta::ToolUseStart {
+                                    id,
+                                    name,
+                                    provider_echoes: Vec::new(),
+                                });
                             }
                             other => {
                                 yield Ok(StreamDelta::Warning(ModelWarning::LossyEncode {
@@ -1272,6 +1355,7 @@ fn stream_anthropic_sse(
                                 if let Some(text) = delta.get("text").and_then(Value::as_str) {
                                     yield Ok(StreamDelta::TextDelta {
                                         text: text.to_owned(),
+                                        provider_echoes: Vec::new(),
                                     });
                                 }
                             }
@@ -1279,15 +1363,23 @@ fn stream_anthropic_sse(
                                 if let Some(text) = delta.get("thinking").and_then(Value::as_str) {
                                     yield Ok(StreamDelta::ThinkingDelta {
                                         text: text.to_owned(),
-                                        signature: None,
+                                        provider_echoes: Vec::new(),
                                     });
                                 }
                             }
                             Some("signature_delta") => {
-                                if let Some(sig) = delta.get("signature").and_then(Value::as_str) {
+                                if let Some(sig) =
+                                    delta.get("signature").and_then(Value::as_str)
+                                {
                                     yield Ok(StreamDelta::ThinkingDelta {
                                         text: String::new(),
-                                        signature: Some(sig.to_owned()),
+                                        provider_echoes: vec![
+                                            ProviderEchoSnapshot::for_provider(
+                                                PROVIDER_KEY,
+                                                "signature",
+                                                sig.to_owned(),
+                                            ),
+                                        ],
                                     });
                                 }
                             }

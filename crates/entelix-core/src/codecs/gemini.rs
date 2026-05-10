@@ -30,13 +30,51 @@ use crate::codecs::codec::{BoxByteStream, BoxDeltaStream, Codec, EncodedRequest}
 use crate::error::{Error, Result};
 use crate::ir::{
     Capabilities, CitationSource, ContentPart, MediaSource, ModelRequest, ModelResponse,
-    ModelWarning, OutputStrategy, ReasoningEffort, RefusalReason, ResponseFormat, Role,
-    SafetyCategory, SafetyLevel, SafetyRating, StopReason, ToolChoice, ToolKind, ToolResultContent,
-    Usage,
+    ModelWarning, OutputStrategy, ProviderEchoSnapshot, ReasoningEffort, RefusalReason,
+    ResponseFormat, Role, SafetyCategory, SafetyLevel, SafetyRating, StopReason, ToolChoice,
+    ToolKind, ToolResultContent, Usage, find_provider_echo,
 };
 use crate::stream::StreamDelta;
 
 const DEFAULT_MAX_CONTEXT_TOKENS: u32 = 1_000_000;
+
+/// Provider key for [`GeminiCodec`] (and its [`super::VertexGeminiCodec`]
+/// composition wrapper) — identifies this vendor's entries in
+/// [`ProviderEchoSnapshot`]. The wire shape is identical across AI
+/// Studio and Vertex AI; only the routing differs.
+const PROVIDER_KEY: &str = "gemini";
+
+/// Wire field name Gemini uses for the opaque thought-signature
+/// round-trip token. Vertex AI strictly rejects camelCase
+/// (`thoughtSignature`) on encode and requires snake_case; AI Studio
+/// accepts both. Encoding always emits snake_case for portability.
+/// Decoder accepts both because Gemini servers have historically
+/// emitted both spellings depending on transport and version.
+const WIRE_THOUGHT_SIGNATURE: &str = "thought_signature";
+const WIRE_THOUGHT_SIGNATURE_LEGACY: &str = "thoughtSignature";
+
+/// Extract a Gemini `thought_signature` from a `Part` (or any JSON
+/// object that may carry it as a sibling field), accepting both
+/// snake_case and the legacy camelCase spelling. Returns the wrapping
+/// `ProviderEchoSnapshot` carrier ready to attach to a `ContentPart`.
+fn decode_thought_signature(obj: &Value) -> Option<ProviderEchoSnapshot> {
+    let sig = obj
+        .get(WIRE_THOUGHT_SIGNATURE)
+        .or_else(|| obj.get(WIRE_THOUGHT_SIGNATURE_LEGACY))
+        .and_then(Value::as_str)?;
+    Some(ProviderEchoSnapshot::for_provider(
+        PROVIDER_KEY,
+        WIRE_THOUGHT_SIGNATURE,
+        sig.to_owned(),
+    ))
+}
+
+/// Look up this codec's `thought_signature` payload from a part's
+/// echoes. Returns the raw signature string so the caller can stamp
+/// it onto the appropriate wire-format object.
+fn encode_thought_signature(echoes: &[ProviderEchoSnapshot]) -> Option<&str> {
+    find_provider_echo(echoes, PROVIDER_KEY).and_then(|e| e.payload_str(WIRE_THOUGHT_SIGNATURE))
+}
 
 /// Stateless codec for the Gemini `generateContent` family of endpoints.
 #[derive(Clone, Copy, Debug, Default)]
@@ -112,6 +150,7 @@ impl Codec for GeminiCodec {
             usage,
             rate_limit: None,
             warnings,
+            provider_echoes: Vec::new(),
         })
     }
 
@@ -599,6 +638,12 @@ fn encode_user_parts(
                         .into(),
                 });
             }
+            ContentPart::RedactedThinking { .. } => {
+                warnings.push(ModelWarning::LossyEncode {
+                    field: path(),
+                    detail: "Gemini does not accept redacted_thinking blocks; block dropped".into(),
+                });
+            }
         }
     }
     out
@@ -633,23 +678,49 @@ fn encode_assistant_parts(
     for (part_idx, part) in parts.iter().enumerate() {
         let path = || format!("messages[{msg_idx}].content[{part_idx}]");
         match part {
-            ContentPart::Text { text, .. } => out.push(json!({ "text": text })),
-            ContentPart::ToolUse { name, input, .. } => {
+            ContentPart::Text {
+                text,
+                provider_echoes,
+                ..
+            } => {
+                let mut o = Map::new();
+                o.insert("text".into(), Value::String(text.clone()));
+                if let Some(sig) = encode_thought_signature(provider_echoes) {
+                    o.insert(WIRE_THOUGHT_SIGNATURE.into(), Value::String(sig.to_owned()));
+                }
+                out.push(Value::Object(o));
+            }
+            ContentPart::ToolUse {
+                name,
+                input,
+                provider_echoes,
+                ..
+            } => {
                 // Gemini's wire shape uses the assistant-emitted function name
                 // as the round-trip key — there is no separate id field. The
                 // `tool_use_id` round-trip is preserved at the IR layer by
                 // letting the codec re-derive the id on decode from the same
                 // `name + args` shape.
-                out.push(json!({ "functionCall": { "name": name, "args": input } }));
+                let mut o = Map::new();
+                o.insert(
+                    "functionCall".into(),
+                    json!({ "name": name, "args": input }),
+                );
+                if let Some(sig) = encode_thought_signature(provider_echoes) {
+                    o.insert(WIRE_THOUGHT_SIGNATURE.into(), Value::String(sig.to_owned()));
+                }
+                out.push(Value::Object(o));
             }
             ContentPart::Thinking {
-                text, signature, ..
+                text,
+                provider_echoes,
+                ..
             } => {
                 let mut o = Map::new();
                 o.insert("text".into(), Value::String(text.clone()));
                 o.insert("thought".into(), Value::Bool(true));
-                if let Some(sig) = signature {
-                    o.insert("thoughtSignature".into(), Value::String(sig.clone()));
+                if let Some(sig) = encode_thought_signature(provider_echoes) {
+                    o.insert(WIRE_THOUGHT_SIGNATURE.into(), Value::String(sig.to_owned()));
                 }
                 out.push(Value::Object(o));
             }
@@ -790,6 +861,7 @@ const fn debug_part_kind(part: &ContentPart) -> &'static str {
         ContentPart::ToolResult { .. } => "tool_result",
         ContentPart::ImageOutput { .. } => "image_output",
         ContentPart::AudioOutput { .. } => "audio_output",
+        ContentPart::RedactedThinking { .. } => "redacted_thinking",
     }
 }
 
@@ -824,26 +896,36 @@ fn decode_candidate(
         // Thinking blocks: parts marked `thought: true` carry reasoning text.
         if part.get("thought").and_then(Value::as_bool) == Some(true) {
             let text = str_field(part, "text").to_owned();
-            let signature = part
-                .get("thoughtSignature")
-                .and_then(Value::as_str)
-                .map(str::to_owned);
+            let provider_echoes = decode_thought_signature(part).map_or_else(Vec::new, |e| vec![e]);
             parts.push(ContentPart::Thinking {
                 text,
-                signature,
                 cache_control: None,
+                provider_echoes,
             });
             continue;
         }
         if let Some(text) = part.get("text").and_then(Value::as_str)
             && !text.is_empty()
         {
-            parts.push(ContentPart::text(text));
+            // Plain `text` parts may also carry `thought_signature`
+            // on reasoning turns — preserve it for round-trip.
+            let provider_echoes = decode_thought_signature(part).map_or_else(Vec::new, |e| vec![e]);
+            parts.push(ContentPart::Text {
+                text: text.to_owned(),
+                cache_control: None,
+                provider_echoes,
+            });
             continue;
         }
         if let Some(call) = part.get("functionCall") {
             let name = str_field(call, "name").to_owned();
             let args = call.get("args").cloned().unwrap_or_else(|| json!({})); // silent-fallback-ok: functionCall without args = empty-args call (vendor sometimes omits when schema has no required fields)
+            // `thought_signature` rides on the `Part` itself
+            // (sibling of `functionCall`), not inside the inner
+            // object — Gemini 3.x rejects the next turn with HTTP
+            // 400 if the first `functionCall` of a step is missing
+            // its echo.
+            let provider_echoes = decode_thought_signature(part).map_or_else(Vec::new, |e| vec![e]);
             // Gemini does not round-trip a tool-use id — derive one
             // from `(name, tool_seq)` where `tool_seq` is a per-
             // response counter of function-call parts. Streaming
@@ -854,6 +936,7 @@ fn decode_candidate(
                 id: format!("{name}#{tool_seq}"),
                 name,
                 input: args,
+                provider_echoes,
             });
             tool_seq = tool_seq.saturating_add(1);
             continue;
@@ -876,6 +959,7 @@ fn decode_candidate(
                         snippet: title.clone().unwrap_or_default(), // silent-fallback-ok: grounding citation without title → snippet "" (the URL is the load-bearing pointer; title is purely descriptive)
                         source: CitationSource::Url { url, title },
                         cache_control: None,
+                        provider_echoes: Vec::new(),
                     });
                 }
             }
@@ -1072,12 +1156,13 @@ fn stream_gemini(
                             .and_then(Value::as_str)
                             .unwrap_or("") // silent-fallback-ok: missing thinking text → empty body; downstream is_empty() guard suppresses the StreamDelta
                             .to_owned();
-                        let signature = part
-                            .get("thoughtSignature")
-                            .and_then(Value::as_str)
-                            .map(str::to_owned);
-                        if !text.is_empty() || signature.is_some() {
-                            yield Ok(StreamDelta::ThinkingDelta { text, signature });
+                        let provider_echoes =
+                            decode_thought_signature(part).map_or_else(Vec::new, |e| vec![e]);
+                        if !text.is_empty() || !provider_echoes.is_empty() {
+                            yield Ok(StreamDelta::ThinkingDelta {
+                                text,
+                                provider_echoes,
+                            });
                         }
                         continue;
                     }
@@ -1088,8 +1173,11 @@ fn stream_gemini(
                             yield Ok(StreamDelta::ToolUseStop);
                             current_tool_open = false;
                         }
+                        let provider_echoes =
+                            decode_thought_signature(part).map_or_else(Vec::new, |e| vec![e]);
                         yield Ok(StreamDelta::TextDelta {
                             text: text.to_owned(),
+                            provider_echoes,
                         });
                         continue;
                     }
@@ -1101,9 +1189,12 @@ fn stream_gemini(
                         let args = call.get("args").cloned().unwrap_or_else(|| json!({})); // silent-fallback-ok: streaming functionCall without args = empty-args call
                         let synth_id = format!("{name}#{tool_synth_idx}");
                         tool_synth_idx = tool_synth_idx.saturating_add(1);
+                        let provider_echoes =
+                            decode_thought_signature(part).map_or_else(Vec::new, |e| vec![e]);
                         yield Ok(StreamDelta::ToolUseStart {
                             id: synth_id,
                             name,
+                            provider_echoes,
                         });
                         yield Ok(StreamDelta::ToolUseInputDelta {
                             partial_json: args.to_string(),

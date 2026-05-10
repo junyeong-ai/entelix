@@ -115,6 +115,7 @@ impl SessionGraph {
                         content: content.clone(),
                         is_error: *is_error,
                         cache_control: None,
+                        provider_echoes: Vec::new(),
                     }],
                 )),
                 _ => {}

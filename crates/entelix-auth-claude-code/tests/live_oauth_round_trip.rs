@@ -51,9 +51,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use entelix_auth_claude_code::{
-    CLAUDE_CODE_BETA, ClaudeCodeOAuthProvider, FileCredentialStore,
-};
+use entelix_auth_claude_code::{CLAUDE_CODE_BETA, ClaudeCodeOAuthProvider, FileCredentialStore};
 use entelix_core::auth::CredentialProvider;
 use entelix_core::codecs::{AnthropicMessagesCodec, Codec};
 use entelix_core::context::ExecutionContext;

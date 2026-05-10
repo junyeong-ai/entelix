@@ -71,6 +71,7 @@ impl Service<StreamingModelInvocation> for StubStreamingService {
                     }),
                     Ok(StreamDelta::TextDelta {
                         text: "hello".into(),
+                        provider_echoes: Vec::new(),
                     }),
                     Ok(StreamDelta::Usage(Usage::new(100, 50))),
                     Ok(StreamDelta::Stop {
@@ -85,6 +86,7 @@ impl Service<StreamingModelInvocation> for StubStreamingService {
                         }),
                         Ok(StreamDelta::TextDelta {
                             text: "partial".into(),
+                            provider_echoes: Vec::new(),
                         }),
                     ];
                     v.truncate(n);
@@ -214,6 +216,7 @@ async fn streaming_ok_branch_emits_cost_attribute() {
             vec![ContentPart::Text {
                 text: "hi".into(),
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }],
         )],
         max_tokens: Some(100),

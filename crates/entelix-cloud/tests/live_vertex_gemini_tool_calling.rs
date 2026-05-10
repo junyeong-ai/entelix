@@ -142,7 +142,9 @@ async fn vertex_gemini_function_tool_call() {
         .content
         .iter()
         .find_map(|part| match part {
-            ContentPart::ToolUse { id, name, input, .. } => Some((id, name, input)),
+            ContentPart::ToolUse {
+                id, name, input, ..
+            } => Some((id, name, input)),
             _ => None,
         })
         .expect("response must contain a ContentPart::ToolUse");

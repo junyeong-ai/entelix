@@ -51,6 +51,7 @@ fn mock_react_model() -> impl Runnable<Vec<Message>, Message> + 'static {
                         id: "tool-1".into(),
                         name: "echo".into(),
                         input: json!({"value": 7}),
+                        provider_echoes: Vec::new(),
                     }],
                 ))
             } else {

@@ -46,6 +46,7 @@ const TOOL_NAME: &str = "get_current_weather";
 
 #[tokio::test]
 #[ignore = "live-API: requires GCP ADC + ENTELIX_LIVE_VERTEX_PROJECT + ENTELIX_LIVE_VERTEX_LOCATION"]
+#[allow(clippy::too_many_lines)]
 async fn vertex_gemini_full_tool_round_trip() {
     install_default_tls();
 
@@ -113,7 +114,10 @@ async fn vertex_gemini_full_tool_round_trip() {
         })
         .expect("turn 1 response must contain a ToolUse");
     assert!(!tool_use_id.is_empty(), "ToolUse.id must be non-empty");
-    assert_eq!(tool_name, TOOL_NAME, "ToolUse.name must round-trip verbatim");
+    assert_eq!(
+        tool_name, TOOL_NAME,
+        "ToolUse.name must round-trip verbatim"
+    );
 
     assert!(r1.usage.input_tokens > 0);
     assert!(r1.usage.output_tokens > 0);
@@ -132,6 +136,7 @@ async fn vertex_gemini_full_tool_round_trip() {
             })),
             is_error: false,
             cache_control: None,
+            provider_echoes: Vec::new(),
         }],
     ));
 
@@ -144,11 +149,10 @@ async fn vertex_gemini_full_tool_round_trip() {
         .content
         .iter()
         .filter_map(|p| match p {
-            ContentPart::Text { text, .. } => Some(text.clone()),
+            ContentPart::Text { text, .. } => Some(text.as_str()),
             _ => None,
         })
-        .collect::<Vec<_>>()
-        .join("");
+        .collect();
     assert!(
         !final_text.trim().is_empty(),
         "turn 2 must produce a final visible text reply citing the tool result; got: {r2:?}"

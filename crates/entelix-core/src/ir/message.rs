@@ -104,6 +104,7 @@ impl Message {
                 content: ToolResultContent::Text(output.into()),
                 is_error: false,
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }],
         }
     }
@@ -124,6 +125,7 @@ impl Message {
                 content: ToolResultContent::Json(output),
                 is_error: false,
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }],
         }
     }
@@ -144,6 +146,7 @@ impl Message {
                 content: ToolResultContent::Text(output.into()),
                 is_error: true,
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }],
         }
     }

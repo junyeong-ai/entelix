@@ -78,6 +78,7 @@ fn ok_response() -> ModelResponse {
         usage: Usage::default(),
         rate_limit: None,
         warnings: vec![],
+        provider_echoes: Vec::new(),
     }
 }
 

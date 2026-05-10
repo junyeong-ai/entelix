@@ -7,7 +7,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use entelix_core::ir::{ContentPart, ModelWarning, ToolResultContent, Usage};
+use entelix_core::ir::{ContentPart, ModelWarning, ProviderEchoSnapshot, ToolResultContent, Usage};
 use entelix_core::rate_limit::RateLimitSnapshot;
 
 /// One audit-log entry.
@@ -105,21 +105,23 @@ pub enum GraphEvent {
         timestamp: DateTime<Utc>,
     },
     /// Streaming thinking-content fragment captured into the audit
-    /// trail. Multiple consecutive deltas with the same `signature`
-    /// belong to the same logical thinking block; aggregators fold
-    /// them into a single `ContentPart::Thinking` when reconstructing
-    /// a finalized message. Recording deltas individually keeps the
-    /// audit log faithful to the wire — a replay that needs only the
-    /// final block can fold the deltas, while a replay that needs
-    /// per-token timing has the data.
+    /// trail. Aggregators fold consecutive deltas into a single
+    /// `ContentPart::Thinking` when reconstructing a finalised
+    /// message. Recording deltas individually keeps the audit log
+    /// faithful to the wire — a replay that needs only the final
+    /// block can fold the deltas, while a replay that needs per-token
+    /// timing has the data.
     ThinkingDelta {
         /// Token text appended to the in-progress thinking block.
         text: String,
-        /// Vendor signature for redaction-resistant replay
-        /// (Anthropic supplies a discrete `signature_delta` event
-        /// or a single `signature` on the block-start event).
-        #[serde(default)]
-        signature: Option<String>,
+        /// Vendor opaque round-trip tokens carried on this delta
+        /// (Anthropic `signature_delta`, Gemini `thought_signature`
+        /// on streamed parts, `OpenAI` Responses reasoning-item
+        /// `encrypted_content`). Codecs pre-wrap into
+        /// `ProviderEchoSnapshot` on decode; the audit log preserves
+        /// the same opaque bytes for replay.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        provider_echoes: Vec<ProviderEchoSnapshot>,
         /// Wall-clock time the event was appended.
         timestamp: DateTime<Utc>,
     },

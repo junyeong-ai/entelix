@@ -80,6 +80,7 @@ fn encode_assistant_tool_use_emits_tool_use_block() {
                 id: "tu-1".into(),
                 name: "double".into(),
                 input: json!({"n": 21}),
+                provider_echoes: Vec::new(),
             }],
         )],
         ..ModelRequest::default()
@@ -104,6 +105,7 @@ fn encode_tool_result_wraps_into_user_message_with_tool_result_block() {
                 content: ToolResultContent::Json(json!({"doubled": 42})),
                 is_error: false,
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }],
         )],
         ..ModelRequest::default()
@@ -186,7 +188,10 @@ fn decode_tool_use_response() {
         .decode(body.to_string().as_bytes(), Vec::new())
         .unwrap();
     assert_eq!(response.stop_reason, StopReason::ToolUse);
-    if let ContentPart::ToolUse { id, name, input } = &response.content[0] {
+    if let ContentPart::ToolUse {
+        id, name, input, ..
+    } = &response.content[0]
+    {
         assert_eq!(id, "tu-1");
         assert_eq!(name, "double");
         assert_eq!(input["n"], 21);

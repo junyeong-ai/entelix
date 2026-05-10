@@ -15,9 +15,11 @@ fn happy_path_text_only_response() -> Result<()> {
     })?;
     agg.push(StreamDelta::TextDelta {
         text: "Hello".into(),
+        provider_echoes: Vec::new(),
     })?;
     agg.push(StreamDelta::TextDelta {
         text: ", world".into(),
+        provider_echoes: Vec::new(),
     })?;
     agg.push(StreamDelta::Usage(Usage::new(5, 2)))?;
     agg.push(StreamDelta::Stop {
@@ -46,10 +48,12 @@ fn tool_use_block_buffers_then_parses_input() -> Result<()> {
     })?;
     agg.push(StreamDelta::TextDelta {
         text: "Sure, calling tool".into(),
+        provider_echoes: Vec::new(),
     })?;
     agg.push(StreamDelta::ToolUseStart {
         id: "toolu_99".into(),
         name: "calculator".into(),
+        provider_echoes: Vec::new(),
     })?;
     agg.push(StreamDelta::ToolUseInputDelta {
         partial_json: "{\"expr\":".into(),
@@ -67,7 +71,9 @@ fn tool_use_block_buffers_then_parses_input() -> Result<()> {
     assert_eq!(resp.content.len(), 2);
     assert!(matches!(resp.content[0], ContentPart::Text { .. }));
     match &resp.content[1] {
-        ContentPart::ToolUse { id, name, input } => {
+        ContentPart::ToolUse {
+            id, name, input, ..
+        } => {
             assert_eq!(id, "toolu_99");
             assert_eq!(name, "calculator");
             assert_eq!(input["expr"], "2+2");
@@ -87,6 +93,7 @@ fn empty_tool_input_defaults_to_empty_object() -> Result<()> {
     agg.push(StreamDelta::ToolUseStart {
         id: "t".into(),
         name: "noop".into(),
+        provider_echoes: Vec::new(),
     })?;
     agg.push(StreamDelta::ToolUseStop)?;
     agg.push(StreamDelta::Stop {
@@ -112,11 +119,13 @@ fn multiple_tool_blocks_preserve_order() -> Result<()> {
     agg.push(StreamDelta::ToolUseStart {
         id: "a".into(),
         name: "one".into(),
+        provider_echoes: Vec::new(),
     })?;
     agg.push(StreamDelta::ToolUseStop)?;
     agg.push(StreamDelta::ToolUseStart {
         id: "b".into(),
         name: "two".into(),
+        provider_echoes: Vec::new(),
     })?;
     agg.push(StreamDelta::ToolUseStop)?;
     agg.push(StreamDelta::Stop {
@@ -151,7 +160,10 @@ fn warnings_collected_in_order() -> Result<()> {
     agg.push(StreamDelta::Warning(ModelWarning::UnknownStopReason {
         raw: "weird".into(),
     }))?;
-    agg.push(StreamDelta::TextDelta { text: "ok".into() })?;
+    agg.push(StreamDelta::TextDelta {
+        text: "ok".into(),
+        provider_echoes: Vec::new(),
+    })?;
     // Emit a Usage delta — without it, finalize would attach a
     // synthetic `LossyEncode` warning about missing usage and this
     // test would conflate two semantics.
@@ -183,8 +195,11 @@ fn finalize_without_usage_attaches_lossy_warning() {
         model: "x".into(),
     })
     .unwrap();
-    agg.push(StreamDelta::TextDelta { text: "ok".into() })
-        .unwrap();
+    agg.push(StreamDelta::TextDelta {
+        text: "ok".into(),
+        provider_echoes: Vec::new(),
+    })
+    .unwrap();
     agg.push(StreamDelta::Stop {
         stop_reason: StopReason::EndTurn,
     })
@@ -211,8 +226,11 @@ fn finalize_without_stop_returns_invalid_request() {
         model: "x".into(),
     })
     .unwrap();
-    agg.push(StreamDelta::TextDelta { text: "ok".into() })
-        .unwrap();
+    agg.push(StreamDelta::TextDelta {
+        text: "ok".into(),
+        provider_echoes: Vec::new(),
+    })
+    .unwrap();
     let err = agg.finalize().unwrap_err();
     assert!(matches!(err, Error::InvalidRequest(_)));
 }
@@ -228,6 +246,7 @@ fn finalize_with_open_tool_block_returns_invalid_request() {
     agg.push(StreamDelta::ToolUseStart {
         id: "t".into(),
         name: "noop".into(),
+        provider_echoes: Vec::new(),
     })
     .unwrap();
     agg.push(StreamDelta::Stop {
@@ -255,6 +274,7 @@ fn malformed_tool_input_json_returns_actionable_invalid_request() {
     agg.push(StreamDelta::ToolUseStart {
         id: "t".into(),
         name: "noop".into(),
+        provider_echoes: Vec::new(),
     })
     .unwrap();
     agg.push(StreamDelta::ToolUseInputDelta {
@@ -303,11 +323,13 @@ fn text_during_tool_block_returns_invalid_request() {
     agg.push(StreamDelta::ToolUseStart {
         id: "t".into(),
         name: "x".into(),
+        provider_echoes: Vec::new(),
     })
     .unwrap();
     let err = agg
         .push(StreamDelta::TextDelta {
             text: "oops".into(),
+            provider_echoes: Vec::new(),
         })
         .unwrap_err();
     assert!(matches!(err, Error::InvalidRequest(_)));
@@ -344,8 +366,11 @@ fn duplicate_stop_delta_with_different_reason_is_rejected() {
         model: "claude-opus-4-7".into(),
     })
     .unwrap();
-    agg.push(StreamDelta::TextDelta { text: "ok".into() })
-        .unwrap();
+    agg.push(StreamDelta::TextDelta {
+        text: "ok".into(),
+        provider_echoes: Vec::new(),
+    })
+    .unwrap();
     agg.push(StreamDelta::Stop {
         stop_reason: StopReason::EndTurn,
     })

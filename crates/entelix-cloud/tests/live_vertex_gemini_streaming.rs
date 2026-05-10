@@ -119,15 +119,11 @@ async fn vertex_gemini_streaming_round_trip() {
     while let Some(delta) = stream.next().await {
         let delta = delta.expect("stream delta must not error mid-flight");
         match delta {
-            StreamDelta::TextDelta { text, .. } => {
-                if !text.is_empty() {
-                    text_chunks.push(text);
-                }
+            StreamDelta::TextDelta { text, .. } if !text.is_empty() => {
+                text_chunks.push(text);
             }
-            StreamDelta::ThinkingDelta { text, .. } => {
-                if !text.is_empty() {
-                    thinking_chunks.push(text);
-                }
+            StreamDelta::ThinkingDelta { text, .. } if !text.is_empty() => {
+                thinking_chunks.push(text);
             }
             StreamDelta::Stop { stop_reason, .. } => {
                 saw_stop = true;

@@ -75,6 +75,7 @@ fn encode_tool_use_emits_function_call_with_reconstructible_id() {
                 id: "double#0".into(),
                 name: "double".into(),
                 input: json!({"n": 21}),
+                provider_echoes: Vec::new(),
             }],
         )],
         ..ModelRequest::default()
@@ -113,6 +114,7 @@ fn encode_tool_result_emits_function_response_with_real_name() {
                 content: ToolResultContent::Json(json!({"doubled": 42})),
                 is_error: false,
                 cache_control: None,
+                provider_echoes: Vec::new(),
             }],
         )],
         ..ModelRequest::default()
@@ -291,7 +293,10 @@ fn decode_function_call_reconstructs_tool_use_id_from_name_and_index() {
     let response = codec
         .decode(body.to_string().as_bytes(), Vec::new())
         .unwrap();
-    if let ContentPart::ToolUse { id, name, input } = &response.content[0] {
+    if let ContentPart::ToolUse {
+        id, name, input, ..
+    } = &response.content[0]
+    {
         // Reconstruction is `name#idx` so the next turn's encode round-trips
         // bit-for-bit. The synth depends on tool name + position only — no
         // randomness, no global counter.

@@ -44,6 +44,7 @@ impl Codec for StaticCodec {
             usage: Usage::default(),
             rate_limit: None,
             warnings: Vec::new(),
+            provider_echoes: Vec::new(),
         })
     }
 }

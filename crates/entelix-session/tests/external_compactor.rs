@@ -69,6 +69,7 @@ fn assistant_with_tool_use(text: &str, call_id: &str, name: &str) -> GraphEvent 
                 id: call_id.to_owned(),
                 name: name.to_owned(),
                 input: serde_json::json!({"q": "x"}),
+                provider_echoes: Vec::new(),
             },
         ],
         usage: None,

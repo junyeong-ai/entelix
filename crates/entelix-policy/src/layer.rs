@@ -355,6 +355,7 @@ mod tests {
             usage: Usage::new(1000, 1000),
             rate_limit: None,
             warnings: Vec::new(),
+            provider_echoes: Vec::new(),
         }
     }
 

@@ -110,7 +110,11 @@ async fn claude_code_oauth_minimal_chat_round_trip() {
         model,
         messages: vec![Message::user("Reply with the word 'ok' and nothing else.")],
         max_tokens: Some(16),
-        temperature: Some(0.0),
+        // Temperature is deliberately unset — Anthropic deprecated
+        // the field on `claude-opus-4-7` and the smoke must run
+        // unchanged across every tier (haiku / sonnet / opus). The
+        // 1-token reply is deterministic enough without sampling
+        // controls.
         provider_extensions: ProviderExtensions::default()
             .with_anthropic(AnthropicExt::default().with_betas([CLAUDE_CODE_BETA])),
         ..ModelRequest::default()

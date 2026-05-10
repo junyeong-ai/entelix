@@ -13,8 +13,6 @@ use entelix_core::error::Result;
 use entelix_core::sandbox::Sandbox;
 use entelix_core::tools::{Tool, ToolEffect, ToolMetadata};
 
-use crate::error::ToolError;
-
 /// Read a file from the sandbox-internal filesystem.
 pub struct SandboxedReadFileTool {
     sandbox: Arc<dyn Sandbox>,
@@ -69,7 +67,7 @@ impl Tool for SandboxedReadFileTool {
     }
 
     async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
-        let parsed: PathInput = serde_json::from_value(input).map_err(ToolError::from)?;
+        let parsed: PathInput = serde_json::from_value(input)?;
         let bytes = self.sandbox.read_file(&parsed.path, ctx.core()).await?;
         // Lean LLM-facing payload: text on UTF-8, base64 on binary.
         // Operators that always know binary handle it explicitly.
@@ -149,7 +147,7 @@ impl Tool for SandboxedWriteFileTool {
     }
 
     async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
-        let parsed: WriteInput = serde_json::from_value(input).map_err(ToolError::from)?;
+        let parsed: WriteInput = serde_json::from_value(input)?;
         let bytes = parsed.content.as_bytes();
         self.sandbox
             .write_file(&parsed.path, bytes, ctx.core())
@@ -210,7 +208,7 @@ impl Tool for SandboxedListDirTool {
     }
 
     async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
-        let parsed: PathInput = serde_json::from_value(input).map_err(ToolError::from)?;
+        let parsed: PathInput = serde_json::from_value(input)?;
         let entries = self.sandbox.list_dir(&parsed.path, ctx.core()).await?;
         // Lean LLM-facing payload — just the entries; the model
         // already knows the path it queried.

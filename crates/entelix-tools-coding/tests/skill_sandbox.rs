@@ -15,7 +15,6 @@
 //! body that follows the frontmatter, and whose other files are
 //! enumerated as lazy resources.
 
-#![cfg(feature = "sandboxed")]
 #![allow(clippy::unwrap_used, clippy::indexing_slicing)]
 
 use std::sync::Arc;
@@ -23,8 +22,7 @@ use std::sync::Arc;
 use entelix_core::context::ExecutionContext;
 use entelix_core::sandbox::Sandbox;
 use entelix_core::skills::{Skill, SkillResourceContent};
-use entelix_tools::SandboxSkill;
-use entelix_tools::sandboxed::MockSandbox;
+use entelix_tools_coding::{MockSandbox, SandboxSkill};
 
 const SKILL_MD: &str = "---
 name: code-review

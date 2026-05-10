@@ -10,11 +10,9 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 
 use entelix_core::AgentContext;
-use entelix_core::error::Result;
+use entelix_core::error::{Error, Result};
 use entelix_core::sandbox::{CodeSpec, Sandbox, SandboxLanguage};
 use entelix_core::tools::{Tool, ToolEffect, ToolMetadata};
-
-use crate::error::ToolError;
 
 /// Allowlist + timeout cap for [`SandboxedCodeTool`].
 ///
@@ -137,13 +135,12 @@ impl Tool for SandboxedCodeTool {
     }
 
     async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
-        let parsed: CodeToolInput = serde_json::from_value(input).map_err(ToolError::from)?;
+        let parsed: CodeToolInput = serde_json::from_value(input)?;
         if !self.policy.admits(parsed.language) {
-            return Err(ToolError::config_msg(format!(
+            return Err(Error::config(format!(
                 "language {:?} is not on the CodePolicy allowlist",
                 parsed.language
-            ))
-            .into());
+            )));
         }
         let spec = CodeSpec {
             language: parsed.language,

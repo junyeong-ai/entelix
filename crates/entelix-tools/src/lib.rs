@@ -22,14 +22,12 @@
 //!   external search APIs (Brave / Tavily / Perplexity / …).
 //!   Concrete providers are deferred to 1.1 (same trait-only policy
 //!   as for `Embedder`).
-//! - [`sandboxed`] (behind the `sandboxed` feature) —
-//!   `SandboxedShellTool` / `SandboxedCodeTool` /
-//!   `SandboxedReadFileTool` / `SandboxedWriteFileTool` /
-//!   `SandboxedListDirTool` plus `SandboxSkill` — shell + filesystem
-//!   tools that delegate to a `Sandbox` backend. Off by default so
-//!   the generic-purpose surface stays free of coding-shape
-//!   opinions; opt in for coding-agent and other sandboxed-IO use
-//!   cases.
+//!
+//! Coding-agent vertical tools (`SandboxedShellTool`,
+//! `SandboxedCodeTool`, `Sandboxed{Read,Write,ListDir}FileTool`,
+//! `ShellPolicy`, `CodePolicy`, `SandboxSkill`) live in the
+//! `entelix-tools-coding` companion crate so this horizontal surface
+//! stays free of coding-shape opinions.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc(html_root_url = "https://docs.rs/entelix-tools/0.3.0")]
@@ -66,9 +64,6 @@ mod dns;
 mod error;
 mod http_fetch;
 pub mod memory;
-#[cfg(feature = "sandboxed")]
-#[cfg_attr(docsrs, doc(cfg(feature = "sandboxed")))]
-pub mod sandboxed;
 mod schema_tool;
 mod search;
 pub mod skills;
@@ -86,18 +81,9 @@ pub use http_fetch::{
     DEFAULT_FETCH_TIMEOUT, DEFAULT_MAX_REDIRECTS, DEFAULT_MAX_RESPONSE_BYTES, HostAllowlist,
     HostRule, HttpFetchTool, HttpFetchToolBuilder,
 };
-#[cfg(feature = "sandboxed")]
-#[cfg_attr(docsrs, doc(cfg(feature = "sandboxed")))]
-pub use sandboxed::{
-    CodePolicy, SandboxedCodeTool, SandboxedListDirTool, SandboxedReadFileTool, SandboxedShellTool,
-    SandboxedWriteFileTool, ShellPolicy, ShellPolicyError,
-};
 pub use schema_tool::{SchemaTool, SchemaToolAdapter, SchemaToolExt};
 pub use search::{DEFAULT_MAX_RESULTS, SearchProvider, SearchResult, SearchTool};
 pub use skills::{
     ActivateSkillTool, InMemorySkill, InMemorySkillBuilder, ListSkillsTool, ReadSkillResourceTool,
     StaticResource,
 };
-#[cfg(feature = "sandboxed")]
-#[cfg_attr(docsrs, doc(cfg(feature = "sandboxed")))]
-pub use skills::{SandboxResource, SandboxSkill};

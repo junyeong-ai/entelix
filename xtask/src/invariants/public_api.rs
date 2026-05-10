@@ -24,6 +24,7 @@ const CRATES: &[&str] = &[
     "entelix-graphmemory-pg",
     "entelix-persistence",
     "entelix-tools",
+    "entelix-tools-coding",
     "entelix-mcp",
     "entelix-cloud",
     "entelix-policy",

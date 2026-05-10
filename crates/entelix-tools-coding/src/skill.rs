@@ -22,7 +22,7 @@ use entelix_core::error::{Error, Result};
 use entelix_core::sandbox::{DirEntry, Sandbox};
 use entelix_core::skills::{LoadedSkill, Skill, SkillResource, SkillResourceContent};
 
-use crate::skills::manifest::{SkillManifest, parse_skill_md};
+use crate::manifest::{SkillManifest, parse_skill_md};
 
 /// Conventional name of the manifest file under each skill root.
 const SKILL_MANIFEST: &str = "SKILL.md";

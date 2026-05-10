@@ -1,5 +1,5 @@
 [package]
-name = "entelix-tools"
+name = "entelix-tools-coding"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -7,16 +7,12 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 documentation.workspace = true
-description = "entelix built-in tools — http_fetch, search adapter trait, calculator (web-only subset; no fs / shell — invariant 9)"
+description = "entelix coding-agent vertical tools — Sandbox-trait-backed shell, code, and filesystem tools plus the Anthropic Claude Skills SKILL.md layout. Companion crate to the horizontal entelix-tools surface."
 keywords.workspace = true
 categories.workspace = true
-readme = "README.md"
 
 [lints]
 workspace = true
-
-[features]
-default = []
 
 [package.metadata.docs.rs]
 all-features = true
@@ -24,24 +20,12 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 entelix-core = { workspace = true }
-entelix-memory = { workspace = true }
-entelix-tool-derive = { workspace = true }
 async-trait = { workspace = true }
-bytes = { workspace = true }
-chrono = { workspace = true }
 futures = { workspace = true }
-hickory-resolver = { workspace = true }
-idna = { workspace = true }
 parking_lot = { workspace = true }
-reqwest = { workspace = true }
-schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-sha2 = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true }
-url = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
-wiremock = { workspace = true }

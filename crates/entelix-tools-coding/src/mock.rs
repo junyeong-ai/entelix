@@ -198,7 +198,7 @@ mod tests {
     use entelix_core::tools::Tool;
 
     use super::*;
-    use crate::sandboxed::{
+    use crate::{
         CodePolicy, SandboxedCodeTool, SandboxedListDirTool, SandboxedReadFileTool,
         SandboxedShellTool, SandboxedWriteFileTool, ShellPolicy,
     };

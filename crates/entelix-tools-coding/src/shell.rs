@@ -8,12 +8,11 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 
 use entelix_core::AgentContext;
-use entelix_core::error::Result;
+use entelix_core::error::{Error, Result};
 use entelix_core::sandbox::{CommandSpec, Sandbox};
 use entelix_core::tools::{Tool, ToolEffect, ToolMetadata};
 
-use crate::error::ToolError;
-use crate::sandboxed::policy::ShellPolicy;
+use crate::policy::ShellPolicy;
 
 /// Shell tool that delegates execution to a [`Sandbox`] backend
 /// after a [`ShellPolicy`] allowlist check.
@@ -100,10 +99,12 @@ impl Tool for SandboxedShellTool {
     }
 
     async fn execute(&self, input: Value, ctx: &AgentContext<()>) -> Result<Value> {
-        let parsed: ShellToolInput = serde_json::from_value(input).map_err(ToolError::from)?;
+        let parsed: ShellToolInput = serde_json::from_value(input)?;
 
         // Policy check — first defense layer.
-        self.policy.check(&parsed.argv).map_err(ToolError::config)?;
+        self.policy
+            .check(&parsed.argv)
+            .map_err(|e| Error::config(format!("ShellPolicy: {e}")))?;
 
         // Sandbox dispatch — second (and stronger) defense layer.
         let spec = CommandSpec {

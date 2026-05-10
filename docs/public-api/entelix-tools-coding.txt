@@ -1,0 +1,257 @@
+pub mod entelix_tools_coding
+pub mod entelix_tools_coding::mock
+pub struct entelix_tools_coding::mock::MockSandbox
+impl entelix_tools_coding::mock::MockSandbox
+pub fn entelix_tools_coding::mock::MockSandbox::add_command_response(self, argv0: &str, output: entelix_core::sandbox::CommandOutput) -> Self
+pub fn entelix_tools_coding::mock::MockSandbox::code_calls(&self) -> u32
+pub fn entelix_tools_coding::mock::MockSandbox::command_calls(&self) -> u32
+pub fn entelix_tools_coding::mock::MockSandbox::new() -> Self
+pub fn entelix_tools_coding::mock::MockSandbox::seed_file(&self, path: impl core::convert::Into<alloc::string::String>, bytes: impl core::convert::Into<alloc::vec::Vec<u8>>)
+impl core::default::Default for entelix_tools_coding::mock::MockSandbox
+pub fn entelix_tools_coding::mock::MockSandbox::default() -> Self
+impl entelix_core::sandbox::Sandbox for entelix_tools_coding::mock::MockSandbox
+pub fn entelix_tools_coding::mock::MockSandbox::backend(&self) -> &str
+pub fn entelix_tools_coding::mock::MockSandbox::list_dir<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, path: &'life1 str, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_core::sandbox::DirEntry>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_tools_coding::mock::MockSandbox::read_file<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, path: &'life1 str, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<u8>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_tools_coding::mock::MockSandbox::run_code<'life0, 'life1, 'async_trait>(&'life0 self, _spec: entelix_core::sandbox::CodeSpec, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::sandbox::CommandOutput>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools_coding::mock::MockSandbox::run_command<'life0, 'life1, 'async_trait>(&'life0 self, spec: entelix_core::sandbox::CommandSpec, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::sandbox::CommandOutput>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools_coding::mock::MockSandbox::write_file<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, path: &'life1 str, bytes: &'life2 [u8], _ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl core::marker::Freeze for entelix_tools_coding::mock::MockSandbox
+impl core::marker::Send for entelix_tools_coding::mock::MockSandbox
+impl core::marker::Sync for entelix_tools_coding::mock::MockSandbox
+impl core::marker::Unpin for entelix_tools_coding::mock::MockSandbox
+impl core::marker::UnsafeUnpin for entelix_tools_coding::mock::MockSandbox
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::mock::MockSandbox
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::mock::MockSandbox
+#[non_exhaustive] pub enum entelix_tools_coding::ManifestError
+pub entelix_tools_coding::ManifestError::EmptyField(&'static str)
+pub entelix_tools_coding::ManifestError::MissingClosingFence
+pub entelix_tools_coding::ManifestError::MissingField(&'static str)
+pub entelix_tools_coding::ManifestError::MissingOpeningFence
+impl core::error::Error for entelix_tools_coding::ManifestError
+impl core::fmt::Debug for entelix_tools_coding::ManifestError
+pub fn entelix_tools_coding::ManifestError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_tools_coding::ManifestError
+pub fn entelix_tools_coding::ManifestError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tools_coding::ManifestError
+impl core::marker::Send for entelix_tools_coding::ManifestError
+impl core::marker::Sync for entelix_tools_coding::ManifestError
+impl core::marker::Unpin for entelix_tools_coding::ManifestError
+impl core::marker::UnsafeUnpin for entelix_tools_coding::ManifestError
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::ManifestError
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::ManifestError
+#[non_exhaustive] pub enum entelix_tools_coding::ShellPolicyError
+pub entelix_tools_coding::ShellPolicyError::CommandNotAllowed
+pub entelix_tools_coding::ShellPolicyError::CommandNotAllowed::command: alloc::string::String
+pub entelix_tools_coding::ShellPolicyError::EmptyArgv
+impl core::cmp::Eq for entelix_tools_coding::ShellPolicyError
+impl core::cmp::PartialEq for entelix_tools_coding::ShellPolicyError
+pub fn entelix_tools_coding::ShellPolicyError::eq(&self, other: &entelix_tools_coding::ShellPolicyError) -> bool
+impl core::error::Error for entelix_tools_coding::ShellPolicyError
+impl core::fmt::Debug for entelix_tools_coding::ShellPolicyError
+pub fn entelix_tools_coding::ShellPolicyError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for entelix_tools_coding::ShellPolicyError
+pub fn entelix_tools_coding::ShellPolicyError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_tools_coding::ShellPolicyError
+impl core::marker::Freeze for entelix_tools_coding::ShellPolicyError
+impl core::marker::Send for entelix_tools_coding::ShellPolicyError
+impl core::marker::Sync for entelix_tools_coding::ShellPolicyError
+impl core::marker::Unpin for entelix_tools_coding::ShellPolicyError
+impl core::marker::UnsafeUnpin for entelix_tools_coding::ShellPolicyError
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::ShellPolicyError
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::ShellPolicyError
+pub struct entelix_tools_coding::CodePolicy
+impl entelix_tools_coding::CodePolicy
+pub fn entelix_tools_coding::CodePolicy::admits(&self, language: entelix_core::sandbox::SandboxLanguage) -> bool
+pub const fn entelix_tools_coding::CodePolicy::max_duration(&self) -> core::time::Duration
+pub fn entelix_tools_coding::CodePolicy::new<I>(allowed: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = entelix_core::sandbox::SandboxLanguage>
+pub const fn entelix_tools_coding::CodePolicy::with_max_duration(self, duration: core::time::Duration) -> Self
+impl core::clone::Clone for entelix_tools_coding::CodePolicy
+pub fn entelix_tools_coding::CodePolicy::clone(&self) -> entelix_tools_coding::CodePolicy
+impl core::default::Default for entelix_tools_coding::CodePolicy
+pub fn entelix_tools_coding::CodePolicy::default() -> Self
+impl core::fmt::Debug for entelix_tools_coding::CodePolicy
+pub fn entelix_tools_coding::CodePolicy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tools_coding::CodePolicy
+impl core::marker::Send for entelix_tools_coding::CodePolicy
+impl core::marker::Sync for entelix_tools_coding::CodePolicy
+impl core::marker::Unpin for entelix_tools_coding::CodePolicy
+impl core::marker::UnsafeUnpin for entelix_tools_coding::CodePolicy
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::CodePolicy
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::CodePolicy
+pub struct entelix_tools_coding::MockSandbox
+impl entelix_tools_coding::mock::MockSandbox
+pub fn entelix_tools_coding::mock::MockSandbox::add_command_response(self, argv0: &str, output: entelix_core::sandbox::CommandOutput) -> Self
+pub fn entelix_tools_coding::mock::MockSandbox::code_calls(&self) -> u32
+pub fn entelix_tools_coding::mock::MockSandbox::command_calls(&self) -> u32
+pub fn entelix_tools_coding::mock::MockSandbox::new() -> Self
+pub fn entelix_tools_coding::mock::MockSandbox::seed_file(&self, path: impl core::convert::Into<alloc::string::String>, bytes: impl core::convert::Into<alloc::vec::Vec<u8>>)
+impl core::default::Default for entelix_tools_coding::mock::MockSandbox
+pub fn entelix_tools_coding::mock::MockSandbox::default() -> Self
+impl entelix_core::sandbox::Sandbox for entelix_tools_coding::mock::MockSandbox
+pub fn entelix_tools_coding::mock::MockSandbox::backend(&self) -> &str
+pub fn entelix_tools_coding::mock::MockSandbox::list_dir<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, path: &'life1 str, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<entelix_core::sandbox::DirEntry>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_tools_coding::mock::MockSandbox::read_file<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, path: &'life1 str, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<alloc::vec::Vec<u8>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn entelix_tools_coding::mock::MockSandbox::run_code<'life0, 'life1, 'async_trait>(&'life0 self, _spec: entelix_core::sandbox::CodeSpec, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::sandbox::CommandOutput>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools_coding::mock::MockSandbox::run_command<'life0, 'life1, 'async_trait>(&'life0 self, spec: entelix_core::sandbox::CommandSpec, _ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::sandbox::CommandOutput>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools_coding::mock::MockSandbox::write_file<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, path: &'life1 str, bytes: &'life2 [u8], _ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+impl core::marker::Freeze for entelix_tools_coding::mock::MockSandbox
+impl core::marker::Send for entelix_tools_coding::mock::MockSandbox
+impl core::marker::Sync for entelix_tools_coding::mock::MockSandbox
+impl core::marker::Unpin for entelix_tools_coding::mock::MockSandbox
+impl core::marker::UnsafeUnpin for entelix_tools_coding::mock::MockSandbox
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::mock::MockSandbox
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::mock::MockSandbox
+pub struct entelix_tools_coding::SandboxResource
+impl core::clone::Clone for entelix_tools_coding::SandboxResource
+pub fn entelix_tools_coding::SandboxResource::clone(&self) -> entelix_tools_coding::SandboxResource
+impl core::fmt::Debug for entelix_tools_coding::SandboxResource
+pub fn entelix_tools_coding::SandboxResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::skills::resource::SkillResource for entelix_tools_coding::SandboxResource
+pub fn entelix_tools_coding::SandboxResource::read<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::skills::resource::SkillResourceContent>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for entelix_tools_coding::SandboxResource
+impl core::marker::Send for entelix_tools_coding::SandboxResource
+impl core::marker::Sync for entelix_tools_coding::SandboxResource
+impl core::marker::Unpin for entelix_tools_coding::SandboxResource
+impl core::marker::UnsafeUnpin for entelix_tools_coding::SandboxResource
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::SandboxResource
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::SandboxResource
+pub struct entelix_tools_coding::SandboxSkill
+impl entelix_tools_coding::SandboxSkill
+pub async fn entelix_tools_coding::SandboxSkill::from_sandbox(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>, root: impl core::convert::Into<alloc::string::String>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<Self>
+impl core::clone::Clone for entelix_tools_coding::SandboxSkill
+pub fn entelix_tools_coding::SandboxSkill::clone(&self) -> entelix_tools_coding::SandboxSkill
+impl core::fmt::Debug for entelix_tools_coding::SandboxSkill
+pub fn entelix_tools_coding::SandboxSkill::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::skills::skill::Skill for entelix_tools_coding::SandboxSkill
+pub fn entelix_tools_coding::SandboxSkill::description(&self) -> &str
+pub fn entelix_tools_coding::SandboxSkill::load<'life0, 'life1, 'async_trait>(&'life0 self, ctx: &'life1 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_core::skills::skill::LoadedSkill>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools_coding::SandboxSkill::name(&self) -> &str
+pub fn entelix_tools_coding::SandboxSkill::version(&self) -> core::option::Option<&str>
+impl core::marker::Freeze for entelix_tools_coding::SandboxSkill
+impl core::marker::Send for entelix_tools_coding::SandboxSkill
+impl core::marker::Sync for entelix_tools_coding::SandboxSkill
+impl core::marker::Unpin for entelix_tools_coding::SandboxSkill
+impl core::marker::UnsafeUnpin for entelix_tools_coding::SandboxSkill
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::SandboxSkill
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::SandboxSkill
+pub struct entelix_tools_coding::SandboxedCodeTool
+impl entelix_tools_coding::SandboxedCodeTool
+pub fn entelix_tools_coding::SandboxedCodeTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>, policy: entelix_tools_coding::CodePolicy) -> Self
+impl core::fmt::Debug for entelix_tools_coding::SandboxedCodeTool
+pub fn entelix_tools_coding::SandboxedCodeTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools_coding::SandboxedCodeTool
+pub fn entelix_tools_coding::SandboxedCodeTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::agent_context::AgentContext<()>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools_coding::SandboxedCodeTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools_coding::SandboxedCodeTool
+impl core::marker::Send for entelix_tools_coding::SandboxedCodeTool
+impl core::marker::Sync for entelix_tools_coding::SandboxedCodeTool
+impl core::marker::Unpin for entelix_tools_coding::SandboxedCodeTool
+impl core::marker::UnsafeUnpin for entelix_tools_coding::SandboxedCodeTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::SandboxedCodeTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::SandboxedCodeTool
+pub struct entelix_tools_coding::SandboxedListDirTool
+impl entelix_tools_coding::SandboxedListDirTool
+pub fn entelix_tools_coding::SandboxedListDirTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>) -> Self
+impl core::fmt::Debug for entelix_tools_coding::SandboxedListDirTool
+pub fn entelix_tools_coding::SandboxedListDirTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools_coding::SandboxedListDirTool
+pub fn entelix_tools_coding::SandboxedListDirTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::agent_context::AgentContext<()>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools_coding::SandboxedListDirTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools_coding::SandboxedListDirTool
+impl core::marker::Send for entelix_tools_coding::SandboxedListDirTool
+impl core::marker::Sync for entelix_tools_coding::SandboxedListDirTool
+impl core::marker::Unpin for entelix_tools_coding::SandboxedListDirTool
+impl core::marker::UnsafeUnpin for entelix_tools_coding::SandboxedListDirTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::SandboxedListDirTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::SandboxedListDirTool
+pub struct entelix_tools_coding::SandboxedReadFileTool
+impl entelix_tools_coding::SandboxedReadFileTool
+pub fn entelix_tools_coding::SandboxedReadFileTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>) -> Self
+impl core::fmt::Debug for entelix_tools_coding::SandboxedReadFileTool
+pub fn entelix_tools_coding::SandboxedReadFileTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools_coding::SandboxedReadFileTool
+pub fn entelix_tools_coding::SandboxedReadFileTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::agent_context::AgentContext<()>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools_coding::SandboxedReadFileTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools_coding::SandboxedReadFileTool
+impl core::marker::Send for entelix_tools_coding::SandboxedReadFileTool
+impl core::marker::Sync for entelix_tools_coding::SandboxedReadFileTool
+impl core::marker::Unpin for entelix_tools_coding::SandboxedReadFileTool
+impl core::marker::UnsafeUnpin for entelix_tools_coding::SandboxedReadFileTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::SandboxedReadFileTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::SandboxedReadFileTool
+pub struct entelix_tools_coding::SandboxedShellTool
+impl entelix_tools_coding::SandboxedShellTool
+pub fn entelix_tools_coding::SandboxedShellTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>, policy: entelix_tools_coding::ShellPolicy) -> Self
+pub fn entelix_tools_coding::SandboxedShellTool::read_only(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>) -> Self
+impl core::fmt::Debug for entelix_tools_coding::SandboxedShellTool
+pub fn entelix_tools_coding::SandboxedShellTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools_coding::SandboxedShellTool
+pub fn entelix_tools_coding::SandboxedShellTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::agent_context::AgentContext<()>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools_coding::SandboxedShellTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools_coding::SandboxedShellTool
+impl core::marker::Send for entelix_tools_coding::SandboxedShellTool
+impl core::marker::Sync for entelix_tools_coding::SandboxedShellTool
+impl core::marker::Unpin for entelix_tools_coding::SandboxedShellTool
+impl core::marker::UnsafeUnpin for entelix_tools_coding::SandboxedShellTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::SandboxedShellTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::SandboxedShellTool
+pub struct entelix_tools_coding::SandboxedWriteFileTool
+impl entelix_tools_coding::SandboxedWriteFileTool
+pub fn entelix_tools_coding::SandboxedWriteFileTool::new(sandbox: alloc::sync::Arc<dyn entelix_core::sandbox::Sandbox>) -> Self
+impl core::fmt::Debug for entelix_tools_coding::SandboxedWriteFileTool
+pub fn entelix_tools_coding::SandboxedWriteFileTool::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::tools::tool::Tool for entelix_tools_coding::SandboxedWriteFileTool
+pub fn entelix_tools_coding::SandboxedWriteFileTool::execute<'life0, 'life1, 'async_trait>(&'life0 self, input: serde_json::value::Value, ctx: &'life1 entelix_core::agent_context::AgentContext<()>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<serde_json::value::Value>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn entelix_tools_coding::SandboxedWriteFileTool::metadata(&self) -> &entelix_core::tools::metadata::ToolMetadata
+impl core::marker::Freeze for entelix_tools_coding::SandboxedWriteFileTool
+impl core::marker::Send for entelix_tools_coding::SandboxedWriteFileTool
+impl core::marker::Sync for entelix_tools_coding::SandboxedWriteFileTool
+impl core::marker::Unpin for entelix_tools_coding::SandboxedWriteFileTool
+impl core::marker::UnsafeUnpin for entelix_tools_coding::SandboxedWriteFileTool
+impl !core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::SandboxedWriteFileTool
+impl !core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::SandboxedWriteFileTool
+pub struct entelix_tools_coding::ShellPolicy
+impl entelix_tools_coding::ShellPolicy
+pub fn entelix_tools_coding::ShellPolicy::add_allowed_command(self, command: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_tools_coding::ShellPolicy::allowed(&self) -> &std::collections::hash::set::HashSet<alloc::string::String>
+pub fn entelix_tools_coding::ShellPolicy::check(&self, argv: &[alloc::string::String]) -> core::result::Result<(), entelix_tools_coding::ShellPolicyError>
+pub fn entelix_tools_coding::ShellPolicy::development_baseline() -> Self
+pub const fn entelix_tools_coding::ShellPolicy::max_duration(&self) -> core::time::Duration
+pub fn entelix_tools_coding::ShellPolicy::new<I, S>(allowed: I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::Into<alloc::string::String>
+pub fn entelix_tools_coding::ShellPolicy::read_only_baseline() -> Self
+pub const fn entelix_tools_coding::ShellPolicy::with_max_duration(self, duration: core::time::Duration) -> Self
+impl core::clone::Clone for entelix_tools_coding::ShellPolicy
+pub fn entelix_tools_coding::ShellPolicy::clone(&self) -> entelix_tools_coding::ShellPolicy
+impl core::default::Default for entelix_tools_coding::ShellPolicy
+pub fn entelix_tools_coding::ShellPolicy::default() -> Self
+impl core::fmt::Debug for entelix_tools_coding::ShellPolicy
+pub fn entelix_tools_coding::ShellPolicy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for entelix_tools_coding::ShellPolicy
+impl core::marker::Send for entelix_tools_coding::ShellPolicy
+impl core::marker::Sync for entelix_tools_coding::ShellPolicy
+impl core::marker::Unpin for entelix_tools_coding::ShellPolicy
+impl core::marker::UnsafeUnpin for entelix_tools_coding::ShellPolicy
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::ShellPolicy
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::ShellPolicy
+pub struct entelix_tools_coding::SkillManifest
+pub entelix_tools_coding::SkillManifest::body: alloc::string::String
+pub entelix_tools_coding::SkillManifest::description: alloc::string::String
+pub entelix_tools_coding::SkillManifest::name: alloc::string::String
+pub entelix_tools_coding::SkillManifest::version: core::option::Option<alloc::string::String>
+impl core::clone::Clone for entelix_tools_coding::SkillManifest
+pub fn entelix_tools_coding::SkillManifest::clone(&self) -> entelix_tools_coding::SkillManifest
+impl core::cmp::Eq for entelix_tools_coding::SkillManifest
+impl core::cmp::PartialEq for entelix_tools_coding::SkillManifest
+pub fn entelix_tools_coding::SkillManifest::eq(&self, other: &entelix_tools_coding::SkillManifest) -> bool
+impl core::fmt::Debug for entelix_tools_coding::SkillManifest
+pub fn entelix_tools_coding::SkillManifest::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for entelix_tools_coding::SkillManifest
+impl core::marker::Freeze for entelix_tools_coding::SkillManifest
+impl core::marker::Send for entelix_tools_coding::SkillManifest
+impl core::marker::Sync for entelix_tools_coding::SkillManifest
+impl core::marker::Unpin for entelix_tools_coding::SkillManifest
+impl core::marker::UnsafeUnpin for entelix_tools_coding::SkillManifest
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_tools_coding::SkillManifest
+impl core::panic::unwind_safe::UnwindSafe for entelix_tools_coding::SkillManifest
+pub fn entelix_tools_coding::parse_skill_md(input: &str) -> core::result::Result<entelix_tools_coding::SkillManifest, entelix_tools_coding::ManifestError>

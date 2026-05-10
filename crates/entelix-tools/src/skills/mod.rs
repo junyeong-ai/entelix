@@ -1,16 +1,16 @@
-//! Concrete `Skill` implementations and the three LLM-facing tools
-//! that drive progressive disclosure.
+//! In-memory skill plus the three LLM-facing tools that drive
+//! progressive disclosure.
 //!
 //! ## Skills
 //!
 //! - [`InMemorySkill`] — struct holding name, description, version,
 //!   instructions, and a resource map. Build via
 //!   [`InMemorySkillBuilder`].
-//! - [`SandboxSkill`] — backed by a sandbox-internal directory tree
-//!   mirroring the Anthropic Claude Skills layout (`SKILL.md` for
-//!   instructions, any other relative file becomes a resource).
-//!   Filesystem access flows through `Sandbox` — invariant 9
-//!   preserved.
+//!
+//! Filesystem-backed skills (Anthropic Claude Skills `SKILL.md`
+//! layout) live in the `entelix-tools-coding` companion crate
+//! because their IO routes through `Sandbox` and they're a
+//! coding-agent-vertical concern (invariant 9 boundary).
 //!
 //! ## LLM-facing tools
 //!
@@ -24,10 +24,6 @@
 //!   `SkillRegistry` API for out-of-band host-application use.
 
 mod in_memory;
-#[cfg(feature = "sandboxed")]
-mod manifest;
-#[cfg(feature = "sandboxed")]
-mod sandbox_skill;
 mod tools;
 
 use std::sync::Arc;
@@ -37,12 +33,6 @@ use entelix_core::skills::SkillRegistry;
 use entelix_core::tools::ToolRegistry;
 
 pub use in_memory::{InMemorySkill, InMemorySkillBuilder, StaticResource};
-#[cfg(feature = "sandboxed")]
-#[cfg_attr(docsrs, doc(cfg(feature = "sandboxed")))]
-pub use manifest::{ManifestError, SkillManifest, parse_skill_md};
-#[cfg(feature = "sandboxed")]
-#[cfg_attr(docsrs, doc(cfg(feature = "sandboxed")))]
-pub use sandbox_skill::{SandboxResource, SandboxSkill};
 pub use tools::{ActivateSkillTool, ListSkillsTool, ReadSkillResourceTool};
 
 /// Register the three LLM-facing skill tools (`list_skills`,

@@ -1,5 +1,5 @@
 //! `ShellPolicy` — allowlist + argv validation for
-//! [`SandboxedShellTool`](crate::sandboxed::SandboxedShellTool).
+//! [`SandboxedShellTool`](crate::SandboxedShellTool).
 //!
 //! Defense in depth: the underlying [`entelix_core::sandbox::Sandbox`]
 //! enforces process isolation; `ShellPolicy` enforces *intent*
@@ -25,7 +25,7 @@ use std::time::Duration;
 use thiserror::Error;
 
 /// Allowlist + duration cap for shell commands the agent may
-/// dispatch through [`crate::sandboxed::SandboxedShellTool`].
+/// dispatch through [`crate::SandboxedShellTool`].
 #[derive(Clone, Debug)]
 pub struct ShellPolicy {
     /// Set of allowed `argv[0]` values. Lookup is exact (no

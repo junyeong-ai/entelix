@@ -31,9 +31,7 @@ embedders-openai = ["dep:entelix-memory-openai"]
 vectorstores-qdrant = ["dep:entelix-memory-qdrant"]
 vectorstores-pgvector = ["dep:entelix-memory-pgvector"]
 graphmemory-pg = ["dep:entelix-graphmemory-pg"]
-sandboxed = ["entelix-tools/sandboxed"]
-auth-claude-code = ["dep:entelix-auth-claude-code"]
-full = ["mcp", "mcp-chatmodel", "postgres", "redis", "otel", "aws", "gcp", "azure", "policy", "server", "embedders-openai", "vectorstores-qdrant", "vectorstores-pgvector", "graphmemory-pg", "sandboxed", "auth-claude-code"]
+full = ["mcp", "mcp-chatmodel", "postgres", "redis", "otel", "aws", "gcp", "azure", "policy", "server", "embedders-openai", "vectorstores-qdrant", "vectorstores-pgvector", "graphmemory-pg"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -58,7 +56,6 @@ entelix-otel = { workspace = true, optional = true }
 entelix-persistence = { workspace = true, optional = true }
 entelix-policy = { workspace = true, optional = true }
 entelix-server = { workspace = true, optional = true }
-entelix-auth-claude-code = { workspace = true, optional = true }
 
 [dev-dependencies]
 async-trait = { workspace = true }
@@ -103,7 +100,3 @@ required-features = ["mcp", "mcp-chatmodel"]
 [[example]]
 name = "18_tool_approval"
 required-features = ["policy"]
-
-[[example]]
-name = "25_claude_code_oauth"
-required-features = ["auth-claude-code"]

@@ -71,15 +71,6 @@ pub use entelix_agents::{
     build_react_graph, build_supervisor_graph, create_chat_agent, create_react_agent,
     create_supervisor_agent, team_from_supervisor,
 };
-#[cfg(feature = "auth-claude-code")]
-#[cfg_attr(docsrs, doc(cfg(feature = "auth-claude-code")))]
-pub use entelix_auth_claude_code::{
-    CLAUDE_CODE_BETA, ClaudeCodeAuthError, ClaudeCodeAuthResult, ClaudeCodeOAuthConfig,
-    ClaudeCodeOAuthProvider, CredentialFile as ClaudeCodeCredentialFile, CredentialStore,
-    DEFAULT_REFRESH_TIMEOUT as CLAUDE_CODE_DEFAULT_REFRESH_TIMEOUT,
-    DEFAULT_TOKEN_URL as CLAUDE_CODE_DEFAULT_TOKEN_URL, FileCredentialStore,
-    OAuthCredential as ClaudeCodeOAuthCredential,
-};
 pub use entelix_cloud::CloudError;
 #[cfg(feature = "aws")]
 #[cfg_attr(docsrs, doc(cfg(feature = "aws")))]

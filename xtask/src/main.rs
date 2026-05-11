@@ -141,17 +141,13 @@ fn main() -> ExitCode {
     }
 }
 
-/// Runs every AST-walking invariant in the canonical order with
-/// per-gate banners. Stops at the first failing gate so output stays
-/// focused — matches the preflight job pattern. Both this command
-/// and the bundled `gates` / `gates-ci` cadences consume
-/// [`gates::ast_gates`] as the single source of truth for the list.
+/// Runs every AST-walking invariant via the share-parse aggregator —
+/// each workspace `.rs` file parses once collectively across the seven
+/// file-level gates, then the cross-file / manifest / markdown gates
+/// fire sequentially. Stops at the first failure. Same path the
+/// bundled `gates` / `gates-ci` cadences embed.
 fn run_all() -> anyhow::Result<()> {
-    let gates = gates::ast_gates();
-    for (name, gate) in gates {
-        println!("── {name}");
-        gate().map_err(|e| anyhow::anyhow!("{name}: {e:#}"))?;
-    }
-    println!("\n✓ {} invariants — all clean.", gates.len());
+    gates::run_all_ast()?;
+    println!("\n✓ invariants — all clean.");
     Ok(())
 }

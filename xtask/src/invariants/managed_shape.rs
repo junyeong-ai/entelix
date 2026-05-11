@@ -1,55 +1,42 @@
 //! Anthropic managed-agent shape — invariants 1, 2, 4, 10 +
 //! Each rule is a single AST predicate, executed only against the file it
-//! targets.
+//! targets. Each predicate is its own [`FileGate`] with a tight
+//! `applies_to` scope so the share-parse orchestrator dispatches the
+//! per-file `syn::File` to whichever predicates target that zone.
+
+use std::path::Path;
 
 use anyhow::Result;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
-use crate::visitor::{Violation, parse, repo_root, report, span_loc};
+use crate::visitor::{FileGate, Violation, run_file_gates, span_loc};
 
-pub(crate) fn run() -> Result<()> {
-    let root = repo_root()?;
-    let mut violations = Vec::new();
+const REMEDIATION: &str = "Anthropic managed-agent shape is non-negotiable. See CLAUDE.md\n\
+     §\"Anthropic managed-agent shape\".";
 
-    // ── Invariant 2 — Agent must not own a `Persistence` field ──
-    inv2_no_agent_persistence(&root, &mut violations)?;
-    // ── Invariant 10 — ExecutionContext must not embed CredentialProvider ──
-    inv10_no_credential_in_ctx(&root, &mut violations)?;
-    // ── Invariant 1 — SessionGraph must hold `events: Vec<GraphEvent>` ──
-    inv1_session_event_field(&root, &mut violations)?;
-    // ── Invariant 4 — Tool trait must expose `execute` ──
-    inv4_tool_execute(&root, &mut violations)?;
-    // ── — Subagent must not construct fresh ToolRegistry ──
-    adr35_subagent_layer_inheritance(&root, &mut violations)?;
+const CORE_SRC: &str = "crates/entelix-core/src";
+const SESSION_SRC: &str = "crates/entelix-session/src";
+const SUBAGENT_FILE: &str = "crates/entelix-agents/src/subagent.rs";
 
-    report(
-        "managed-shape (invariants 1, 2, 4, 10)",
-        violations,
-        "Anthropic managed-agent shape is non-negotiable. See CLAUDE.md\n\
-         §\"Anthropic managed-agent shape\".",
-    )
+fn under(path: &Path, zone: &str) -> bool {
+    path.to_string_lossy().contains(zone)
 }
 
-fn inv2_no_agent_persistence(
-    root: &std::path::Path,
-    violations: &mut Vec<Violation>,
-) -> Result<()> {
-    // Walk every entelix-core source file. Flag any field whose type ends
-    // in `*Persistence` directly on a struct named `Agent` or `*Agent`.
-    let dir = root.join("crates/entelix-core/src");
-    if !dir.exists() {
-        return Ok(());
+// ── Invariant 2 — Agent must not own a `Persistence` field ──────────
+
+pub(crate) struct NoAgentPersistenceGate;
+
+impl FileGate for NoAgentPersistenceGate {
+    fn name(&self) -> &'static str {
+        "managed-shape (invariants 1, 2, 4, 10)"
     }
-    for entry in walkdir::WalkDir::new(&dir)
-        .into_iter()
-        .filter_map(std::result::Result::ok)
-    {
-        let p = entry.path();
-        if !p.is_file() || p.extension().and_then(|s| s.to_str()) != Some("rs") {
-            continue;
-        }
-        let (_, ast) = parse(p)?;
+
+    fn applies_to(&self, path: &Path) -> bool {
+        under(path, CORE_SRC)
+    }
+
+    fn visit(&self, path: &Path, _src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
         for item in &ast.items {
             if let syn::Item::Struct(s) = item {
                 let name = s.ident.to_string();
@@ -64,7 +51,7 @@ fn inv2_no_agent_persistence(
                     if ty.ends_with("Persistence") {
                         let (line, col) = span_loc(ident.span());
                         violations.push(Violation::new(
-                            p.to_path_buf(),
+                            path.to_path_buf(),
                             line,
                             col,
                             format!(
@@ -77,26 +64,26 @@ fn inv2_no_agent_persistence(
             }
         }
     }
-    Ok(())
+
+    fn remediation(&self) -> &'static str {
+        REMEDIATION
+    }
 }
 
-fn inv10_no_credential_in_ctx(
-    root: &std::path::Path,
-    violations: &mut Vec<Violation>,
-) -> Result<()> {
-    let dir = root.join("crates/entelix-core/src");
-    if !dir.exists() {
-        return Ok(());
+// ── Invariant 10 — ExecutionContext must not embed CredentialProvider ──
+
+pub(crate) struct NoCredentialInCtxGate;
+
+impl FileGate for NoCredentialInCtxGate {
+    fn name(&self) -> &'static str {
+        "managed-shape (invariants 1, 2, 4, 10)"
     }
-    for entry in walkdir::WalkDir::new(&dir)
-        .into_iter()
-        .filter_map(std::result::Result::ok)
-    {
-        let p = entry.path();
-        if !p.is_file() || p.extension().and_then(|s| s.to_str()) != Some("rs") {
-            continue;
-        }
-        let (_, ast) = parse(p)?;
+
+    fn applies_to(&self, path: &Path) -> bool {
+        under(path, CORE_SRC)
+    }
+
+    fn visit(&self, path: &Path, _src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
         for item in &ast.items {
             if let syn::Item::Struct(s) = item {
                 if s.ident != "ExecutionContext" {
@@ -107,7 +94,7 @@ fn inv10_no_credential_in_ctx(
                     if ty == "CredentialProvider" || ty.ends_with("CredentialProvider") {
                         let (line, col) = span_loc(field.ty.span());
                         violations.push(Violation::new(
-                            p.to_path_buf(),
+                            path.to_path_buf(),
                             line,
                             col,
                             format!(
@@ -119,24 +106,26 @@ fn inv10_no_credential_in_ctx(
             }
         }
     }
-    Ok(())
+
+    fn remediation(&self) -> &'static str {
+        REMEDIATION
+    }
 }
 
-fn inv1_session_event_field(root: &std::path::Path, violations: &mut Vec<Violation>) -> Result<()> {
-    let dir = root.join("crates/entelix-session/src");
-    if !dir.exists() {
-        return Ok(());
+// ── Invariant 1 — SessionGraph must hold `events: Vec<GraphEvent>` ──
+
+pub(crate) struct SessionEventFieldGate;
+
+impl FileGate for SessionEventFieldGate {
+    fn name(&self) -> &'static str {
+        "managed-shape (invariants 1, 2, 4, 10)"
     }
-    let mut session_struct: Option<(std::path::PathBuf, proc_macro2::Span, bool)> = None;
-    for entry in walkdir::WalkDir::new(&dir)
-        .into_iter()
-        .filter_map(std::result::Result::ok)
-    {
-        let p = entry.path();
-        if !p.is_file() || p.extension().and_then(|s| s.to_str()) != Some("rs") {
-            continue;
-        }
-        let (_, ast) = parse(p)?;
+
+    fn applies_to(&self, path: &Path) -> bool {
+        under(path, SESSION_SRC)
+    }
+
+    fn visit(&self, path: &Path, _src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
         for item in &ast.items {
             if let syn::Item::Struct(s) = item {
                 if s.ident != "SessionGraph" {
@@ -148,7 +137,6 @@ fn inv1_session_event_field(root: &std::path::Path, violations: &mut Vec<Violati
                         continue;
                     };
                     if ident == "events" {
-                        // Expect Vec<GraphEvent>.
                         if let syn::Type::Path(tp) = &field.ty {
                             if let Some(last) = tp.path.segments.last() {
                                 if last.ident == "Vec" {
@@ -168,38 +156,38 @@ fn inv1_session_event_field(root: &std::path::Path, violations: &mut Vec<Violati
                         }
                     }
                 }
-                session_struct = Some((p.to_path_buf(), s.ident.span(), has_events_vec_graphevent));
+                if !has_events_vec_graphevent {
+                    let (line, col) = span_loc(s.ident.span());
+                    violations.push(Violation::new(
+                        path.to_path_buf(),
+                        line,
+                        col,
+                        "`SessionGraph` must hold `events: Vec<GraphEvent>` (invariant 1 — event SSoT)",
+                    ));
+                }
             }
         }
     }
-    if let Some((path, span, ok)) = session_struct {
-        if !ok {
-            let (line, col) = span_loc(span);
-            violations.push(Violation::new(
-                path,
-                line,
-                col,
-                "`SessionGraph` must hold `events: Vec<GraphEvent>` (invariant 1 — event SSoT)",
-            ));
-        }
+
+    fn remediation(&self) -> &'static str {
+        REMEDIATION
     }
-    Ok(())
 }
 
-fn inv4_tool_execute(root: &std::path::Path, violations: &mut Vec<Violation>) -> Result<()> {
-    let dir = root.join("crates/entelix-core/src");
-    if !dir.exists() {
-        return Ok(());
+// ── Invariant 4 — Tool trait must expose `execute` ──
+
+pub(crate) struct ToolExecuteGate;
+
+impl FileGate for ToolExecuteGate {
+    fn name(&self) -> &'static str {
+        "managed-shape (invariants 1, 2, 4, 10)"
     }
-    for entry in walkdir::WalkDir::new(&dir)
-        .into_iter()
-        .filter_map(std::result::Result::ok)
-    {
-        let p = entry.path();
-        if !p.is_file() || p.extension().and_then(|s| s.to_str()) != Some("rs") {
-            continue;
-        }
-        let (_, ast) = parse(p)?;
+
+    fn applies_to(&self, path: &Path) -> bool {
+        under(path, CORE_SRC)
+    }
+
+    fn visit(&self, path: &Path, _src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
         for item in &ast.items {
             if let syn::Item::Trait(t) = item {
                 if t.ident != "Tool" {
@@ -215,7 +203,7 @@ fn inv4_tool_execute(root: &std::path::Path, violations: &mut Vec<Violation>) ->
                 if !has_execute {
                     let (line, col) = span_loc(t.ident.span());
                     violations.push(Violation::new(
-                        p.to_path_buf(),
+                        path.to_path_buf(),
                         line,
                         col,
                         "`Tool` trait missing `execute` method (invariant 4)",
@@ -224,25 +212,36 @@ fn inv4_tool_execute(root: &std::path::Path, violations: &mut Vec<Violation>) ->
             }
         }
     }
-    Ok(())
+
+    fn remediation(&self) -> &'static str {
+        REMEDIATION
+    }
 }
 
-fn adr35_subagent_layer_inheritance(
-    root: &std::path::Path,
-    violations: &mut Vec<Violation>,
-) -> Result<()> {
-    let path = root.join("crates/entelix-agents/src/subagent.rs");
-    if !path.exists() {
-        return Ok(());
+// ── Subagent must not construct fresh ToolRegistry ──
+
+pub(crate) struct SubagentLayerInheritanceGate;
+
+impl FileGate for SubagentLayerInheritanceGate {
+    fn name(&self) -> &'static str {
+        "managed-shape (invariants 1, 2, 4, 10)"
     }
-    let (src, ast) = parse(&path)?;
-    let mut v = ToolRegistryNewVisitor {
-        file: path.clone(),
-        violations,
-    };
-    v.visit_file(&ast);
-    let _ = src;
-    Ok(())
+
+    fn applies_to(&self, path: &Path) -> bool {
+        under(path, SUBAGENT_FILE)
+    }
+
+    fn visit(&self, path: &Path, _src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
+        let mut v = ToolRegistryNewVisitor {
+            file: path.to_path_buf(),
+            violations,
+        };
+        v.visit_file(ast);
+    }
+
+    fn remediation(&self) -> &'static str {
+        REMEDIATION
+    }
 }
 
 struct ToolRegistryNewVisitor<'v> {
@@ -282,4 +281,18 @@ fn type_last_segment(ty: &syn::Type) -> Option<String> {
         syn::Type::Reference(r) => type_last_segment(&r.elem),
         _ => None,
     }
+}
+
+pub(crate) fn gates() -> Vec<Box<dyn FileGate>> {
+    vec![
+        Box::new(NoAgentPersistenceGate),
+        Box::new(NoCredentialInCtxGate),
+        Box::new(SessionEventFieldGate),
+        Box::new(ToolExecuteGate),
+        Box::new(SubagentLayerInheritanceGate),
+    ]
+}
+
+pub(crate) fn run() -> Result<()> {
+    run_file_gates(&gates())
 }

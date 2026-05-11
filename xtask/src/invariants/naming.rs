@@ -18,14 +18,16 @@
 //!  6. **ctx parameter ordering** — split convention by trait family.
 
 use std::collections::BTreeSet;
+use std::path::Path;
 
 use anyhow::Result;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
-use crate::visitor::{Violation, parse, read, repo_root, report, rust_source_files, span_loc};
-// `read` is used by check_ctx_in_trait_files via the helper closure below; keep
-// alongside the rest of the visitor utilities.
+use crate::visitor::{
+    FileGate, Violation, parse, read, repo_root, report, run_file_gates, rust_source_files,
+    span_loc,
+};
 
 const FORBIDDEN_SUFFIXES: &[&str] = &["Engine", "Wrapper", "Handler", "Helper", "Util"];
 
@@ -68,35 +70,68 @@ const MEMORY_PATTERN_FILES: &[&str] = &[
     "crates/entelix-memory/src/consolidating.rs",
 ];
 
-pub(crate) fn run() -> Result<()> {
-    let root = repo_root()?;
-    let files = rust_source_files(&root);
-    let mut violations = Vec::new();
+const REMEDIATION: &str = "Replacement guide:\n\
+     *Engine    → say what it does (OrchestrationLoop, RetryStrategy)\n\
+     *Wrapper   → say what it wraps (ToolToRunnableAdapter)\n\
+     *Handler   → say what it handles (RequestProcessor, EventConsumer)\n\
+     *Helper / *Util → fold into module\n\
+     *Service   → *Manager (lifecycle) / *Client (HTTP)\n\
+     get_X()    → X()\n\
+     with_X(&self, …) → X(&self) bare accessor or restricted_to / filter / etc.\n\
+     builder method → with_<noun> / add_<element> / set_<role> / register\n\
+     ctx-first traits — memory/persistence: (&self, ctx, scope, payload, …)\n\
+     ctx-last traits — computation/dispatch: (&self, input, …, ctx)";
 
-    for file in &files {
-        let (src, ast) = parse(file)?;
-        let mut v = NamingVisitor {
-            file: file.clone(),
-            file_uses_tower_service: file_imports_tower_service(&src),
-            in_builder_impl_depth: 0,
-            current_trait: None,
-            violations: &mut violations,
-        };
-        v.visit_file(&ast);
+pub(crate) struct NamingGate;
+
+impl FileGate for NamingGate {
+    fn name(&self) -> &'static str {
+        "naming"
     }
 
-    // ctx ordering — explicit per-trait pass.
+    fn visit(&self, path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
+        let mut v = NamingVisitor {
+            file: path.to_path_buf(),
+            file_uses_tower_service: file_imports_tower_service(src),
+            in_builder_impl_depth: 0,
+            current_trait: None,
+            violations,
+        };
+        v.visit_file(ast);
+    }
+
+    fn remediation(&self) -> &'static str {
+        REMEDIATION
+    }
+}
+
+pub(crate) fn gates() -> Vec<Box<dyn FileGate>> {
+    vec![Box::new(NamingGate)]
+}
+
+pub(crate) fn run() -> Result<()> {
+    run_file_gates(&gates())?;
+    run_secondary()
+}
+
+/// Cross-file ctx-position passes — these need a global view (which file
+/// declares trait X?) so they don't fit the per-file `FileGate` shape.
+/// Surfaced as a separate function so the share-parse aggregator in
+/// [`crate::gates`] can call it after every other gate's file-level pass
+/// has run. The cost is small: ~17 traits × cheap substring filter over
+/// ~300 files, only matching files parse.
+pub(crate) fn run_secondary() -> Result<()> {
+    let root = repo_root()?;
+    let mut violations = Vec::new();
     for trait_name in CTX_FIRST_TRAITS {
         check_ctx_in_trait_files(&root, trait_name, CtxExpect::First, &mut violations)?;
     }
     for trait_name in CTX_LAST_TRAITS {
         check_ctx_in_trait_files(&root, trait_name, CtxExpect::Last, &mut violations)?;
     }
-    // memory pattern files — every ctx-bearing method ctx-first, **except**
-    // methods that belong to a ctx-last trait whose impl/definition is also
-    // hosted in this file (e.g. `Summarizer` lives in `consolidating.rs` and
-    // is ctx-last by trait family). Those are governed by their explicit
-    // CTX_LAST_TRAITS pass and the file-level pass must not re-flag them.
+    // Memory pattern files — ctx-bearing methods are ctx-first by family
+    // rule, **except** methods governed by an explicit CTX_LAST_TRAITS
+    // pass (e.g. `Summarizer` in `consolidating.rs`).
     for rel in MEMORY_PATTERN_FILES {
         let path = root.join(rel);
         if !path.exists() {
@@ -114,21 +149,7 @@ pub(crate) fn run() -> Result<()> {
         v.visit_file(&ast);
     }
 
-    report(
-        "naming",
-        violations,
-        "Replacement guide:\n\
-         *Engine    → say what it does (OrchestrationLoop, RetryStrategy)\n\
-         *Wrapper   → say what it wraps (ToolToRunnableAdapter)\n\
-         *Handler   → say what it handles (RequestProcessor, EventConsumer)\n\
-         *Helper / *Util → fold into module\n\
-         *Service   → *Manager (lifecycle) / *Client (HTTP)\n\
-         get_X()    → X()\n\
-         with_X(&self, …) → X(&self) bare accessor or restricted_to / filter / etc.\n\
-         builder method → with_<noun> / add_<element> / set_<role> / register\n\
-         ctx-first traits — memory/persistence: (&self, ctx, scope, payload, …)\n\
-         ctx-last traits — computation/dispatch: (&self, input, …, ctx)",
-    )
+    report("naming", violations, REMEDIATION)
 }
 
 fn file_imports_tower_service(src: &str) -> bool {
@@ -193,8 +214,6 @@ impl<'ast, 'v> Visit<'ast> for NamingVisitor<'v> {
     }
     fn visit_item_trait(&mut self, item: &'ast syn::ItemTrait) {
         self.check_pub_type_name(&item.vis, &item.ident);
-        // Recurse into trait body with current_trait set so trait-default
-        // methods see the get_* / with_*(&self) / ctx rules.
         let prev = self.current_trait.replace(item.ident.to_string());
         for trait_item in &item.items {
             self.visit_trait_item(trait_item);
@@ -202,8 +221,6 @@ impl<'ast, 'v> Visit<'ast> for NamingVisitor<'v> {
         self.current_trait = prev;
     }
     fn visit_item_impl(&mut self, item: &'ast syn::ItemImpl) {
-        // `impl <X>Builder` — rest of the methods inside go through builder
-        // verb-prefix enforcement.
         let mut is_builder_impl = false;
         if item.trait_.is_none() {
             if let syn::Type::Path(tp) = &*item.self_ty {
@@ -228,15 +245,11 @@ impl<'ast, 'v> Visit<'ast> for NamingVisitor<'v> {
         syn::visit::visit_impl_item_fn(self, item);
     }
     fn visit_trait_item_fn(&mut self, item: &'ast syn::TraitItemFn) {
-        // Trait methods: visibility is implicitly public; treat as `pub`.
         let pub_vis = syn::Visibility::Public(syn::token::Pub::default());
         check_method(self, &pub_vis, &item.sig, item.span());
         syn::visit::visit_trait_item_fn(self, item);
     }
     fn visit_item_fn(&mut self, item: &'ast syn::ItemFn) {
-        // Free fns: only check forbidden type suffix has nothing to do here;
-        // get_*-on-self is impossible without a receiver, so skip get_*
-        // detection — but builder verb-prefix is still impl-scoped.
         syn::visit::visit_item_fn(self, item);
     }
 }
@@ -255,15 +268,6 @@ fn check_method(
     let (line, col) = span_loc(sig.ident.span());
 
     // ── Rule 3: `get_*` accessors with self receiver ──
-    //
-    // Forbidden: `fn get_name(&self) -> &str` — bare field accessor
-    // shape, must use the bare name (`name`) per naming taxonomy.
-    //
-    // Allowed: `fn get_node(&self, ctx, ns, id) -> Result<Option<N>>`
-    // — persistence-read verb-family per `.claude/rules/naming.md`.
-    // Parameterized lookups returning `Option` are not field
-    // accessors; the `get_*` prefix is the canonical persistence
-    // read shape.
     if name.starts_with("get_") && has_self_receiver(sig) && sig.inputs.len() == 1 {
         v.violations.push(Violation::new(
             v.file.clone(),
@@ -314,12 +318,6 @@ fn is_builder_verb_prefix(name: &str) -> bool {
         || name == "build"
         || name == "new"
         || name == "default"
-        // Narrowing / selection verbs — analogous to
-        // `ToolRegistry::restricted_to` / `Iterator::filter`. They
-        // describe *which subset* the builder selects, not a
-        // configuration value, so the `with_*` prefix would read
-        // worse (`with_restriction` / `with_predicate` are vague).
-        // The convention is documented in
         || name == "restrict_to"
         || name == "filter"
 }
@@ -386,17 +384,19 @@ enum CtxExpect {
 }
 
 /// Find the trait declaration in any source file, then walk its methods.
+/// Uses the shared `rust_source_files` walker — the dedicated
+/// `rust_source_files_under_src` duplicate is gone.
 fn check_ctx_in_trait_files(
     root: &std::path::Path,
     trait_name: &str,
     expected: CtxExpect,
     violations: &mut Vec<Violation>,
 ) -> Result<()> {
-    // Search every `crates/*/src` for `pub trait <name>`.
-    let candidates = rust_source_files_under_src(root);
+    let candidates = rust_source_files(root);
+    let needle = format!("trait {trait_name}");
     for file in &candidates {
         let src = read(file)?;
-        if !src.contains(&format!("trait {trait_name}")) {
+        if !src.contains(&needle) {
             continue;
         }
         let ast: syn::File = match syn::parse_file(&src) {
@@ -413,27 +413,6 @@ fn check_ctx_in_trait_files(
         v.visit_file(&ast);
     }
     Ok(())
-}
-
-fn rust_source_files_under_src(root: &std::path::Path) -> Vec<std::path::PathBuf> {
-    let mut out = Vec::new();
-    for entry in walkdir::WalkDir::new(root.join("crates"))
-        .into_iter()
-        .filter_map(std::result::Result::ok)
-    {
-        let p = entry.path();
-        if !p.is_file() || p.extension().and_then(|s| s.to_str()) != Some("rs") {
-            continue;
-        }
-        if p.components().any(|c| {
-            let s = c.as_os_str().to_string_lossy();
-            s == "target" || s == "tests"
-        }) {
-            continue;
-        }
-        out.push(p.to_path_buf());
-    }
-    out
 }
 
 struct TraitCtxVisitor<'v> {
@@ -466,13 +445,7 @@ impl<'ast, 'v> Visit<'ast> for TraitCtxVisitor<'v> {
 struct CtxFileVisitor<'v> {
     file: std::path::PathBuf,
     expected: CtxExpect,
-    /// Method names defined inside a trait declaration that's listed in
-    /// CTX_LAST_TRAITS. Used to skip those methods during the file-level
-    /// ctx-first sweep — they're already covered by their trait pass.
     ctx_last_trait_method_names: BTreeSet<String>,
-    /// True while walking inside a trait declaration or `impl Trait for T`
-    /// block whose trait is in CTX_LAST_TRAITS — every method inside is
-    /// ctx-last by trait family, not ctx-first.
     current_ctx_last_trait: Option<String>,
     in_trait_or_impl: usize,
     violations: &'v mut Vec<Violation>,

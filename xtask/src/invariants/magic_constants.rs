@@ -10,10 +10,12 @@
 //! never reach the AST so prose mentioning thresholds is automatically
 //! safe.
 
+use std::path::Path;
+
 use anyhow::Result;
 use syn::visit::Visit;
 
-use crate::visitor::{Violation, parse, repo_root, report, rust_source_files_in, span_loc};
+use crate::visitor::{FileGate, Violation, run_file_gates, span_loc};
 
 const ZONES: &[&str] = &[
     "crates/entelix-core/src/codecs",
@@ -25,34 +27,45 @@ const ZONES: &[&str] = &[
 
 const MARKER: &str = "magic-ok";
 
-pub(crate) fn run() -> Result<()> {
-    let root = repo_root()?;
-    let mut violations = Vec::new();
+const REMEDIATION: &str = "Move the literal onto a `*Policy` struct the operator can\n\
+     override. Existing patterns: `RetryPolicy`, `MmrPolicy`,\n\
+     `ConsolidationPolicy`. Genuinely safe literals (e.g. an exact ratio\n\
+     fixed by a vendor wire format) carry an inline marker:\n\
+     \n  let ratio = 0.5; // magic-ok: vendor-fixed ratio";
 
-    for zone in ZONES {
-        let zone_path = root.join(zone);
-        let files = rust_source_files_in(&zone_path);
-        for file in &files {
-            let (src, ast) = parse(file)?;
-            let lines: Vec<&str> = src.lines().collect();
-            let mut v = MagicVisitor {
-                file: file.clone(),
-                lines: &lines,
-                violations: &mut violations,
-            };
-            v.visit_file(&ast);
-        }
+pub(crate) struct MagicConstantsGate;
+
+impl FileGate for MagicConstantsGate {
+    fn name(&self) -> &'static str {
+        "magic-constants (invariant 17)"
     }
 
-    report(
-        "magic-constants (invariant 17)",
-        violations,
-        "Move the literal onto a `*Policy` struct the operator can\n\
-         override. Existing patterns: `RetryPolicy`, `MmrPolicy`,\n\
-         `ConsolidationPolicy`. Genuinely safe literals (e.g. an exact ratio\n\
-         fixed by a vendor wire format) carry an inline marker:\n\
-         \n  let ratio = 0.5; // magic-ok: vendor-fixed ratio",
-    )
+    fn applies_to(&self, path: &Path) -> bool {
+        let s = path.to_string_lossy();
+        ZONES.iter().any(|zone| s.contains(zone))
+    }
+
+    fn visit(&self, path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
+        let lines: Vec<&str> = src.lines().collect();
+        let mut v = MagicVisitor {
+            file: path.to_path_buf(),
+            lines: &lines,
+            violations,
+        };
+        v.visit_file(ast);
+    }
+
+    fn remediation(&self) -> &'static str {
+        REMEDIATION
+    }
+}
+
+pub(crate) fn gates() -> Vec<Box<dyn FileGate>> {
+    vec![Box::new(MagicConstantsGate)]
+}
+
+pub(crate) fn run() -> Result<()> {
+    run_file_gates(&gates())
 }
 
 struct MagicVisitor<'v, 'l> {
@@ -88,9 +101,6 @@ impl<'ast, 'v, 'l> Visit<'ast> for MagicVisitor<'v, 'l> {
 }
 
 fn is_probability_literal(text: &str) -> bool {
-    // base10_digits() returns the literal without type suffix — `0.5`, `1.0`.
-    // We match `0.<digit>+` exactly. Anything starting with a digit other
-    // than 0 (`1.0`, `100.0`) is excluded.
     let mut chars = text.chars();
     let Some('0') = chars.next() else {
         return false;

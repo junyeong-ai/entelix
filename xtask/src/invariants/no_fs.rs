@@ -9,11 +9,13 @@
 //! Companion `cargo deny` `bans` section guards the dep graph
 //! against `landlock` / `seatbelt` / `tree-sitter` even transitively.
 
+use std::path::Path;
+
 use anyhow::Result;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
-use crate::visitor::{Violation, parse, repo_root, report, rust_source_files, span_loc};
+use crate::visitor::{FileGate, Violation, run_file_gates, span_loc};
 
 /// Path-prefix denylist. The matcher checks `prefix == path[..prefix.len()]`,
 /// so `["std", "fs"]` catches both `std::fs` and `std::fs::read`.
@@ -39,41 +41,52 @@ const FORBIDDEN_MACROS: &[&str] = &["include_str", "include_bytes"];
 /// rather than being caught by the gate.
 const CREDENTIAL_STORAGE_EXEMPTIONS: &[&str] = &["crates/entelix-auth-claude-code/"];
 
-pub(crate) fn run() -> Result<()> {
-    let root = repo_root()?;
-    let files = rust_source_files(&root);
+const REMEDIATION: &str = "Invariant 9 — entelix is web-service-native. No filesystem,\n\
+     no shell, no local sandbox. Replace `std::fs` reads with HTTP / Store /\n\
+     user-supplied bytes; replace `std::process` shell-outs with first-class\n\
+     tools or MCP servers; replace `include_str!` / `include_bytes!` with\n\
+     runtime data. Credential-storage backends (e.g. \
+     `entelix-auth-claude-code`) are the documented exception — fs access \
+     there is bounded to the OAuth credential file the upstream Claude \
+     Code CLI shares. Any other crate proposing fs access must amend \
+     CLAUDE.md and this gate's exemption list together.";
 
-    let mut violations = Vec::new();
-    for file in &files {
-        let rel = file.strip_prefix(&root).unwrap_or(file);
-        let rel_str = rel.to_string_lossy();
-        if CREDENTIAL_STORAGE_EXEMPTIONS
-            .iter()
-            .any(|prefix| rel_str.starts_with(prefix))
-        {
-            continue;
-        }
-        let (_, ast) = parse(file)?;
-        let mut v = NoFsVisitor {
-            file: file.clone(),
-            violations: &mut violations,
-        };
-        v.visit_file(&ast);
+pub(crate) struct NoFsGate;
+
+impl FileGate for NoFsGate {
+    fn name(&self) -> &'static str {
+        "no-fs (invariant 9)"
     }
 
-    report(
-        "no-fs (invariant 9)",
-        violations,
-        "Invariant 9 — entelix is web-service-native. No filesystem,\n\
-         no shell, no local sandbox. Replace `std::fs` reads with HTTP / Store /\n\
-         user-supplied bytes; replace `std::process` shell-outs with first-class\n\
-         tools or MCP servers; replace `include_str!` / `include_bytes!` with\n\
-         runtime data. Credential-storage backends (e.g. \
-         `entelix-auth-claude-code`) are the documented exception — fs access \
-         there is bounded to the OAuth credential file the upstream Claude \
-         Code CLI shares. Any other crate proposing fs access must amend \
-         CLAUDE.md and this gate's exemption list together.",
-    )
+    fn applies_to(&self, path: &Path) -> bool {
+        // The orchestrator hands us absolute paths under `<repo>/crates/…`,
+        // so the relative prefix in `CREDENTIAL_STORAGE_EXEMPTIONS` shows up
+        // verbatim as a substring. Cheaper than a strip_prefix dance.
+        let rel = path.to_string_lossy();
+        !CREDENTIAL_STORAGE_EXEMPTIONS
+            .iter()
+            .any(|exempt| rel.contains(exempt))
+    }
+
+    fn visit(&self, path: &Path, _src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
+        let mut v = NoFsVisitor {
+            file: path.to_path_buf(),
+            violations,
+        };
+        v.visit_file(ast);
+    }
+
+    fn remediation(&self) -> &'static str {
+        REMEDIATION
+    }
+}
+
+pub(crate) fn gates() -> Vec<Box<dyn FileGate>> {
+    vec![Box::new(NoFsGate)]
+}
+
+pub(crate) fn run() -> Result<()> {
+    run_file_gates(&gates())
 }
 
 struct NoFsVisitor<'v> {
@@ -139,10 +152,6 @@ impl<'ast, 'v> Visit<'ast> for NoFsVisitor<'v> {
         syn::visit::visit_macro(self, m);
     }
 }
-
-// `syn::Path::span()` from the `Spanned` trait — bring it into method-call
-// position via the import above. The duplicate trait below is left out — we
-// use `syn::spanned::Spanned` directly.
 
 fn gather_use_paths(tree: &syn::UseTree, prefix: &mut Vec<String>, out: &mut Vec<Vec<String>>) {
     match tree {

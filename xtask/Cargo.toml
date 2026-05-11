@@ -63,3 +63,9 @@ toml_edit = "0.22"
 # (`proc_macro2::Span` is opaque outside the proc-macro context).
 proc-macro2 = { version = "1", features = ["span-locations"] }
 regex = "1"
+# Parallel iteration for the share-parse AST orchestrator —
+# `visitor::run_file_gates` walks every workspace `.rs` once, parses
+# the `syn::File` once, and dispatches to every `FileGate` whose
+# `applies_to(path)` is true. Single AST parse fans out to N
+# visitors across cores.
+rayon = "1"

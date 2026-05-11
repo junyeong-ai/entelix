@@ -7,10 +7,12 @@
 //! removes the regex-script class of regression where a baseline number
 //! drifted up over time and the reviewer never saw it.
 
+use std::path::Path;
+
 use anyhow::Result;
 use syn::visit::Visit;
 
-use crate::visitor::{Violation, parse, repo_root, report, rust_source_files_in};
+use crate::visitor::{FileGate, Violation, run_file_gates};
 
 const HOT_ZONES: &[&str] = &[
     "crates/entelix-core/src/codecs",
@@ -25,38 +27,49 @@ const FALLBACK_METHODS: &[&str] = &["unwrap_or", "unwrap_or_default", "unwrap_or
 
 const MARKER: &str = "silent-fallback-ok";
 
-pub(crate) fn run() -> Result<()> {
-    let root = repo_root()?;
-    let mut violations = Vec::new();
+const REMEDIATION: &str = "Invariant 15 — surface every information-loss event through a typed\n\
+     channel (`ModelWarning::LossyEncode { field, detail }` or\n\
+     `StopReason::Other { raw }`). Default-injecting a value\n\
+     (`max_tokens.unwrap_or(4096)`, `cache_rate.unwrap_or(input/10)`) is\n\
+     a bug regardless of how reasonable the default looks.\n\
+     \n\
+     If a fallback is genuinely safe (e.g. a missing-string accessor\n\
+     that defaults to \"\"), add the marker on the same line:\n\
+     \n  .unwrap_or(\"\") // silent-fallback-ok: missing optional field";
 
-    for zone in HOT_ZONES {
-        let zone_path = root.join(zone);
-        let files = rust_source_files_in(&zone_path);
-        for file in &files {
-            let (src, ast) = parse(file)?;
-            let lines: Vec<&str> = src.lines().collect();
-            let mut v = FallbackVisitor {
-                file: file.clone(),
-                lines: &lines,
-                violations: &mut violations,
-            };
-            v.visit_file(&ast);
-        }
+pub(crate) struct SilentFallbackGate;
+
+impl FileGate for SilentFallbackGate {
+    fn name(&self) -> &'static str {
+        "silent-fallback (invariant 15)"
     }
 
-    report(
-        "silent-fallback (invariant 15)",
-        violations,
-        "Invariant 15 — surface every information-loss event through a typed\n\
-         channel (`ModelWarning::LossyEncode { field, detail }` or\n\
-         `StopReason::Other { raw }`). Default-injecting a value\n\
-         (`max_tokens.unwrap_or(4096)`, `cache_rate.unwrap_or(input/10)`) is\n\
-         a bug regardless of how reasonable the default looks.\n\
-         \n\
-         If a fallback is genuinely safe (e.g. a missing-string accessor\n\
-         that defaults to \"\"), add the marker on the same line:\n\
-         \n  .unwrap_or(\"\") // silent-fallback-ok: missing optional field",
-    )
+    fn applies_to(&self, path: &Path) -> bool {
+        let s = path.to_string_lossy();
+        HOT_ZONES.iter().any(|zone| s.contains(zone))
+    }
+
+    fn visit(&self, path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
+        let lines: Vec<&str> = src.lines().collect();
+        let mut v = FallbackVisitor {
+            file: path.to_path_buf(),
+            lines: &lines,
+            violations,
+        };
+        v.visit_file(ast);
+    }
+
+    fn remediation(&self) -> &'static str {
+        REMEDIATION
+    }
+}
+
+pub(crate) fn gates() -> Vec<Box<dyn FileGate>> {
+    vec![Box::new(SilentFallbackGate)]
+}
+
+pub(crate) fn run() -> Result<()> {
+    run_file_gates(&gates())
 }
 
 struct FallbackVisitor<'v, 'l> {

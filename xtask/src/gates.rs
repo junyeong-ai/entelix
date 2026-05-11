@@ -5,11 +5,12 @@
 //! The local cadence ([`run_local`]) is meant for the commit-time
 //! discipline: cheap-enough to run between slices, comprehensive
 //! enough to catch the bugs CI would otherwise reject. It runs
-//! `cargo fmt --check`, `cargo clippy` against the workspace's default
-//! features (the lints fire on the same code paths the typical
-//! consumer compiles), `cargo test` against the same scope, and the
-//! AST-walking invariant set. It deliberately omits `--all-features`,
-//! `--all-targets`, public-API drift, feature-matrix isolation, and
+//! `cargo fmt --check`, `cargo clippy` over `--lib --bins --tests`
+//! (catches test-file lint regressions without the example /
+//! benchmark blow-up of `--all-targets`), the test sweep — through
+//! `cargo nextest run` when nextest is installed, otherwise `cargo
+//! test` — and the AST-walking invariant set. It deliberately omits
+//! `--all-features`, public-API drift, feature-matrix isolation, and
 //! supply-chain auditing — those reach across feature combinations CI
 //! is paid to compile while the iteration loop should not be.
 //!
@@ -29,23 +30,24 @@ use std::process::Command;
 use anyhow::{Context, Result, bail};
 
 use crate::invariants;
-use crate::visitor::repo_root;
-
-/// One sequenced gate — name shown in the banner, closure that runs
-/// the underlying check. Failure short-circuits the cadence.
-pub(crate) type Step = (&'static str, fn() -> Result<()>);
+use crate::visitor::{FileGate, Gate, repo_root, run_file_gates};
 
 /// Run the local fast cadence — pre-commit discipline.
 ///
 /// Sequence (each step fails fast):
 /// 1. `cargo fmt --all -- --check`
-/// 2. `cargo clippy --workspace -- -D warnings` (default features)
-/// 3. `cargo test --workspace` (default features)
+/// 2. `cargo clippy --workspace --lib --bins --tests -- -D warnings`
+///    (default features; tests covered without examples / benches)
+/// 3. Tests — `cargo nextest run --workspace` if nextest is on PATH,
+///    otherwise `cargo test --workspace` (default features)
 /// 4. AST-walking invariants ([`run_all_ast`])
 pub(crate) fn run_local() -> Result<()> {
-    let steps: &[Step] = &[
+    let steps: &[Gate] = &[
         ("fmt", fmt_check),
-        ("clippy (default features)", clippy_local),
+        (
+            "clippy (default features, lib + bins + tests)",
+            clippy_local,
+        ),
         ("test (default features)", test_local),
         ("invariants (AST)", run_all_ast),
     ];
@@ -64,7 +66,7 @@ pub(crate) fn run_local() -> Result<()> {
 /// 7. Feature-matrix isolation (`cargo xtask feature-matrix`)
 /// 8. Supply-chain audit (`cargo xtask supply-chain`)
 pub(crate) fn run_ci() -> Result<()> {
-    let steps: &[Step] = &[
+    let steps: &[Gate] = &[
         ("fmt", fmt_check),
         ("clippy (all features, all targets)", clippy_full),
         ("test (all features)", test_full),
@@ -77,11 +79,11 @@ pub(crate) fn run_ci() -> Result<()> {
     run_sequence("gates-ci", steps)
 }
 
-fn run_sequence(banner: &str, steps: &[Step]) -> Result<()> {
+fn run_sequence(banner: &str, steps: &[Gate]) -> Result<()> {
     println!("══ {banner}");
     for (name, step) in steps {
         println!("── {name}");
-        step().with_context(|| format!("{name}"))?;
+        step().with_context(|| name.to_string())?;
     }
     println!("\n✓ {banner} — all clean.");
     Ok(())
@@ -95,7 +97,16 @@ fn fmt_check() -> Result<()> {
 
 fn clippy_local() -> Result<()> {
     run_cargo(
-        &["clippy", "--workspace", "--", "-D", "warnings"],
+        &[
+            "clippy",
+            "--workspace",
+            "--lib",
+            "--bins",
+            "--tests",
+            "--",
+            "-D",
+            "warnings",
+        ],
         None,
     )
 }
@@ -116,21 +127,43 @@ fn clippy_full() -> Result<()> {
 }
 
 fn test_local() -> Result<()> {
-    run_cargo(&["test", "--workspace"], None)
+    if has_nextest() {
+        run_cargo(&["nextest", "run", "--workspace"], None)
+    } else {
+        run_cargo(&["test", "--workspace"], None)
+    }
 }
 
 fn test_full() -> Result<()> {
-    run_cargo(&["test", "--workspace", "--all-features"], None)
+    if has_nextest() {
+        run_cargo(&["nextest", "run", "--workspace", "--all-features"], None)
+    } else {
+        run_cargo(&["test", "--workspace", "--all-features"], None)
+    }
+}
+
+/// True when `cargo-nextest` is available on PATH — auto-detect so the
+/// cadence picks up the faster test runner without configuration when
+/// the developer has it installed. Falls back transparently to plain
+/// `cargo test` on machines without it. Detection runs once per
+/// cadence invocation; the result is cached for the process lifetime.
+fn has_nextest() -> bool {
+    use std::sync::OnceLock;
+    static CACHED: OnceLock<bool> = OnceLock::new();
+    *CACHED.get_or_init(|| {
+        Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned())) // silent-fallback-ok: PATH-resolved `cargo` is the universal fallback when CARGO is unset.
+            .args(["nextest", "--version"])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .map(|s| s.success())
+            .unwrap_or(false)
+    })
 }
 
 fn doc_full() -> Result<()> {
     run_cargo(
-        &[
-            "doc",
-            "--workspace",
-            "--all-features",
-            "--no-deps",
-        ],
+        &["doc", "--workspace", "--all-features", "--no-deps"],
         Some(("RUSTDOCFLAGS", "-D warnings")),
     )
 }
@@ -151,32 +184,43 @@ fn run_cargo(args: &[&str], env: Option<(&str, &str)>) -> Result<()> {
     Ok(())
 }
 
-/// Canonical AST-walking invariant set in CI order. Both the bundled
-/// cadences and the standalone `cargo xtask invariants` consume this
-/// list — single source of truth for "which gates are static
-/// analysis" and "in what order they fire".
-pub(crate) fn ast_gates() -> &'static [Step] {
-    &[
-        ("no-fs", invariants::no_fs::run),
-        ("managed-shape", invariants::managed_shape::run),
-        ("naming", invariants::naming::run),
-        ("surface-hygiene", invariants::surface_hygiene::run),
-        ("silent-fallback", invariants::silent_fallback::run),
-        ("magic-constants", invariants::magic_constants::run),
-        ("no-shims", invariants::no_shims::run),
+/// Canonical AST-walking invariant set, share-parse-aware. The seven
+/// `FileGate`-implementing invariants below all parse the workspace
+/// once collectively (`visitor::run_file_gates` walks every `.rs` file
+/// under `crates/`, parses each into a single `syn::File`, and
+/// dispatches to whichever gates' `applies_to` matches). Cross-file or
+/// manifest-shaped gates that don't fit the per-file shape stay
+/// sequential after the share-parse pass.
+///
+/// Single source of truth for "which gates are static analysis" and
+/// "in what order they fire". Adding a new file-level AST gate: add
+/// its `gates()` collection here; the share-parse pass picks it up
+/// automatically.
+pub(crate) fn run_all_ast() -> Result<()> {
+    // ── Share-parse pass: 7 invariants, 1 parse per file ──
+    let mut file_gates: Vec<Box<dyn FileGate>> = Vec::new();
+    file_gates.extend(invariants::no_fs::gates());
+    file_gates.extend(invariants::managed_shape::gates());
+    file_gates.extend(invariants::naming::gates());
+    file_gates.extend(invariants::surface_hygiene::gates());
+    file_gates.extend(invariants::silent_fallback::gates());
+    file_gates.extend(invariants::magic_constants::gates());
+    file_gates.extend(invariants::no_shims::gates());
+    run_file_gates(&file_gates).with_context(|| "ast file-gates".to_string())?;
+
+    // ── Naming's cross-file ctx-position passes ──
+    // Per-trait declaration lookup needs a global view, so it lives
+    // outside the FileGate orchestrator.
+    invariants::naming::run_secondary().with_context(|| "naming".to_string())?;
+
+    // ── Manifest / cross-file / markdown gates — stay sequential ──
+    let tail: &[Gate] = &[
         ("lock-ordering", invariants::lock_ordering::run),
         ("dead-deps", invariants::dead_deps::run),
         ("facade-completeness", invariants::facade_completeness::run),
         ("doc-canonical-paths", invariants::doc_canonical_paths::run),
-    ]
-}
-
-/// Run every AST-walking invariant in canonical order, silently —
-/// the surrounding bundled cadence prints one banner per logical
-/// step, so the per-gate detail stays quiet unless one fires. Stops
-/// at the first failure.
-pub(crate) fn run_all_ast() -> Result<()> {
-    for (name, gate) in ast_gates() {
+    ];
+    for (name, gate) in tail {
         gate().with_context(|| (*name).to_string())?;
     }
     Ok(())

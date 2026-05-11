@@ -12,37 +12,48 @@
 //!     variant's named field type ends in `Error` and lacks `#[source]` /
 //!     `#[from]`, flag.
 
+use std::path::Path;
+
 use anyhow::Result;
 use syn::visit::Visit;
 
-use crate::visitor::{Violation, parse, repo_root, report, rust_source_files, span_loc};
+use crate::visitor::{FileGate, Violation, run_file_gates, span_loc};
 
 const TIER1_CONFIG_STRUCTS: &[&str] = &["ChatModelConfig", "SessionGraph", "Usage", "GraphHop"];
 
-pub(crate) fn run() -> Result<()> {
-    let root = repo_root()?;
-    let files = rust_source_files(&root);
-    let mut violations = Vec::new();
+const REMEDIATION: &str = "Add `#[non_exhaustive]` to public enums and Tier-1 config structs.\n\
+     Annotate error inner fields with `#[source]` or `#[from]` so the\n\
+     diagnostic chain is preserved. If a `pub enum` is genuinely sealed\n\
+     (a finite FSM), add a comment on the line above the declaration:\n\
+     \n  // SEALED-ENUM: <reason>\n  pub enum FooState { ... }";
 
-    for file in &files {
-        let (src, ast) = parse(file)?;
-        let mut v = HygieneVisitor {
-            file: file.clone(),
-            src: &src,
-            violations: &mut violations,
-        };
-        v.visit_file(&ast);
+pub(crate) struct SurfaceHygieneGate;
+
+impl FileGate for SurfaceHygieneGate {
+    fn name(&self) -> &'static str {
+        "surface-hygiene"
     }
 
-    report(
-        "surface-hygiene",
-        violations,
-        "Add `#[non_exhaustive]` to public enums and Tier-1 config structs.\n\
-         Annotate error inner fields with `#[source]` or `#[from]` so the\n\
-         diagnostic chain is preserved. If a `pub enum` is genuinely sealed\n\
-         (a finite FSM), add a comment on the line above the declaration:\n\
-         \n  // SEALED-ENUM: <reason>\n  pub enum FooState { ... }",
-    )
+    fn visit(&self, path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
+        let mut v = HygieneVisitor {
+            file: path.to_path_buf(),
+            src,
+            violations,
+        };
+        v.visit_file(ast);
+    }
+
+    fn remediation(&self) -> &'static str {
+        REMEDIATION
+    }
+}
+
+pub(crate) fn gates() -> Vec<Box<dyn FileGate>> {
+    vec![Box::new(SurfaceHygieneGate)]
+}
+
+pub(crate) fn run() -> Result<()> {
+    run_file_gates(&gates())
 }
 
 struct HygieneVisitor<'v, 's> {

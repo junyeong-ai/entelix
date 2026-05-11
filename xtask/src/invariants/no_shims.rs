@@ -14,11 +14,13 @@
 //! they document the name a user is reading right now and never carry
 //! shim semantics.
 
+use std::path::Path;
+
 use anyhow::Result;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
-use crate::visitor::{Violation, parse, repo_root, report, rust_source_files, span_loc};
+use crate::visitor::{FileGate, Violation, run_file_gates, span_loc};
 
 const ALIAS_TAILS: &[&str] = &["Old", "Legacy"];
 
@@ -32,18 +34,24 @@ const COMMENT_PATTERNS: &[&str] = &[
     "// removed for migration",
 ];
 
-pub(crate) fn run() -> Result<()> {
-    let root = repo_root()?;
-    let files = rust_source_files(&root);
+const REMEDIATION: &str = "Delete the old name / type / signature in the same PR. No\n\
+     `#[deprecated]`, no `pub use OldName as NewName`, no `// formerly`\n\
+     comments. If a flagged comment is genuinely descriptive prose\n\
+     (not a backcompat marker), rephrase to avoid the trigger words.";
 
-    let mut violations = Vec::new();
-    for file in &files {
-        let (src, ast) = parse(file)?;
+pub(crate) struct NoShimsGate;
+
+impl FileGate for NoShimsGate {
+    fn name(&self) -> &'static str {
+        "no-shims (invariant 14)"
+    }
+
+    fn visit(&self, path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
         let mut v = NoShimsVisitor {
-            file: file.clone(),
-            violations: &mut violations,
+            file: path.to_path_buf(),
+            violations,
         };
-        v.visit_file(&ast);
+        v.visit_file(ast);
 
         // Comment scan — line by line, skip doc comments.
         for (idx, raw) in src.lines().enumerate() {
@@ -53,8 +61,8 @@ pub(crate) fn run() -> Result<()> {
             }
             for pat in COMMENT_PATTERNS {
                 if trimmed.contains(pat) {
-                    violations.push(Violation::new(
-                        file.clone(),
+                    v.violations.push(Violation::new(
+                        path.to_path_buf(),
                         idx + 1,
                         raw.find(pat).unwrap_or(0) + 1,
                         format!("legacy comment marker — `{pat}`"),
@@ -65,18 +73,17 @@ pub(crate) fn run() -> Result<()> {
         }
     }
 
-    // Top-level docs (CLAUDE.md, README, ADRs) host the rule rationale and
-    // include the literal patterns inside fenced examples — those are not
-    // shims. We restrict the comment scan to `crates/` source already.
+    fn remediation(&self) -> &'static str {
+        REMEDIATION
+    }
+}
 
-    report(
-        "no-shims (invariant 14)",
-        violations,
-        "Delete the old name / type / signature in the same PR. No\n\
-         `#[deprecated]`, no `pub use OldName as NewName`, no `// formerly`\n\
-         comments. If a flagged comment is genuinely descriptive prose\n\
-         (not a backcompat marker), rephrase to avoid the trigger words.",
-    )
+pub(crate) fn gates() -> Vec<Box<dyn FileGate>> {
+    vec![Box::new(NoShimsGate)]
+}
+
+pub(crate) fn run() -> Result<()> {
+    run_file_gates(&gates())
 }
 
 struct NoShimsVisitor<'v> {

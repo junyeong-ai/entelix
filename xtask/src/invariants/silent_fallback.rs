@@ -44,15 +44,14 @@ impl FileGate for SilentFallbackGate {
         "silent-fallback (invariant 15)"
     }
 
-    fn applies_to(&self, path: &Path) -> bool {
-        let s = path.to_string_lossy();
-        HOT_ZONES.iter().any(|zone| s.contains(zone))
+    fn applies_to(&self, rel_path: &Path) -> bool {
+        HOT_ZONES.iter().any(|zone| rel_path.starts_with(zone))
     }
 
-    fn visit(&self, path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
+    fn visit(&self, rel_path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
         let lines: Vec<&str> = src.lines().collect();
         let mut v = FallbackVisitor {
-            file: path.to_path_buf(),
+            file: rel_path.to_path_buf(),
             lines: &lines,
             violations,
         };

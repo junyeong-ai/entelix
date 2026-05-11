@@ -30,7 +30,9 @@ use std::process::Command;
 use anyhow::{Context, Result, bail};
 
 use crate::invariants;
-use crate::visitor::{FileGate, Gate, repo_root, run_file_gates};
+use crate::visitor::{
+    FileGate, Gate, WorkspaceGate, repo_root, run_file_gates, run_workspace_gates,
+};
 
 /// Run the local fast cadence — pre-commit discipline.
 ///
@@ -128,7 +130,12 @@ fn clippy_full() -> Result<()> {
 
 fn test_local() -> Result<()> {
     if has_nextest() {
-        run_cargo(&["nextest", "run", "--workspace"], None)
+        // nextest does not run doctests — `--doc` is the documented
+        // workaround. Two-step keeps local coverage equivalent to a
+        // plain `cargo test --workspace` regardless of which runner
+        // the developer has installed.
+        run_cargo(&["nextest", "run", "--workspace"], None)?;
+        run_cargo(&["test", "--workspace", "--doc"], None)
     } else {
         run_cargo(&["test", "--workspace"], None)
     }
@@ -136,7 +143,8 @@ fn test_local() -> Result<()> {
 
 fn test_full() -> Result<()> {
     if has_nextest() {
-        run_cargo(&["nextest", "run", "--workspace", "--all-features"], None)
+        run_cargo(&["nextest", "run", "--workspace", "--all-features"], None)?;
+        run_cargo(&["test", "--workspace", "--all-features", "--doc"], None)
     } else {
         run_cargo(&["test", "--workspace", "--all-features"], None)
     }
@@ -184,36 +192,45 @@ fn run_cargo(args: &[&str], env: Option<(&str, &str)>) -> Result<()> {
     Ok(())
 }
 
-/// Canonical AST-walking invariant set, share-parse-aware. The seven
-/// `FileGate`-implementing invariants below all parse the workspace
-/// once collectively (`visitor::run_file_gates` walks every `.rs` file
-/// under `crates/`, parses each into a single `syn::File`, and
-/// dispatches to whichever gates' `applies_to` matches). Cross-file or
-/// manifest-shaped gates that don't fit the per-file shape stay
-/// sequential after the share-parse pass.
+/// Canonical AST-walking invariant set, share-parse-aware. Three
+/// pipeline stages:
+///
+///   1. **File pass** — every [`FileGate`] from the AST invariant
+///      modules runs against every workspace `.rs` once. The
+///      orchestrator parses each file exactly once and dispatches the
+///      shared `syn::File` to every gate whose `applies_to` matches.
+///   2. **Workspace pass** — every [`WorkspaceGate`] runs against the
+///      shared parse cache the file pass produced. Cross-file checks
+///      (per-trait declaration lookup, memory-pattern files) reuse
+///      the ASTs without re-reading or re-parsing.
+///   3. **Sequential tail** — manifest / markdown / cross-file gates
+///      that aren't Rust-AST-shaped (lock-ordering, dead-deps, …)
+///      run in canonical order.
 ///
 /// Single source of truth for "which gates are static analysis" and
 /// "in what order they fire". Adding a new file-level AST gate: add
-/// its `gates()` collection here; the share-parse pass picks it up
-/// automatically.
+/// its `file_gates()` collection here. Adding a workspace-level gate:
+/// add its `workspace_gates()` collection here.
 pub(crate) fn run_all_ast() -> Result<()> {
-    // ── Share-parse pass: 7 invariants, 1 parse per file ──
+    // ── Stage 1: file pass — N invariants, 1 parse per file ──
     let mut file_gates: Vec<Box<dyn FileGate>> = Vec::new();
     file_gates.extend(invariants::no_fs::gates());
     file_gates.extend(invariants::managed_shape::gates());
-    file_gates.extend(invariants::naming::gates());
+    file_gates.extend(invariants::naming::file_gates());
     file_gates.extend(invariants::surface_hygiene::gates());
     file_gates.extend(invariants::silent_fallback::gates());
     file_gates.extend(invariants::magic_constants::gates());
     file_gates.extend(invariants::no_shims::gates());
     run_file_gates(&file_gates).with_context(|| "ast file-gates".to_string())?;
 
-    // ── Naming's cross-file ctx-position passes ──
-    // Per-trait declaration lookup needs a global view, so it lives
-    // outside the FileGate orchestrator.
-    invariants::naming::run_secondary().with_context(|| "naming".to_string())?;
+    // ── Stage 2: workspace pass — cross-file checks parse the
+    // workspace once into a single-threaded cache that every
+    // workspace gate borrows in succession. ──
+    let mut workspace_gates: Vec<Box<dyn WorkspaceGate>> = Vec::new();
+    workspace_gates.extend(invariants::naming::workspace_gates());
+    run_workspace_gates(&workspace_gates).with_context(|| "ast workspace-gates".to_string())?;
 
-    // ── Manifest / cross-file / markdown gates — stay sequential ──
+    // ── Stage 3: manifest / cross-file / markdown gates — sequential tail ──
     let tail: &[Gate] = &[
         ("lock-ordering", invariants::lock_ordering::run),
         ("dead-deps", invariants::dead_deps::run),

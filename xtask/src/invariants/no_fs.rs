@@ -58,19 +58,19 @@ impl FileGate for NoFsGate {
         "no-fs (invariant 9)"
     }
 
-    fn applies_to(&self, path: &Path) -> bool {
-        // The orchestrator hands us absolute paths under `<repo>/crates/…`,
-        // so the relative prefix in `CREDENTIAL_STORAGE_EXEMPTIONS` shows up
-        // verbatim as a substring. Cheaper than a strip_prefix dance.
-        let rel = path.to_string_lossy();
+    fn applies_to(&self, rel_path: &Path) -> bool {
+        // Component-aware prefix match — `Path::starts_with` walks
+        // the path one component at a time, so a directory whose
+        // name coincidentally contains the exemption string can
+        // never be silently exempted.
         !CREDENTIAL_STORAGE_EXEMPTIONS
             .iter()
-            .any(|exempt| rel.contains(exempt))
+            .any(|exempt| rel_path.starts_with(exempt))
     }
 
-    fn visit(&self, path: &Path, _src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
+    fn visit(&self, rel_path: &Path, _src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
         let mut v = NoFsVisitor {
-            file: path.to_path_buf(),
+            file: rel_path.to_path_buf(),
             violations,
         };
         v.visit_file(ast);

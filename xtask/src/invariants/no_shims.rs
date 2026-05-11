@@ -46,9 +46,9 @@ impl FileGate for NoShimsGate {
         "no-shims (invariant 14)"
     }
 
-    fn visit(&self, path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
+    fn visit(&self, rel_path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
         let mut v = NoShimsVisitor {
-            file: path.to_path_buf(),
+            file: rel_path.to_path_buf(),
             violations,
         };
         v.visit_file(ast);
@@ -62,7 +62,7 @@ impl FileGate for NoShimsGate {
             for pat in COMMENT_PATTERNS {
                 if trimmed.contains(pat) {
                     v.violations.push(Violation::new(
-                        path.to_path_buf(),
+                        rel_path.to_path_buf(),
                         idx + 1,
                         raw.find(pat).unwrap_or(0) + 1,
                         format!("legacy comment marker — `{pat}`"),

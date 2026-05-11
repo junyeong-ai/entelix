@@ -1,4 +1,5 @@
-//! naming taxonomy enforcement. Five rules:
+//! naming taxonomy enforcement. Five file-level rules + one
+//! workspace-level rule:
 //!
 //!  1. **Forbidden suffixes** on `pub struct/enum/trait`:
 //!     `*Engine` / `*Wrapper` / `*Handler` / `*Helper` / `*Util`.
@@ -15,7 +16,11 @@
 //!  5. **`with_*(&self, …)`** — borrow disguised as builder. Bare
 //!     accessor (`region(&self)`) for borrows; domain verb
 //!     (`restricted_to(&self, …)`) for derivative views.
-//!  6. **ctx parameter ordering** — split convention by trait family.
+//!  6. **ctx parameter ordering** — workspace-level. Split convention
+//!     by trait family (ctx-first for memory / persistence, ctx-last
+//!     for computation / dispatch). Runs as a [`WorkspaceGate`] over
+//!     the shared parse cache so 17 trait-name scans share one parse
+//!     of every file.
 
 use std::collections::BTreeSet;
 use std::path::Path;
@@ -25,7 +30,7 @@ use syn::spanned::Spanned;
 use syn::visit::Visit;
 
 use crate::visitor::{
-    FileGate, Violation, parse, read, repo_root, report, run_file_gates, rust_source_files,
+    FileGate, Violation, WorkspaceGate, WorkspaceParse, run_file_gates, run_workspace_gates,
     span_loc,
 };
 
@@ -89,9 +94,9 @@ impl FileGate for NamingGate {
         "naming"
     }
 
-    fn visit(&self, path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
+    fn visit(&self, rel_path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
         let mut v = NamingVisitor {
-            file: path.to_path_buf(),
+            file: rel_path.to_path_buf(),
             file_uses_tower_service: file_imports_tower_service(src),
             in_builder_impl_depth: 0,
             current_trait: None,
@@ -105,51 +110,64 @@ impl FileGate for NamingGate {
     }
 }
 
-pub(crate) fn gates() -> Vec<Box<dyn FileGate>> {
+/// Cross-file ctx-position pass — operates on the shared
+/// [`WorkspaceParse`] cache so the 17 trait-family checks reuse the
+/// ASTs the file pass already built. The prior shape rewalked
+/// `crates/` once per trait name and reparsed every matching file;
+/// the cache-driven shape collapses that to one workspace walk and
+/// zero re-parses.
+pub(crate) struct CtxPositionGate;
+
+impl WorkspaceGate for CtxPositionGate {
+    fn name(&self) -> &'static str {
+        "naming: ctx parameter ordering"
+    }
+
+    fn check(&self, parse: &WorkspaceParse, violations: &mut Vec<Violation>) {
+        for trait_name in CTX_FIRST_TRAITS {
+            check_ctx_in_trait(parse, trait_name, CtxExpect::First, violations);
+        }
+        for trait_name in CTX_LAST_TRAITS {
+            check_ctx_in_trait(parse, trait_name, CtxExpect::Last, violations);
+        }
+
+        // Memory pattern files — ctx-bearing methods are ctx-first by
+        // family rule, **except** methods governed by an explicit
+        // CTX_LAST_TRAITS pass (e.g. `Summarizer` in
+        // `consolidating.rs`).
+        let memory_targets: BTreeSet<&Path> = MEMORY_PATTERN_FILES.iter().map(Path::new).collect();
+        for file in parse.iter() {
+            if !memory_targets.contains(file.rel.as_path()) {
+                continue;
+            }
+            let mut v = CtxFileVisitor {
+                file: file.rel.clone(),
+                expected: CtxExpect::First,
+                ctx_last_trait_method_names: collect_ctx_last_trait_methods(&file.ast),
+                current_ctx_last_trait: None,
+                in_trait_or_impl: 0,
+                violations,
+            };
+            v.visit_file(&file.ast);
+        }
+    }
+
+    fn remediation(&self) -> &'static str {
+        REMEDIATION
+    }
+}
+
+pub(crate) fn file_gates() -> Vec<Box<dyn FileGate>> {
     vec![Box::new(NamingGate)]
 }
 
-pub(crate) fn run() -> Result<()> {
-    run_file_gates(&gates())?;
-    run_secondary()
+pub(crate) fn workspace_gates() -> Vec<Box<dyn WorkspaceGate>> {
+    vec![Box::new(CtxPositionGate)]
 }
 
-/// Cross-file ctx-position passes — these need a global view (which file
-/// declares trait X?) so they don't fit the per-file `FileGate` shape.
-/// Surfaced as a separate function so the share-parse aggregator in
-/// [`crate::gates`] can call it after every other gate's file-level pass
-/// has run. The cost is small: ~17 traits × cheap substring filter over
-/// ~300 files, only matching files parse.
-pub(crate) fn run_secondary() -> Result<()> {
-    let root = repo_root()?;
-    let mut violations = Vec::new();
-    for trait_name in CTX_FIRST_TRAITS {
-        check_ctx_in_trait_files(&root, trait_name, CtxExpect::First, &mut violations)?;
-    }
-    for trait_name in CTX_LAST_TRAITS {
-        check_ctx_in_trait_files(&root, trait_name, CtxExpect::Last, &mut violations)?;
-    }
-    // Memory pattern files — ctx-bearing methods are ctx-first by family
-    // rule, **except** methods governed by an explicit CTX_LAST_TRAITS
-    // pass (e.g. `Summarizer` in `consolidating.rs`).
-    for rel in MEMORY_PATTERN_FILES {
-        let path = root.join(rel);
-        if !path.exists() {
-            continue;
-        }
-        let (_, ast) = parse(&path)?;
-        let mut v = CtxFileVisitor {
-            file: path.clone(),
-            expected: CtxExpect::First,
-            ctx_last_trait_method_names: collect_ctx_last_trait_methods(&ast),
-            current_ctx_last_trait: None,
-            in_trait_or_impl: 0,
-            violations: &mut violations,
-        };
-        v.visit_file(&ast);
-    }
-
-    report("naming", violations, REMEDIATION)
+pub(crate) fn run() -> Result<()> {
+    run_file_gates(&file_gates())?;
+    run_workspace_gates(&workspace_gates())
 }
 
 fn file_imports_tower_service(src: &str) -> bool {
@@ -383,62 +401,34 @@ enum CtxExpect {
     Last,
 }
 
-/// Find the trait declaration in any source file, then walk its methods.
-/// Uses the shared `rust_source_files` walker — the dedicated
-/// `rust_source_files_under_src` duplicate is gone.
-fn check_ctx_in_trait_files(
-    root: &std::path::Path,
+/// Walk the cached parse for every trait whose ident matches
+/// `trait_name`. The cache replaces the prior "walk + read + reparse"
+/// loop — each file is already an `Arc<syn::File>`.
+fn check_ctx_in_trait(
+    parse: &WorkspaceParse,
     trait_name: &str,
     expected: CtxExpect,
     violations: &mut Vec<Violation>,
-) -> Result<()> {
-    let candidates = rust_source_files(root);
-    let needle = format!("trait {trait_name}");
-    for file in &candidates {
-        let src = read(file)?;
-        if !src.contains(&needle) {
-            continue;
-        }
-        let ast: syn::File = match syn::parse_file(&src) {
-            Ok(a) => a,
-            Err(_) => continue,
-        };
-        let mut v = TraitCtxVisitor {
-            file: file.clone(),
-            target: trait_name,
-            expected,
-            seen: BTreeSet::new(),
-            violations,
-        };
-        v.visit_file(&ast);
-    }
-    Ok(())
-}
-
-struct TraitCtxVisitor<'v> {
-    file: std::path::PathBuf,
-    target: &'v str,
-    expected: CtxExpect,
-    seen: BTreeSet<String>,
-    violations: &'v mut Vec<Violation>,
-}
-
-impl<'ast, 'v> Visit<'ast> for TraitCtxVisitor<'v> {
-    fn visit_item_trait(&mut self, item: &'ast syn::ItemTrait) {
-        if item.ident == self.target {
-            for trait_item in &item.items {
+) {
+    let mut seen: BTreeSet<String> = BTreeSet::new();
+    for file in parse.iter() {
+        for item in &file.ast.items {
+            let syn::Item::Trait(t) = item else { continue };
+            if t.ident != trait_name {
+                continue;
+            }
+            for trait_item in &t.items {
                 if let syn::TraitItem::Fn(f) = trait_item {
-                    let key = format!("{}::{}", self.target, f.sig.ident);
-                    if !self.seen.insert(key) {
+                    let key = format!("{trait_name}::{}", f.sig.ident);
+                    if !seen.insert(key) {
                         continue;
                     }
-                    if let Some(violation) = check_ctx_position(&self.file, &f.sig, self.expected) {
-                        self.violations.push(violation);
+                    if let Some(violation) = check_ctx_position(&file.rel, &f.sig, expected) {
+                        violations.push(violation);
                     }
                 }
             }
         }
-        syn::visit::visit_item_trait(self, item);
     }
 }
 

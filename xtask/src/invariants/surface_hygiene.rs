@@ -34,9 +34,9 @@ impl FileGate for SurfaceHygieneGate {
         "surface-hygiene"
     }
 
-    fn visit(&self, path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
+    fn visit(&self, rel_path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
         let mut v = HygieneVisitor {
-            file: path.to_path_buf(),
+            file: rel_path.to_path_buf(),
             src,
             violations,
         };

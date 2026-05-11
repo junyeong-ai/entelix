@@ -23,7 +23,7 @@
 //! dedicated `VertexAnthropicCodec` carries the wire-shape rewrite.
 
 #![cfg(all(feature = "aws", feature = "gcp", feature = "azure"))]
-#![allow(clippy::unwrap_used, clippy::doc_markdown, dead_code)]
+#![allow(clippy::unwrap_used, dead_code)]
 
 use std::sync::Arc;
 use std::time::{Duration, Instant};

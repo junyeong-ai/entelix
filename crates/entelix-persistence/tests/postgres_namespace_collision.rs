@@ -33,12 +33,7 @@
 //! ```
 
 #![cfg(feature = "postgres")]
-#![allow(
-    clippy::unwrap_used,
-    clippy::expect_used,
-    clippy::indexing_slicing,
-    clippy::doc_markdown
-)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 
 use std::time::Duration;
 

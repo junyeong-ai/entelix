@@ -12,7 +12,7 @@ use std::path::Path;
 use anyhow::Result;
 use syn::visit::Visit;
 
-use crate::visitor::{FileGate, Violation, run_file_gates};
+use crate::visitor::{FileGate, Violation, run_invariants};
 
 const HOT_ZONES: &[&str] = &[
     "crates/entelix-core/src/codecs",
@@ -63,12 +63,12 @@ impl FileGate for SilentFallbackGate {
     }
 }
 
-pub(crate) fn gates() -> Vec<Box<dyn FileGate>> {
+pub(crate) fn file_gates() -> Vec<Box<dyn FileGate>> {
     vec![Box::new(SilentFallbackGate)]
 }
 
 pub(crate) fn run() -> Result<()> {
-    run_file_gates(&gates())
+    run_invariants(&file_gates(), &[])
 }
 
 struct FallbackVisitor<'v, 'l> {

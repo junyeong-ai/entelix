@@ -20,7 +20,7 @@ use anyhow::Result;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
-use crate::visitor::{FileGate, Violation, run_file_gates, span_loc};
+use crate::visitor::{FileGate, Violation, run_invariants, span_loc};
 
 const ALIAS_TAILS: &[&str] = &["Old", "Legacy"];
 
@@ -78,12 +78,12 @@ impl FileGate for NoShimsGate {
     }
 }
 
-pub(crate) fn gates() -> Vec<Box<dyn FileGate>> {
+pub(crate) fn file_gates() -> Vec<Box<dyn FileGate>> {
     vec![Box::new(NoShimsGate)]
 }
 
 pub(crate) fn run() -> Result<()> {
-    run_file_gates(&gates())
+    run_invariants(&file_gates(), &[])
 }
 
 struct NoShimsVisitor<'v> {

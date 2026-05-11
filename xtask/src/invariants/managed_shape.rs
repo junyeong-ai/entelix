@@ -15,7 +15,7 @@ use anyhow::Result;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
-use crate::visitor::{FileGate, Violation, run_file_gates, span_loc};
+use crate::visitor::{FileGate, Violation, run_invariants, span_loc};
 
 const REMEDIATION: &str = "Anthropic managed-agent shape is non-negotiable. See CLAUDE.md\n\
      §\"Anthropic managed-agent shape\".";
@@ -284,7 +284,7 @@ fn type_last_segment(ty: &syn::Type) -> Option<String> {
     }
 }
 
-pub(crate) fn gates() -> Vec<Box<dyn FileGate>> {
+pub(crate) fn file_gates() -> Vec<Box<dyn FileGate>> {
     vec![
         Box::new(NoAgentPersistenceGate),
         Box::new(NoCredentialInCtxGate),
@@ -295,5 +295,5 @@ pub(crate) fn gates() -> Vec<Box<dyn FileGate>> {
 }
 
 pub(crate) fn run() -> Result<()> {
-    run_file_gates(&gates())
+    run_invariants(&file_gates(), &[])
 }

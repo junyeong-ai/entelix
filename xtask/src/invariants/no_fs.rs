@@ -15,7 +15,7 @@ use anyhow::Result;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
-use crate::visitor::{FileGate, Violation, run_file_gates, span_loc};
+use crate::visitor::{FileGate, Violation, run_invariants, span_loc};
 
 /// Path-prefix denylist. The matcher checks `prefix == path[..prefix.len()]`,
 /// so `["std", "fs"]` catches both `std::fs` and `std::fs::read`.
@@ -81,12 +81,12 @@ impl FileGate for NoFsGate {
     }
 }
 
-pub(crate) fn gates() -> Vec<Box<dyn FileGate>> {
+pub(crate) fn file_gates() -> Vec<Box<dyn FileGate>> {
     vec![Box::new(NoFsGate)]
 }
 
 pub(crate) fn run() -> Result<()> {
-    run_file_gates(&gates())
+    run_invariants(&file_gates(), &[])
 }
 
 struct NoFsVisitor<'v> {

@@ -30,8 +30,7 @@ use syn::spanned::Spanned;
 use syn::visit::Visit;
 
 use crate::visitor::{
-    FileGate, Violation, WorkspaceGate, WorkspaceParse, run_file_gates, run_workspace_gates,
-    span_loc,
+    FileGate, Violation, WorkspaceGate, WorkspaceParse, run_invariants, span_loc,
 };
 
 const FORBIDDEN_SUFFIXES: &[&str] = &["Engine", "Wrapper", "Handler", "Helper", "Util"];
@@ -166,8 +165,7 @@ pub(crate) fn workspace_gates() -> Vec<Box<dyn WorkspaceGate>> {
 }
 
 pub(crate) fn run() -> Result<()> {
-    run_file_gates(&file_gates())?;
-    run_workspace_gates(&workspace_gates())
+    run_invariants(&file_gates(), &workspace_gates())
 }
 
 fn file_imports_tower_service(src: &str) -> bool {

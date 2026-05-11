@@ -2,23 +2,25 @@
 //! source loading, and the `Violation` reporting shape so each per-invariant
 //! module reads as a focused predicate.
 //!
-//! Two gate shapes drive the orchestrator:
+//! One pipeline drives every AST invariant: [`run_invariants`] parses
+//! the workspace once into a shared [`WorkspaceParse`] cache, runs
+//! every [`FileGate`] file-by-file against that cache, then runs every
+//! [`WorkspaceGate`] over the same cache for cross-file checks. Each
+//! workspace `.rs` is read + parsed exactly once per invocation
+//! regardless of how many gates inspect it — no double-parse, no
+//! "walk + reparse per trait name" regression.
 //!
-//!   * [`FileGate`] — per-file AST visitor. [`run_file_gates`] walks every
-//!     workspace `.rs` in parallel via rayon; each worker parses one
-//!     `syn::File` and dispatches it to every gate whose
-//!     [`FileGate::applies_to`] matches. ASTs never cross thread
-//!     boundaries (`syn::File` is `!Send`), so each thread parses and
-//!     visits in isolation.
-//!   * [`WorkspaceGate`] — cross-file pass that needs a whole-workspace
-//!     view (e.g. "which file declares this trait?"). [`run_workspace_gates`]
-//!     builds a single-threaded [`WorkspaceParse`] cache and feeds every
-//!     workspace gate from it, so multiple cross-file gates within one
-//!     pass share one parse of every file.
+//! The pipeline is single-threaded by necessity. `syn::File` is
+//! `!Send` because proc-macro2's `Span` enum wraps a native
+//! `proc_macro::Span` variant, so ASTs cannot cross thread boundaries
+//! and the cache cannot fan out across rayon workers. Bounded cost
+//! (~300 files × ~µs per parse) keeps the wall-time profile within
+//! the cadence budget; correctness + share-parse hygiene beats the
+//! ~50ms parallelism win the prior shape extracted.
 //!
-//! Both pipelines feed [`report`] and surface violations in deterministic
-//! `(path, line, col)` order so reviewers see the same output run after
-//! run regardless of how rayon scheduled the fan-out.
+//! [`report`] sorts violations by `(path, line, col, message)` before
+//! printing so two runs against the same code produce byte-identical
+//! output regardless of the visit order.
 
 use std::collections::HashMap;
 use std::fmt::Write as _;
@@ -26,7 +28,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use rayon::prelude::*;
 use walkdir::WalkDir;
 
 /// One detected violation. Always carries `path:line:col` so editors can jump
@@ -66,10 +67,11 @@ impl Violation {
     }
 }
 
-/// Print every violation in the canonical `path:line:col: msg` form, prefix the
-/// reviewer-facing remediation block, and return `Err` so the binary exits 1.
-/// Sorts violations by `(path, line, col)` so the report is deterministic
-/// regardless of which rayon thread captured each finding.
+/// Print every violation in the canonical `path:line:col: msg` form,
+/// prefix the reviewer-facing remediation block, and return `Err` so
+/// the binary exits 1. Sorts violations by `(path, line, col,
+/// message)` so the report is deterministic — same input, same
+/// output, every run.
 pub(crate) fn report(invariant: &str, violations: Vec<Violation>, remediation: &str) -> Result<()> {
     if violations.is_empty() {
         return Ok(());
@@ -133,9 +135,9 @@ pub(crate) fn read(path: &Path) -> Result<String> {
 
 /// Parse a Rust source file into a `syn::File`. Caller decides whether
 /// to keep the source string (for raw-line scans) or drop it. Kept
-/// alongside [`read`] because non-FileGate gates (e.g.
-/// `facade_completeness`'s targeted re-parse) still need an
-/// ad-hoc parse path outside the orchestrator.
+/// alongside [`read`] because non-pipeline gates (e.g.
+/// `facade_completeness`'s targeted re-parse of a single facade
+/// `lib.rs`) need an ad-hoc parse path outside the orchestrator.
 pub(crate) fn parse(path: &Path) -> Result<(String, syn::File)> {
     let src = read(path)?;
     let ast = syn::parse_file(&src).with_context(|| format!("parse {}", path.display()))?;
@@ -190,22 +192,25 @@ pub(crate) fn span_loc(span: proc_macro2::Span) -> (usize, usize) {
 /// dispatch shapes; this typedef is the outer cadence sequencer.
 pub(crate) type Gate = (&'static str, fn() -> Result<()>);
 
-/// One parsed workspace file in the workspace-pass cache. `syn::File`
-/// is `!Send`, so this struct never crosses thread boundaries — the
-/// workspace pass is single-threaded by construction.
+/// One parsed workspace file in the shared cache.
 pub(crate) struct ParsedFile {
     /// Path relative to the workspace root (e.g.
     /// `crates/entelix-core/src/lib.rs`). Stable across machines.
     pub(crate) rel: PathBuf,
-    /// Parsed Rust AST. Multiple [`WorkspaceGate`] impls borrow it
-    /// in succession during one workspace pass.
+    /// File source text — retained so file gates that scan raw lines
+    /// (`no-shims` comment markers, `silent-fallback` marker
+    /// detection) operate on the same string the parser consumed
+    /// without a second `read_to_string`.
+    pub(crate) src: String,
+    /// Parsed Rust AST. Every gate that inspects this file borrows
+    /// the same instance — no double-parse, no thread-shipping
+    /// (`syn::File` is `!Send`).
     pub(crate) ast: syn::File,
 }
 
 /// Single-threaded parse cache shared across every gate in one
-/// workspace pass. Built once by [`run_workspace_gates`] and iterated
-/// by each [`WorkspaceGate`] in turn — N gates share one parse of
-/// every workspace file.
+/// pipeline invocation. Built once by [`run_invariants`] and iterated
+/// by every [`FileGate`] and [`WorkspaceGate`] in turn.
 pub(crate) struct WorkspaceParse {
     files: Vec<ParsedFile>,
 }
@@ -216,15 +221,13 @@ impl WorkspaceParse {
     }
 }
 
-/// Single-file invariant visitor — share-parse contract. The
-/// orchestrator walks every workspace `.rs` once, parses one
-/// `syn::File` per file, and dispatches to every [`FileGate`] whose
-/// [`Self::applies_to`] is true. Each gate sees the same AST without
-/// re-parsing.
+/// Single-file invariant visitor. The orchestrator dispatches the
+/// shared AST to every gate whose [`Self::applies_to`] matches —
+/// each file is parsed once across the whole pipeline.
 ///
 /// `applies_to` operates on the **workspace-relative** path
 /// (`crates/<crate>/src/<file>.rs`) so component-aware
-/// [`Path::starts_with`] gives correct zone scoping — substring
+/// [`Path::starts_with`] gives correct zone scoping. Substring
 /// matching on absolute paths is reviewer-rejected because an
 /// unrelated path component could coincidentally embed the zone
 /// string.
@@ -243,10 +246,9 @@ pub(crate) trait FileGate: Send + Sync {
     }
 
     /// Inspect one parsed file, push every detected violation into
-    /// `violations`. The orchestrator merges and reports in
-    /// deterministic order at the end. `rel_path` is the
-    /// workspace-relative form — visitors stash it verbatim in
-    /// [`Violation::new`] so reports render `crates/.../file.rs:L:C`.
+    /// `violations`. `rel_path` is the workspace-relative form —
+    /// visitors stash it verbatim in [`Violation::new`] so reports
+    /// render `crates/.../file.rs:L:C`.
     fn visit(&self, rel_path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>);
 
     /// Reviewer-facing remediation block printed beneath the
@@ -256,10 +258,9 @@ pub(crate) trait FileGate: Send + Sync {
 }
 
 /// Cross-file invariant gate — runs after every [`FileGate`] against
-/// the shared [`WorkspaceParse`] cache. Use this shape for checks that
-/// need a whole-workspace view (which file declares trait X, what
-/// methods does it carry, …) — the cache avoids the prior
-/// "walk + reparse per trait name" O(N×M) regression.
+/// the same shared [`WorkspaceParse`] cache. Use this shape for
+/// checks that need a whole-workspace view (which file declares
+/// trait X, what methods does it carry, …).
 pub(crate) trait WorkspaceGate: Send + Sync {
     fn name(&self) -> &'static str;
 
@@ -270,104 +271,77 @@ pub(crate) trait WorkspaceGate: Send + Sync {
     fn remediation(&self) -> &'static str;
 }
 
-/// Run the file pass against every `.rs` file under `crates/`. Each
-/// rayon worker reads + parses one file and dispatches the resulting
-/// AST to every gate whose [`FileGate::applies_to`] matches the
-/// workspace-relative path. ASTs never cross threads (`syn::File` is
-/// `!Send`). Per-gate violations are merged via `try_reduce`, which
-/// also propagates parse failures as `Err` instead of swallowing them
-/// — a malformed Rust file is a genuine signal, not a "gate had
-/// nothing to report" outcome. Fails fast at the first gate that
-/// emitted violations, in canonical input gate order.
-pub(crate) fn run_file_gates(gates: &[Box<dyn FileGate>]) -> Result<()> {
-    if gates.is_empty() {
-        return Ok(());
-    }
-    let root = repo_root()?;
-    let files = rust_source_files(&root);
-
-    let per_gate: HashMap<&'static str, Vec<Violation>> = files
-        .par_iter()
-        .map(|abs| -> Result<HashMap<&'static str, Vec<Violation>>> {
-            let rel = abs
-                .strip_prefix(&root)
-                .with_context(|| format!("strip repo root from {}", abs.display()))?;
-            // Build the applicable-gate slice before parsing so files
-            // outside every gate's scope skip the parse entirely.
-            let applicable: Vec<&dyn FileGate> = gates
-                .iter()
-                .filter(|g| g.applies_to(rel))
-                .map(|g| g.as_ref())
-                .collect();
-            if applicable.is_empty() {
-                return Ok(HashMap::new());
-            }
-            let src = read(abs)?;
-            let ast = syn::parse_file(&src).with_context(|| format!("parse {}", rel.display()))?;
-            let mut local: HashMap<&'static str, Vec<Violation>> = HashMap::new();
-            for gate in applicable {
-                let mut vs = Vec::new();
-                gate.visit(rel, &src, &ast, &mut vs);
-                if !vs.is_empty() {
-                    local.entry(gate.name()).or_default().extend(vs);
-                }
-            }
-            Ok(local)
-        })
-        .try_reduce(HashMap::new, |mut a, b| {
-            for (k, v) in b {
-                a.entry(k).or_default().extend(v);
-            }
-            Ok(a)
-        })?;
-
-    // Deterministic fail-fast in input gate order. `report` sorts each
-    // gate's violations by `(path, line, col)` so rayon's
-    // nondeterministic merge order doesn't bleed into the printout.
-    for gate in gates {
-        if let Some(violations) = per_gate.get(gate.name())
-            && !violations.is_empty()
-        {
-            return report(gate.name(), violations.clone(), gate.remediation());
-        }
-    }
-    Ok(())
-}
-
-/// Run the workspace pass. Parses every workspace `.rs` once into a
-/// single-threaded [`WorkspaceParse`] cache, then iterates each
-/// [`WorkspaceGate`] over the same cache so N cross-file gates share
-/// one parse per file. Fails fast at the first gate that emitted
-/// violations, in input gate order.
+/// Run the full invariant pipeline against the workspace.
 ///
-/// The pass is single-threaded by construction — `syn::File` is
-/// `!Send`, so the cache cannot fan out across rayon workers. The
-/// sequential cost is bounded (~300 files × ~µs per parse) and pays
-/// for itself the moment a second workspace gate consumes the cache.
-pub(crate) fn run_workspace_gates(gates: &[Box<dyn WorkspaceGate>]) -> Result<()> {
-    if gates.is_empty() {
+/// Stages, all sharing one `WorkspaceParse` cache:
+///
+/// 1. **Parse** — every `.rs` file under `crates/` is read + parsed
+///    once. A parse error surfaces immediately as `Err`; a malformed
+///    Rust file is a genuine signal, not a "gate had nothing to
+///    report" outcome.
+/// 2. **File pass** — for each cached file, every [`FileGate`] whose
+///    `applies_to` matches receives the shared AST. Violations
+///    accumulate per gate.
+/// 3. **Workspace pass** — every [`WorkspaceGate`] receives the full
+///    cache. Violations accumulate per gate.
+///
+/// Fails fast at the first gate (file or workspace) that emitted
+/// violations, in input order. Single-threaded — see module docs for
+/// the `syn::File: !Send` constraint that forces this.
+pub(crate) fn run_invariants(
+    file_gates: &[Box<dyn FileGate>],
+    workspace_gates: &[Box<dyn WorkspaceGate>],
+) -> Result<()> {
+    if file_gates.is_empty() && workspace_gates.is_empty() {
         return Ok(());
     }
     let root = repo_root()?;
     let files = rust_source_files(&root);
 
+    // ── Stage 1: parse the workspace once ──
     let mut cache: Vec<ParsedFile> = Vec::with_capacity(files.len());
     for abs in &files {
         let rel = abs
             .strip_prefix(&root)
             .with_context(|| format!("strip repo root from {}", abs.display()))?
             .to_path_buf();
-        let (_, ast) = parse(abs)?;
-        cache.push(ParsedFile { rel, ast });
+        let (src, ast) = parse(abs)?;
+        cache.push(ParsedFile { rel, src, ast });
     }
     let parse_cache = WorkspaceParse { files: cache };
 
-    for gate in gates {
+    // ── Stage 2: file pass over the shared cache ──
+    if !file_gates.is_empty() {
+        let mut per_gate: HashMap<&'static str, Vec<Violation>> = HashMap::new();
+        for file in parse_cache.iter() {
+            for gate in file_gates {
+                if !gate.applies_to(&file.rel) {
+                    continue;
+                }
+                let mut vs = Vec::new();
+                gate.visit(&file.rel, &file.src, &file.ast, &mut vs);
+                if !vs.is_empty() {
+                    per_gate.entry(gate.name()).or_default().extend(vs);
+                }
+            }
+        }
+        for gate in file_gates {
+            if let Some(violations) = per_gate.get(gate.name())
+                && !violations.is_empty()
+            {
+                return report(gate.name(), violations.clone(), gate.remediation());
+            }
+        }
+    }
+
+    // ── Stage 3: workspace pass over the same cache ──
+    for gate in workspace_gates {
         let mut violations = Vec::new();
         gate.check(&parse_cache, &mut violations);
         if !violations.is_empty() {
             return report(gate.name(), violations, gate.remediation());
         }
     }
+
     Ok(())
 }

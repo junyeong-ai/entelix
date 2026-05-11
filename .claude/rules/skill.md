@@ -77,7 +77,7 @@ The three LLM-facing tools are appended to a clone of `tool_registry`, which is 
 
 Operators that want inline summaries call `summaries()` and concat themselves.
 
-## 1.0 concrete impls
+## Concrete impls
 
 - `InMemorySkill` + `InMemorySkillBuilder` — embedded/test
 - `SandboxSkill` — Anthropic Skills layout (`SKILL.md` + sub-files); takes `Arc<dyn Sandbox>` to preserve invariant 9

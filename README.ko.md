@@ -16,9 +16,9 @@
 
 - **멀티테넌트 일급** — `TenantId` 가 모든 영속화 경계에 강제. Postgres `FORCE ROW LEVEL SECURITY` 가 모든 백엔드에 defense-in-depth. 테넌트 간 데이터 누설은 API 설계상 구조적으로 불가능.
 - **타입 강제 아키텍처** — sealed `RenderedForLlm<T>` 캐리어 (LLM / 운영자 채널 분리 컴파일 타임 강제); sealed `CompactedHistory` (`tool_call` / `tool_result` 페어 invariant 깨뜨릴 수 없음); `TenantId` 검증 newtype.
-- **production observability 처음부터** — OpenTelemetry GenAI semconv `gen_ai.*` 속성. cost 는 트랜잭셔널 emit (`Ok` 분기에서만). 6 verb 의 typed `AuditSink` 채널 (`sub_agent_invoked` / `agent_handoff` / `resumed` / `memory_recall` / `usage_limit_exceeded` / `context_compacted`).
-- **5 codec × 4 transport** — Anthropic Messages, OpenAI Chat, OpenAI Responses, Gemini, Bedrock Converse 가 Direct (어떤 HTTPS), Bedrock (SigV4), Vertex (gcp_auth), Foundry (api-key + AAD) 위에서 동작. 능력 정직성: 모든 변환 손실 필드에 `LossyEncode` 경고, 미지 vendor 시그널은 `Other { raw }` — silent fallback 없음.
-- **MCP 일급** — 3 가지 server-initiated 채널 모두 (`Roots`, `Elicitation`, `Sampling`). per-tenant `(tenant_id, server_name)` pool 격리. HTTP-only 설계.
+- **production observability 처음부터** — OpenTelemetry GenAI semconv `gen_ai.*` 속성. cost 는 트랜잭셔널 emit (`Ok` 분기에서만). typed `AuditSink` 채널이 sub-agent 호출 / supervisor handoff / wake-resume / 메모리 회상 / usage-limit 위반 / 컨텍스트 압축 이벤트를 emit 사이트와 영속화 백엔드의 결합 없이 기록.
+- **Cross-vendor IR** — Anthropic Messages, OpenAI Chat, OpenAI Responses, Gemini, Bedrock Converse codec 이 Direct (어떤 HTTPS), Bedrock (SigV4), Vertex (gcp_auth), Foundry (api-key + AAD) transport 위에서 동작. 능력 정직성: 모든 변환 손실 필드에 `LossyEncode` 경고, 미지 vendor 시그널은 `Other { raw }` — silent fallback 없음.
+- **MCP 일급** — server-initiated 채널 (`Roots`, `Elicitation`, `Sampling`) 모두 지원. per-tenant `(tenant_id, server_name)` pool 격리. HTTP-only 설계.
 - **CI 강제 invariants** — `cargo xtask invariants` 가 매 push 마다 typed-AST visitor 들을 실행 (filesystem-free / naming taxonomy / silent-fallback / lock-ordering / public-API drift / supply-chain / feature-matrix gates).
 
 ---
@@ -56,7 +56,7 @@ async fn main() -> entelix::Result<()> {
 
 ## 주요 기능
 
-### LLM 호출 — 5 codec, 단일 IR
+### LLM 호출 — cross-vendor IR
 
 ```rust
 // 같은 `ModelRequest` IR 가 모든 codec 통과.
@@ -141,13 +141,13 @@ async fn add(_ctx: &AgentContext<()>, a: i64, b: i64) -> Result<i64> {
 // `Add` unit struct + `SchemaTool` impl + JSON Schema 자동 생성.
 ```
 
-Built-ins: `HttpFetchTool` (3-layer SSRF 방어), `Calculator`, `SchemaTool` 타입 I/O 어댑터. sandboxed shell / file / code / list-dir 도구는 `entelix-tools-coding` 컴패니언 crate 가 제공하고 모든 syscall 은 `Sandbox` trait 통해 delegate.
+Built-ins: `HttpFetchTool` (계층 SSRF 방어 — 허용목록 / DNS resolver / 리다이렉트·크기 캡), `Calculator`, `SchemaTool` 타입 I/O 어댑터. sandboxed shell / file / code / list-dir 도구는 `entelix-tools-coding` 컴패니언 crate 가 제공하고 모든 syscall 은 `Sandbox` trait 통해 delegate.
 
 ### Memory 패턴
 
 `BufferMemory` (sliding window), `SummaryMemory` (rolling LLM 요약), `ConsolidatingBufferMemory` (size 임계 자동 summary), `EntityMemory` (엔티티 키 기반 fact), `EpisodicMemory<V>` (시간순 episode), `SemanticMemory<E, V>` (벡터 retrieval), `GraphMemory<N, E>` (타입 노드 + 타임스탬프 edge, BFS traversal + shortest-path).
 
-### MCP — 3 server-initiated 채널 모두
+### MCP — server-initiated 채널 전체
 
 ```rust
 use entelix::{ChatModelSamplingProvider, McpServerConfig, StaticRootsProvider};
@@ -172,10 +172,10 @@ let server = McpServerConfig::http("https://server.example/mcp")
 | Sealed LLM/operator 채널 캐리어 | ✗ | ✗ | ✗ | ✗ | **✓** |
 | OTel GenAI semconv 네이티브 | △ | △ | △ | ✓ | **✓** |
 | Typed audit sink (`record_*` verbs) | ✗ | ✗ | △ | ✗ | **✓** |
-| Run budget axes (USD cost 포함) | ✗ | △ | ✗ | ✓ (5-axis, USD 없음) | **✓ (6-axis incl. USD)** |
+| Run budget axes (USD cost 포함) | ✗ | △ | ✗ | ✓ (USD 없음) | **✓ (USD 포함)** |
 | Vendor 확장 escape-hatch (`*Ext`) | △ | △ | ✗ | ✓ | **✓** |
 | 분산 session lock (Postgres + Redis) | ✗ | ✗ | ✗ | ✗ | **✓** |
-| MCP 3 server-initiated 채널 모두 | △ | △ | ✓ | △ | **✓** |
+| MCP server-initiated 채널 (전체) | △ | △ | ✓ | △ | **✓** |
 | CI 강제 아키텍처 invariants | ✗ | ✗ | ✗ | ✗ | **✓** |
 
 ---
@@ -216,7 +216,7 @@ entelix-mcp              — 네이티브 JSON-RPC 2.0 over MCP streamable-http;
 entelix-cloud            — Bedrock (SigV4) / Vertex (gcp_auth) / Foundry (AAD) transport
 entelix-policy           — TenantPolicy, RateLimiter, PiiRedactor, CostMeter, QuotaLimiter, PolicyLayer
 entelix-otel             — OpenTelemetry GenAI semconv tower::Layer + cache token telemetry + agent root span
-entelix-server           — axum HTTP + 5-mode SSE + tenant middleware
+entelix-server           — axum HTTP + multi-mode SSE + tenant middleware
 entelix-auth-claude-code — Claude.ai OAuth credential provider (Claude Code CLI 공유 저장소)
 entelix-agents           — ReAct, Supervisor, Hierarchical, Chat 레시피 + Subagent
 ```

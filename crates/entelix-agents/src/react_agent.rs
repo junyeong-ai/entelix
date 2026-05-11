@@ -324,7 +324,7 @@ where
     /// [`SystemPrompt`] before passing it here.
     ///
     /// Without this call the planner inherits whatever
-    /// [`crate::agent::ChatModel`]-side default the operator
+    /// [`entelix_core::ChatModel`]-side default the operator
     /// configured on the model (or empty if none).
     #[must_use]
     pub fn with_system(mut self, system: SystemPrompt) -> Self {

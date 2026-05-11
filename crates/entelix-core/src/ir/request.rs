@@ -143,3 +143,69 @@ pub struct ModelRequest {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub continued_from: Vec<ProviderEchoSnapshot>,
 }
+
+impl ModelRequest {
+    /// Advance this request to the next conversational turn — append
+    /// the prior assistant turn, chain the vendor's opaque echoes,
+    /// and add the next message (whatever its role).
+    ///
+    /// The transformation is:
+    ///
+    /// 1. The model's prior reply (`prior_response.content`) is wrapped
+    ///    in [`Message::new(Role::Assistant, ...)`](crate::ir::Message::new)
+    ///    and pushed to `self.messages`.
+    /// 2. `self.continued_from` is replaced with
+    ///    `prior_response.provider_echoes` so vendor-specific
+    ///    continuation pointers (OpenAI Responses `previous_response_id`,
+    ///    Anthropic extended-thinking signatures, Gemini thought
+    ///    signatures) ride the next wire encoding. Codecs whose wire
+    ///    format represents the prior turn through a server-side
+    ///    chain pointer (OpenAI Responses) deduplicate the appended
+    ///    assistant turn against that pointer at encode time so the
+    ///    transcript is not double-carried.
+    /// 3. `next_message` is pushed onto `self.messages`. The role is
+    ///    free — `Role::User` is the common case, `Role::Tool` is the
+    ///    canonical shape when chaining a tool-round-trip result into
+    ///    the next turn, and operator-driven flows that splice a
+    ///    `Role::System` correction message are also valid.
+    ///
+    /// Model / system prompt / tools / response format / sampling
+    /// knobs survive unchanged. Callers needing per-turn adjustments
+    /// chain further builder methods on the returned value.
+    ///
+    /// ## Tool round-trip
+    ///
+    /// `Role::Tool` results for pending `ToolUse` blocks in
+    /// `prior_response.content` are passed in via `next_message` —
+    /// either directly (single tool round-trip) or by composing
+    /// additional pushes on the returned request before the next
+    /// dispatch (multi-tool fan-out). The helper does not
+    /// auto-synthesise tool results; agent loops dispatch tools and
+    /// produce the matching `Message::Tool` themselves.
+    ///
+    /// ## Why a self-consuming method
+    ///
+    /// `ModelRequest` is cheap to clone but the chain shape is
+    /// fundamentally "previous turn → next turn"; consuming `self`
+    /// makes accidental mutation of the old request impossible and
+    /// reads naturally at the call site:
+    ///
+    /// ```ignore
+    /// let next = prior_request.continue_turn(&prior_response, Message::user("more"));
+    /// ```
+    #[must_use]
+    pub fn continue_turn(
+        mut self,
+        prior_response: &crate::ir::response::ModelResponse,
+        next_message: crate::ir::message::Message,
+    ) -> Self {
+        self.messages.push(crate::ir::message::Message::new(
+            crate::ir::message::Role::Assistant,
+            prior_response.content.clone(),
+        ));
+        self.continued_from
+            .clone_from(&prior_response.provider_echoes);
+        self.messages.push(next_message);
+        self
+    }
+}

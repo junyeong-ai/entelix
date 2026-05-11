@@ -428,7 +428,27 @@ fn encode_inputs(
     }
     let mut items = Vec::new();
 
-    for (idx, msg) in request.messages.iter().enumerate() {
+    // When `previous_response_id` chains this request to a prior
+    // server-side turn, that turn (and everything before it) is
+    // already represented server-side. Encode only the messages
+    // appended *after* the last assistant turn — typically the new
+    // user / tool message(s) for the next round. Without this, an
+    // operator using `ModelRequest::continue_turn` would re-send the
+    // entire transcript alongside the chain pointer and pay for both.
+    let chained = ProviderEchoSnapshot::find_in(&request.continued_from, PROVIDER_KEY)
+        .and_then(|e| e.payload_str("response_id"))
+        .is_some();
+    let start_idx = if chained {
+        request
+            .messages
+            .iter()
+            .rposition(|m| m.role == Role::Assistant)
+            .map_or(0, |i| i + 1)
+    } else {
+        0
+    };
+
+    for (idx, msg) in request.messages.iter().enumerate().skip(start_idx) {
         match msg.role {
             Role::System => {
                 let mut text = String::new();

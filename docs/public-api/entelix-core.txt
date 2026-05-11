@@ -670,6 +670,9 @@ impl core::marker::UnsafeUnpin for entelix_core::context::ExecutionContext
 impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::context::ExecutionContext
 impl !core::panic::unwind_safe::UnwindSafe for entelix_core::context::ExecutionContext
 pub mod entelix_core::cost
+pub trait entelix_core::cost::BudgetCostEstimator: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::cost::BudgetCostEstimator::calculate_actual<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, request: &'life1 entelix_core::ir::ModelRequest, usage: &'life2 entelix_core::ir::Usage, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<rust_decimal::decimal::Decimal>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_core::cost::BudgetCostEstimator::estimate_pre_call<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, request: &'life1 entelix_core::ir::ModelRequest, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<rust_decimal::decimal::Decimal>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
 pub trait entelix_core::cost::CostCalculator: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::cost::CostCalculator::compute_cost<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, model: &'life1 str, usage: &'life2 entelix_core::ir::Usage, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<f64>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
 pub trait entelix_core::cost::ToolCostCalculator: core::marker::Send + core::marker::Sync + 'static
@@ -2319,10 +2322,18 @@ impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::UsageLim
 pub struct entelix_core::run_budget::RunBudget
 impl entelix_core::run_budget::RunBudget
 pub fn entelix_core::run_budget::RunBudget::check_pre_request(&self) -> entelix_core::error::Result<()>
+pub fn entelix_core::run_budget::RunBudget::check_pre_request_cost(&self, estimated_charge: rust_decimal::decimal::Decimal) -> entelix_core::error::Result<()>
+pub fn entelix_core::run_budget::RunBudget::check_pre_request_tokens(&self, estimated_input: u64, estimated_output: u64) -> entelix_core::error::Result<()>
 pub fn entelix_core::run_budget::RunBudget::check_pre_tool_call(&self) -> entelix_core::error::Result<()>
+pub const fn entelix_core::run_budget::RunBudget::cost_usd_limit(&self) -> core::option::Option<rust_decimal::decimal::Decimal>
+pub const fn entelix_core::run_budget::RunBudget::input_tokens_limit(&self) -> core::option::Option<u64>
 pub fn entelix_core::run_budget::RunBudget::observe_cost(&self, charge_usd: rust_decimal::decimal::Decimal) -> entelix_core::error::Result<()>
 pub fn entelix_core::run_budget::RunBudget::observe_usage(&self, usage: &entelix_core::ir::Usage) -> entelix_core::error::Result<()>
+pub const fn entelix_core::run_budget::RunBudget::output_tokens_limit(&self) -> core::option::Option<u64>
+pub const fn entelix_core::run_budget::RunBudget::request_limit(&self) -> core::option::Option<u32>
 pub fn entelix_core::run_budget::RunBudget::snapshot(&self) -> entelix_core::run_budget::UsageSnapshot
+pub const fn entelix_core::run_budget::RunBudget::tool_calls_limit(&self) -> core::option::Option<u32>
+pub const fn entelix_core::run_budget::RunBudget::total_tokens_limit(&self) -> core::option::Option<u64>
 pub fn entelix_core::run_budget::RunBudget::unlimited() -> Self
 pub const fn entelix_core::run_budget::RunBudget::with_cost_limit_usd(self, limit: rust_decimal::decimal::Decimal) -> Self
 pub const fn entelix_core::run_budget::RunBudget::with_input_tokens_limit(self, n: u64) -> Self
@@ -4254,10 +4265,18 @@ impl core::panic::unwind_safe::UnwindSafe for entelix_core::overrides::RequestOv
 pub struct entelix_core::RunBudget
 impl entelix_core::run_budget::RunBudget
 pub fn entelix_core::run_budget::RunBudget::check_pre_request(&self) -> entelix_core::error::Result<()>
+pub fn entelix_core::run_budget::RunBudget::check_pre_request_cost(&self, estimated_charge: rust_decimal::decimal::Decimal) -> entelix_core::error::Result<()>
+pub fn entelix_core::run_budget::RunBudget::check_pre_request_tokens(&self, estimated_input: u64, estimated_output: u64) -> entelix_core::error::Result<()>
 pub fn entelix_core::run_budget::RunBudget::check_pre_tool_call(&self) -> entelix_core::error::Result<()>
+pub const fn entelix_core::run_budget::RunBudget::cost_usd_limit(&self) -> core::option::Option<rust_decimal::decimal::Decimal>
+pub const fn entelix_core::run_budget::RunBudget::input_tokens_limit(&self) -> core::option::Option<u64>
 pub fn entelix_core::run_budget::RunBudget::observe_cost(&self, charge_usd: rust_decimal::decimal::Decimal) -> entelix_core::error::Result<()>
 pub fn entelix_core::run_budget::RunBudget::observe_usage(&self, usage: &entelix_core::ir::Usage) -> entelix_core::error::Result<()>
+pub const fn entelix_core::run_budget::RunBudget::output_tokens_limit(&self) -> core::option::Option<u64>
+pub const fn entelix_core::run_budget::RunBudget::request_limit(&self) -> core::option::Option<u32>
 pub fn entelix_core::run_budget::RunBudget::snapshot(&self) -> entelix_core::run_budget::UsageSnapshot
+pub const fn entelix_core::run_budget::RunBudget::tool_calls_limit(&self) -> core::option::Option<u32>
+pub const fn entelix_core::run_budget::RunBudget::total_tokens_limit(&self) -> core::option::Option<u64>
 pub fn entelix_core::run_budget::RunBudget::unlimited() -> Self
 pub const fn entelix_core::run_budget::RunBudget::with_cost_limit_usd(self, limit: rust_decimal::decimal::Decimal) -> Self
 pub const fn entelix_core::run_budget::RunBudget::with_input_tokens_limit(self, n: u64) -> Self
@@ -4636,6 +4655,9 @@ pub fn entelix_core::AuditSink::record_memory_recall(&self, tier: &str, namespac
 pub fn entelix_core::AuditSink::record_resumed(&self, from_checkpoint: &str)
 pub fn entelix_core::AuditSink::record_sub_agent_invoked(&self, agent_id: &str, sub_thread_id: &str)
 pub fn entelix_core::AuditSink::record_usage_limit_exceeded(&self, breach: &entelix_core::run_budget::UsageLimitBreach)
+pub trait entelix_core::BudgetCostEstimator: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_core::BudgetCostEstimator::calculate_actual<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, request: &'life1 entelix_core::ir::ModelRequest, usage: &'life2 entelix_core::ir::Usage, ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<rust_decimal::decimal::Decimal>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn entelix_core::BudgetCostEstimator::estimate_pre_call<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, request: &'life1 entelix_core::ir::ModelRequest, ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = core::option::Option<rust_decimal::decimal::Decimal>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
 pub trait entelix_core::Clock: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::Clock::now_micros(&self) -> u64
 impl entelix_core::time::Clock for entelix_core::time::SystemClock

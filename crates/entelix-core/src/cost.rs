@@ -46,9 +46,10 @@
 //! directly; the value emitted into telemetry is for dashboards.
 
 use async_trait::async_trait;
+use rust_decimal::Decimal;
 
 use crate::context::ExecutionContext;
-use crate::ir::Usage;
+use crate::ir::{ModelRequest, Usage};
 
 /// Compute a monetary cost for one model invocation.
 ///
@@ -95,4 +96,55 @@ pub trait ToolCostCalculator: Send + Sync + 'static {
         output: &serde_json::Value,
         ctx: &ExecutionContext,
     ) -> Option<f64>;
+}
+
+/// Precision-accurate cost projection for [`crate::RunBudget`] axis
+/// enforcement.
+///
+/// Distinct from [`CostCalculator`] (f64 telemetry) — budget
+/// enforcement is currency arithmetic that demands `Decimal`
+/// precision (invariant 12: cost is computed transactionally;
+/// silent rounding drift in the cumulative ledger is not
+/// recoverable). Two traits over one trade off: the telemetry path
+/// stays JSON-friendly while the budget path stays exact.
+///
+/// Implementations typically live alongside the operator's pricing
+/// catalogue. `entelix-policy::CostMeter` is the reference impl —
+/// it implements both [`CostCalculator`] (for `gen_ai.usage.cost`)
+/// and `BudgetCostEstimator` (for `RunBudget::check_pre_request_cost`
+/// + `observe_cost`) over the same `PricingTable`.
+#[async_trait]
+pub trait BudgetCostEstimator: Send + Sync + 'static {
+    /// Pre-call worst-case estimate. `RunBudget` compares
+    /// `(observed + estimate)` against `cost_usd_limit` before the
+    /// wire roundtrip. Implementations typically compute
+    /// `(prompt_tokens × input_rate) + (max_tokens × output_rate)`
+    /// where `max_tokens` defaults to the model's context window
+    /// when `request.max_tokens` is unset.
+    ///
+    /// Conservative (worst-case) is correct — a false-positive
+    /// rejection surfaces a recoverable `UsageLimitExceeded`, but a
+    /// silent cap overrun on cost is not. `None` when the
+    /// `(provider, model)` pair has no tariff — the SDK treats this
+    /// as "skip the pre-call gate" rather than synthesising a zero,
+    /// matching `compute_cost`'s convention.
+    async fn estimate_pre_call(
+        &self,
+        request: &ModelRequest,
+        ctx: &ExecutionContext,
+    ) -> Option<Decimal>;
+
+    /// Post-call actual charge in `Decimal` precision. The dispatch
+    /// site feeds the result to [`crate::RunBudget::observe_cost`]
+    /// on the `Ok` branch (invariant 12 — a failed call never
+    /// drains the budget).
+    ///
+    /// `None` when the `(provider, model)` pair has no tariff —
+    /// silent skip, no synthesised zero.
+    async fn calculate_actual(
+        &self,
+        request: &ModelRequest,
+        usage: &Usage,
+        ctx: &ExecutionContext,
+    ) -> Option<Decimal>;
 }

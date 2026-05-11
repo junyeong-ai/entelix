@@ -447,6 +447,69 @@ impl entelix_core::CostCalculator for CostMeter {
     }
 }
 
+/// Conservative worst-case output budget used by the pre-call
+/// estimator when [`entelix_core::ir::ModelRequest::max_tokens`] is
+/// unset. Vendor defaults vary (Anthropic = `max_tokens` required by
+/// API contract; `OpenAI` = vendor-default ~4096; Gemini = up to
+/// 8192). The constant biases toward overestimation so a `RunBudget`
+/// pre-call gate fails closed (false-positive rejection is
+/// recoverable; silent overrun is not).
+const PRE_CALL_UNBOUNDED_OUTPUT_TOKENS: u32 = 8_192;
+
+#[async_trait::async_trait]
+impl entelix_core::BudgetCostEstimator for CostMeter {
+    /// Pre-call worst-case estimate in `Decimal` precision. Looks up
+    /// the pricing row for `request.model`; if absent, returns
+    /// `None` so the pre-call gate skips rather than synthesising a
+    /// zero (matches `compute_cost`).
+    ///
+    /// Prompt-token estimation uses [`entelix_core::ByteCountTokenCounter`]
+    /// for a conservative count without coupling to a vendor-accurate
+    /// tokenizer. Operators with vendor-accurate token counters wired
+    /// via [`entelix_core::TokenCounterRegistry`] implement a custom
+    /// [`entelix_core::BudgetCostEstimator`] that consults the
+    /// registry directly — the trait surface stays vendor-agnostic.
+    ///
+    /// Output-token estimate is `request.max_tokens` when set, or
+    /// `PRE_CALL_UNBOUNDED_OUTPUT_TOKENS` as the worst-case bound.
+    /// Cache rates are treated as zero (no cache hit on a yet-to-fire
+    /// call), which biases the estimate upward.
+    async fn estimate_pre_call(
+        &self,
+        request: &entelix_core::ir::ModelRequest,
+        _ctx: &entelix_core::ExecutionContext,
+    ) -> Option<Decimal> {
+        use entelix_core::TokenCounter;
+        let pricing = self.pricing.read();
+        let model_pricing = pricing.get(&request.model)?;
+        let counter = entelix_core::ByteCountTokenCounter::new();
+        let raw_tokens = counter.count_messages(&request.messages);
+        let input_tokens = u32::try_from(raw_tokens).unwrap_or(u32::MAX); // silent-fallback-ok: saturate at u32::MAX so a pathologically long prompt over-estimates rather than wraps; biases the pre-call gate conservatively.
+        let output_tokens = request
+            .max_tokens
+            .unwrap_or(PRE_CALL_UNBOUNDED_OUTPUT_TOKENS); // silent-fallback-ok: PRE_CALL_UNBOUNDED_OUTPUT_TOKENS is the documented worst-case bound for vendors that allow unset max_tokens.
+        let projected = Usage::new(input_tokens, output_tokens);
+        Some(model_pricing.cost_for(&projected))
+    }
+
+    /// Post-call actual charge in `Decimal` precision. Read
+    /// directly from the response's [`Usage`]; this is the same
+    /// arithmetic [`Self::charge`] feeds into the per-tenant ledger,
+    /// surfaced separately so [`entelix_core::RunBudget::observe_cost`]
+    /// receives the precision-preserving value before any
+    /// `f64`-lossy telemetry conversion.
+    async fn calculate_actual(
+        &self,
+        request: &entelix_core::ir::ModelRequest,
+        usage: &Usage,
+        _ctx: &entelix_core::ExecutionContext,
+    ) -> Option<Decimal> {
+        let pricing = self.pricing.read();
+        let model_pricing = pricing.get(&request.model)?;
+        Some(model_pricing.cost_for(usage))
+    }
+}
+
 impl std::fmt::Debug for CostMeter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("CostMeter")

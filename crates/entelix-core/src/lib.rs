@@ -75,7 +75,7 @@ pub use auth::{
 };
 pub use chat::{ChatModel, ChatModelConfig, TypedModelStream};
 pub use context::ExecutionContext;
-pub use cost::{CostCalculator, ToolCostCalculator};
+pub use cost::{BudgetCostEstimator, CostCalculator, ToolCostCalculator};
 pub use error::{Error, ErrorClass, ProviderErrorKind, Result};
 pub use extensions::Extensions;
 pub use interruption::{InterruptionKind, InterruptionPhase, interrupt, interrupt_with};

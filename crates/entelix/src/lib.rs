@@ -51,13 +51,14 @@ pub use entelix_core::transports;
 // matching, LLM-facing error rendering) reaches them. Keep them at
 // the top so callers don't need to memorise an internal module name.
 pub use entelix_core::{
-    AgentContext, ApprovalDecision, AuditSink, AuditSinkHandle, ByteCountTokenCounter, ChatModel,
-    ChatModelConfig, Clock, CostCalculator, DEFAULT_TENANT_ID, Error, ErrorClass, ExecutionContext,
-    Extensions, InterruptionKind, InterruptionPhase, LlmFacingSchema, LlmRenderable,
-    OutputValidator, PendingApprovalDecisions, ProviderErrorKind, RenderedForLlm, RequestOverrides,
-    Result, RunBudget, RunOverrides, SystemClock, TenantId, ThreadKey, TokenCounter,
-    TokenCounterRegistry, TokenCounterResolution, ToolCostCalculator, TypedModelStream,
-    UsageLimitBreach, UsageSnapshot, install_default_tls, interrupt, interrupt_with,
+    AgentContext, ApprovalDecision, AuditSink, AuditSinkHandle, BudgetCostEstimator,
+    ByteCountTokenCounter, ChatModel, ChatModelConfig, Clock, CostCalculator, DEFAULT_TENANT_ID,
+    Error, ErrorClass, ExecutionContext, Extensions, InterruptionKind, InterruptionPhase,
+    LlmFacingSchema, LlmRenderable, OutputValidator, PendingApprovalDecisions, ProviderErrorKind,
+    RenderedForLlm, RequestOverrides, Result, RunBudget, RunOverrides, SystemClock, TenantId,
+    ThreadKey, TokenCounter, TokenCounterRegistry, TokenCounterResolution, ToolCostCalculator,
+    TypedModelStream, UsageLimitBreach, UsageSnapshot, install_default_tls, interrupt,
+    interrupt_with,
 };
 
 // ── Sub-crate re-exports — the 90% surface for crates that don't

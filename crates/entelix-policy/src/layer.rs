@@ -135,11 +135,33 @@ where
                     .await
                     .map_err(Error::from)?;
             }
+            // Pre-call cost gate — projects the worst-case charge
+            // against `RunBudget::cost_usd_limit` before the wire
+            // roundtrip fires. Skips silently when no budget is
+            // attached, no cost meter is configured, or the meter
+            // has no tariff for `request.model`.
+            if let (Some(meter), Some(budget)) = (&policy.cost_meter, invocation.ctx.run_budget())
+                && let Some(estimate) = entelix_core::BudgetCostEstimator::estimate_pre_call(
+                    meter.as_ref(),
+                    &invocation.request,
+                    &invocation.ctx,
+                )
+                .await
+            {
+                budget.check_pre_request_cost(estimate)?;
+            }
 
             let tenant = invocation.ctx.tenant_id().to_owned();
+            let ctx_for_post = invocation.ctx.clone();
+            let request_snapshot = invocation.request.clone();
             let mut response = inner.oneshot(invocation).await?;
 
-            // Post — redact then charge.
+            // Post — redact then charge (tenant ledger) and observe
+            // (RunBudget axis). Both fire only on the `Ok` branch
+            // (invariant 12). The two paths share `PricingTable` via
+            // `CostMeter`'s `BudgetCostEstimator::calculate_actual`
+            // and `charge` — no rounding drift between ledger and
+            // budget axis because the source decimal is the same.
             if let Some(redactor) = &policy.redactor {
                 redactor
                     .redact_response(&mut response)
@@ -158,6 +180,17 @@ where
                         );
                     }
                     Err(e) => return Err(Error::from(e)),
+                }
+                if let Some(budget) = ctx_for_post.run_budget()
+                    && let Some(actual) = entelix_core::BudgetCostEstimator::calculate_actual(
+                        meter.as_ref(),
+                        &request_snapshot,
+                        &response.usage,
+                        &ctx_for_post,
+                    )
+                    .await
+                {
+                    budget.observe_cost(actual)?;
                 }
             }
             Ok(response)
@@ -207,8 +240,24 @@ where
                     .await
                     .map_err(Error::from)?;
             }
+            // Pre-call cost gate — same shape as `ModelInvocation`.
+            // The estimate operates on the request as the consumer
+            // submitted it; streaming-side accumulated `Usage`
+            // post-completion drives the post-call `observe_cost`.
+            if let (Some(meter), Some(budget)) = (&policy.cost_meter, invocation.ctx().run_budget())
+                && let Some(estimate) = entelix_core::BudgetCostEstimator::estimate_pre_call(
+                    meter.as_ref(),
+                    &invocation.inner.request,
+                    invocation.ctx(),
+                )
+                .await
+            {
+                budget.check_pre_request_cost(estimate)?;
+            }
 
             let tenant = invocation.ctx().tenant_id().clone();
+            let ctx_for_post = invocation.ctx().clone();
+            let request_snapshot = invocation.inner.request.clone();
             let model_stream = inner.oneshot(invocation).await?;
             let ModelStream { stream, completion } = model_stream;
 
@@ -234,6 +283,17 @@ where
                             );
                         }
                         Err(e) => return Err(Error::from(e)),
+                    }
+                    if let Some(budget) = ctx_for_post.run_budget()
+                        && let Some(actual) = entelix_core::BudgetCostEstimator::calculate_actual(
+                            meter.as_ref(),
+                            &request_snapshot,
+                            &response.usage,
+                            &ctx_for_post,
+                        )
+                        .await
+                    {
+                        budget.observe_cost(actual)?;
                     }
                 }
                 result
@@ -466,6 +526,83 @@ mod tests {
         fn call(&mut self, inv: ToolInvocation) -> Self::Future {
             Box::pin(async move { Ok(inv.input) })
         }
+    }
+
+    #[tokio::test]
+    async fn pre_call_cost_gate_blocks_when_projection_exceeds_budget() {
+        // Worst-case projection from the `make_request` body + the
+        // unbounded-output fallback (8192 tokens) under the pricing
+        // table dominates a $0.10 ceiling; the pre-call gate must
+        // refuse the dispatch before the inner service runs.
+        let meter = Arc::new(CostMeter::new(pricing()));
+        let mgr = Arc::new(
+            PolicyRegistry::new().with_tenant(
+                TenantId::new("acme"),
+                TenantPolicy::builder()
+                    .with_cost_meter(meter.clone())
+                    .build()
+                    .unwrap(),
+            ),
+        );
+        let leaf = FakeModelService::new(make_response());
+        let calls = leaf.calls.clone();
+        let service = PolicyLayer::new(mgr).layer(leaf);
+
+        let budget = entelix_core::RunBudget::unlimited().with_cost_limit_usd(d("0.10"));
+        let ctx = ExecutionContext::new()
+            .with_tenant_id(TenantId::new("acme"))
+            .with_run_budget(budget);
+        let err = tower::ServiceExt::oneshot(service, ModelInvocation::new(make_request(), ctx))
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(
+                err,
+                Error::UsageLimitExceeded(entelix_core::UsageLimitBreach::CostUsd { .. })
+            ),
+            "got: {err:?}"
+        );
+        assert_eq!(
+            calls.load(Ordering::SeqCst),
+            0,
+            "inner dispatch must not fire when pre-call gate refuses"
+        );
+        assert_eq!(
+            meter.spent_by(&TenantId::new("acme")),
+            Decimal::ZERO,
+            "no ledger charge on refused dispatch"
+        );
+    }
+
+    #[tokio::test]
+    async fn cost_observation_populates_run_budget_after_ok() {
+        let meter = Arc::new(CostMeter::new(pricing()));
+        let mgr = Arc::new(
+            PolicyRegistry::new().with_tenant(
+                TenantId::new("acme"),
+                TenantPolicy::builder()
+                    .with_cost_meter(meter.clone())
+                    .build()
+                    .unwrap(),
+            ),
+        );
+        let leaf = FakeModelService::new(make_response());
+        let service = PolicyLayer::new(mgr).layer(leaf);
+
+        // Budget is high enough that the worst-case pre-call estimate
+        // passes; the post-call `observe_cost` then records the actual
+        // charge against the RunBudget axis.
+        let budget = entelix_core::RunBudget::unlimited().with_cost_limit_usd(d("1000"));
+        let budget_for_assertion = budget.clone();
+        let ctx = ExecutionContext::new()
+            .with_tenant_id(TenantId::new("acme"))
+            .with_run_budget(budget);
+        let _ = tower::ServiceExt::oneshot(service, ModelInvocation::new(make_request(), ctx))
+            .await
+            .unwrap();
+        // 1000 in / 1000 out @ $15 / $75 per 1k = $90.
+        assert_eq!(budget_for_assertion.snapshot().cost_usd, d("90"));
+        assert_eq!(meter.spent_by(&TenantId::new("acme")), d("90"));
     }
 
     #[tokio::test]

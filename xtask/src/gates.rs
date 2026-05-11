@@ -220,6 +220,7 @@ pub(crate) fn run_all_ast() -> Result<()> {
         ("dead-deps", invariants::dead_deps::run),
         ("facade-completeness", invariants::facade_completeness::run),
         ("doc-canonical-paths", invariants::doc_canonical_paths::run),
+        ("advisory-expiry", invariants::advisory_expiry::run),
     ];
     for (name, gate) in tail {
         gate().with_context(|| (*name).to_string())?;

@@ -102,6 +102,10 @@ enum Cmd {
     /// Per-crate public-API drift against `docs/public-api/<crate>.txt`.
     PublicApi,
 
+    /// `deny.toml` advisory-ignore `REVIEW-BY:` expiry — tripwire so
+    /// no advisory ignore outlives its rationale.
+    AdvisoryExpiry,
+
     /// Refreeze public-API baselines into `docs/public-api/<crate>.txt`.
     /// Run only after a deliberate, ADR-documented API change.
     FreezePublicApi {
@@ -130,6 +134,7 @@ fn main() -> ExitCode {
         Cmd::SupplyChain => invariants::supply_chain::run(),
         Cmd::FeatureMatrix => invariants::feature_matrix::run(),
         Cmd::PublicApi => invariants::public_api::run(),
+        Cmd::AdvisoryExpiry => invariants::advisory_expiry::run(),
         Cmd::FreezePublicApi { crates } => invariants::public_api::freeze(&crates),
     };
     match outcome {

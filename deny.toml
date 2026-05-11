@@ -5,6 +5,14 @@
 #   - advisories: RustSec database — known CVEs / unmaintained / unsound.
 #   - licenses:   allow-list of OSI-approved permissive licenses only.
 #   - bans:       explicit duplicate-version + multiple-versions policy.
+#
+# Ignore entries are **time-boxed**. Every `expires` date is a tripwire:
+# when the date passes, cargo-deny rejects the ignore and the
+# supply-chain gate fails. The intent is that no ignore stays in the
+# tree by accident — every quarter someone re-evaluates whether the
+# upstream pin has shipped a fix or the structural-absence argument
+# still holds, then either deletes the entry or extends the expiry
+# with fresh rationale. Permanent ignores are reviewer-rejected.
 
 [graph]
 all-features = true
@@ -12,26 +20,37 @@ all-features = true
 [advisories]
 yanked = "deny"
 ignore = [
-    # RUSTSEC-2023-0071 — `rsa 0.9.10` Marvin timing sidechannel.
-    # Pulled in transitively by `sqlx-mysql` through sqlx 0.8's macro
-    # crate, even though entelix selects only the `postgres` driver.
-    # sqlx 0.9 is still alpha; entelix uses sqlx 0.8 stable. No host-
-    # local fix path; the vulnerability is academic for our usage
-    # (no MySQL connection ever opens) and the upstream sqlx team
-    # tracks it as `sqlx-macros` cleanup deferred to 0.9.
-    "RUSTSEC-2023-0071",
-    # RUSTSEC-2026-0118 — hickory-proto NSEC3 unbounded loop.
-    # No upstream fix available as of hickory 0.26.1. Triggered only
-    # by a malicious DNS server returning crafted NSEC3 records on
-    # cross-zone responses; entelix-tools' SsrfSafeDnsResolver only
-    # ever resolves A/AAAA records and discards NSEC3, so the
-    # exploit path is structurally absent in our use.
-    "RUSTSEC-2026-0118",
-    # RUSTSEC-2025-0134 — rustls-pemfile unmaintained.
-    # Transitive via tonic 0.12 → qdrant-client 1.17. tonic 0.13+
-    # drops the dep but qdrant-client has not yet upgraded.
-    # Tracked by qdrant-client tonic 0.13 migration upstream.
-    "RUSTSEC-2025-0134",
+    # Marvin timing sidechannel in `rsa 0.9.10` — pulled transitively
+    # by `sqlx-mysql` through sqlx 0.8's compile-time macro driver
+    # fan-out. entelix selects `sqlx` with `default-features = false,
+    # features = ["postgres"]` (no mysql runtime). The exploit path
+    # requires a live MySQL connection that entelix never opens. sqlx
+    # 0.9 (still alpha) restructures the macro driver pull; we revisit
+    # when sqlx ships a stable 0.9 OR when the upstream macro deps
+    # drop the mysql crate.
+    { id = "RUSTSEC-2023-0071", reason = "REVIEW-BY: 2026-08-11 — sqlx-mysql build-time only, no MySQL runtime connection in entelix; revisit on sqlx 0.9 stable." },
+
+    # `paste` macro crate unmaintained — transitive via
+    # `tokenizers 0.23.1 → paste 1.0.15` (also via
+    # `macro_rules_attribute → tokenizers`). `paste` is a build-time
+    # `macro_rules` helper with zero runtime surface. tokenizers
+    # 0.23.1 is the latest stable; upstream tracks the macro-deps
+    # refresh.
+    { id = "RUSTSEC-2024-0436", reason = "REVIEW-BY: 2026-08-11 — build-time-only macro dep, no runtime surface; revisit on tokenizers > 0.23.1." },
+
+    # `rustls-pemfile` unmaintained — transitive via tonic 0.12 →
+    # qdrant-client 1.17. qdrant-client 1.17.0 is the latest stable
+    # release; tonic 0.13 drops the dep but qdrant-client has not
+    # yet migrated. Revisit on every qdrant-client release.
+    { id = "RUSTSEC-2025-0134", reason = "REVIEW-BY: 2026-08-11 — qdrant-client transitive, upstream tonic 0.13 migration pending; revisit on qdrant-client > 1.17.0." },
+
+    # `hickory-proto` NSEC3 unbounded loop. Reachable only when a
+    # malicious DNS server returns crafted NSEC3 records on
+    # cross-zone responses. entelix-tools' `SsrfSafeDnsResolver`
+    # resolves only A/AAAA records and discards NSEC3, so the
+    # exploit surface is structurally absent. Upstream hickory has
+    # no fix shipped as of 0.26.1.
+    { id = "RUSTSEC-2026-0118", reason = "REVIEW-BY: 2026-08-11 — exploit path structurally absent (SsrfSafeDnsResolver discards NSEC3); revisit on hickory > 0.26.1." },
 ]
 
 [licenses]

@@ -1,6 +1,7 @@
 //! Per-invariant visitor modules. Each exposes a single `pub fn run() ->
 //! Result<()>` entry point so `main.rs` can dispatch uniformly.
 
+pub(crate) mod advisory_expiry;
 pub(crate) mod dead_deps;
 pub(crate) mod doc_canonical_paths;
 pub(crate) mod facade_completeness;

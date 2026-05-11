@@ -115,6 +115,31 @@ Use targeted per-crate gates (`cargo build -p <crate>` + `cargo test
 -p <crate> --lib <module>`) and reach for `gates` only at slice
 boundaries.
 
+The local cadence picks up `cargo-nextest` automatically when it's on
+`PATH` (typically a faster + colour-richer test runner). Install once
+per-developer with `cargo install cargo-nextest --locked`; falls back
+transparently to `cargo test` when absent.
+
+Linker — the workspace's link step dominates incremental rebuild on
+larger refactors. Recommended per-developer override (not committed —
+add to `.cargo/config.toml` outside the repo, or to a local
+`~/.cargo/config.toml`):
+
+```toml
+# macOS (Apple Silicon / Intel) — `brew install llvm` ships lld.
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+# Linux — `apt install mold` / `pacman -S mold`. Mold beats lld here.
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+```
+
+Workspace `.cargo/config.toml` stays linker-agnostic so CI and casual
+contributors keep working without setup.
+
 ```bash
 # Local — fmt + clippy (default features) + test (default features) + AST invariants.
 # Skips `--all-features` / `--all-targets` and the subprocess gates that CI handles.

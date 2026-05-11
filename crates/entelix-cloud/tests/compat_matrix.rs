@@ -1,20 +1,20 @@
 //! Sparse codec×transport compatibility matrix — type-level
 //! verification that the documented `~10` valid pairings
 //! all instantiate `ChatModel<C, T>` cleanly. Pairings the matrix
-//! marks invalid (e.g. OpenAiChat × BedrockTransport) are
+//! marks invalid (e.g. `OpenAiChat` × `BedrockTransport`) are
 //! intentionally absent — vendors don't ship those models on those
 //! routes.
 //!
 //! Compatible cells (test helper exists for each):
 //!
-//! | Codec ↓ \ Transport →    | Direct | Bedrock | Vertex | Foundry |
-//! |--------------------------|--------|---------|--------|---------|
-//! | AnthropicMessagesCodec   | ✓      | ✓       | ·      | ✓       |
-//! | VertexAnthropicCodec     | ·      | ·       | ✓      | ·       |
-//! | OpenAiChatCodec          | ✓      | ·       | ·      | ✓       |
-//! | OpenAiResponsesCodec     | ✓      | ·       | ·      | ·       |
-//! | GeminiCodec              | ✓      | ·       | ✓      | ·       |
-//! | BedrockConverseCodec     | ·      | ✓       | ·      | ·       |
+//! | Codec ↓ \ Transport →      | Direct | Bedrock | Vertex | Foundry |
+//! |----------------------------|--------|---------|--------|---------|
+//! | `AnthropicMessagesCodec`   | ✓      | ✓       | ·      | ✓       |
+//! | `VertexAnthropicCodec`     | ·      | ·       | ✓      | ·       |
+//! | `OpenAiChatCodec`          | ✓      | ·       | ·      | ✓       |
+//! | `OpenAiResponsesCodec`     | ✓      | ·       | ·      | ·       |
+//! | `GeminiCodec`              | ✓      | ·       | ✓      | ·       |
+//! | `BedrockConverseCodec`     | ·      | ✓       | ·      | ·       |
 //!
 //! Vertex AI hosts Anthropic Claude on a `:rawPredict` /
 //! `:streamRawPredict` endpoint with a vendor-specific

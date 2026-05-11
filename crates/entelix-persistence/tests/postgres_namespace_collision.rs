@@ -17,10 +17,10 @@
 //!    `("t", "1:a:b")` would collide on a `LIKE 't:1:a:b%'` query.
 //!    Verifies the Postgres backend keys the table on the rendered
 //!    string verbatim, not on a weakly-escaped variant.
-//! 2. **SessionLog** — same `thread_id` under two distinct
+//! 2. **`SessionLog`** — same `thread_id` under two distinct
 //!    `tenant_id`s must yield independent event lists. Catches a
 //!    backend that keys the table on `thread_id` alone.
-//! 3. **DistributedLock** — same logical thread under two tenants
+//! 3. **`DistributedLock`** — same logical thread under two tenants
 //!    must derive distinct advisory keys. The hash already includes
 //!    `tenant`, but verifying end-to-end against Postgres confirms
 //!    no truncation drops the tenant component before reaching the

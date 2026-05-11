@@ -1,11 +1,28 @@
 //! Invariant 15 — silent fallback prohibition. In the codec,
-//! transport, and cost-meter hot zones, every `.unwrap_or*` site requires
-//! an audited `// silent-fallback-ok: <reason>` marker on the same line.
+//! transport, and cost-meter hot zones, every `.unwrap_or*` / `or_else`
+//! site requires an audited `// silent-fallback-ok: <reason>` marker on
+//! the same line.
 //!
 //! No baseline counts. The marker is the unique authentication channel —
 //! presence on the line reading the call, or the call is rejected. This
 //! removes the regex-script class of regression where a baseline number
 //! drifted up over time and the reviewer never saw it.
+//!
+//! ## Hot-zone maintenance contract
+//!
+//! [`HOT_ZONES`] is the curated list of zones the rule enforces:
+//! codecs, transports, cost-meter. The list is editable from one place
+//! and visible at every review of a new codec / transport / cost
+//! source. When a new codec or transport lands — particularly in a new
+//! crate — the reviewer's checklist item is "does this zone belong on
+//! the silent-fallback list?". A structural alternative (detect any
+//! file declaring `impl Codec for …` / `impl Transport for …` and
+//! enrol it automatically) would dissolve the maintenance contract
+//! into the code, at the cost of a workspace-wide pre-pass on every
+//! invocation. The hardcoded list is deliberate: the cost of one new
+//! line on a new codec PR is lower than the cost of a workspace-wide
+//! impl scan on every cadence run, and the review-time prompt is the
+//! intended catch.
 
 use std::path::Path;
 

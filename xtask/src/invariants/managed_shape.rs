@@ -8,6 +8,31 @@
 //! identifies which managed-shape rule fired — collapsing all five
 //! under one umbrella label hides which invariant the violation
 //! actually breaks.
+//!
+//! ## Enforcement boundary
+//!
+//! The gates here enforce the **structurally detectable** projections
+//! of invariants 1/2/4/10. CLAUDE.md states broader claims that the
+//! AST cannot mechanically prove:
+//!
+//!   * Invariant 1's "no message cache anywhere" — the gate enforces
+//!     the SSoT shape (`SessionGraph` holds `events: Vec<GraphEvent>`)
+//!     but cannot prove that no *other* struct in the workspace
+//!     accidentally caches messages. A `Vec<Message>` field could be a
+//!     legitimate `BufferMemory` working-memory shape or an illegitimate
+//!     side-cache; distinguishing them needs semantic context the
+//!     visitor doesn't carry. Reviewer-enforced.
+//!   * Invariant 2's "no persistent state beyond in-memory request
+//!     scope" — the gate catches `Agent` fields whose type carries
+//!     `*Persistence` / `*Checkpointer` / `*SessionLog` (the three
+//!     persistence-layer trait families), which covers the common
+//!     regression. Subtler shapes (a custom cache type, a stray
+//!     handle to a DB pool) are reviewer-enforced.
+//!
+//! The structural projections catch every regression we've seen in
+//! practice. The reviewer-enforced clauses are documented here so
+//! future-Claude knows where the gate's enforcement ends and code
+//! review picks up.
 
 use std::path::Path;
 
@@ -24,9 +49,24 @@ const CORE_SRC: &str = "crates/entelix-core/src";
 const SESSION_SRC: &str = "crates/entelix-session/src";
 const SUBAGENT_FILE: &str = "crates/entelix-agents/src/subagent.rs";
 
-// ── Invariant 2 — Agent must not own a `Persistence` field ──────────
+// ── Invariant 2 — Agent must not own persistent-state fields ────────
+//
+// Statelessness covers every persistence-layer trait, not just the
+// `*Persistence` aggregate facade: a stray `*Checkpointer` /
+// `*SessionLog` reference on an `Agent` would also defeat
+// crash → wake(thread_id) → resume.
 
 pub(crate) struct NoAgentPersistenceGate;
+
+const PERSISTENT_STATE_SUFFIXES: &[&str] = &["Persistence", "Checkpointer", "SessionLog"];
+
+fn carries_persistent_state(ty: &syn::Type) -> bool {
+    type_carries(ty, &|seg: &str| {
+        PERSISTENT_STATE_SUFFIXES
+            .iter()
+            .any(|suffix| seg.ends_with(suffix))
+    })
+}
 
 impl FileGate for NoAgentPersistenceGate {
     fn name(&self) -> &'static str {
@@ -48,14 +88,14 @@ impl FileGate for NoAgentPersistenceGate {
                     let Some(ident) = &field.ident else {
                         continue;
                     };
-                    if type_carries(&field.ty, &|seg: &str| seg.ends_with("Persistence")) {
+                    if carries_persistent_state(&field.ty) {
                         let (line, col) = span_loc(ident.span());
                         violations.push(Violation::new(
                             rel_path.to_path_buf(),
                             line,
                             col,
                             format!(
-                                "`{name}.{ident}` carries `*Persistence` (directly or via `Arc` / `Box<dyn …>` / `Option`) — Harness must be stateless (invariant 2)"
+                                "`{name}.{ident}` carries a persistence-layer type (`*Persistence` / `*Checkpointer` / `*SessionLog`, directly or via `Arc` / `Box<dyn …>` / `Option`) — Harness must be stateless (invariant 2)"
                             ),
                         ));
                     }

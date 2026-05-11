@@ -3,9 +3,11 @@
 //! "처음부터 이렇게 설계된 것처럼 흔적 0".
 //!
 //! Flagged shapes:
-//!   1. `#[deprecated]` / `#[deprecated(...)]` attributes on any item.
+//!   1. `#[deprecated]` / `#[deprecated(...)]` attributes on any item,
+//!      including `#[cfg_attr(_, deprecated)]` conditional gating.
 //!   2. `pub use OldName as NewName` re-exports where the alias signals
-//!      a backcompat rename — `*Old` / `*Legacy` / `*_old`.
+//!      a backcompat rename — `*Old` / `*Legacy` / `*_old` / `*V<digit>+`
+//!      (covering both PascalCase `FooV1` and snake_case `foo_v1`).
 //!   3. Line comments — `// deprecated`, `// formerly`,
 //!      `// removed for backcompat` (and variants).
 //!
@@ -13,6 +15,17 @@
 //! on raw source text. Doc comments (`///` / `//!`) are excluded because
 //! they document the name a user is reading right now and never carry
 //! shim semantics.
+//!
+//! ## Enforcement boundary
+//!
+//! Invariant 14 also bans "fallback constructors" — a `pub fn new() ->
+//! Self` left behind as a redirect when the canonical construction
+//! moved to a different name. There is no syntactic marker for "this
+//! constructor is a backcompat redirect", so the AST gate cannot
+//! detect it structurally. Such a shim usually carries one of the
+//! attributes / comment markers above (`#[deprecated]`, `// formerly
+//! …`), in which case the gate fires. A shim with no marker is
+//! reviewer-enforced.
 
 use std::path::Path;
 

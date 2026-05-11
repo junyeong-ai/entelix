@@ -93,13 +93,22 @@ struct NoShimsVisitor<'v> {
 
 impl<'ast, 'v> Visit<'ast> for NoShimsVisitor<'v> {
     fn visit_attribute(&mut self, attr: &'ast syn::Attribute) {
-        if attr.path().is_ident("deprecated") {
+        let path = attr.path();
+        if path.is_ident("deprecated") {
             let (line, col) = span_loc(attr.bracket_token.span.span());
             self.violations.push(Violation::new(
                 self.file.clone(),
                 line,
                 col,
                 "`#[deprecated]` attribute — invariant 14 forbids deprecation periods",
+            ));
+        } else if path.is_ident("cfg_attr") && cfg_attr_contains_deprecated(attr) {
+            let (line, col) = span_loc(attr.bracket_token.span.span());
+            self.violations.push(Violation::new(
+                self.file.clone(),
+                line,
+                col,
+                "`#[cfg_attr(_, deprecated)]` — invariant 14 forbids deprecation periods even under cfg gating",
             ));
         }
         syn::visit::visit_attribute(self, attr);
@@ -115,12 +124,7 @@ fn scan_use_for_legacy_alias(tree: &syn::UseTree, v: &mut NoShimsVisitor<'_>) {
     match tree {
         syn::UseTree::Rename(r) => {
             let name = r.rename.to_string();
-            if ALIAS_TAILS.iter().any(|tail| name.ends_with(tail))
-                || name.starts_with("Old")
-                || name.starts_with("Legacy")
-                || name.contains("_old")
-                || name.contains("_legacy")
-            {
+            if is_legacy_alias_name(&name) {
                 let (line, col) = span_loc(r.rename.span());
                 v.violations.push(Violation::new(
                     v.file.clone(),
@@ -138,4 +142,52 @@ fn scan_use_for_legacy_alias(tree: &syn::UseTree, v: &mut NoShimsVisitor<'_>) {
         }
         syn::UseTree::Name(_) | syn::UseTree::Glob(_) => {}
     }
+}
+
+/// True when an alias name is a backcompat shim. Recognises the `Old`
+/// / `Legacy` family **and** versioned trailers (`FooV1`, `FooV2`,
+/// `foo_v1`) — both shapes are the canonical "I renamed the new
+/// thing, here's a redirect for the old name" pattern.
+fn is_legacy_alias_name(name: &str) -> bool {
+    if ALIAS_TAILS.iter().any(|tail| name.ends_with(tail))
+        || name.starts_with("Old")
+        || name.starts_with("Legacy")
+        || name.contains("_old")
+        || name.contains("_legacy")
+    {
+        return true;
+    }
+    has_versioned_suffix(name)
+}
+
+/// True when `name` ends in `V<digit>+` (PascalCase, `FooV1`) or
+/// `_v<digit>+` (snake_case, `foo_v1`). The version digits are at
+/// least one character — `V` alone is not enough.
+fn has_versioned_suffix(name: &str) -> bool {
+    fn ends_with_digit_run(slice: &str) -> bool {
+        let mut chars = slice.chars().rev();
+        let mut saw_digit = false;
+        for c in chars.by_ref() {
+            if c.is_ascii_digit() {
+                saw_digit = true;
+            } else {
+                return saw_digit && (c == 'V' || c == 'v');
+            }
+        }
+        false
+    }
+    ends_with_digit_run(name)
+        && (name.contains("_v") || name.chars().rev().find(|c| !c.is_ascii_digit()) == Some('V'))
+}
+
+/// True when `attr` is `#[cfg_attr(_, deprecated, ...)]` — any inner
+/// meta whose path is `deprecated` triggers the gate.
+fn cfg_attr_contains_deprecated(attr: &syn::Attribute) -> bool {
+    let Ok(list) = attr.meta.require_list() else {
+        return false;
+    };
+    list.tokens.clone().into_iter().any(|tt| match tt {
+        proc_macro2::TokenTree::Ident(i) => i == "deprecated",
+        _ => false,
+    })
 }

@@ -23,15 +23,9 @@ use std::path::Path;
 use anyhow::Result;
 use syn::visit::Visit;
 
-use crate::visitor::{FileGate, Violation, run_invariants, span_loc};
+use crate::visitor::{FileGate, Violation, run_invariants, span_loc, type_carries};
 
 const TIER1_CONFIG_STRUCTS: &[&str] = &["ChatModelConfig", "SessionGraph", "Usage", "GraphHop"];
-
-/// Single-arity generic wrappers whose inner type still counts as the
-/// "carried" error for `#[source]` / `#[from]` purposes. `Box<reqwest::Error>`
-/// or `Option<AuthError>` is semantically the same as the bare error
-/// from a diagnostic-chain standpoint.
-const TRANSPARENT_WRAPPERS: &[&str] = &["Box", "Arc", "Rc", "Option"];
 
 const REMEDIATION: &str = "Add `#[non_exhaustive]` to public enums and Tier-1 config structs.\n\
      Annotate error inner fields with `#[source]` or `#[from]` so the\n\
@@ -107,10 +101,42 @@ impl<'ast, 'v, 's> Visit<'ast> for HygieneVisitor<'v, 's> {
                 format!("`pub struct {name}` is Tier-1 config — must carry `#[non_exhaustive]`"),
             ));
         }
+        if is_error_ident(&name) {
+            self.check_error_struct_fields(item);
+        }
     }
 }
 
 impl<'v, 's> HygieneVisitor<'v, 's> {
+    fn check_error_struct_fields(&mut self, item: &syn::ItemStruct) {
+        let struct_name = item.ident.to_string();
+        for (idx, field) in item.fields.iter().enumerate() {
+            if !field_carries_error_type(&field.ty) {
+                continue;
+            }
+            if field_has_source_or_from(&field.attrs) {
+                continue;
+            }
+            let span = field.ident.as_ref().map_or_else(
+                || syn::spanned::Spanned::span(&field.ty),
+                syn::spanned::Spanned::span,
+            );
+            let (line, col) = span_loc(span);
+            let where_ = match &field.ident {
+                Some(id) => format!("field `{id}`"),
+                None => format!("tuple field {idx}"),
+            };
+            self.violations.push(Violation::new(
+                self.file.clone(),
+                line,
+                col,
+                format!(
+                    "`{struct_name}` {where_} carries an inner error type without `#[source]` / `#[from]` — diagnostic chain breaks"
+                ),
+            ));
+        }
+    }
+
     fn check_error_variants(&mut self, item: &syn::ItemEnum) {
         let enum_name = item.ident.to_string();
         for variant in &item.variants {
@@ -152,16 +178,25 @@ impl<'v, 's> HygieneVisitor<'v, 's> {
 }
 
 /// Detect `#[error(transparent)]` on a variant. The attr path is
-/// `error` and the argument tokens are exactly the `transparent`
-/// keyword — `parse_args::<syn::Ident>()` succeeds and yields that
-/// identifier.
+/// `error`; any token tree containing the `transparent` keyword
+/// (alone, or as part of a comma-separated meta list) satisfies the
+/// gate. Token-level scan keeps us robust to thiserror's accepted
+/// surface shapes — `#[error(transparent)]`, `#[error(transparent,
+/// fmt = ...)]`, etc.
 fn variant_is_transparent(attrs: &[syn::Attribute]) -> bool {
     attrs.iter().any(|a| {
         if !a.path().is_ident("error") {
             return false;
         }
-        a.parse_args::<syn::Ident>()
-            .map(|i| i == "transparent")
+        a.meta
+            .require_list()
+            .ok()
+            .map(|list| {
+                list.tokens.clone().into_iter().any(|tt| match tt {
+                    proc_macro2::TokenTree::Ident(i) => i == "transparent",
+                    _ => false,
+                })
+            })
             .unwrap_or(false)
     })
 }
@@ -170,53 +205,13 @@ fn is_error_ident(name: &str) -> bool {
     name == "Error" || name.ends_with("Error")
 }
 
-/// True when the field's type carries an error. Recurses through:
-///
-///   * References (`&T`, `&mut T`) — unwrap one level.
-///   * Trait objects (`dyn Error`, `dyn std::error::Error + Send + Sync`)
-///     — any trait bound whose last path segment is `Error` or ends in
-///     `Error` counts. Covers the `Box<dyn std::error::Error + Send +
-///     Sync + 'static>` shape that every entelix transport-error
-///     variant uses.
-///   * Single-arity wrappers (`Box<E>`, `Arc<E>`, `Rc<E>`, `Option<E>`)
-///     — peel one wrapper and check the inner.
-///
-/// Concrete error types are detected by their path's last segment
-/// being `Error` or ending in `Error`. The check is structural, not
-/// nominal — it does not need a `use entelix_core::Error` import to
-/// fire.
+/// True when the field's type carries an error. Delegates to the
+/// shared [`type_carries`] helper with the error-ident predicate so
+/// the recursion semantics (references, trait objects, transparent
+/// wrappers, parens, groups, tuples, arrays, `impl Trait`) are
+/// auditable in one place across every gate.
 fn field_carries_error_type(ty: &syn::Type) -> bool {
-    match ty {
-        syn::Type::Reference(r) => field_carries_error_type(&r.elem),
-        syn::Type::TraitObject(to) => to.bounds.iter().any(|bound| {
-            if let syn::TypeParamBound::Trait(t) = bound {
-                t.path
-                    .segments
-                    .last()
-                    .map(|s| is_error_ident(&s.ident.to_string()))
-                    .unwrap_or(false)
-            } else {
-                false
-            }
-        }),
-        syn::Type::Path(tp) => {
-            let Some(seg) = tp.path.segments.last() else {
-                return false;
-            };
-            let name = seg.ident.to_string();
-            if is_error_ident(&name) {
-                return true;
-            }
-            if TRANSPARENT_WRAPPERS.contains(&name.as_str())
-                && let syn::PathArguments::AngleBracketed(args) = &seg.arguments
-                && let Some(syn::GenericArgument::Type(inner)) = args.args.first()
-            {
-                return field_carries_error_type(inner);
-            }
-            false
-        }
-        _ => false,
-    }
+    type_carries(ty, &|s: &str| is_error_ident(s))
 }
 
 fn field_has_source_or_from(attrs: &[syn::Attribute]) -> bool {

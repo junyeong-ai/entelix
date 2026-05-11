@@ -2,47 +2,30 @@
 //! catches `feature = ["dep:foo"]` regressions where the pass-through to
 //! `foo`'s own internal feature is missing. cargo's default `--all-features`
 //! union masks this.
+//!
+//! The feature list is **discovered** from `crates/entelix/Cargo.toml`'s
+//! `[features]` table at runtime, not hand-maintained here. CLAUDE.md
+//! declares the facade `Cargo.toml` the single source of truth for
+//! features; this gate honours that by parsing it.
 
 use std::process::Command;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 
-use crate::visitor::{Violation, repo_root, report};
-
-const FEATURES: &[&str] = &[
-    "mcp",
-    "mcp-chatmodel",
-    "postgres",
-    "redis",
-    "otel",
-    "aws",
-    "gcp",
-    "azure",
-    "policy",
-    "server",
-    "embedders-openai",
-    "vectorstores-qdrant",
-    "vectorstores-pgvector",
-    "graphmemory-pg",
-];
+use crate::visitor::{Violation, read, repo_root, report};
 
 pub(crate) fn run() -> Result<()> {
     let root = repo_root()?;
+    let features = discover_facade_features(&root)?;
     let mut violations = Vec::new();
 
-    for f in FEATURES {
+    for f in &features {
         if !cargo_check(&root, &["--no-default-features", "--features", f])? {
             violations.push(Violation::file(
                 root.join("crates/entelix/Cargo.toml"),
                 format!("feature `{f}` does not compile in isolation"),
             ));
         }
-    }
-    if !cargo_check(&root, &["--no-default-features", "--features", "full"])? {
-        violations.push(Violation::file(
-            root.join("crates/entelix/Cargo.toml"),
-            "feature `full` does not compile",
-        ));
     }
     if !cargo_check(&root, &["--no-default-features"])? {
         violations.push(Violation::file(
@@ -60,6 +43,28 @@ pub(crate) fn run() -> Result<()> {
          \n\
          Reproduce locally with:\n  cargo check -p entelix --no-default-features --features <FEATURE>",
     )
+}
+
+/// Parse `crates/entelix/Cargo.toml` and return every entry in its
+/// `[features]` table except `default` (the empty starting point) —
+/// `full` and every individual feature must each compile alone.
+fn discover_facade_features(root: &std::path::Path) -> Result<Vec<String>> {
+    let path = root.join("crates/entelix/Cargo.toml");
+    let text = read(&path)?;
+    let doc: toml_edit::DocumentMut = text
+        .parse()
+        .with_context(|| format!("parse {}", path.display()))?;
+    let features = doc
+        .get("features")
+        .and_then(|v| v.as_table())
+        .with_context(|| format!("`[features]` table missing in {}", path.display()))?;
+    let mut out: Vec<String> = features
+        .iter()
+        .map(|(name, _)| name.to_owned())
+        .filter(|n| n != "default")
+        .collect();
+    out.sort();
+    Ok(out)
 }
 
 fn cargo_check(root: &std::path::Path, extra: &[&str]) -> Result<bool> {

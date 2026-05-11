@@ -100,13 +100,20 @@ impl<'ast, 'v, 'l> Visit<'ast> for MagicVisitor<'v, 'l> {
 }
 
 fn is_probability_literal(text: &str) -> bool {
-    let mut chars = text.chars();
-    let Some('0') = chars.next() else {
-        return false;
-    };
-    let Some('.') = chars.next() else {
-        return false;
-    };
-    let rest: String = chars.collect();
-    !rest.is_empty() && rest.chars().all(|c| c.is_ascii_digit())
+    // `0.<digit>+` (`0.5`, `0.001`, `0.500`) — bare decimal form.
+    if let Some(rest) = text.strip_prefix("0.") {
+        return !rest.is_empty() && rest.chars().all(|c| c.is_ascii_digit());
+    }
+    // Scientific notation that evaluates to a magnitude in (0, 1) —
+    // `1e-3`, `5e-2`, `2.5e-1`. Parse the float and check the range;
+    // negative exponent on a small mantissa is exactly the "policy
+    // probability" shape we want to surface.
+    if let Ok(v) = text.parse::<f64>()
+        && v.is_finite()
+        && v > 0.0
+        && v < 1.0
+    {
+        return true;
+    }
+    false
 }

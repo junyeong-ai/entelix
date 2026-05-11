@@ -15,7 +15,7 @@ use anyhow::Result;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
-use crate::visitor::{FileGate, Violation, run_invariants, span_loc};
+use crate::visitor::{FileGate, Violation, run_invariants, span_loc, type_carries};
 
 const REMEDIATION: &str = "Anthropic managed-agent shape is non-negotiable. See CLAUDE.md\n\
      §\"Anthropic managed-agent shape\".";
@@ -48,16 +48,14 @@ impl FileGate for NoAgentPersistenceGate {
                     let Some(ident) = &field.ident else {
                         continue;
                     };
-                    let ty = type_last_segment(&field.ty).unwrap_or_default();
-                    if ty.ends_with("Persistence") {
+                    if type_carries(&field.ty, &|seg: &str| seg.ends_with("Persistence")) {
                         let (line, col) = span_loc(ident.span());
                         violations.push(Violation::new(
                             rel_path.to_path_buf(),
                             line,
                             col,
                             format!(
-                                "`{name}.{}: {ty}` — Harness must be stateless (invariant 2)",
-                                ident
+                                "`{name}.{ident}` carries `*Persistence` (directly or via `Arc` / `Box<dyn …>` / `Option`) — Harness must be stateless (invariant 2)"
                             ),
                         ));
                     }
@@ -91,16 +89,15 @@ impl FileGate for NoCredentialInCtxGate {
                     continue;
                 }
                 for field in &s.fields {
-                    let ty = type_last_segment(&field.ty).unwrap_or_default();
-                    if ty == "CredentialProvider" || ty.ends_with("CredentialProvider") {
+                    if type_carries(&field.ty, &|seg: &str| {
+                        seg == "CredentialProvider" || seg.ends_with("CredentialProvider")
+                    }) {
                         let (line, col) = span_loc(field.ty.span());
                         violations.push(Violation::new(
                             rel_path.to_path_buf(),
                             line,
                             col,
-                            format!(
-                                "`ExecutionContext` embeds `{ty}` — tokens must never reach Tool input (invariant 10)"
-                            ),
+                            "`ExecutionContext` field carries a `CredentialProvider` (directly or via `Arc` / `Box<dyn …>` / `Option`) — tokens must never reach Tool input (invariant 10)",
                         ));
                     }
                 }

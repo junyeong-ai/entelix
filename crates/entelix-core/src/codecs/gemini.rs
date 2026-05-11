@@ -60,7 +60,7 @@ const WIRE_THOUGHT_SIGNATURE_LEGACY: &str = "thoughtSignature";
 fn decode_thought_signature(obj: &Value) -> Option<ProviderEchoSnapshot> {
     let sig = obj
         .get(WIRE_THOUGHT_SIGNATURE)
-        .or_else(|| obj.get(WIRE_THOUGHT_SIGNATURE_LEGACY))
+        .or_else(|| obj.get(WIRE_THOUGHT_SIGNATURE_LEGACY)) // silent-fallback-ok: snake_case + camelCase are both valid vendor spellings of the same field — accepting either is the contract, no default injected.
         .and_then(Value::as_str)?;
     Some(ProviderEchoSnapshot::for_provider(
         PROVIDER_KEY,

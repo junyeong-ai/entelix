@@ -10,13 +10,18 @@
 //! regardless of how many gates inspect it — no double-parse, no
 //! "walk + reparse per trait name" regression.
 //!
-//! The pipeline is single-threaded by necessity. `syn::File` is
-//! `!Send` because proc-macro2's `Span` enum wraps a native
-//! `proc_macro::Span` variant, so ASTs cannot cross thread boundaries
-//! and the cache cannot fan out across rayon workers. Bounded cost
-//! (~300 files × ~µs per parse) keeps the wall-time profile within
-//! the cadence budget; correctness + share-parse hygiene beats the
-//! ~50ms parallelism win the prior shape extracted.
+//! The pipeline is single-threaded because the syn / proc-macro2
+//! toolchain marks `syn::File` as `!Send` — the wrapping `Span` enum
+//! holds a `proc_macro::Span` variant whose runtime data is
+//! thread-local. ASTs therefore cannot cross thread boundaries today
+//! and the cache cannot fan out across rayon workers. Empirical cost
+//! is ~1-2 ms per file × ~300 files = ~0.45 s warm, which keeps the
+//! wall-time profile within the cadence budget; correctness +
+//! share-parse hygiene beats the modest parallelism win the prior
+//! shape extracted. A future migration to a `Send`-able parser
+//! (rust-analyzer's `rowan` IR, or proc-macro2's nightly `Send`
+//! variant) would unlock cross-thread fan-out without changing the
+//! gate trait surface.
 //!
 //! [`report`] sorts violations by `(path, line, col, message)` before
 //! printing so two runs against the same code produce byte-identical
@@ -184,6 +189,73 @@ pub(crate) fn repo_root() -> Result<PathBuf> {
 pub(crate) fn span_loc(span: proc_macro2::Span) -> (usize, usize) {
     let lc = span.start();
     (lc.line, lc.column + 1)
+}
+
+/// Single-arity generic wrappers whose inner type is what callers
+/// semantically care about. Used by every gate that asks "does this
+/// field carry a `*Suffix` type?" — wrappers don't change the answer.
+const TRANSPARENT_TYPE_WRAPPERS: &[&str] = &["Box", "Arc", "Rc", "Option"];
+
+/// True when `ty` carries a type whose last path segment matches
+/// `predicate`. Recurses through:
+///
+///   * References (`&T`, `&mut T`) — unwrap one level.
+///   * Trait objects (`dyn Suffix`) — any bound whose last path
+///     segment satisfies the predicate counts.
+///   * Single-arity wrappers (`Box<T>`, `Arc<T>`, `Rc<T>`, `Option<T>`)
+///     — peel one wrapper and recurse on the inner type.
+///   * Parenthesised / grouped types (`(T)`, `Group<T>`) — transparent.
+///
+/// Shared by every gate that ends in "field X carries an inner Y" —
+/// `surface_hygiene` (`*Error`), `managed_shape` (`*Persistence`), …
+/// — so the recursion semantics are auditable in one place.
+pub(crate) fn type_carries(ty: &syn::Type, predicate: &dyn Fn(&str) -> bool) -> bool {
+    match ty {
+        syn::Type::Reference(r) => type_carries(&r.elem, predicate),
+        syn::Type::Paren(p) => type_carries(&p.elem, predicate),
+        syn::Type::Group(g) => type_carries(&g.elem, predicate),
+        syn::Type::TraitObject(to) => to.bounds.iter().any(|bound| {
+            if let syn::TypeParamBound::Trait(t) = bound {
+                t.path
+                    .segments
+                    .last()
+                    .map(|s| predicate(&s.ident.to_string()))
+                    .unwrap_or(false)
+            } else {
+                false
+            }
+        }),
+        syn::Type::ImplTrait(it) => it.bounds.iter().any(|bound| {
+            if let syn::TypeParamBound::Trait(t) = bound {
+                t.path
+                    .segments
+                    .last()
+                    .map(|s| predicate(&s.ident.to_string()))
+                    .unwrap_or(false)
+            } else {
+                false
+            }
+        }),
+        syn::Type::Tuple(t) => t.elems.iter().any(|e| type_carries(e, predicate)),
+        syn::Type::Array(a) => type_carries(&a.elem, predicate),
+        syn::Type::Path(tp) => {
+            let Some(seg) = tp.path.segments.last() else {
+                return false;
+            };
+            let name = seg.ident.to_string();
+            if predicate(&name) {
+                return true;
+            }
+            if TRANSPARENT_TYPE_WRAPPERS.contains(&name.as_str())
+                && let syn::PathArguments::AngleBracketed(args) = &seg.arguments
+                && let Some(syn::GenericArgument::Type(inner)) = args.args.first()
+            {
+                return type_carries(inner, predicate);
+            }
+            false
+        }
+        _ => false,
+    }
 }
 
 /// One sequenced cadence step — name shown in the banner, closure that

@@ -27,7 +27,7 @@ A PR contradicting any invariant is invalid regardless of how clean the code loo
 
 ### Security
 
-9. **No filesystem, no shell** — first-party crates do NOT import `std::fs`, `std::path::Path`/`PathBuf` (except as opaque IDs), `std::process`, `std::os::unix::process`, `tokio::fs`, `tokio::process`, `landlock`, `seatbelt`, `tree-sitter*`, `nix`. Coding-shape tools (shell, code-exec, file-IO) live in the `entelix-tools-coding` companion crate and route every syscall through the operator-supplied `entelix_core::sandbox::Sandbox` trait — the import ban holds inside that companion too. **Documented exception**: credential-storage companion crates (today: `entelix-auth-claude-code`) may import `std::fs` *bounded to the OAuth credential file the upstream Claude Code CLI shares* — the exception is allowlisted per-crate in `cargo xtask no-fs`'s `CREDENTIAL_STORAGE_EXEMPTIONS`, and any new crate proposing fs access must amend this invariant and the gate's allowlist together. Enforced by `cargo xtask no-fs`.
+9. **No filesystem, no shell** — first-party crates do NOT import `std::fs`, `std::path::Path`/`PathBuf`, `std::process`, `std::os::unix::process`, `std::os::unix::fs`, `tokio::fs`, `tokio::process`, `landlock`, `seatbelt`, `tree-sitter*`, `nix`. Coding-shape tools (shell, code-exec, file-IO) live in the `entelix-tools-coding` companion crate and route every syscall through the operator-supplied `entelix_core::sandbox::Sandbox` trait — the import ban holds inside that companion too. **Documented exception**: credential-storage companion crates (today: `entelix-auth-claude-code`) may import `std::fs` *bounded to the OAuth credential file the upstream Claude Code CLI shares* — the exception is allowlisted per-crate in `cargo xtask no-fs`'s `CREDENTIAL_STORAGE_EXEMPTIONS`, and any new crate proposing fs access must amend this invariant and the gate's allowlist together. Enforced by `cargo xtask no-fs`.
 10. **Tokens never reach Tool input** — credentials live exclusively in `entelix_core::auth::CredentialProvider`. Headers are added in transport. `ExecutionContext` does NOT embed `CredentialProvider`. Type-checked.
 11. **Multi-tenant Namespace is mandatory** — `entelix_memory::Namespace` requires a `tenant_id`. Cross-tenant data leak is structurally impossible by API design.
 
@@ -126,7 +126,10 @@ add to `.cargo/config.toml` outside the repo, or to a local
 `~/.cargo/config.toml`):
 
 ```toml
-# macOS (Apple Silicon / Intel) — `brew install llvm` ships lld.
+# macOS (Apple Silicon / Intel) — `brew install llvm` ships lld, but
+# the LLVM formula is keg-only. Add its `bin` to `PATH` (the brew
+# install hint prints the right export line) so cargo can resolve
+# `ld64.lld` / `lld`.
 [target.aarch64-apple-darwin]
 rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 [target.x86_64-apple-darwin]

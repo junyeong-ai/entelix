@@ -21,8 +21,10 @@ use crate::visitor::{FileGate, Violation, run_invariants, span_loc};
 /// so `["std", "fs"]` catches both `std::fs` and `std::fs::read`.
 const FORBIDDEN_PREFIXES: &[&[&str]] = &[
     &["std", "fs"],
+    &["std", "path"],
     &["std", "process"],
     &["std", "os", "unix", "process"],
+    &["std", "os", "unix", "fs"],
     &["tokio", "fs"],
     &["tokio", "process"],
     &["landlock"],

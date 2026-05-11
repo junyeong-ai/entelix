@@ -5,9 +5,11 @@
 //!     `*Engine` / `*Wrapper` / `*Handler` / `*Helper` / `*Util`.
 //!  2. **`*Service`** is reserved for types that directly impl
 //!     `tower::Service<R>`. Other names use `*Manager` / `*Client` / etc.
-//!  3. **No `get_*`** accessors — use the bare name. Catches `pub fn`,
-//!     `pub async fn`, **and** trait-default methods (the prior regex
-//!     missed `pub async fn` and trait-default `async fn`).
+//!  3. **No `get_*`** field accessors — use the bare name. Scope is
+//!     method-level (impl-block methods and trait methods, sync and
+//!     async). Free functions like `pub fn get_user(id)` are
+//!     parameterised lookups, not field accessors — out of scope by
+//!     design.
 //!  4. **Builder verb-prefix** — every `pub fn` returning `Self` /
 //!     `Result<Self>` inside `impl <X>Builder` must start with
 //!     `with_` / `add_` / `set_` / `register`. Value-level combinators
@@ -62,17 +64,11 @@ const CTX_LAST_TRAITS: &[&str] = &[
     "Summarizer",
 ];
 
-/// Memory pattern files where every method taking `&ExecutionContext` is
-/// ctx-first by family rule (BufferMemory / SummaryMemory / EntityMemory /
-/// EpisodicMemory / SemanticMemory / ConsolidatingBufferMemory).
-const MEMORY_PATTERN_FILES: &[&str] = &[
-    "crates/entelix-memory/src/buffer.rs",
-    "crates/entelix-memory/src/summary.rs",
-    "crates/entelix-memory/src/entity.rs",
-    "crates/entelix-memory/src/episodic.rs",
-    "crates/entelix-memory/src/semantic.rs",
-    "crates/entelix-memory/src/consolidating.rs",
-];
+/// Workspace path under which "`*Memory` pattern" files live. A file
+/// is a memory-pattern file when it sits under this directory **and**
+/// declares a `pub struct` whose ident ends in `Memory` — the rule
+/// surfaces structurally from the code, no hand-maintained path list.
+const MEMORY_PATTERN_DIR: &str = "crates/entelix-memory/src";
 
 const REMEDIATION: &str = "Replacement guide:\n\
      *Engine    → say what it does (OrchestrationLoop, RetryStrategy)\n\
@@ -93,10 +89,10 @@ impl FileGate for NamingGate {
         "naming"
     }
 
-    fn visit(&self, rel_path: &Path, src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
+    fn visit(&self, rel_path: &Path, _src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
         let mut v = NamingVisitor {
             file: rel_path.to_path_buf(),
-            file_uses_tower_service: file_imports_tower_service(src),
+            file_uses_tower_service: file_imports_tower_service(ast),
             in_builder_impl_depth: 0,
             current_trait: None,
             violations,
@@ -130,13 +126,17 @@ impl WorkspaceGate for CtxPositionGate {
             check_ctx_in_trait(parse, trait_name, CtxExpect::Last, violations);
         }
 
-        // Memory pattern files — ctx-bearing methods are ctx-first by
-        // family rule, **except** methods governed by an explicit
+        // Memory pattern files — auto-discovered: any file under
+        // `crates/entelix-memory/src/` declaring a `pub struct
+        // *Memory`. ctx-bearing methods on those types are ctx-first
+        // by family rule, **except** methods governed by an explicit
         // CTX_LAST_TRAITS pass (e.g. `Summarizer` in
         // `consolidating.rs`).
-        let memory_targets: BTreeSet<&Path> = MEMORY_PATTERN_FILES.iter().map(Path::new).collect();
         for file in parse.iter() {
-            if !memory_targets.contains(file.rel.as_path()) {
+            if !file.rel.starts_with(MEMORY_PATTERN_DIR) {
+                continue;
+            }
+            if !declares_memory_pattern(&file.ast) {
                 continue;
             }
             let mut v = CtxFileVisitor {
@@ -168,15 +168,33 @@ pub(crate) fn run() -> Result<()> {
     run_invariants(&file_gates(), &workspace_gates())
 }
 
-fn file_imports_tower_service(src: &str) -> bool {
-    // Cheap text test — full AST visit happens elsewhere. tower::Service is
-    // the universal middleware contract; whichever crate genuinely
-    // implements it imports the trait. False positives here would only
-    // **silence** a *Service-suffix violation, never fabricate one.
-    src.contains("use tower::Service")
-        || src.contains("tower::Service<")
-        || src.contains("impl Service<")
-        || src.contains(" Service<") && src.contains("tower")
+/// True when the file imports `tower::Service` via any `use` shape —
+/// bare (`use tower::Service`), grouped (`use tower::{Layer, Service}`),
+/// nested (`use tower::{Service as TowerService}`), or wildcard
+/// (`use tower::*`). Reached through the cached AST so grouped imports
+/// the prior text scan missed are correctly recognised. False
+/// positives here only **silence** a `*Service`-suffix violation,
+/// never fabricate one — so the recogniser stays permissive.
+fn file_imports_tower_service(ast: &syn::File) -> bool {
+    fn tree_imports_service(tree: &syn::UseTree, in_tower: bool) -> bool {
+        match tree {
+            syn::UseTree::Path(p) => {
+                let next_in_tower = in_tower || p.ident == "tower";
+                tree_imports_service(&p.tree, next_in_tower)
+            }
+            syn::UseTree::Name(n) => in_tower && n.ident == "Service",
+            syn::UseTree::Rename(r) => in_tower && r.ident == "Service",
+            syn::UseTree::Glob(_) => in_tower,
+            syn::UseTree::Group(g) => g.items.iter().any(|t| tree_imports_service(t, in_tower)),
+        }
+    }
+    ast.items.iter().any(|item| {
+        if let syn::Item::Use(u) = item {
+            tree_imports_service(&u.tree, false)
+        } else {
+            false
+        }
+    })
 }
 
 struct NamingVisitor<'v> {
@@ -513,6 +531,27 @@ impl<'v> CtxFileVisitor<'v> {
         }
         true
     }
+}
+
+/// True when `ast` declares a `pub struct` whose ident ends in
+/// `Memory` — the structural marker for the "memory-pattern" file
+/// family. Recurses into `mod` blocks so a nested module declaring
+/// the struct still counts.
+fn declares_memory_pattern(ast: &syn::File) -> bool {
+    fn scan_items(items: &[syn::Item]) -> bool {
+        items.iter().any(|item| match item {
+            syn::Item::Struct(s) => {
+                matches!(s.vis, syn::Visibility::Public(_))
+                    && s.ident.to_string().ends_with("Memory")
+            }
+            syn::Item::Mod(m) => m
+                .content
+                .as_ref()
+                .is_some_and(|(_, inner)| scan_items(inner)),
+            _ => false,
+        })
+    }
+    scan_items(&ast.items)
 }
 
 /// Walk one parsed file and collect method names declared inside any trait

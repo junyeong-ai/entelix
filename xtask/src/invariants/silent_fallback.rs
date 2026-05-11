@@ -23,7 +23,12 @@ const HOT_ZONES: &[&str] = &[
     "crates/entelix-policy/src/cost.rs",
 ];
 
-const FALLBACK_METHODS: &[&str] = &["unwrap_or", "unwrap_or_default", "unwrap_or_else"];
+const FALLBACK_METHODS: &[&str] = &[
+    "unwrap_or",
+    "unwrap_or_default",
+    "unwrap_or_else",
+    "or_else",
+];
 
 const MARKER: &str = "silent-fallback-ok";
 

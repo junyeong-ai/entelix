@@ -16,6 +16,7 @@ use std::process::ExitCode;
 
 use clap::{Parser, Subcommand};
 
+mod gates;
 mod invariants;
 mod visitor;
 
@@ -32,8 +33,21 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Cmd {
-    /// Run every invariant check in the canonical order. Equivalent to
-    /// the preflight + supply-chain + feature-matrix + public-api CI jobs.
+    /// Local fast cadence — fmt + clippy (default features) + test
+    /// (default features) + AST invariants. Pre-commit discipline.
+    /// Skips `--all-features` / `--all-targets` / public-api drift /
+    /// feature-matrix / supply-chain — CI runs those.
+    Gates,
+
+    /// Full CI cadence — local set + `--all-features --all-targets`
+    /// clippy / test, `RUSTDOCFLAGS="-D warnings" cargo doc`,
+    /// public-api drift, feature-matrix isolation, supply-chain
+    /// audit. Push-time / merge-gate enforcement.
+    GatesCi,
+
+    /// Run every AST-walking invariant check in the canonical order.
+    /// Same set both `Gates` and `GatesCi` embed; surfaced separately
+    /// for callers that want only the static-analysis pass.
     Invariants,
 
     /// Invariant 9 — no `std::fs` / `std::process` / `tokio::fs` /
@@ -99,6 +113,8 @@ enum Cmd {
 fn main() -> ExitCode {
     let cli = Cli::parse();
     let outcome = match cli.command {
+        Cmd::Gates => gates::run_local(),
+        Cmd::GatesCi => gates::run_ci(),
         Cmd::Invariants => run_all(),
         Cmd::NoFs => invariants::no_fs::run(),
         Cmd::NoShims => invariants::no_shims::run(),
@@ -125,25 +141,13 @@ fn main() -> ExitCode {
     }
 }
 
-/// One static-analysable gate in the canonical CI order.
-type Gate = (&'static str, fn() -> anyhow::Result<()>);
-
-/// Runs every invariant check in the canonical CI order. Stops at the first
-/// failing gate so output stays focused — matches the preflight job pattern.
+/// Runs every AST-walking invariant in the canonical order with
+/// per-gate banners. Stops at the first failing gate so output stays
+/// focused — matches the preflight job pattern. Both this command
+/// and the bundled `gates` / `gates-ci` cadences consume
+/// [`gates::ast_gates`] as the single source of truth for the list.
 fn run_all() -> anyhow::Result<()> {
-    let gates: &[Gate] = &[
-        ("no-fs", invariants::no_fs::run),
-        ("managed-shape", invariants::managed_shape::run),
-        ("naming", invariants::naming::run),
-        ("surface-hygiene", invariants::surface_hygiene::run),
-        ("silent-fallback", invariants::silent_fallback::run),
-        ("magic-constants", invariants::magic_constants::run),
-        ("no-shims", invariants::no_shims::run),
-        ("lock-ordering", invariants::lock_ordering::run),
-        ("dead-deps", invariants::dead_deps::run),
-        ("facade-completeness", invariants::facade_completeness::run),
-        ("doc-canonical-paths", invariants::doc_canonical_paths::run),
-    ];
+    let gates = gates::ast_gates();
     for (name, gate) in gates {
         println!("── {name}");
         gate().map_err(|e| anyhow::anyhow!("{name}: {e:#}"))?;

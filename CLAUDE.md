@@ -109,20 +109,25 @@ Key references:
 
 ## Commands
 
-```bash
-# Standard gates — all must be green before merge
-cargo fmt --all -- --check
-cargo clippy --workspace --all-features -- -D warnings
-cargo clippy --workspace --all-features --all-targets -- -D warnings
-RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
-cargo test --workspace --all-features
+Two bundled cadences encode the canonical sequence — local fast for
+the commit-time discipline, full CI for push/merge gate. Iterating?
+Use targeted per-crate gates (`cargo build -p <crate>` + `cargo test
+-p <crate> --lib <module>`) and reach for `gates` only at slice
+boundaries.
 
-# Run every static-analysable invariant in canonical CI order
+```bash
+# Local — fmt + clippy (default features) + test (default features) + AST invariants.
+# Skips `--all-features` / `--all-targets` and the subprocess gates that CI handles.
+cargo xtask gates
+
+# CI — adds `--all-features --all-targets` clippy/test, doc with -D warnings,
+# public-api drift, feature-matrix isolation, supply-chain audit. Push-time.
+cargo xtask gates-ci
+
+# AST invariants only (every subcommand maps to one CLAUDE.md invariant).
 cargo xtask invariants
 
-# Or per-invariant — each subcommand maps to one CLAUDE.md invariant.
-# Implementations live in xtask/src/invariants/<name>.rs as typed-AST
-# visitors over `syn::File` and `toml_edit::DocumentMut`.
+# Or per-invariant — `xtask/src/invariants/<name>.rs` typed-AST visitors.
 cargo xtask no-fs                    # invariant 9
 cargo xtask managed-shape            # invariants 1, 2, 4, 10
 cargo xtask naming                   # taxonomy + ctx-position
@@ -135,16 +140,16 @@ cargo xtask dead-deps                # workspace.dependencies hygiene
 cargo xtask facade-completeness      # every pub item reachable via `entelix::*`
 cargo xtask doc-canonical-paths      # live docs use facade canonical paths
 
-# Network-bound / cargo-subprocess gates — heavier, separate CI jobs
+# Subprocess gates — embedded in `gates-ci`, also runnable standalone.
 cargo xtask supply-chain             # cargo audit (RustSec) + cargo deny
 cargo xtask feature-matrix           # each facade feature compiles alone
 cargo xtask public-api               # per-crate public-API drift baseline
 
-# Refreeze public-API baselines after a deliberate API change
+# Refreeze public-API baselines after a deliberate API change.
 cargo xtask freeze-public-api [<crate>...]
 
-# Live integration (requires API keys, opt-in)
+# Live integration (requires API keys, opt-in).
 cargo test --workspace --all-features -- --ignored
 ```
 
-All gates run in CI. PR cannot merge with red gate.
+`gates-ci` is the merge gate. PR cannot merge with a red `gates-ci` run.

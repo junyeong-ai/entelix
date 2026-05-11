@@ -18,7 +18,7 @@
 //! and `docs/architecture/principles.md`.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix/0.4.2")]
+#![doc(html_root_url = "https://docs.rs/entelix/0.4.3")]
 #![deny(missing_docs)]
 
 mod tokenizer;

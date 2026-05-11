@@ -39,7 +39,7 @@
 //! provisioning and trusts the operator to have stamped them.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-memory-qdrant/0.4.2")]
+#![doc(html_root_url = "https://docs.rs/entelix-memory-qdrant/0.4.3")]
 #![deny(missing_docs)]
 // `qdrant`, `Postgres`, etc. ride through doc strings as vendor names
 // (not code identifiers); backticking each occurrence is noise.

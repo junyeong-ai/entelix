@@ -42,7 +42,7 @@
 //! trusting the operator to have stamped them.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-graphmemory-pg/0.4.2")]
+#![doc(html_root_url = "https://docs.rs/entelix-graphmemory-pg/0.4.3")]
 #![deny(missing_docs)]
 // `Postgres` rides through doc strings as a vendor name. Crate-
 // internal `pub(crate)` items inside private modules are the

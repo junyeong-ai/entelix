@@ -64,7 +64,7 @@
 //! without touching the file path.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-auth-claude-code/0.4.0")]
+#![doc(html_root_url = "https://docs.rs/entelix-auth-claude-code/0.4.1")]
 #![deny(missing_docs)]
 // Doc-prose lints fire on legitimate proper nouns / acronyms (Claude
 // Code, OAuth2, RFC 6749, …); the redundant_pub_crate lint disagrees

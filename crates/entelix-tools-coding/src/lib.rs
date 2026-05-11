@@ -45,7 +45,7 @@
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-tools-coding/0.4.0")]
+#![doc(html_root_url = "https://docs.rs/entelix-tools-coding/0.4.1")]
 #![deny(missing_docs)]
 #![allow(
     clippy::doc_markdown,

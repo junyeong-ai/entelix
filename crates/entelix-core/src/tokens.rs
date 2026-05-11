@@ -119,6 +119,235 @@ impl TokenCounter for ByteCountTokenCounter {
     }
 }
 
+/// Routing table from `(provider, model)` pairs to a vendor-accurate
+/// [`TokenCounter`].
+///
+/// Operators registering one counter per `(provider, model_prefix)`
+/// pair drive the [`Self::resolve`] lookup; gateways (one process
+/// fronting many model handles) read every chat-side dispatch
+/// through one shared registry. The facade ships
+/// `default_token_counter_registry()` factory (feature-gated on
+/// `tokenizer-tiktoken` / `tokenizer-hf`) with the OpenAI BPE
+/// pre-populated; operators extend it with their HuggingFace
+/// `tokenizer.json` bytes.
+///
+/// ## Matching algorithm
+///
+/// Entries match when the provider name is **exactly equal** and the
+/// model name **starts with** the registered prefix. Among all
+/// matching entries, the one with the longest prefix wins — so
+/// registering both `"gpt-4"` and `"gpt-4o"` routes
+/// `"gpt-4o-mini"` to the `"gpt-4o"` entry without depending on
+/// registration order. Ties on prefix length resolve to the
+/// last-registered entry (operator-overridable). Misses fall through
+/// to the registry's fallback counter.
+///
+/// ## Why prefix matching
+///
+/// Vendors version models with stable family prefixes (`gpt-4o-*`,
+/// `claude-sonnet-*`, `gemini-1.5-*`). Exact-name matching forces
+/// the operator to update the registry on every minor model release;
+/// prefix matching absorbs new patch revisions silently into the
+/// same tokenizer mapping the family uses. Regex was considered and
+/// rejected — too expressive, and the typical mistake is *missing* a
+/// model, which prefix matching handles by falling through to the
+/// fallback rather than misrouting silently.
+pub struct TokenCounterRegistry {
+    entries: Vec<RegistryEntry>,
+    fallback: Arc<dyn TokenCounter>,
+}
+
+struct RegistryEntry {
+    provider: &'static str,
+    model_prefix: &'static str,
+    counter: Arc<dyn TokenCounter>,
+}
+
+impl TokenCounterRegistry {
+    /// Construct an empty registry with [`ByteCountTokenCounter`] as
+    /// the fallback. Add entries with [`Self::register`]; replace
+    /// the fallback with [`Self::with_default`].
+    #[must_use]
+    pub fn new() -> Self {
+        Self {
+            entries: Vec::new(),
+            fallback: Arc::new(ByteCountTokenCounter::new()),
+        }
+    }
+
+    /// Replace the fallback counter used when no entry matches.
+    /// Default is [`ByteCountTokenCounter`] (conservative — biased
+    /// to over-count so pre-flight budget checks fail closed).
+    #[must_use]
+    pub fn with_default(mut self, fallback: Arc<dyn TokenCounter>) -> Self {
+        self.fallback = fallback;
+        self
+    }
+
+    /// Append a `(provider, model_prefix) → counter` entry. Multiple
+    /// entries for the same provider partition the model space by
+    /// prefix; the longest-prefix match wins at lookup time.
+    /// Ties on prefix length resolve to the last-registered entry,
+    /// so a later `register` call overrides an earlier one for the
+    /// same `(provider, model_prefix)` pair.
+    #[must_use]
+    pub fn register(
+        mut self,
+        provider: &'static str,
+        model_prefix: &'static str,
+        counter: Arc<dyn TokenCounter>,
+    ) -> Self {
+        self.entries.push(RegistryEntry {
+            provider,
+            model_prefix,
+            counter,
+        });
+        self
+    }
+
+    /// Resolve `(provider, model)` to a counter. The returned
+    /// [`Resolution`] makes match vs. fallback visible at the type
+    /// level so callers branch on the miss without inspecting
+    /// `encoding_name()` after the fact (invariant 15 — silent
+    /// fallback is not an option). See [`Resolution`] for the
+    /// pattern-match shape and the deliberate "accept fallback"
+    /// idiom.
+    #[must_use]
+    pub fn resolve(&self, provider: &str, model: &str) -> Resolution {
+        let mut best: Option<&RegistryEntry> = None;
+        for entry in &self.entries {
+            if entry.provider != provider {
+                continue;
+            }
+            if !model.starts_with(entry.model_prefix) {
+                continue;
+            }
+            match best {
+                Some(prev) if prev.model_prefix.len() > entry.model_prefix.len() => {}
+                _ => best = Some(entry),
+            }
+        }
+        match best {
+            Some(entry) => Resolution::Matched(Arc::clone(&entry.counter)),
+            None => Resolution::Fallback(Arc::clone(&self.fallback)),
+        }
+    }
+
+    /// Number of registered `(provider, model_prefix)` entries.
+    /// Excludes the fallback. Operators wiring a `tracing::info!` on
+    /// boot read this to confirm the table is the expected size.
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.entries.len()
+    }
+
+    /// Whether the registry has no registered entries (the fallback
+    /// is always present).
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+}
+
+impl Default for TokenCounterRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Outcome of [`TokenCounterRegistry::resolve`] — surfaces whether a
+/// registered entry actually matched `(provider, model)` or the
+/// registry's fallback counter was returned because no entry matched.
+///
+/// Making fallback visible at the type level lets production cost
+/// estimation paths log / alert on unknown models without inspecting
+/// `encoding_name()` after the fact (invariant 15 — silent fallback is
+/// not an option). Callers consume the resolution via pattern match —
+/// there is no "give me the counter regardless" shortcut, because
+/// such a shortcut would re-enable silent absorption of the fallback.
+///
+/// ```ignore
+/// let counter = match registry.resolve("openai", "gpt-9") {
+///     Resolution::Matched(c) => c,
+///     Resolution::Fallback(c) => {
+///         tracing::warn!("unknown model — using fallback counter");
+///         c
+///     }
+/// };
+/// ```
+///
+/// Operators that intentionally accept the fallback bind both arms to
+/// the same name (`Resolution::Matched(c) | Resolution::Fallback(c) => c`).
+/// The pattern is short, and the call site signals the deliberate
+/// choice in source.
+///
+/// ## Future variants
+///
+/// `Resolution` is `#[non_exhaustive]`. The two predicates
+/// [`Self::is_match`] and [`Self::is_fallback`] each return `true`
+/// only for their own variant — `!is_match()` and `is_fallback()`
+/// are **not** equivalent under future variant additions. Operators
+/// that want to alert on the no-match branch should match on
+/// `Self::Fallback` explicitly.
+#[derive(Clone)]
+#[non_exhaustive]
+pub enum Resolution {
+    /// A registered `(provider, model_prefix)` entry matched.
+    Matched(Arc<dyn TokenCounter>),
+    /// No entry matched; the registry's fallback counter is returned.
+    Fallback(Arc<dyn TokenCounter>),
+}
+
+impl Resolution {
+    /// Borrow the resolved counter regardless of which branch matched.
+    /// Operators that need the owned `Arc` consume the enum through a
+    /// pattern match.
+    #[must_use]
+    pub fn counter(&self) -> &Arc<dyn TokenCounter> {
+        match self {
+            Self::Matched(c) | Self::Fallback(c) => c,
+        }
+    }
+
+    /// `true` when a registered entry matched.
+    #[must_use]
+    pub const fn is_match(&self) -> bool {
+        matches!(self, Self::Matched(_))
+    }
+
+    /// `true` when no entry matched and the fallback was returned.
+    /// Distinct from `!is_match()` — `Resolution` is `non_exhaustive`,
+    /// so a future variant could make both predicates return `false`.
+    #[must_use]
+    pub const fn is_fallback(&self) -> bool {
+        matches!(self, Self::Fallback(_))
+    }
+}
+
+impl std::fmt::Debug for Resolution {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let (kind, encoding) = match self {
+            Self::Matched(c) => ("Matched", c.encoding_name()),
+            Self::Fallback(c) => ("Fallback", c.encoding_name()),
+        };
+        f.debug_struct(kind).field("encoding", &encoding).finish()
+    }
+}
+
+impl std::fmt::Debug for TokenCounterRegistry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let entries: Vec<(&'static str, &'static str, &'static str)> = self
+            .entries
+            .iter()
+            .map(|e| (e.provider, e.model_prefix, e.counter.encoding_name()))
+            .collect();
+        f.debug_struct("TokenCounterRegistry")
+            .field("entries", &entries)
+            .field("fallback", &self.fallback.encoding_name())
+            .finish()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -192,5 +421,132 @@ mod tests {
         let c: Arc<dyn TokenCounter> = Arc::new(ByteCountTokenCounter::new());
         assert_eq!(c.count("abcd"), 1);
         assert_eq!(c.encoding_name(), "byte-count-naive");
+    }
+
+    #[derive(Debug)]
+    struct LabelledCounter(&'static str, u64);
+    impl TokenCounter for LabelledCounter {
+        fn count(&self, _text: &str) -> u64 {
+            self.1
+        }
+        fn encoding_name(&self) -> &'static str {
+            self.0
+        }
+    }
+
+    fn labelled(name: &'static str, fixed: u64) -> Arc<dyn TokenCounter> {
+        Arc::new(LabelledCounter(name, fixed))
+    }
+
+    #[test]
+    fn registry_returns_fallback_when_empty() {
+        let reg = TokenCounterRegistry::new();
+        let resolution = reg.resolve("openai", "gpt-5");
+        assert!(
+            resolution.is_fallback(),
+            "empty registry should fall through"
+        );
+        assert_eq!(resolution.counter().encoding_name(), "byte-count-naive");
+    }
+
+    #[test]
+    fn registry_resolves_exact_provider_and_prefix() {
+        let reg = TokenCounterRegistry::new().register("openai", "gpt-4o", labelled("o200k", 1));
+        let resolution = reg.resolve("openai", "gpt-4o-mini");
+        assert!(resolution.is_match(), "registered prefix should match");
+        assert_eq!(resolution.counter().encoding_name(), "o200k");
+    }
+
+    #[test]
+    fn registry_ignores_wrong_provider() {
+        let reg =
+            TokenCounterRegistry::new().register("anthropic", "claude", labelled("anthropic", 2));
+        let resolution = reg.resolve("openai", "claude-clone");
+        // Provider mismatch — fall through to fallback.
+        assert!(resolution.is_fallback());
+        assert_eq!(resolution.counter().encoding_name(), "byte-count-naive");
+    }
+
+    #[test]
+    fn registry_longest_prefix_wins_regardless_of_registration_order() {
+        // Register "gpt-4" first, then "gpt-4o" — longest-prefix wins
+        // on "gpt-4o-mini" regardless of order.
+        let reg = TokenCounterRegistry::new()
+            .register("openai", "gpt-4", labelled("cl100k", 1))
+            .register("openai", "gpt-4o", labelled("o200k", 1));
+        assert_eq!(
+            reg.resolve("openai", "gpt-4o-mini")
+                .counter()
+                .encoding_name(),
+            "o200k"
+        );
+
+        // Reverse registration order — same outcome.
+        let reg = TokenCounterRegistry::new()
+            .register("openai", "gpt-4o", labelled("o200k", 1))
+            .register("openai", "gpt-4", labelled("cl100k", 1));
+        assert_eq!(
+            reg.resolve("openai", "gpt-4o-mini")
+                .counter()
+                .encoding_name(),
+            "o200k"
+        );
+    }
+
+    #[test]
+    fn registry_falls_through_to_fallback_on_non_matching_model() {
+        let reg = TokenCounterRegistry::new().register("openai", "gpt-4o", labelled("o200k", 1));
+        // Same provider, prefix doesn't match — fall through.
+        let resolution = reg.resolve("openai", "davinci");
+        assert!(resolution.is_fallback());
+        assert_eq!(resolution.counter().encoding_name(), "byte-count-naive");
+    }
+
+    #[test]
+    fn registry_last_wins_on_tie() {
+        let reg = TokenCounterRegistry::new()
+            .register("openai", "gpt-4", labelled("first", 1))
+            .register("openai", "gpt-4", labelled("second", 1));
+        assert_eq!(
+            reg.resolve("openai", "gpt-4-turbo")
+                .counter()
+                .encoding_name(),
+            "second"
+        );
+    }
+
+    #[test]
+    fn registry_with_default_replaces_fallback() {
+        let reg = TokenCounterRegistry::new().with_default(labelled("custom-fb", 0));
+        let resolution = reg.resolve("any", "x");
+        assert!(resolution.is_fallback());
+        assert_eq!(resolution.counter().encoding_name(), "custom-fb");
+    }
+
+    #[test]
+    fn registry_len_excludes_fallback() {
+        let reg = TokenCounterRegistry::new()
+            .register("openai", "gpt-4", labelled("a", 1))
+            .register("openai", "gpt-4o", labelled("b", 1));
+        assert_eq!(reg.len(), 2);
+        assert!(!reg.is_empty());
+    }
+
+    #[test]
+    fn resolution_pattern_match_yields_counter() {
+        let reg = TokenCounterRegistry::new().register("openai", "gpt-4o", labelled("o200k", 1));
+        let counter = match reg.resolve("openai", "gpt-4o") {
+            Resolution::Matched(c) | Resolution::Fallback(c) => c,
+        };
+        assert_eq!(counter.encoding_name(), "o200k");
+    }
+
+    #[test]
+    fn resolution_match_and_fallback_are_distinguishable() {
+        let reg = TokenCounterRegistry::new().register("openai", "gpt-4o", labelled("o200k", 1));
+        let matched = reg.resolve("openai", "gpt-4o-mini");
+        let fallback = reg.resolve("openai", "davinci-002");
+        assert!(matched.is_match() && !matched.is_fallback());
+        assert!(fallback.is_fallback() && !fallback.is_match());
     }
 }

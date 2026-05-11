@@ -21,6 +21,10 @@
 #![doc(html_root_url = "https://docs.rs/entelix/0.4.0")]
 #![deny(missing_docs)]
 
+mod tokenizer;
+
+pub use tokenizer::default_token_counter_registry;
+
 // ── Module re-exports — every type's canonical facade path lives
 // inside the entelix-core submodule it was authored in. Reach a
 // codec via `entelix::codecs::AnthropicMessagesCodec`, an
@@ -48,12 +52,12 @@ pub use entelix_core::transports;
 // the top so callers don't need to memorise an internal module name.
 pub use entelix_core::{
     AgentContext, ApprovalDecision, AuditSink, AuditSinkHandle, ByteCountTokenCounter, ChatModel,
-    ChatModelConfig, Clock, CostCalculator, DEFAULT_TENANT_ID, Error, ExecutionContext, Extensions,
-    InterruptionKind, InterruptionPhase, LlmFacingSchema, LlmRenderable, OutputValidator,
-    PendingApprovalDecisions, ProviderErrorKind, RenderedForLlm, RequestOverrides, Result,
-    RunBudget, RunOverrides, SystemClock, TenantId, ThreadKey, TokenCounter, ToolCostCalculator,
-    TypedModelStream, UsageLimitBreach, UsageSnapshot, install_default_tls, interrupt,
-    interrupt_with,
+    ChatModelConfig, Clock, CostCalculator, DEFAULT_TENANT_ID, Error, ErrorClass, ExecutionContext,
+    Extensions, InterruptionKind, InterruptionPhase, LlmFacingSchema, LlmRenderable,
+    OutputValidator, PendingApprovalDecisions, ProviderErrorKind, RenderedForLlm, RequestOverrides,
+    Result, RunBudget, RunOverrides, SystemClock, TenantId, ThreadKey, TokenCounter,
+    TokenCounterRegistry, TokenCounterResolution, ToolCostCalculator, TypedModelStream,
+    UsageLimitBreach, UsageSnapshot, install_default_tls, interrupt, interrupt_with,
 };
 
 // ── Sub-crate re-exports — the 90% surface for crates that don't
@@ -196,12 +200,6 @@ pub use entelix_prompt::{
     FewShotPromptTemplate, FixedExampleSelector, LengthBasedExampleSelector, MessagesPlaceholder,
     PromptTemplate, PromptValue, PromptVars, SharedExampleSelector,
 };
-#[cfg(feature = "tokenizer-hf")]
-#[cfg_attr(docsrs, doc(cfg(feature = "tokenizer-hf")))]
-pub use entelix_tokenizer_hf::{HfTokenCounter, HfTokenizerError};
-#[cfg(feature = "tokenizer-tiktoken")]
-#[cfg_attr(docsrs, doc(cfg(feature = "tokenizer-tiktoken")))]
-pub use entelix_tokenizer_tiktoken::{TiktokenCounter, TiktokenEncoding, TiktokenError};
 pub use entelix_rag::{
     CONTEXTUAL_CHUNKER_DEFAULT_INSTRUCTION, CORRECTIVE_RAG_AGENT_NAME, Chunker, ContextualChunker,
     ContextualChunkerBuilder, CorrectiveRagState, CragConfig, DEFAULT_CHUNK_OVERLAP_CHARS,
@@ -232,6 +230,12 @@ pub use entelix_session::{
     SessionAuditSink, SessionGraph, SessionLog, ToolPair, Turn, messages_char_size,
     messages_to_events,
 };
+#[cfg(feature = "tokenizer-hf")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tokenizer-hf")))]
+pub use entelix_tokenizer_hf::{HfTokenCounter, HfTokenizerError};
+#[cfg(feature = "tokenizer-tiktoken")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tokenizer-tiktoken")))]
+pub use entelix_tokenizer_tiktoken::{TiktokenCounter, TiktokenEncoding, TiktokenError};
 pub use entelix_tools::{
     ActivateSkillTool, Calculator, CalculatorInput, CalculatorOutput,
     DEFAULT_FETCH_TIMEOUT as HTTP_FETCH_DEFAULT_TIMEOUT,
@@ -253,17 +257,19 @@ pub mod prelude {
     pub use entelix_core::{AgentContext, ChatModel, Error, ExecutionContext, Result};
     pub use entelix_prompt::{ChatPromptPart, ChatPromptTemplate, PromptValue, PromptVars};
     pub use entelix_rag::{
-    CONTEXTUAL_CHUNKER_DEFAULT_INSTRUCTION, CORRECTIVE_RAG_AGENT_NAME, Chunker, ContextualChunker,
-    ContextualChunkerBuilder, CorrectiveRagState, CragConfig, DEFAULT_CHUNK_OVERLAP_CHARS,
-    DEFAULT_CHUNK_OVERLAP_TOKENS, DEFAULT_CHUNK_SIZE_CHARS, DEFAULT_CHUNK_SIZE_TOKENS,
-    DEFAULT_GENERATOR_SYSTEM_PROMPT, DEFAULT_GRADER_INSTRUCTION, DEFAULT_MARKDOWN_HEADING_LEVELS,
-    DEFAULT_MAX_REWRITE_ATTEMPTS, DEFAULT_MIN_CORRECT_FRACTION, DEFAULT_RECURSIVE_SEPARATORS,
-    DEFAULT_RETRIEVAL_TOP_K, DEFAULT_REWRITER_INSTRUCTION, Document, DocumentId, DocumentLoader,
-    DocumentStream, FailurePolicy, GradeVerdict, IngestError, IngestReport, IngestionPipeline,
-    IngestionPipelineBuilder, Lineage, LlmQueryRewriter, LlmQueryRewriterBuilder,
-    LlmRetrievalGrader, LlmRetrievalGraderBuilder, MarkdownStructureSplitter,
-    PROVENANCE_METADATA_KEY, QueryRewriter, RecursiveCharacterSplitter, RetrievalGrader, Source,
-    TextSplitter, TokenCountSplitter, build_corrective_rag_graph, create_corrective_rag_agent,
-};
-pub use entelix_runnable::{JsonOutputParser, Runnable, RunnableExt};
+        CONTEXTUAL_CHUNKER_DEFAULT_INSTRUCTION, CORRECTIVE_RAG_AGENT_NAME, Chunker,
+        ContextualChunker, ContextualChunkerBuilder, CorrectiveRagState, CragConfig,
+        DEFAULT_CHUNK_OVERLAP_CHARS, DEFAULT_CHUNK_OVERLAP_TOKENS, DEFAULT_CHUNK_SIZE_CHARS,
+        DEFAULT_CHUNK_SIZE_TOKENS, DEFAULT_GENERATOR_SYSTEM_PROMPT, DEFAULT_GRADER_INSTRUCTION,
+        DEFAULT_MARKDOWN_HEADING_LEVELS, DEFAULT_MAX_REWRITE_ATTEMPTS,
+        DEFAULT_MIN_CORRECT_FRACTION, DEFAULT_RECURSIVE_SEPARATORS, DEFAULT_RETRIEVAL_TOP_K,
+        DEFAULT_REWRITER_INSTRUCTION, Document, DocumentId, DocumentLoader, DocumentStream,
+        FailurePolicy, GradeVerdict, IngestError, IngestReport, IngestionPipeline,
+        IngestionPipelineBuilder, Lineage, LlmQueryRewriter, LlmQueryRewriterBuilder,
+        LlmRetrievalGrader, LlmRetrievalGraderBuilder, MarkdownStructureSplitter,
+        PROVENANCE_METADATA_KEY, QueryRewriter, RecursiveCharacterSplitter, RetrievalGrader,
+        Source, TextSplitter, TokenCountSplitter, build_corrective_rag_graph,
+        create_corrective_rag_agent,
+    };
+    pub use entelix_runnable::{JsonOutputParser, Runnable, RunnableExt};
 }

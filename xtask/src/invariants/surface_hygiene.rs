@@ -170,31 +170,52 @@ fn is_error_ident(name: &str) -> bool {
     name == "Error" || name.ends_with("Error")
 }
 
-/// True when the field's type carries an error. Unwraps one level of
-/// single-arity wrapper (`Box<E>`, `Arc<E>`, `Option<E>`) so a wrapped
-/// error still trips the diagnostic-chain requirement.
+/// True when the field's type carries an error. Recurses through:
+///
+///   * References (`&T`, `&mut T`) — unwrap one level.
+///   * Trait objects (`dyn Error`, `dyn std::error::Error + Send + Sync`)
+///     — any trait bound whose last path segment is `Error` or ends in
+///     `Error` counts. Covers the `Box<dyn std::error::Error + Send +
+///     Sync + 'static>` shape that every entelix transport-error
+///     variant uses.
+///   * Single-arity wrappers (`Box<E>`, `Arc<E>`, `Rc<E>`, `Option<E>`)
+///     — peel one wrapper and check the inner.
+///
+/// Concrete error types are detected by their path's last segment
+/// being `Error` or ending in `Error`. The check is structural, not
+/// nominal — it does not need a `use entelix_core::Error` import to
+/// fire.
 fn field_carries_error_type(ty: &syn::Type) -> bool {
-    let Some(seg) = path_last_segment(ty) else {
-        return false;
-    };
-    let name = seg.ident.to_string();
-    if is_error_ident(&name) {
-        return true;
-    }
-    if TRANSPARENT_WRAPPERS.contains(&name.as_str())
-        && let syn::PathArguments::AngleBracketed(args) = &seg.arguments
-        && let Some(syn::GenericArgument::Type(inner)) = args.args.first()
-    {
-        return field_carries_error_type(inner);
-    }
-    false
-}
-
-fn path_last_segment(ty: &syn::Type) -> Option<&syn::PathSegment> {
     match ty {
-        syn::Type::Path(tp) => tp.path.segments.last(),
-        syn::Type::Reference(r) => path_last_segment(&r.elem),
-        _ => None,
+        syn::Type::Reference(r) => field_carries_error_type(&r.elem),
+        syn::Type::TraitObject(to) => to.bounds.iter().any(|bound| {
+            if let syn::TypeParamBound::Trait(t) = bound {
+                t.path
+                    .segments
+                    .last()
+                    .map(|s| is_error_ident(&s.ident.to_string()))
+                    .unwrap_or(false)
+            } else {
+                false
+            }
+        }),
+        syn::Type::Path(tp) => {
+            let Some(seg) = tp.path.segments.last() else {
+                return false;
+            };
+            let name = seg.ident.to_string();
+            if is_error_ident(&name) {
+                return true;
+            }
+            if TRANSPARENT_WRAPPERS.contains(&name.as_str())
+                && let syn::PathArguments::AngleBracketed(args) = &seg.arguments
+                && let Some(syn::GenericArgument::Type(inner)) = args.args.first()
+            {
+                return field_carries_error_type(inner);
+            }
+            false
+        }
+        _ => false,
     }
 }
 

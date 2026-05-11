@@ -14,7 +14,7 @@
 //! primitive is `tower::ServiceBuilder`.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-core/0.4.0")]
+#![doc(html_root_url = "https://docs.rs/entelix-core/0.4.1")]
 #![deny(missing_docs)]
 // Tower-style middleware modules use long opening doc paragraphs to
 // explain composition semantics; trait-method `&str` returns satisfy
@@ -76,7 +76,7 @@ pub use auth::{
 pub use chat::{ChatModel, ChatModelConfig, TypedModelStream};
 pub use context::ExecutionContext;
 pub use cost::{CostCalculator, ToolCostCalculator};
-pub use error::{Error, ProviderErrorKind, Result};
+pub use error::{Error, ErrorClass, ProviderErrorKind, Result};
 pub use extensions::Extensions;
 pub use interruption::{InterruptionKind, InterruptionPhase, interrupt, interrupt_with};
 pub use llm_facing::{LlmFacingSchema, LlmRenderable, RenderedForLlm};
@@ -95,5 +95,8 @@ pub use tenant_id::{DEFAULT_TENANT_ID, TenantId};
 pub use thread_key::ThreadKey;
 pub use time::{Clock, SystemClock};
 pub use tls::install_default_tls;
-pub use tokens::{ByteCountTokenCounter, TokenCounter};
-pub use tools::{Tool, ToolErrorKind, ToolRegistry};
+pub use tokens::{ByteCountTokenCounter, TokenCounter, TokenCounterRegistry};
+pub use tools::{
+    CurrentToolInvocation, Tool, ToolErrorKind, ToolProgress, ToolProgressSink,
+    ToolProgressSinkHandle, ToolProgressStatus, ToolRegistry,
+};

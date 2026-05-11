@@ -128,6 +128,16 @@ Batch variants of CRUD operations use the **suffix** form (`add_batch`, never `b
 
 These are the **only** authorized exceptions to `with_*`. Do not introduce new verb prefixes (`define_*`, `attach_*`, `mount_*`). If unsure, reach for `with_` / `add_` / `set_` / `register` in that order. Selection verbs (`restrict_to` / `filter`) are reserved for builders that produce *narrowed views* of an existing parent set.
 
+### IR state-transition verbs
+
+Builder taxonomy above covers configuration setters and collection inserts on construction-time targets. IR value types (`ModelRequest`, `ModelResponse`, …) additionally expose **state-transition** methods that advance the value to a derived value reflecting a conceptual step. These are not builders — they transform existing semantically-meaningful state — and use a domain verb that names the transition.
+
+| Verb | Use for | Example |
+|---|---|---|
+| `continue_<noun>(self, …)` | advance an IR value to its post-transition state — round-trip conversational state, chain opaque vendor echoes, etc. Consumes `self`, returns `Self`. | `ModelRequest::continue_turn(prior_response, next_user_message)` |
+
+State-transition verbs are reserved for IR-level value advancement where (a) the operation has a single clearly-named conceptual unit (`turn`, …) the caller already understands and (b) the transformation touches more than one field, so the builder taxonomy's "single shaped target" framing is misleading. Reviewer-rejected outside that narrow case — recipe-side or service-side state changes use `tower::Service` dispatch or graph nodes, not IR helper methods.
+
 
 ## `ctx` parameter ordering — split convention
 

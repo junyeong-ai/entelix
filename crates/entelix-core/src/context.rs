@@ -26,6 +26,9 @@ use crate::audit::AuditSinkHandle;
 use crate::cancellation::CancellationToken;
 use crate::extensions::Extensions;
 use crate::tenant_id::TenantId;
+use crate::tools::{
+    CurrentToolInvocation, ToolProgress, ToolProgressSinkHandle, ToolProgressStatus,
+};
 
 /// Carrier for request-scope state that every `Runnable`, `Tool`,
 /// and codec sees.
@@ -230,6 +233,73 @@ impl ExecutionContext {
     #[must_use]
     pub fn audit_sink(&self) -> Option<Arc<AuditSinkHandle>> {
         self.extension::<AuditSinkHandle>()
+    }
+
+    /// Attach a [`ToolProgressSinkHandle`] for the current run.
+    /// Long-running tools emit phase transitions through
+    /// [`Self::record_phase`] / [`Self::record_phase_with`] and the
+    /// SDK fans the transition into this sink. Absent handle makes
+    /// every emit site a silent no-op.
+    ///
+    /// Stored in [`Extensions`] under `ToolProgressSinkHandle`'s
+    /// `TypeId`, so a second call replaces the prior handle (single
+    /// sink per run by design — recipes that need fan-out wrap two
+    /// sinks behind one impl).
+    #[must_use]
+    pub fn with_tool_progress_sink(self, handle: ToolProgressSinkHandle) -> Self {
+        self.add_extension(handle)
+    }
+
+    /// Borrow the [`ToolProgressSinkHandle`] for the current run, if
+    /// one has been attached.
+    #[must_use]
+    pub fn tool_progress_sink(&self) -> Option<Arc<ToolProgressSinkHandle>> {
+        self.extension::<ToolProgressSinkHandle>()
+    }
+
+    /// Emit a tool-phase transition with no metadata.
+    ///
+    /// Silent no-op when no [`ToolProgressSinkHandle`] is attached or
+    /// when the call is outside a tool dispatch (no
+    /// [`CurrentToolInvocation`] marker on the context). See
+    /// [`Self::record_phase_with`] for the metadata-bearing variant.
+    pub async fn record_phase(
+        &self,
+        phase: impl Into<String> + Send,
+        status: ToolProgressStatus,
+    ) -> crate::Result<()> {
+        self.record_phase_with(phase, status, serde_json::Value::Null)
+            .await
+    }
+
+    /// Emit a tool-phase transition with structured metadata.
+    ///
+    /// `metadata` flows through to the sink alongside the phase
+    /// identity — UIs render percent-complete / item-counts /
+    /// partial-result counts from this field. Tools that have nothing
+    /// to attach pass [`Self::record_phase`] instead.
+    pub async fn record_phase_with(
+        &self,
+        phase: impl Into<String> + Send,
+        status: ToolProgressStatus,
+        metadata: serde_json::Value,
+    ) -> crate::Result<()> {
+        let Some(sink) = self.tool_progress_sink() else {
+            return Ok(());
+        };
+        let Some(current) = self.extension::<CurrentToolInvocation>() else {
+            return Ok(());
+        };
+        let progress = ToolProgress {
+            run_id: self.run_id().map(str::to_owned).unwrap_or_default(),
+            tool_use_id: current.tool_use_id().to_owned(),
+            tool_name: current.tool_name().to_owned(),
+            phase: phase.into(),
+            status,
+            dispatch_elapsed_ms: current.dispatch_elapsed_ms(),
+            metadata,
+        };
+        sink.inner().record_progress(progress).await
     }
 
     /// Attach a typed cross-cutting value to the context's

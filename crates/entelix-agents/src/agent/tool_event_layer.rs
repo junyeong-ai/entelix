@@ -27,6 +27,7 @@ use futures::future::BoxFuture;
 use serde_json::Value;
 use tower::{Layer, Service, ServiceExt};
 
+use entelix_core::CurrentToolInvocation;
 use entelix_core::LlmRenderable;
 use entelix_core::error::{Error, Result};
 use entelix_core::service::ToolInvocation;
@@ -128,7 +129,7 @@ where
         self.inner.poll_ready(cx)
     }
 
-    fn call(&mut self, invocation: ToolInvocation) -> Self::Future {
+    fn call(&mut self, mut invocation: ToolInvocation) -> Self::Future {
         let inner = self.inner.clone();
         let sink = Arc::clone(&self.sink);
         Box::pin(async move {
@@ -149,6 +150,23 @@ where
                         input,
                     })
                     .await;
+            }
+
+            // Stamp the per-dispatch identity marker just before
+            // dispatch so leaf-tool `ctx.record_phase(...)` calls
+            // resolve a stable (tool_use_id, tool_name, started_at)
+            // triple whose `started_at` aligns with the dispatch
+            // baseline below — `dispatch_elapsed_ms` measures
+            // tool-local work without layer-emit overhead leaking in.
+            // `tool_use_id` falls back to the tool name when the
+            // dispatch did not originate from a model `ToolUse` block.
+            let marker_use_id = if tool_use_id.is_empty() {
+                tool.clone()
+            } else {
+                tool_use_id.clone()
+            };
+            if let Ok(marker) = CurrentToolInvocation::new(marker_use_id, tool.clone()) {
+                invocation.ctx = invocation.ctx.clone().add_extension(marker);
             }
 
             let started_at = Instant::now();

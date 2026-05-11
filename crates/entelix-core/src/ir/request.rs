@@ -143,3 +143,62 @@ pub struct ModelRequest {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub continued_from: Vec<ProviderEchoSnapshot>,
 }
+
+impl ModelRequest {
+    /// Advance this request to the next conversational turn — append
+    /// the prior assistant turn, chain the vendor's opaque echoes,
+    /// and add the user's next message.
+    ///
+    /// The transformation is:
+    ///
+    /// 1. The model's prior reply (`prior_response.content`) is wrapped
+    ///    in [`Message::new(Role::Assistant, ...)`](crate::ir::Message::new)
+    ///    and pushed to `self.messages`.
+    /// 2. `self.continued_from` is replaced with
+    ///    `prior_response.provider_echoes` so vendor-specific
+    ///    continuation pointers (OpenAI Responses `Response.id`,
+    ///    Anthropic extended-thinking signatures, Gemini thought
+    ///    signatures) ride the next wire encoding.
+    /// 3. `next_user_message` is pushed onto `self.messages`.
+    ///
+    /// Model / system prompt / tools / response format / sampling
+    /// knobs survive unchanged. Callers needing per-turn adjustments
+    /// chain further builder methods on the returned value.
+    ///
+    /// ## Tool round-trip
+    ///
+    /// This helper does **not** synthesise `Message::Tool` results for
+    /// pending `ToolUse` blocks in `prior_response.content`. Agent
+    /// loops dispatch tools and append the matching tool-result
+    /// messages explicitly — the helper composes with that pattern by
+    /// taking the *user's* next message after tool round-trips have
+    /// already been appended. Calling `continue_turn` while a
+    /// `ToolUse` remains unmatched yields a request the vendor will
+    /// reject at validation time.
+    ///
+    /// ## Why a self-consuming method
+    ///
+    /// `ModelRequest` is cheap to clone but the chain shape is
+    /// fundamentally "previous turn → next turn"; consuming `self`
+    /// makes accidental mutation of the old request impossible and
+    /// reads naturally at the call site:
+    ///
+    /// ```ignore
+    /// let next = prior_request.continue_turn(&prior_response, Message::user("more"));
+    /// ```
+    #[must_use]
+    pub fn continue_turn(
+        mut self,
+        prior_response: &crate::ir::response::ModelResponse,
+        next_user_message: crate::ir::message::Message,
+    ) -> Self {
+        self.messages.push(crate::ir::message::Message::new(
+            crate::ir::message::Role::Assistant,
+            prior_response.content.clone(),
+        ));
+        self.continued_from
+            .clone_from(&prior_response.provider_echoes);
+        self.messages.push(next_user_message);
+        self
+    }
+}

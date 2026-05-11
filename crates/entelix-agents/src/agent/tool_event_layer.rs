@@ -18,6 +18,21 @@
 //! events unstamped (the layer falls through to the inner service
 //! without emitting), so wiring the layer outside an agent run is
 //! a quiet no-op rather than a panic.
+//!
+//! ## Cancellation
+//!
+//! `ToolStart` is emitted before the inner dispatch begins. If the
+//! dispatch future is dropped while awaiting the sink (cooperative
+//! cancellation, deadline expiry, parent-future drop), observers may
+//! see a `ToolStart` for which no matching `ToolComplete` / `ToolError`
+//! ever arrives. This is inherent to any "emit-before-dispatch" shape
+//! over an async sink — durable correlation lives in the
+//! [`entelix_session::SessionAuditSink`] event-log channel
+//! (`ToolCall` + `ToolResult` are written through
+//! [`AgentEvent::to_graph_event`]), not in the in-flight `AgentEvent`
+//! stream. Consumers that need orphan detection time the
+//! `(ToolStart, run_id, tool_use_id)` triple against an absent
+//! terminal event in their own dashboard.
 
 use std::sync::Arc;
 use std::task::{Context, Poll};
@@ -27,6 +42,7 @@ use futures::future::BoxFuture;
 use serde_json::Value;
 use tower::{Layer, Service, ServiceExt};
 
+use entelix_core::CurrentToolInvocation;
 use entelix_core::LlmRenderable;
 use entelix_core::error::{Error, Result};
 use entelix_core::service::ToolInvocation;
@@ -128,7 +144,7 @@ where
         self.inner.poll_ready(cx)
     }
 
-    fn call(&mut self, invocation: ToolInvocation) -> Self::Future {
+    fn call(&mut self, mut invocation: ToolInvocation) -> Self::Future {
         let inner = self.inner.clone();
         let sink = Arc::clone(&self.sink);
         Box::pin(async move {
@@ -149,6 +165,23 @@ where
                         input,
                     })
                     .await;
+            }
+
+            // Stamp the per-dispatch identity marker just before
+            // dispatch so leaf-tool `ctx.record_phase(...)` calls
+            // resolve a stable (tool_use_id, tool_name, started_at)
+            // triple whose `started_at` aligns with the dispatch
+            // baseline below — `dispatch_elapsed_ms` measures
+            // tool-local work without layer-emit overhead leaking in.
+            // `tool_use_id` falls back to the tool name when the
+            // dispatch did not originate from a model `ToolUse` block.
+            let marker_use_id = if tool_use_id.is_empty() {
+                tool.clone()
+            } else {
+                tool_use_id.clone()
+            };
+            if let Ok(marker) = CurrentToolInvocation::new(marker_use_id, tool.clone()) {
+                invocation.ctx = invocation.ctx.clone().add_extension(marker);
             }
 
             let started_at = Instant::now();

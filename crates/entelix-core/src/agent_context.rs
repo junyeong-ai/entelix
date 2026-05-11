@@ -58,6 +58,7 @@ use crate::context::ExecutionContext;
 use crate::extensions::Extensions;
 use crate::run_budget::RunBudget;
 use crate::tenant_id::TenantId;
+use crate::tools::{ToolProgressSinkHandle, ToolProgressStatus};
 
 /// Per-run carrier of infra context + typed operator-side
 /// dependencies. `D` defaults to `()` so deps-less agents pay no
@@ -206,6 +207,37 @@ impl<D> AgentContext<D> {
         self.core.audit_sink()
     }
 
+    /// Borrow the [`ToolProgressSinkHandle`] attached to the run, if
+    /// any.
+    #[must_use]
+    pub fn tool_progress_sink(&self) -> Option<Arc<ToolProgressSinkHandle>> {
+        self.core.tool_progress_sink()
+    }
+
+    /// Emit a tool-phase transition with no metadata. Silent no-op
+    /// when no sink is attached or the call is outside a tool
+    /// dispatch. Fire-and-forget — sink failures stay inside the
+    /// sink. Forwards to [`ExecutionContext::record_phase`].
+    pub async fn record_phase(&self, phase: impl Into<String> + Send, status: ToolProgressStatus)
+    where
+        D: Sync,
+    {
+        self.core.record_phase(phase, status).await;
+    }
+
+    /// Emit a tool-phase transition with structured metadata.
+    /// Forwards to [`ExecutionContext::record_phase_with`].
+    pub async fn record_phase_with(
+        &self,
+        phase: impl Into<String> + Send,
+        status: ToolProgressStatus,
+        metadata: serde_json::Value,
+    ) where
+        D: Sync,
+    {
+        self.core.record_phase_with(phase, status, metadata).await;
+    }
+
     // ---- builder methods (delegate to core) --------------------
 
     /// Attach a deadline. Returns `self` for builder-style chaining.
@@ -254,6 +286,13 @@ impl<D> AgentContext<D> {
     #[must_use]
     pub fn with_audit_sink(mut self, handle: AuditSinkHandle) -> Self {
         self.core = self.core.with_audit_sink(handle);
+        self
+    }
+
+    /// Attach a [`ToolProgressSinkHandle`].
+    #[must_use]
+    pub fn with_tool_progress_sink(mut self, handle: ToolProgressSinkHandle) -> Self {
+        self.core = self.core.with_tool_progress_sink(handle);
         self
     }
 

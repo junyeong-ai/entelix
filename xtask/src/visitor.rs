@@ -425,3 +425,145 @@ pub(crate) fn run_invariants(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod type_carries_tests {
+    //! Adversarial fixture corpus for [`type_carries`]. The recursion
+    //! semantics — references, parens, groups, trait objects, impl
+    //! Trait, tuples, arrays, slices, paths with arbitrary generic
+    //! arguments — are load-bearing for both `surface_hygiene`
+    //! (`*Error`) and `managed_shape` (`*Persistence` / `*Checkpointer`
+    //! / `*SessionLog`). One regression in this helper silently
+    //! widens every gate's coverage hole; the fixtures below pin the
+    //! recursion shape so a future tweak surfaces here first.
+
+    use super::type_carries;
+
+    fn parse(src: &str) -> syn::Type {
+        syn::parse_str(src).unwrap_or_else(|e| panic!("parse `{src}`: {e}"))
+    }
+
+    fn ends_in_error(s: &str) -> bool {
+        s == "Error" || s.ends_with("Error")
+    }
+
+    fn carries_error(ty: &str) -> bool {
+        type_carries(&parse(ty), &ends_in_error)
+    }
+
+    #[test]
+    fn bare_path_with_matching_last_segment() {
+        assert!(carries_error("Error"));
+        assert!(carries_error("MyError"));
+        assert!(carries_error("crate::auth::AuthError"));
+    }
+
+    #[test]
+    fn bare_path_without_match_is_false() {
+        assert!(!carries_error("String"));
+        assert!(!carries_error("u64"));
+        assert!(!carries_error("std::collections::HashMap"));
+    }
+
+    #[test]
+    fn single_arity_wrappers_recurse() {
+        assert!(carries_error("Box<MyError>"));
+        assert!(carries_error("Arc<MyError>"));
+        assert!(carries_error("Rc<MyError>"));
+        assert!(carries_error("Option<MyError>"));
+        assert!(carries_error("Pin<Box<MyError>>"));
+    }
+
+    #[test]
+    fn multi_arity_paths_recurse_through_every_arg() {
+        // `HashMap<K, V>` — error in the value slot.
+        assert!(carries_error("HashMap<String, MyError>"));
+        // …and in the key slot.
+        assert!(carries_error("HashMap<MyError, String>"));
+        // `Result<T, E>` — error in the error slot is the common case.
+        assert!(carries_error("Result<String, MyError>"));
+        // Both slots clear → false.
+        assert!(!carries_error("HashMap<String, u32>"));
+        assert!(!carries_error("Result<String, u32>"));
+    }
+
+    #[test]
+    fn references_unwrap_one_level() {
+        assert!(carries_error("&MyError"));
+        assert!(carries_error("&mut MyError"));
+        assert!(carries_error("&'a MyError"));
+        assert!(!carries_error("&String"));
+    }
+
+    #[test]
+    fn trait_objects_recognise_bounds() {
+        assert!(carries_error("dyn MyError"));
+        assert!(carries_error("dyn std::error::Error + Send + Sync"));
+        assert!(carries_error(
+            "Box<dyn std::error::Error + Send + Sync + 'static>"
+        ));
+        assert!(carries_error("dyn Send + Sync + MyError"));
+        assert!(!carries_error("dyn Send + Sync"));
+    }
+
+    #[test]
+    fn impl_trait_bounds_recognised() {
+        assert!(carries_error("impl MyError"));
+        assert!(carries_error("impl Send + MyError"));
+        assert!(!carries_error("impl Send + Sync"));
+    }
+
+    #[test]
+    fn tuples_arrays_slices_recurse() {
+        assert!(carries_error("(String, MyError)"));
+        assert!(carries_error("(MyError,)"));
+        assert!(carries_error("[MyError; 5]"));
+        assert!(carries_error("&[MyError]"));
+        assert!(carries_error("&[Box<dyn std::error::Error>]"));
+        assert!(!carries_error("(String, u32)"));
+        assert!(!carries_error("[u8; 32]"));
+    }
+
+    #[test]
+    fn paren_and_group_are_transparent() {
+        assert!(carries_error("(MyError)"));
+        assert!(carries_error("((MyError))"));
+    }
+
+    #[test]
+    fn deep_nesting_recurses_all_the_way() {
+        assert!(carries_error("Vec<Option<Box<dyn std::error::Error>>>"));
+        assert!(carries_error("Result<Vec<u8>, Arc<MyError>>"));
+        assert!(carries_error("Option<(String, &MyError)>"));
+        assert!(carries_error("HashMap<String, Vec<Box<dyn Error>>>"));
+    }
+
+    #[test]
+    fn unsupported_type_variants_fall_through_to_false() {
+        // Function pointers and raw pointers are not error carriers
+        // semantically and fall through to the catch-all.
+        assert!(!carries_error("fn(MyError) -> ()"));
+        assert!(!carries_error("*const MyError"));
+        assert!(!carries_error("*mut MyError"));
+    }
+
+    #[test]
+    fn predicate_is_arbitrary() {
+        // Same helper must work for any suffix the gates care about —
+        // `*Persistence`, `*Checkpointer`, `*SessionLog`.
+        assert!(type_carries(&parse("Arc<dyn Persistence>"), &|s: &str| s
+            .ends_with("Persistence"),));
+        assert!(type_carries(
+            &parse("Vec<Arc<PostgresCheckpointer>>"),
+            &|s: &str| s.ends_with("Checkpointer"),
+        ));
+        assert!(type_carries(
+            &parse("Option<Box<dyn SessionLog>>"),
+            &|s: &str| s.ends_with("SessionLog")
+        ));
+        assert!(!type_carries(
+            &parse("Vec<Arc<HashMap<String, u32>>>"),
+            &|s: &str| s.ends_with("Persistence"),
+        ));
+    }
+}

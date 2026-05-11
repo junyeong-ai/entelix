@@ -116,8 +116,9 @@ impl IngestError {
 }
 
 /// Builder for [`IngestionPipeline`]. Required components
-/// (loader / splitter / embedder / store) come in via [`Self::new`];
-/// optional [`Chunker`] entries accumulate via [`Self::add_chunker`].
+/// (loader / splitter / embedder / store) come in via
+/// [`IngestionPipeline::builder`]; optional [`Chunker`] entries
+/// accumulate via [`Self::add_chunker`].
 pub struct IngestionPipelineBuilder<L, S, E: ?Sized, V: ?Sized> {
     loader: L,
     splitter: S,

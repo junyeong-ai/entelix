@@ -25,11 +25,12 @@
 //!    [`Lineage`].
 //!
 //! Setext headings (`===` / `---` underlines) and code-fenced
-//! `#`-lines (inside `\`\`\`` blocks) are intentionally NOT split
-//! on — the regex anchors at line start and ignores fence-aware
-//! parsing in service of zero-dependency simplicity. Documents
-//! relying on setext or `#`-comments inside code blocks need the
-//! recursive splitter or a future markdown-fenced companion.
+//! `#`-lines (inside triple-backtick blocks) are intentionally NOT
+//! split on — the regex anchors at line start and ignores
+//! fence-aware parsing in service of zero-dependency simplicity.
+//! Documents relying on setext or `#`-comments inside code blocks
+//! need the recursive splitter or a future markdown-fenced
+//! companion.
 
 use std::sync::OnceLock;
 

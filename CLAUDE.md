@@ -73,9 +73,12 @@ Every async API that may run > 100ms accepts `tokio_util::sync::CancellationToke
   - `Error::Auth(AuthError)` — credential resolution / token failures. Distinct from `Provider` so retry policies can split "model is down" from "key is bad".
   - `Error::Cancelled` — `ExecutionContext` cancellation token fired.
   - `Error::DeadlineExceeded` — `ExecutionContext` deadline hit.
-  - `Error::Interrupted { payload: serde_json::Value }` — graph node requested human-in-the-loop. Caught by the executor; resume via `CompiledGraph::resume_with`.
+  - `Error::Interrupted { kind: InterruptionKind, payload: serde_json::Value }` — graph node requested human-in-the-loop. Caught by the executor; resume via `CompiledGraph::resume_with`.
+  - `Error::ModelRetry { hint: RenderedForLlm<String>, attempt: u32 }` — validator / schema-mismatch retry budget exhausted. The chat-model loop catches the variant and reflects `hint` to the model as a corrective `User` message; surfaces to callers only when the configured `validation_retries` budget runs out (invariant 20).
   - `Error::Serde(serde_json::Error)` — JSON failure at an entelix-managed boundary (codec, tool I/O, persistence). `#[from]` enables `?` chaining.
+  - `Error::UsageLimitExceeded(UsageLimitBreach)` — `RunBudget` axis cap fired. The typed `UsageLimitBreach` pairs axis with magnitude in one variant.
 - All errors are `Debug + Display + Send + Sync + 'static`. `Result<T> = std::result::Result<T, Error>`.
+- Integrators surfacing errors over a typed wire envelope key off `Error::wire_code()` (patch-version-stable `&'static str` — `"rate_limited"`, `"upstream_unauthorized"`, `"auth_failed"`, `"quota_exceeded"`, …) and `Error::wire_class()` (responsibility split — `ErrorClass::{Client, Server}`). Never parse the `Display` string — the wire pair is the only stable identifier.
 
 ## Naming
 

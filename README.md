@@ -16,9 +16,9 @@
 
 - **Multi-tenant first** — `TenantId` at every persistence boundary; Postgres `FORCE ROW LEVEL SECURITY` is defense-in-depth on every backend; cross-tenant data leakage is structurally impossible by API design.
 - **Type-enforced architecture** — sealed `RenderedForLlm<T>` carrier (compile-time LLM / operator channel separation); sealed `CompactedHistory` (`tool_call` / `tool_result` pair invariant impossible to break); `TenantId` newtype with validating constructor.
-- **Production observability from day 1** — OpenTelemetry GenAI semconv `gen_ai.*` attributes; cost emits transactionally (`Ok` branch only); typed `AuditSink` channel with six `record_*` verbs (`sub_agent_invoked` / `agent_handoff` / `resumed` / `memory_recall` / `usage_limit_exceeded` / `context_compacted`).
-- **Five codecs × four transports** — Anthropic Messages, OpenAI Chat, OpenAI Responses, Gemini, Bedrock Converse over Direct (any HTTPS), Bedrock (SigV4), Vertex (gcp_auth), Foundry (api-key + AAD). Capability honesty: `LossyEncode` warnings on every coerced field, `Other { raw }` for unknown vendor signals — no silent fallback.
-- **MCP first-class** — all three server-initiated channels (`Roots`, `Elicitation`, `Sampling`); per-tenant `(tenant_id, server_name)` pool isolation; HTTP-only by design.
+- **Production observability from day 1** — OpenTelemetry GenAI semconv `gen_ai.*` attributes; cost emits transactionally (`Ok` branch only); typed `AuditSink` channel records sub-agent invocation / supervisor handoff / wake-resume / memory recall / usage-limit breach / context-compaction events without coupling emit sites to a persistence backend.
+- **Cross-vendor IR** — Anthropic Messages, OpenAI Chat, OpenAI Responses, Gemini, and Bedrock Converse codecs route across Direct (any HTTPS), Bedrock (SigV4), Vertex (gcp_auth), and Foundry (api-key + AAD) transports. Capability honesty: `LossyEncode` warnings on every coerced field, `Other { raw }` for unknown vendor signals — no silent fallback.
+- **MCP first-class** — every server-initiated channel (`Roots`, `Elicitation`, `Sampling`); per-tenant `(tenant_id, server_name)` pool isolation; HTTP-only by design.
 - **CI-enforced invariants** — `cargo xtask invariants` runs typed-AST visitors per push for filesystem-free, naming taxonomy, silent-fallback, lock-ordering, public-API drift, supply-chain, feature-matrix gates.
 
 ---
@@ -57,7 +57,7 @@ async fn main() -> entelix::Result<()> {
 
 ## Key Features
 
-### LLM call — five codecs through one IR
+### LLM call — cross-vendor IR
 
 ```rust
 // Same `ModelRequest` IR routes through every codec.
@@ -142,13 +142,13 @@ async fn add(_ctx: &AgentContext<()>, a: i64, b: i64) -> Result<i64> {
 // Generates `Add` unit struct + `SchemaTool` impl + JSON Schema.
 ```
 
-Built-ins: `HttpFetchTool` (3-layer SSRF defense), `Calculator`, `SchemaTool` typed-I/O adapter. Sandboxed shell / file / code / list-dir tools live in the `entelix-tools-coding` companion crate and delegate syscalls through the `Sandbox` trait.
+Built-ins: `HttpFetchTool` (layered SSRF defense — allowlist, DNS resolver, redirect / size caps), `Calculator`, `SchemaTool` typed-I/O adapter. Sandboxed shell / file / code / list-dir tools live in the `entelix-tools-coding` companion crate and delegate syscalls through the `Sandbox` trait.
 
 ### Memory patterns
 
 `BufferMemory` (sliding window), `SummaryMemory` (rolling LLM summary), `ConsolidatingBufferMemory` (auto-summary on size threshold), `EntityMemory` (entity-keyed facts), `EpisodicMemory<V>` (time-ordered episodes), `SemanticMemory<E, V>` (vector retrieval), `GraphMemory<N, E>` (typed nodes + timestamped edges, BFS traversal + shortest-path).
 
-### MCP — all three server-initiated channels
+### MCP — every server-initiated channel
 
 ```rust
 use entelix::{ChatModelSamplingProvider, McpServerConfig, StaticRootsProvider};
@@ -173,10 +173,10 @@ let server = McpServerConfig::http("https://server.example/mcp")
 | Sealed LLM/operator channel carrier | ✗ | ✗ | ✗ | ✗ | **✓** |
 | OTel GenAI semconv native | △ | △ | △ | ✓ | **✓** |
 | Typed audit sink (`record_*` verbs) | ✗ | ✗ | △ | ✗ | **✓** |
-| Run budget axes (incl. USD cost) | ✗ | △ | ✗ | ✓ (5-axis, no USD) | **✓ (6-axis incl. USD)** |
+| Run budget axes (incl. USD cost) | ✗ | △ | ✗ | ✓ (no USD) | **✓ (incl. USD)** |
 | Vendor-specific extension escape-hatch (`*Ext`) | △ | △ | ✗ | ✓ | **✓** |
 | Distributed session lock (Postgres + Redis) | ✗ | ✗ | ✗ | ✗ | **✓** |
-| MCP all 3 server-initiated channels | △ | △ | ✓ | △ | **✓** |
+| MCP server-initiated channels (full coverage) | △ | △ | ✓ | △ | **✓** |
 | CI-enforced architectural invariants | ✗ | ✗ | ✗ | ✗ | **✓** |
 
 ---
@@ -217,7 +217,7 @@ entelix-mcp              — native JSON-RPC 2.0 over MCP streamable-http; Roots
 entelix-cloud            — Bedrock (SigV4) / Vertex (gcp_auth) / Foundry (AAD) transports
 entelix-policy           — TenantPolicy, RateLimiter, PiiRedactor, CostMeter, QuotaLimiter, PolicyLayer
 entelix-otel             — OpenTelemetry GenAI semconv tower::Layer + cache token telemetry + agent root span
-entelix-server           — axum HTTP + 5-mode SSE + tenant middleware
+entelix-server           — axum HTTP + multi-mode SSE + tenant middleware
 entelix-auth-claude-code — Claude.ai OAuth credential provider (Claude Code CLI shared storage)
 entelix-agents           — ReAct, Supervisor, Hierarchical, Chat recipes + Subagent
 ```

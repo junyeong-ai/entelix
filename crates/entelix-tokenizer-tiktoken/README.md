@@ -8,8 +8,8 @@ synchronous per the `TokenCounter` contract.
 
 ```toml
 [dependencies]
-entelix-core = "0.3"
-entelix-tokenizer-tiktoken = "0.3"
+entelix-core = "0.4"
+entelix-tokenizer-tiktoken = "0.4"
 ```
 
 ```rust,ignore

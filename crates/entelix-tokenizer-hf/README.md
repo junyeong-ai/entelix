@@ -8,8 +8,8 @@ published in HF's standard format.
 
 ```toml
 [dependencies]
-entelix-core = "0.3"
-entelix-tokenizer-hf = "0.3"
+entelix-core = "0.4"
+entelix-tokenizer-hf = "0.4"
 ```
 
 ```rust,ignore

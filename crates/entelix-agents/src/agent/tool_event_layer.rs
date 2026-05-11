@@ -210,6 +210,8 @@ where
                             tool_version,
                             error: err.to_string(),
                             error_for_llm: err.for_llm(),
+                            wire_code: err.wire_code(),
+                            wire_class: err.wire_class(),
                             duration_ms,
                         })
                         .await;

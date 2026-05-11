@@ -241,6 +241,8 @@ where
                     .send(AgentEvent::Failed {
                         run_id,
                         error: err.to_string(),
+                        wire_code: err.wire_code(),
+                        wire_class: err.wire_class(),
                     })
                     .await;
                 Err(err)
@@ -493,6 +495,8 @@ where
                     let failed = AgentEvent::Failed {
                         run_id,
                         error: err.to_string(),
+                        wire_code: err.wire_code(),
+                        wire_class: err.wire_class(),
                     };
                     let _ = self.sink.send(failed.clone()).await;
                     yield Ok(failed);

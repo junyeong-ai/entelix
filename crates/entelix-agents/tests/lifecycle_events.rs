@@ -155,7 +155,7 @@ async fn failed_event_is_emitted_when_inner_runnable_errors() {
     assert_eq!(events.len(), 2);
     assert!(matches!(events[0], AgentEvent::Started { .. }));
     let (run_id, error) = match &events[1] {
-        AgentEvent::Failed { run_id, error } => (run_id.clone(), error.clone()),
+        AgentEvent::Failed { run_id, error, .. } => (run_id.clone(), error.clone()),
         other => panic!("expected Failed, got {other:?}"),
     };
     let started_run_id = match &events[0] {
@@ -197,7 +197,21 @@ async fn execute_stream_emits_failed_then_typed_err_on_caller_side() {
     // Sink-side terminal: Started → Failed.
     let sink_events = sink.events();
     assert_eq!(sink_events.len(), 2);
-    assert!(matches!(sink_events[1], AgentEvent::Failed { .. }));
+    // The Failed event carries the typed wire identity derived from
+    // the inner `Error::Provider::Http(503)` — sink consumers route
+    // on `wire_code` / `wire_class` instead of parsing the prose
+    // `error` field.
+    match &sink_events[1] {
+        AgentEvent::Failed {
+            wire_code,
+            wire_class,
+            ..
+        } => {
+            assert_eq!(*wire_code, "upstream_unavailable");
+            assert_eq!(*wire_class, entelix_core::ErrorClass::Server);
+        }
+        other => panic!("expected Failed, got {other:?}"),
+    }
 }
 
 // ── Tool event layer ───────────────────────────────────────────────────────
@@ -412,6 +426,38 @@ async fn tool_event_layer_propagates_tool_version_to_error() {
     match &events[1] {
         AgentEvent::ToolError { tool_version, .. } => {
             assert_eq!(tool_version.as_deref(), Some("1.4.2"));
+        }
+        other => panic!("expected ToolError, got {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn tool_event_layer_stamps_typed_wire_identity_on_error() {
+    // Invariant 16/17 follow-on — `ToolError` must carry the typed
+    // `wire_code` / `wire_class` derived from the underlying
+    // `Error`. Sink consumers (replay, metric labels, typed wire
+    // envelopes) route off the typed identifier instead of parsing
+    // the prose `error` field.
+    let sink = Arc::new(CaptureSink::<i32>::new());
+    let registry = ToolRegistry::new()
+        .layer(ToolEventLayer::new(sink.clone() as Arc<_>))
+        .register(Arc::new(VersionedTool::new(true)))
+        .unwrap();
+    let ctx = ExecutionContext::new().with_run_id("run-wire-err");
+    let _ = registry
+        .dispatch("tu_wire", "versioned", json!({}), &ctx)
+        .await
+        .unwrap_err();
+    let events = sink.events();
+    match &events[1] {
+        AgentEvent::ToolError {
+            wire_code,
+            wire_class,
+            ..
+        } => {
+            // VersionedTool surfaces `Error::Config` on failure.
+            assert_eq!(*wire_code, "config_error");
+            assert_eq!(*wire_class, entelix_core::ErrorClass::Server);
         }
         other => panic!("expected ToolError, got {other:?}"),
     }

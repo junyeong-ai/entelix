@@ -8,6 +8,8 @@ pub entelix_agents::AgentEvent::Complete::usage: core::option::Option<entelix_co
 pub entelix_agents::AgentEvent::Failed
 pub entelix_agents::AgentEvent::Failed::error: alloc::string::String
 pub entelix_agents::AgentEvent::Failed::run_id: alloc::string::String
+pub entelix_agents::AgentEvent::Failed::wire_class: entelix_core::error::ErrorClass
+pub entelix_agents::AgentEvent::Failed::wire_code: &'static str
 pub entelix_agents::AgentEvent::Started
 pub entelix_agents::AgentEvent::Started::agent: alloc::string::String
 pub entelix_agents::AgentEvent::Started::parent_run_id: core::option::Option<alloc::string::String>
@@ -36,6 +38,8 @@ pub entelix_agents::AgentEvent::ToolError::run_id: alloc::string::String
 pub entelix_agents::AgentEvent::ToolError::tool: alloc::string::String
 pub entelix_agents::AgentEvent::ToolError::tool_use_id: alloc::string::String
 pub entelix_agents::AgentEvent::ToolError::tool_version: core::option::Option<alloc::string::String>
+pub entelix_agents::AgentEvent::ToolError::wire_class: entelix_core::error::ErrorClass
+pub entelix_agents::AgentEvent::ToolError::wire_code: &'static str
 pub entelix_agents::AgentEvent::ToolStart
 pub entelix_agents::AgentEvent::ToolStart::input: serde_json::value::Value
 pub entelix_agents::AgentEvent::ToolStart::run_id: alloc::string::String

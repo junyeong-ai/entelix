@@ -82,8 +82,13 @@ async fn main() -> Result<()> {
             AgentEvent::Complete { run_id, state, .. } => {
                 println!("Complete  | run_id={run_id} state={state}");
             }
-            AgentEvent::Failed { run_id, error } => {
-                println!("Failed    | run_id={run_id} error={error}");
+            AgentEvent::Failed {
+                run_id,
+                error,
+                wire_code,
+                ..
+            } => {
+                println!("Failed    | run_id={run_id} wire={wire_code} error={error}");
             }
             other => println!("{other:?}"),
         }

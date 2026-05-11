@@ -44,6 +44,7 @@
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 
+use entelix_core::ErrorClass;
 use entelix_core::RenderedForLlm;
 use entelix_core::UsageSnapshot;
 use entelix_core::ir::ToolResultContent;
@@ -138,6 +139,17 @@ pub enum AgentEvent<S> {
         /// reconstructs the model's view without re-leaking
         /// operator content (invariant #16).
         error_for_llm: RenderedForLlm<String>,
+        /// Patch-version-stable wire identifier paired with the
+        /// originating [`entelix_core::Error::wire_code`]. Sink
+        /// consumers (audit log replay, metric labels, typed wire
+        /// envelopes) key off this field instead of parsing the
+        /// `error` prose. `&'static str` mirrors `wire_code`'s
+        /// stability promise.
+        wire_code: &'static str,
+        /// Responsibility class paired with the originating
+        /// [`entelix_core::Error::wire_class`]. `Client` for
+        /// caller-actionable failures, `Server` for SDK/vendor side.
+        wire_class: ErrorClass,
         /// Wall-clock duration measured by the layer.
         duration_ms: u64,
     },
@@ -151,6 +163,14 @@ pub enum AgentEvent<S> {
         run_id: String,
         /// Lean error message (`Display` form).
         error: String,
+        /// Patch-version-stable wire identifier paired with the
+        /// originating [`entelix_core::Error::wire_code`]. Replay /
+        /// audit / metric consumers route off this field instead of
+        /// parsing `error` prose.
+        wire_code: &'static str,
+        /// Responsibility class paired with
+        /// [`entelix_core::Error::wire_class`].
+        wire_class: ErrorClass,
     },
 
     /// Run terminated successfully with the agent's terminal state.
@@ -306,6 +326,8 @@ mod tests {
         let failed: AgentEvent<u32> = AgentEvent::Failed {
             run_id: "r1".into(),
             error: "boom".into(),
+            wire_code: "internal",
+            wire_class: ErrorClass::Server,
         };
         assert!(started.to_graph_event(ts()).is_none());
         assert!(complete.to_graph_event(ts()).is_none());
@@ -395,6 +417,8 @@ mod tests {
             // LLM-facing rendering — short, actionable, no vendor
             // identifiers. The audit projection picks this.
             error_for_llm: llm_facing,
+            wire_code: "upstream_unavailable",
+            wire_class: ErrorClass::Server,
             duration_ms: 7,
         };
         let projected = event.to_graph_event(ts()).unwrap();

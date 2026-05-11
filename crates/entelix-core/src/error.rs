@@ -181,10 +181,17 @@ impl Error {
         Self::ModelRetry { hint, attempt }
     }
 
-    /// Build an HTTP-class provider error (4xx / 5xx). Use the
-    /// `_network` / `_tls` / `_dns` variants for transport-class
-    /// failures so retry classifiers see the typed signal rather
-    /// than a stringly-typed status code.
+    /// Build an HTTP-class provider error. Use the `_network` /
+    /// `_tls` / `_dns` variants for transport-class failures so
+    /// retry classifiers see the typed signal rather than a
+    /// stringly-typed status code.
+    ///
+    /// Status `0` / 1xx / 2xx / 3xx / ≥600 do **not** represent a
+    /// terminal vendor response. The constructor coerces them to
+    /// [`ProviderErrorKind::Network`] so retry classifiers, wire
+    /// codes, and dashboards see "we never received a terminal
+    /// response" rather than a plausible-looking `upstream_error`
+    /// (invariant 15).
     ///
     /// Synthetic-message form: use when the message is composed
     /// from vendor body fields (no source error). For
@@ -193,7 +200,7 @@ impl Error {
     /// chain.
     pub fn provider_http(status: u16, message: impl Into<String>) -> Self {
         Self::Provider {
-            kind: ProviderErrorKind::Http(status),
+            kind: http_or_network(status),
             message: message.into(),
             retry_after: None,
             source: None,
@@ -202,13 +209,15 @@ impl Error {
 
     /// Build an HTTP-class provider error from any
     /// [`std::error::Error`]. Message is `err.to_string()`; the
-    /// original error is preserved as `#[source]`.
+    /// original error is preserved as `#[source]`. Status coercion
+    /// follows [`Self::provider_http`] — non-4xx/5xx statuses
+    /// surface as [`ProviderErrorKind::Network`].
     pub fn provider_http_from<E>(status: u16, err: E) -> Self
     where
         E: std::error::Error + Send + Sync + 'static,
     {
         Self::Provider {
-            kind: ProviderErrorKind::Http(status),
+            kind: http_or_network(status),
             message: err.to_string(),
             retry_after: None,
             source: Some(Box::new(err)),
@@ -341,6 +350,118 @@ impl Error {
             *source = Some(Box::new(err));
         }
         self
+    }
+
+    /// Stable wire identifier for this error — a snake-case ASCII
+    /// string suitable as a key into an integrator's i18n catalogue,
+    /// metric label, or typed wire envelope.
+    ///
+    /// Guarantee: **the returned string never changes across patch
+    /// versions**. Adding a new [`Error`] variant adds a new wire
+    /// code; existing codes are forever-stable. Integrators map one
+    /// branch per code instead of parsing `Display` output.
+    ///
+    /// HTTP provider failures bucket on the status family rather than
+    /// the exact code so vendor drift (a new 4xx status added by an
+    /// upstream) is silently absorbed into the right class without an
+    /// SDK release.
+    pub fn wire_code(&self) -> &'static str {
+        match self {
+            Self::InvalidRequest(_) => "invalid_request",
+            Self::Config(_) => "config_error",
+            Self::Provider { kind, .. } => match kind {
+                ProviderErrorKind::Network => "transport_failure",
+                ProviderErrorKind::Tls => "tls_failure",
+                ProviderErrorKind::Dns => "dns_failure",
+                ProviderErrorKind::Http(status) => match *status {
+                    429 => "rate_limited",
+                    401 | 403 => "upstream_unauthorized",
+                    s if (400..500).contains(&s) => "upstream_invalid",
+                    s if (500..600).contains(&s) => "upstream_unavailable",
+                    _ => "upstream_error",
+                },
+            },
+            Self::Auth(_) => "auth_failed",
+            Self::Cancelled => "cancelled",
+            Self::DeadlineExceeded => "deadline_exceeded",
+            Self::Interrupted { .. } => "interrupted",
+            Self::ModelRetry { .. } => "model_retry_exhausted",
+            Self::Serde(_) => "serde",
+            Self::UsageLimitExceeded(_) => "quota_exceeded",
+        }
+    }
+
+    /// Coarse responsibility class — `Client` for caller-side failures
+    /// (bad input, expired credentials, exceeded quota) and `Server`
+    /// for SDK/vendor-side failures (deployment misconfiguration,
+    /// upstream unavailability, transport breakage).
+    ///
+    /// Orthogonal to retry semantics: a `Server`-class error may still
+    /// be permanent and a `Client`-class error may still be a
+    /// transient rate limit. Retry decisions consume the typed
+    /// `Error::Provider::retry_after` and `RetryClassifier` surfaces
+    /// (invariant 17), not this method.
+    pub fn wire_class(&self) -> ErrorClass {
+        match self {
+            Self::InvalidRequest(_)
+            | Self::Auth(_)
+            | Self::Cancelled
+            | Self::Interrupted { .. }
+            | Self::ModelRetry { .. }
+            | Self::UsageLimitExceeded(_) => ErrorClass::Client,
+            Self::Config(_) | Self::DeadlineExceeded | Self::Serde(_) => ErrorClass::Server,
+            Self::Provider { kind, .. } => match kind {
+                ProviderErrorKind::Network | ProviderErrorKind::Tls | ProviderErrorKind::Dns => {
+                    ErrorClass::Server
+                }
+                ProviderErrorKind::Http(status) => match *status {
+                    s if (400..500).contains(&s) => ErrorClass::Client,
+                    _ => ErrorClass::Server,
+                },
+            },
+        }
+    }
+}
+
+/// Coarse responsibility class for an [`Error`]. Two values by design —
+/// "transient" / "permanent" is a retry-policy axis, orthogonal to
+/// responsibility, and surfaced via [`Error::Provider`]'s
+/// `retry_after` field plus the `RetryClassifier` policy surface.
+///
+/// Maps onto the standard HTTP family split: `Client` ≈ 4xx-equivalent
+/// (caller / integrator can act to fix), `Server` ≈ 5xx-equivalent
+/// (vendor or deployment must act).
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+#[non_exhaustive]
+pub enum ErrorClass {
+    /// The caller — request shape, credentials, quota, cancellation
+    /// choice — is the actor that can resolve the failure.
+    Client,
+    /// The SDK, vendor, or deployment environment is the actor that
+    /// can resolve the failure.
+    Server,
+}
+
+impl std::fmt::Display for ErrorClass {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Client => f.write_str("client"),
+            Self::Server => f.write_str("server"),
+        }
+    }
+}
+
+/// Coerce a raw `u16` HTTP status into a typed
+/// [`ProviderErrorKind`]. 4xx / 5xx surface as
+/// [`ProviderErrorKind::Http`]; every other value collapses to
+/// [`ProviderErrorKind::Network`] because the SDK never received a
+/// terminal vendor response (invariant 15 — no silent fallback to
+/// a plausible-looking `upstream_error`).
+const fn http_or_network(status: u16) -> ProviderErrorKind {
+    if status >= 400 && status < 600 {
+        ProviderErrorKind::Http(status)
+    } else {
+        ProviderErrorKind::Network
     }
 }
 

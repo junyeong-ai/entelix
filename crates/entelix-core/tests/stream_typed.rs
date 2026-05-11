@@ -1,8 +1,7 @@
-//! Regression tests for `ChatModel::stream_typed<O>` (slice 119,
-//! ADR follow-on to 0079/0090). The streaming counterpart to
-//! `complete_typed<O>` exposes raw `StreamDelta`s on `stream` for
-//! incremental display and resolves a typed `O` on `completion`
-//! after the stream drains.
+//! Regression tests for `ChatModel::stream_typed<O>`. The streaming
+//! counterpart to `complete_typed<O>` exposes raw `StreamDelta`s on
+//! `stream` for incremental display and resolves a typed `O` on
+//! `completion` after the stream drains.
 //!
 //! Locks two properties:
 //!
@@ -10,9 +9,12 @@
 //!    unmodified (text fragments echo through the aggregator's
 //!    tap).
 //! 2. `completion` resolves to `Ok(O)` after the stream is
-//!    drained and to `Err(Error::Serde(_))` on a schema-mismatch
-//!    response — `stream_typed` does NOT retry (per the slice
-//!    119 design note).
+//!    drained and to `Err(Error::ModelRetry { .. })` on a
+//!    schema-mismatch response — the parse-site wrap converts the
+//!    underlying serde failure into the unified typed retry signal
+//!    (invariant 20). `stream_typed` does NOT retry; the consumer
+//!    already received deltas, re-invoking would emit a divergent
+//!    stream.
 
 #![allow(clippy::unwrap_used, clippy::indexing_slicing)]
 
@@ -135,11 +137,14 @@ async fn stream_typed_resolves_completion_to_typed_value() {
 }
 
 #[tokio::test]
-async fn stream_typed_schema_mismatch_surfaces_serde_error() {
+async fn stream_typed_schema_mismatch_surfaces_model_retry() {
     // Stream sees the raw deltas as before; completion fails with
-    // Error::Serde when the model's reply doesn't match the schema.
-    // Unlike complete_typed, no retry — the consumer already
-    // received deltas, re-invoking would emit a divergent stream.
+    // `Error::ModelRetry` when the model's reply doesn't match the
+    // schema — the parse helper wraps schema-mismatch at the parse
+    // site so streaming and one-shot surfaces converge on the same
+    // typed signal (invariant 20). Unlike `complete_typed`, no retry
+    // — the consumer already received deltas, re-invoking would emit
+    // a divergent stream.
     let codec = std::sync::Arc::new(ScriptedCodec::new(vec![r#"{"not_the_schema": true}"#]));
     let model = ChatModel::from_arc(codec, std::sync::Arc::new(EmptyTransport), "test")
         .with_validation_retries(2); // ignored on stream_typed by design
@@ -161,8 +166,8 @@ async fn stream_typed_schema_mismatch_surfaces_serde_error() {
 
     let err = typed_stream.completion.await.unwrap_err();
     assert!(
-        matches!(err, Error::Serde(_)),
-        "expected Error::Serde on schema mismatch; got: {err:?}"
+        matches!(err, Error::ModelRetry { .. }),
+        "expected Error::ModelRetry on schema mismatch; got: {err:?}"
     );
 }
 

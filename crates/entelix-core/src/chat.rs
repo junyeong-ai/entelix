@@ -124,12 +124,13 @@ pub struct ChatModelConfig {
     tools: Arc<[ToolSpec]>,
     tool_choice: ToolChoice,
     reasoning_effort: Option<ReasoningEffort>,
-    /// `complete_typed<O>` retry budget — schema-mismatch failures
-    /// reflect the parse error to the model and re-prompt up to
-    /// `validation_retries` times before bubbling
-    /// [`Error::Serde`]. Default `0` (no retry); operators opt in
-    ///. Distinct from [`crate::Error::Provider`]'s
-    /// transport retries (handled by `RetryService`).
+    /// `complete_typed<O>` retry budget — schema-mismatch and
+    /// [`crate::OutputValidator`] failures both reflect their hint
+    /// to the model and re-prompt up to `validation_retries` times
+    /// before surfacing [`Error::ModelRetry`] (invariant 20).
+    /// Default `0` (no retry). Distinct from
+    /// [`crate::Error::Provider`]'s transport retries (handled by
+    /// `RetryService`).
     validation_retries: u32,
     /// Operator-supplied token counter for pre-flight budget checks
     /// and content-economy estimation. `None` (the default) means
@@ -510,10 +511,13 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
 
     /// Set the [`complete_typed`](Self::complete_typed) validation
     /// retry budget — number of times the loop reflects a
-    /// schema-mismatch [`Error::Serde`] back to the model with
-    /// corrective hint text before bubbling the error. Default `0`
-    /// (no retry). Each retry increments the conversation length by
-    /// two messages (assistant's failed reply + retry prompt).
+    /// schema-mismatch or [`crate::OutputValidator`] failure back to
+    /// the model with corrective hint text before surfacing the
+    /// terminal [`Error::ModelRetry`]. Default `0` (no retry). Each
+    /// retry increments the conversation length by two messages
+    /// (assistant's failed reply + retry prompt). Both retry shapes
+    /// share one budget and route through `Error::ModelRetry`
+    /// (invariant 20).
     #[must_use]
     pub const fn with_validation_retries(mut self, n: u32) -> Self {
         self.config.validation_retries = n;
@@ -796,10 +800,44 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
     where
         O: schemars::JsonSchema + serde::de::DeserializeOwned + Send + 'static,
     {
-        // Derive the JSON Schema once per call. schemars handles
-        // memoisation at the type-level via its `for_value` cache;
-        // operators sensitive to per-call overhead pre-build the
-        // `JsonSchemaSpec` and route through `complete_full`.
+        self.complete_typed_validated(messages, |_: &O| Ok(()), ctx)
+            .await
+    }
+
+    /// Send a conversation, parse the structured-output response as
+    /// `O`, and run `validator` against the parsed value.
+    ///
+    /// Both failure modes — schema-mismatch (the model emitted JSON
+    /// the deserialiser couldn't bind to `O`) and validator failure
+    /// (the deserialised value broke a semantic invariant) — route
+    /// through one channel: [`crate::Error::ModelRetry`]. The retry
+    /// loop catches the variant, reflects the hint to the model as
+    /// a corrective user message, and re-invokes within the same
+    /// [`ChatModelConfig::validation_retries`](crate::ChatModelConfig::validation_retries)
+    /// budget (invariant 20).
+    ///
+    /// [`Self::complete_typed`] is the no-validator shortcut — it
+    /// calls into this method with an always-`Ok` validator so the
+    /// schema-mismatch retry path stays uniform.
+    ///
+    /// The validator surface is sync ([`crate::OutputValidator::validate`])
+    /// so simple closures (`|out: &O| -> Result<()>`) compose
+    /// without `async-trait` ceremony. Validators that need to
+    /// `.await` (DB lookup, external check) compose around the
+    /// `complete_typed_validated` call boundary instead — run the
+    /// async work after the typed response returns.
+    pub async fn complete_typed_validated<O, V>(
+        &self,
+        messages: Vec<Message>,
+        validator: V,
+        ctx: &ExecutionContext,
+    ) -> Result<O>
+    where
+        O: schemars::JsonSchema + serde::de::DeserializeOwned + Send + 'static,
+        V: crate::output_validator::OutputValidator<O>,
+    {
+        use crate::llm_facing::RenderedForLlm;
+
         let schema_value = serde_json::to_value(schemars::schema_for!(O)).map_err(Error::Serde)?;
         let type_name = std::any::type_name::<O>();
         // Strip the module path so the wire-side `name` is short
@@ -832,119 +870,36 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
             // text-block content first so a parse failure can
             // re-feed the model its own output as context.
             let assistant_text = response_text_for_retry(&response);
-            match parse_typed_response::<O>(response) {
-                Ok(value) => return Ok(value),
-                Err(err) if matches!(err, Error::Serde(_)) && attempt < max_retries => {
-                    attempt += 1;
-                    let parse_diagnostic = err.to_string();
-                    // Echo the assistant's failed turn into the
-                    // conversation so the next call sees what it
-                    // produced; then add a user-side correction.
-                    conversation.push(Message::new(
-                        crate::ir::Role::Assistant,
-                        vec![ContentPart::Text {
-                            text: assistant_text.unwrap_or_default(),
-                            cache_control: None,
-                            provider_echoes: Vec::new(),
-                        }],
-                    ));
-                    conversation.push(Message::new(
-                        crate::ir::Role::User,
-                        vec![ContentPart::Text {
-                            text: format!(
-                                "Your previous response did not match the required JSON schema for `{short_name}`. \
-                                 Parser diagnostic: {parse_diagnostic}\n\
-                                 Re-emit the response as a single valid JSON object that conforms to the schema."
-                            ),
-                            cache_control: None,
-                            provider_echoes: Vec::new(),
-                        }],
-                    ));
-                }
-                Err(err) => return Err(err),
-            }
-        }
-    }
 
-    /// Send a conversation, parse the structured-output response as
-    /// `O`, and run `validator` against the parsed value. Mirrors
-    /// [`Self::complete_typed`] for the schema-mismatch retry path
-    /// and additionally catches [`crate::Error::ModelRetry`] raised
-    /// from the validator — both error kinds reflect a corrective
-    /// hint to the model and re-invoke within the same
-    /// [`ChatModelConfig::validation_retries`](crate::ChatModelConfig::validation_retries)
-    /// budget.
-    ///
-    /// The validator surface is sync ([`crate::OutputValidator::validate`])
-    /// so simple closures (`|out: &O| -> Result<()>`) compose
-    /// without `async-trait` ceremony. Validators that need to
-    /// `.await` (DB lookup, external check) compose around the
-    /// `complete_typed_validated` call boundary instead — run the
-    /// async work after the typed response returns.
-    pub async fn complete_typed_validated<O, V>(
-        &self,
-        messages: Vec<Message>,
-        validator: V,
-        ctx: &ExecutionContext,
-    ) -> Result<O>
-    where
-        O: schemars::JsonSchema + serde::de::DeserializeOwned + Send + 'static,
-        V: crate::output_validator::OutputValidator<O>,
-    {
-        let schema_value = serde_json::to_value(schemars::schema_for!(O)).map_err(Error::Serde)?;
-        let type_name = std::any::type_name::<O>();
-        let short_name = type_name.rsplit("::").next().unwrap_or(type_name);
-        let spec = JsonSchemaSpec::new(short_name, schema_value)?;
-        let format = ResponseFormat::strict(spec);
-
-        let mut conversation = messages;
-        let max_retries = self.config.validation_retries;
-        let mut attempt: u32 = 0;
-        loop {
-            let budget = ctx.run_budget();
-            if let Some(budget) = &budget {
-                budget.check_pre_request()?;
-            }
-            let mut request = self.config.build_request(conversation.clone());
-            apply_overrides(&mut request, ctx);
-            request.response_format = Some(format.clone());
-
-            let invocation = ModelInvocation::new(request, ctx.clone());
-            let response = self.service().oneshot(invocation).await?;
-            if let Some(budget) = &budget {
-                budget.observe_usage(&response.usage)?;
-            }
-            let assistant_text = response_text_for_retry(&response);
-            let parse_outcome = parse_typed_response::<O>(response);
-
-            // Combine schema-mismatch and validator-driven retries
-            // through one match. The retry budget is shared because
-            // both paths represent "the model emitted output we
-            // can't accept" — distinguishing them at the budget
-            // level adds knobs without buying behaviour operators
-            // commonly want to vary independently.
-            let retry_hint = match parse_outcome {
-                Ok(value) => match validator.validate(&value) {
-                    Ok(()) => return Ok(value),
-                    Err(Error::ModelRetry { hint, .. }) if attempt < max_retries => {
-                        Some(hint.into_inner())
-                    }
+            // Both failure modes arrive as `Error::ModelRetry`:
+            // schema-mismatch is wrapped inside `parse_typed_response`
+            // at the parse site, and validator failures already
+            // construct `Error::ModelRetry` themselves. A shared
+            // budget governs both because they reflect the same
+            // condition — the model emitted output the harness
+            // cannot accept — and distinguishing them at the budget
+            // level would add knobs without buying behaviour
+            // operators commonly want to vary independently
+            // (invariant 20).
+            let retry_hint: RenderedForLlm<String> =
+                match parse_typed_response::<O>(short_name, response) {
+                    Ok(value) => match validator.validate(&value) {
+                        Ok(()) => return Ok(value),
+                        Err(Error::ModelRetry { hint, .. }) => hint,
+                        Err(err) => return Err(err),
+                    },
+                    Err(Error::ModelRetry { hint, .. }) => hint,
                     Err(err) => return Err(err),
-                },
-                Err(err) if matches!(err, Error::Serde(_)) && attempt < max_retries => {
-                    Some(format!(
-                        "Your previous response did not match the required JSON schema for `{short_name}`. \
-                         Parser diagnostic: {err}\n\
-                         Re-emit the response as a single valid JSON object that conforms to the schema."
-                    ))
-                }
-                Err(err) => return Err(err),
-            };
+                };
 
-            let Some(hint) = retry_hint else {
-                unreachable!()
-            };
+            if attempt >= max_retries {
+                return Err(Error::model_retry(retry_hint, attempt));
+            }
             attempt += 1;
+
+            // Echo the assistant's failed turn into the conversation
+            // so the next call sees what it produced, then push the
+            // corrective user message carrying the rendered hint.
             conversation.push(Message::new(
                 crate::ir::Role::Assistant,
                 vec![ContentPart::Text {
@@ -956,7 +911,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
             conversation.push(Message::new(
                 crate::ir::Role::User,
                 vec![ContentPart::Text {
-                    text: hint,
+                    text: retry_hint.into_inner(),
                     cache_control: None,
                     provider_echoes: Vec::new(),
                 }],
@@ -1097,12 +1052,13 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         let ModelStream { stream, completion } = model_stream;
 
         let budget_for_completion = budget.clone();
+        let short_name_owned = short_name.to_owned();
         let typed_completion = async move {
             let response = completion.await?;
             if let Some(budget) = &budget_for_completion {
                 budget.observe_usage(&response.usage)?;
             }
-            parse_typed_response::<O>(response)
+            parse_typed_response::<O>(&short_name_owned, response)
         };
         Ok(TypedModelStream {
             stream,
@@ -1189,25 +1145,61 @@ fn response_text_for_retry(response: &ModelResponse) -> Option<String> {
     if out.is_empty() { None } else { Some(out) }
 }
 
+/// Parse a structured-output response into `O`, wrapping any
+/// schema-mismatch directly into [`Error::ModelRetry`] at the parse
+/// site so the unified retry loop never sees a raw [`Error::Serde`]
+/// for schema-mismatch failures (invariant 20). The hint flows through
+/// the [`crate::llm_facing::RenderedForLlm`] funnel so the model
+/// receives a corrective message routed by the operator (invariant 16).
+///
+/// [`Error::invalid_request`] still surfaces unchanged when the
+/// response carried no parseable content — that is an `OutputStrategy`
+/// configuration error, not a retry condition.
 #[allow(clippy::needless_pass_by_value)]
-fn parse_typed_response<O>(response: ModelResponse) -> Result<O>
+fn parse_typed_response<O>(short_name: &str, response: ModelResponse) -> Result<O>
 where
     O: serde::de::DeserializeOwned,
 {
+    use crate::llm_facing::LlmRenderable;
+    let wrap = |e: serde_json::Error| -> Error {
+        Error::model_retry(schema_mismatch_diagnostic(short_name, &e).for_llm(), 0)
+    };
     for part in &response.content {
         if let ContentPart::ToolUse { input, .. } = part {
-            return serde_json::from_value(input.clone()).map_err(Error::Serde);
+            return serde_json::from_value(input.clone()).map_err(wrap);
         }
     }
     for part in &response.content {
         if let ContentPart::Text { text, .. } = part {
-            return serde_json::from_str(text).map_err(Error::Serde);
+            return serde_json::from_str(text).map_err(wrap);
         }
     }
     Err(Error::invalid_request(
         "complete_typed: model response carried neither a `tool_use` block nor a text \
          block — the configured `OutputStrategy` did not produce typed output",
     ))
+}
+
+/// Render a schema-mismatch parse error into a model-actionable hint.
+/// Strips `serde_json::Error`'s trailing `at line N column M` position
+/// noise — line / column offsets reference the raw bytes the parser
+/// scanned and cannot help the model correct its output, but they leak
+/// internal parser state into the LLM channel (invariant 16).
+///
+/// Schema-mismatch and validator-driven retries converge on the
+/// returned text wrapped in the `RenderedForLlm` carrier (invariant 20).
+fn schema_mismatch_diagnostic(short_name: &str, err: &serde_json::Error) -> String {
+    let raw = err.to_string();
+    let trimmed = raw
+        .split(" at line ")
+        .next()
+        .unwrap_or(raw.as_str())
+        .trim_end_matches('.');
+    format!(
+        "Your previous response did not match the required JSON schema for `{short_name}`. \
+         Parser diagnostic: {trimmed}.\n\
+         Re-emit the response as a single valid JSON object that conforms to the schema."
+    )
 }
 
 // ── Provider shortcuts ────────────────────────────────────────────

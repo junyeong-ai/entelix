@@ -1,9 +1,10 @@
-//! Regression tests for `complete_typed<O>` schema-mismatch retry
-//! loop (slice 106 /). Operator wires
-//! `with_validation_retries(n)` on the chat model; schema-mismatch
-//! `Error::Serde` failures reflect the parse diagnostic to the
-//! model as a corrective user message and re-invoke up to `n`
-//! times before bubbling the final error.
+//! Regression tests for the `complete_typed<O>` /
+//! `complete_typed_validated<O, V>` unified retry channel (invariant 20).
+//! Operator wires `with_validation_retries(n)` on the chat model;
+//! schema-mismatch and `OutputValidator` failures both arrive as
+//! `Error::ModelRetry`, reflect the rendered hint to the model as a
+//! corrective user message, and re-invoke up to `n` times before
+//! surfacing the terminal `Error::ModelRetry`.
 
 #![allow(
     clippy::unwrap_used,
@@ -110,7 +111,9 @@ impl Transport for EmptyTransport {
 }
 
 #[tokio::test]
-async fn schema_mismatch_with_zero_retries_surfaces_serde_error() {
+async fn schema_mismatch_with_zero_retries_surfaces_model_retry() {
+    // Invariant 20 — schema-mismatch and validator-driven retries
+    // share `Error::ModelRetry` as the single typed channel.
     let codec = std::sync::Arc::new(ScriptedCodec::new(vec![r#"{"not_the_schema": true}"#]));
     let model = ChatModel::from_arc(codec.clone(), std::sync::Arc::new(EmptyTransport), "test");
     let ctx = ExecutionContext::new();
@@ -121,7 +124,10 @@ async fn schema_mismatch_with_zero_retries_surfaces_serde_error() {
         )
         .await
         .unwrap_err();
-    assert!(matches!(err, entelix_core::Error::Serde(_)), "got: {err:?}");
+    assert!(
+        matches!(err, entelix_core::Error::ModelRetry { .. }),
+        "schema-mismatch surfaces as ModelRetry, got: {err:?}"
+    );
     assert_eq!(codec.call_count(), 1);
 }
 
@@ -152,7 +158,7 @@ async fn schema_mismatch_with_retries_recovers_when_second_attempt_valid() {
 }
 
 #[tokio::test]
-async fn schema_mismatch_retries_exhausted_surfaces_final_serde_error() {
+async fn schema_mismatch_retries_exhausted_surfaces_model_retry() {
     let codec = std::sync::Arc::new(ScriptedCodec::new(vec![
         r#"{"first": "bad"}"#,
         r#"{"second": "still bad"}"#,
@@ -168,7 +174,10 @@ async fn schema_mismatch_retries_exhausted_surfaces_final_serde_error() {
         )
         .await
         .unwrap_err();
-    assert!(matches!(err, entelix_core::Error::Serde(_)), "got: {err:?}");
+    assert!(
+        matches!(err, entelix_core::Error::ModelRetry { .. }),
+        "got: {err:?}"
+    );
     assert_eq!(codec.call_count(), 3, "initial + 2 retries");
 }
 

@@ -30,7 +30,7 @@ use std::process::Command;
 use anyhow::{Context, Result, bail};
 
 use crate::invariants;
-use crate::visitor::{FileGate, Gate, WorkspaceGate, repo_root, run_invariants};
+use crate::visitor::{CadenceStep, FileGate, WorkspaceGate, repo_root, run_invariants};
 
 /// Run the local fast cadence — pre-commit discipline.
 ///
@@ -42,7 +42,7 @@ use crate::visitor::{FileGate, Gate, WorkspaceGate, repo_root, run_invariants};
 ///    otherwise `cargo test --workspace` (default features)
 /// 4. AST-walking invariants ([`run_all_ast`])
 pub(crate) fn run_local() -> Result<()> {
-    let steps: &[Gate] = &[
+    let steps: &[CadenceStep] = &[
         ("fmt", fmt_check),
         (
             "clippy (default features, lib + bins + tests)",
@@ -66,7 +66,7 @@ pub(crate) fn run_local() -> Result<()> {
 /// 7. Feature-matrix isolation (`cargo xtask feature-matrix`)
 /// 8. Supply-chain audit (`cargo xtask supply-chain`)
 pub(crate) fn run_ci() -> Result<()> {
-    let steps: &[Gate] = &[
+    let steps: &[CadenceStep] = &[
         ("fmt", fmt_check),
         ("clippy (all features, all targets)", clippy_full),
         ("test (all features)", test_full),
@@ -79,7 +79,7 @@ pub(crate) fn run_ci() -> Result<()> {
     run_sequence("gates-ci", steps)
 }
 
-fn run_sequence(banner: &str, steps: &[Gate]) -> Result<()> {
+fn run_sequence(banner: &str, steps: &[CadenceStep]) -> Result<()> {
     println!("══ {banner}");
     for (name, step) in steps {
         println!("── {name}");
@@ -215,7 +215,7 @@ pub(crate) fn run_all_ast() -> Result<()> {
     run_invariants(&file_gates, &workspace_gates).with_context(|| "ast invariants".to_string())?;
 
     // ── Tail: manifest / markdown / cross-file non-AST gates ──
-    let tail: &[Gate] = &[
+    let tail: &[CadenceStep] = &[
         ("lock-ordering", invariants::lock_ordering::run),
         ("dead-deps", invariants::dead_deps::run),
         ("facade-completeness", invariants::facade_completeness::run),

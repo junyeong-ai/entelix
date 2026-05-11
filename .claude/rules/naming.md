@@ -46,7 +46,7 @@ paths:
 | `*Format` | structural rule for output shape — rides the IR to the wire | `ResponseFormat` |
 | `*Memory` | stateful conversation/working-memory facade over a `Store<V>` | `BufferMemory`, `EntityMemory`, `SummaryMemory`, `SemanticMemory` |
 | `*Ext` | extension trait — provided methods on a base trait, blanket-impl'd for every base impl | `RunnableExt`, `SchemaToolExt` |
-| `*Gate` | check / predicate that fails closed on detection (xtask invariants, future runtime policy gates) | `FileGate`, `WorkspaceGate`, `NamingGate` |
+| `*Gate` | check / predicate that fails closed on detection (xtask invariants, future runtime policy gates). A `CadenceStep` typedef is the orthogonal "one step in a sequenced cadence" shape — sequencing is not gating, do not conflate. | `FileGate`, `WorkspaceGate`, `NamingGate` |
 
 ## `Runnable<Verb>` composition prefix
 

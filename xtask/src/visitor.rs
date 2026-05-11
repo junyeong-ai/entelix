@@ -111,26 +111,49 @@ pub(crate) fn report(invariant: &str, violations: Vec<Violation>, remediation: &
     anyhow::bail!("{out}");
 }
 
-/// All `.rs` files under `crates/`. Skips `target/` and `tests/` directories
-/// ( — invariant gates apply to first-party production code).
-pub(crate) fn rust_source_files(repo_root: &Path) -> Vec<PathBuf> {
+/// All `.rs` files under `crates/`, skipping `target/` and `tests/`
+/// trees — invariant gates apply to first-party production code.
+///
+/// Returns `Err` if `crates/` is missing (wrong `CARGO_MANIFEST_DIR`,
+/// stale checkout, fresh workspace) so an empty file list never
+/// silently reports every gate as green. Pruning happens at the
+/// directory level via `filter_entry`, so `WalkDir` never descends
+/// into a multi-gigabyte `target/` before discovering it should be
+/// skipped.
+pub(crate) fn rust_source_files(repo_root: &Path) -> Result<Vec<PathBuf>> {
     let crates = repo_root.join("crates");
+    if !crates.exists() {
+        anyhow::bail!(
+            "no `crates/` directory under {} — is `CARGO_MANIFEST_DIR` pointing at the workspace root?",
+            repo_root.display()
+        );
+    }
     let mut out = Vec::new();
-    for entry in WalkDir::new(&crates).into_iter().filter_map(Result::ok) {
+    let walker = WalkDir::new(&crates).into_iter().filter_entry(|entry| {
+        // Prune `target/` and `tests/` before descending. WalkDir's
+        // depth-0 root entry has no skip-worthy name; the filter
+        // applies from depth-1 inward.
+        if entry.depth() == 0 {
+            return true;
+        }
+        let name = entry.file_name().to_string_lossy();
+        name != "target" && name != "tests"
+    });
+    for entry in walker.filter_map(Result::ok) {
         let path = entry.path();
         if !path.is_file() || path.extension().and_then(|s| s.to_str()) != Some("rs") {
             continue;
         }
-        if path.components().any(|c| {
-            let s = c.as_os_str().to_string_lossy();
-            s == "target" || s == "tests"
-        }) {
-            continue;
-        }
         out.push(path.to_path_buf());
     }
+    if out.is_empty() {
+        anyhow::bail!(
+            "no `.rs` files found under {} — invariant gates would falsely report green; check `CARGO_MANIFEST_DIR`.",
+            crates.display()
+        );
+    }
     out.sort();
-    out
+    Ok(out)
 }
 
 /// Read a source file from disk.
@@ -268,9 +291,10 @@ pub(crate) fn type_carries(ty: &syn::Type, predicate: &dyn Fn(&str) -> bool) -> 
 
 /// One sequenced cadence step — name shown in the banner, closure that
 /// runs the underlying check. Failure short-circuits the cadence.
-/// Distinct from [`FileGate`] / [`WorkspaceGate`] — those are the AST
-/// dispatch shapes; this typedef is the outer cadence sequencer.
-pub(crate) type Gate = (&'static str, fn() -> Result<()>);
+/// Distinct shape from [`FileGate`] / [`WorkspaceGate`] (those are
+/// AST dispatch contracts); a `CadenceStep` is one entry in the
+/// outer bundled-cadence sequence (`fmt → clippy → test → invariants`).
+pub(crate) type CadenceStep = (&'static str, fn() -> Result<()>);
 
 /// One parsed workspace file in the shared cache.
 pub(crate) struct ParsedFile {
@@ -376,7 +400,7 @@ pub(crate) fn run_invariants(
         return Ok(());
     }
     let root = repo_root()?;
-    let files = rust_source_files(&root);
+    let files = rust_source_files(&root)?;
 
     // ── Stage 1: parse the workspace once ──
     let mut cache: Vec<ParsedFile> = Vec::with_capacity(files.len());
@@ -545,6 +569,51 @@ mod type_carries_tests {
         assert!(!carries_error("fn(MyError) -> ()"));
         assert!(!carries_error("*const MyError"));
         assert!(!carries_error("*mut MyError"));
+    }
+
+    #[test]
+    fn hrtb_trait_objects_recurse_bounds() {
+        // Higher-ranked trait bounds are valid trait-object shapes
+        // (`Box<dyn for<'r> Visit<'r>>`). The bound's last path
+        // segment is what predicate matching keys on; HRTB wrapping
+        // must not hide the trait ident.
+        assert!(carries_error(
+            "Box<dyn for<'r> std::error::Error + Send + Sync + 'r>"
+        ));
+        assert!(carries_error("&dyn for<'a> MyError"));
+    }
+
+    #[test]
+    fn const_generic_args_dont_mask_inner_types() {
+        // Const-generic args carry no type info, so they're skipped
+        // during recursion; the type-shaped sibling args still
+        // recurse normally.
+        assert!(carries_error("Foo<MyError, 32>"));
+        assert!(!carries_error("Foo<u8, 32>"));
+        // Array-as-generic-arg: `Foo<[u8; 32]>` — Foo's first
+        // generic arg is a Type::Array which recurses to u8 (not
+        // error). Should be false.
+        assert!(!carries_error("Foo<[u8; 32]>"));
+        // Same shape with an error element should fire.
+        assert!(carries_error("Foo<[MyError; 32]>"));
+    }
+
+    #[test]
+    fn lifetime_parameterized_paths_recurse() {
+        // Lifetime args are skipped during generic-arg recursion;
+        // the type-shaped sibling args still surface the predicate.
+        assert!(carries_error("Foo<'a, MyError>"));
+        assert!(carries_error("&'a Foo<'b, MyError>"));
+        assert!(!carries_error("Foo<'a, 'b>"));
+    }
+
+    #[test]
+    fn associated_type_bindings_in_trait_objects() {
+        // `Box<dyn Trait<Output = MyError>>` — the binding's RHS is
+        // a Type that recursion currently does not unwrap. This is
+        // a known limit: the visitor inspects bound paths only, not
+        // bound bindings. Documented expected behaviour today.
+        assert!(!carries_error("Box<dyn Trait<Output = MyError>>"));
     }
 
     #[test]

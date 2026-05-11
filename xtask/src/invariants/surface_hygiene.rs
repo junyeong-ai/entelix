@@ -14,9 +14,12 @@
 //!     every variant whose type's last segment is `Error` or ends in
 //!     `Error`, require `#[source]` or `#[from]` on the field — OR
 //!     `#[error(transparent)]` on the variant, which thiserror expands
-//!     into source-forwarding for the inner field. `Box<X>` / `Arc<X>`
-//!     / `Option<X>` wrappers are unwrapped one level so
-//!     `Option<reqwest::Error>` still trips the check.
+//!     into source-forwarding for the inner field. Containment
+//!     recursion is uniform — any generic argument of any path type
+//!     is inspected, so `Option<reqwest::Error>`, `Box<dyn Error>`,
+//!     `Vec<MyError>`, `HashMap<K, MyError>`, `Result<T, MyError>`,
+//!     `&[Box<dyn Error>]`, and `(String, MyError)` all trip the
+//!     check uniformly through [`type_carries`].
 
 use std::path::Path;
 

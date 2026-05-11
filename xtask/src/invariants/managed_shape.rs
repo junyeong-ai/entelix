@@ -45,8 +45,15 @@ use crate::visitor::{FileGate, Violation, run_invariants, span_loc, type_carries
 const REMEDIATION: &str = "Anthropic managed-agent shape is non-negotiable. See CLAUDE.md\n\
      §\"Anthropic managed-agent shape\".";
 
-const CORE_SRC: &str = "crates/entelix-core/src";
-const SESSION_SRC: &str = "crates/entelix-session/src";
+/// Single-file scoping for the subagent layer-inheritance invariant —
+/// that rule targets a specific file (`subagent.rs`), not a struct
+/// name. Name-targeted invariants (Agent / ExecutionContext /
+/// SessionGraph / Tool) do not declare a path scope; the visitor's
+/// `s.ident != "TargetName"` filter does the right thing without
+/// the gate needing to predict which crate the target moves into.
+/// This avoids the regression where a target struct moves crates
+/// (e.g. `Agent` migrating from entelix-core to entelix-agents) and
+/// silently slips past the gate.
 const SUBAGENT_FILE: &str = "crates/entelix-agents/src/subagent.rs";
 
 // ── Invariant 2 — Agent must not own persistent-state fields ────────
@@ -71,10 +78,6 @@ fn carries_persistent_state(ty: &syn::Type) -> bool {
 impl FileGate for NoAgentPersistenceGate {
     fn name(&self) -> &'static str {
         "managed-shape: invariant 2 (Agent is stateless)"
-    }
-
-    fn applies_to(&self, rel_path: &Path) -> bool {
-        rel_path.starts_with(CORE_SRC)
     }
 
     fn visit(&self, rel_path: &Path, _src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
@@ -118,10 +121,6 @@ impl FileGate for NoCredentialInCtxGate {
         "managed-shape: invariant 10 (no credentials in ExecutionContext)"
     }
 
-    fn applies_to(&self, rel_path: &Path) -> bool {
-        rel_path.starts_with(CORE_SRC)
-    }
-
     fn visit(&self, rel_path: &Path, _src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
         for item in &ast.items {
             if let syn::Item::Struct(s) = item {
@@ -157,10 +156,6 @@ pub(crate) struct SessionEventFieldGate;
 impl FileGate for SessionEventFieldGate {
     fn name(&self) -> &'static str {
         "managed-shape: invariant 1 (SessionGraph events SSoT)"
-    }
-
-    fn applies_to(&self, rel_path: &Path) -> bool {
-        rel_path.starts_with(SESSION_SRC)
     }
 
     fn visit(&self, rel_path: &Path, _src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {
@@ -219,10 +214,6 @@ pub(crate) struct ToolExecuteGate;
 impl FileGate for ToolExecuteGate {
     fn name(&self) -> &'static str {
         "managed-shape: invariant 4 (Tool::execute hand contract)"
-    }
-
-    fn applies_to(&self, rel_path: &Path) -> bool {
-        rel_path.starts_with(CORE_SRC)
     }
 
     fn visit(&self, rel_path: &Path, _src: &str, ast: &syn::File, violations: &mut Vec<Violation>) {

@@ -191,24 +191,26 @@ pub(crate) fn span_loc(span: proc_macro2::Span) -> (usize, usize) {
     (lc.line, lc.column + 1)
 }
 
-/// Single-arity generic wrappers whose inner type is what callers
-/// semantically care about. Used by every gate that asks "does this
-/// field carry a `*Suffix` type?" — wrappers don't change the answer.
-const TRANSPARENT_TYPE_WRAPPERS: &[&str] = &["Box", "Arc", "Rc", "Option"];
-
 /// True when `ty` carries a type whose last path segment matches
-/// `predicate`. Recurses through:
+/// `predicate`. Recurses uniformly through every containment shape
+/// `syn::Type` exposes:
 ///
-///   * References (`&T`, `&mut T`) — unwrap one level.
-///   * Trait objects (`dyn Suffix`) — any bound whose last path
-///     segment satisfies the predicate counts.
-///   * Single-arity wrappers (`Box<T>`, `Arc<T>`, `Rc<T>`, `Option<T>`)
-///     — peel one wrapper and recurse on the inner type.
-///   * Parenthesised / grouped types (`(T)`, `Group<T>`) — transparent.
+///   * References (`&T`, `&mut T`) and parenthesised / grouped
+///     wrappers — unwrap one level.
+///   * Trait objects (`dyn Trait`) and `impl Trait` — any bound whose
+///     last path segment satisfies the predicate counts.
+///   * Tuples, fixed-size arrays, slices — recurse into each element
+///     type.
+///   * Path types (`Foo`, `Bar<T>`, `HashMap<K, V>`, `Box<T>`,
+///     `Vec<T>`, …) — predicate first, then recurse into every
+///     `<T>` generic argument the path carries.
 ///
-/// Shared by every gate that ends in "field X carries an inner Y" —
-/// `surface_hygiene` (`*Error`), `managed_shape` (`*Persistence`), …
-/// — so the recursion semantics are auditable in one place.
+/// The recursion is uniform — no hand-curated "transparent wrapper"
+/// list to drift out of sync with stdlib + ecosystem container
+/// types. Shared by every gate that ends in "field X carries an
+/// inner Y" — `surface_hygiene` (`*Error`), `managed_shape`
+/// (`*Persistence` / `*Checkpointer` / `*SessionLog`) — so the
+/// recursion semantics are auditable in one place.
 pub(crate) fn type_carries(ty: &syn::Type, predicate: &dyn Fn(&str) -> bool) -> bool {
     match ty {
         syn::Type::Reference(r) => type_carries(&r.elem, predicate),
@@ -238,19 +240,25 @@ pub(crate) fn type_carries(ty: &syn::Type, predicate: &dyn Fn(&str) -> bool) -> 
         }),
         syn::Type::Tuple(t) => t.elems.iter().any(|e| type_carries(e, predicate)),
         syn::Type::Array(a) => type_carries(&a.elem, predicate),
+        syn::Type::Slice(s) => type_carries(&s.elem, predicate),
         syn::Type::Path(tp) => {
             let Some(seg) = tp.path.segments.last() else {
                 return false;
             };
-            let name = seg.ident.to_string();
-            if predicate(&name) {
+            if predicate(&seg.ident.to_string()) {
                 return true;
             }
-            if TRANSPARENT_TYPE_WRAPPERS.contains(&name.as_str())
-                && let syn::PathArguments::AngleBracketed(args) = &seg.arguments
-                && let Some(syn::GenericArgument::Type(inner)) = args.args.first()
-            {
-                return type_carries(inner, predicate);
+            // Recurse through every generic argument — covers `Vec<T>`,
+            // `HashMap<K, V>`, `Result<T, E>`, `Box<T>`, `Arc<T>`,
+            // `Option<T>`, `Pin<P>`, plus any future container.
+            if let syn::PathArguments::AngleBracketed(args) = &seg.arguments {
+                for arg in &args.args {
+                    if let syn::GenericArgument::Type(inner) = arg
+                        && type_carries(inner, predicate)
+                    {
+                        return true;
+                    }
+                }
             }
             false
         }

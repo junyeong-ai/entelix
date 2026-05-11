@@ -130,10 +130,10 @@ pub(crate) fn rust_source_files(repo_root: &Path) -> Result<Vec<PathBuf>> {
     }
     let mut out = Vec::new();
     let walker = WalkDir::new(&crates).into_iter().filter_entry(|entry| {
-        // Prune `target/` and `tests/` before descending. WalkDir's
-        // depth-0 root entry has no skip-worthy name; the filter
-        // applies from depth-1 inward.
-        if entry.depth() == 0 {
+        // Prune nested `target/` and `tests/` before descending. The
+        // depth-0 root and depth-1 crate directories must remain visible
+        // so a legitimate crate named `tests` is not silently skipped.
+        if entry.depth() <= 1 {
             return true;
         }
         let name = entry.file_name().to_string_lossy();
@@ -448,6 +448,74 @@ pub(crate) fn run_invariants(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod rust_source_files_tests {
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    use super::rust_source_files;
+
+    #[test]
+    fn first_level_crate_named_tests_is_not_pruned() {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock before unix epoch")
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!(
+            "entelix-xtask-rust-source-files-{}-{nonce}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&root);
+
+        fs::create_dir_all(root.join("crates/tests/src")).expect("create tests crate");
+        fs::create_dir_all(root.join("crates/foo/src")).expect("create foo crate");
+        fs::create_dir_all(root.join("crates/foo/tests")).expect("create nested tests dir");
+        fs::create_dir_all(root.join("crates/foo/target")).expect("create nested target dir");
+        fs::write(
+            root.join("crates/tests/src/lib.rs"),
+            "pub struct FromTestsCrate;\n",
+        )
+        .expect("write tests crate lib");
+        fs::write(root.join("crates/foo/src/lib.rs"), "pub struct FromFoo;\n")
+            .expect("write foo lib");
+        fs::write(
+            root.join("crates/foo/tests/integration.rs"),
+            "pub struct HiddenTest;\n",
+        )
+        .expect("write nested test");
+        fs::write(
+            root.join("crates/foo/target/generated.rs"),
+            "pub struct HiddenTarget;\n",
+        )
+        .expect("write nested target");
+
+        let files = rust_source_files(&root).expect("collect rust source files");
+        let rel: Vec<_> = files
+            .iter()
+            .map(|path| path.strip_prefix(&root).expect("strip temp root"))
+            .collect();
+
+        assert!(
+            rel.iter()
+                .any(|path| *path == std::path::Path::new("crates/tests/src/lib.rs"))
+        );
+        assert!(
+            rel.iter()
+                .any(|path| *path == std::path::Path::new("crates/foo/src/lib.rs"))
+        );
+        assert!(
+            !rel.iter()
+                .any(|path| *path == std::path::Path::new("crates/foo/tests/integration.rs"))
+        );
+        assert!(
+            !rel.iter()
+                .any(|path| *path == std::path::Path::new("crates/foo/target/generated.rs"))
+        );
+
+        let _ = fs::remove_dir_all(&root);
+    }
 }
 
 #[cfg(test)]

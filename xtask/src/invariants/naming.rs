@@ -400,33 +400,47 @@ enum CtxExpect {
 }
 
 /// Walk the cached parse for every trait whose ident matches
-/// `trait_name`. The cache replaces the prior "walk + read + reparse"
-/// loop — each file is already an `Arc<syn::File>`.
+/// `trait_name`. Uses `syn::Visit` recursion so traits declared inside
+/// modules (`mod x { pub trait Store { … } }`) are reachable. Every
+/// declaration is checked independently — no cross-file dedup, so a
+/// duplicate trait definition with a divergent signature still
+/// surfaces both declarations' violations.
 fn check_ctx_in_trait(
     parse: &WorkspaceParse,
     trait_name: &str,
     expected: CtxExpect,
     violations: &mut Vec<Violation>,
 ) {
-    let mut seen: BTreeSet<String> = BTreeSet::new();
     for file in parse.iter() {
-        for item in &file.ast.items {
-            let syn::Item::Trait(t) = item else { continue };
-            if t.ident != trait_name {
-                continue;
-            }
-            for trait_item in &t.items {
-                if let syn::TraitItem::Fn(f) = trait_item {
-                    let key = format!("{trait_name}::{}", f.sig.ident);
-                    if !seen.insert(key) {
-                        continue;
-                    }
-                    if let Some(violation) = check_ctx_position(&file.rel, &f.sig, expected) {
-                        violations.push(violation);
-                    }
+        let mut v = TraitCtxVisitor {
+            file: &file.rel,
+            target: trait_name,
+            expected,
+            violations,
+        };
+        v.visit_file(&file.ast);
+    }
+}
+
+struct TraitCtxVisitor<'v> {
+    file: &'v Path,
+    target: &'v str,
+    expected: CtxExpect,
+    violations: &'v mut Vec<Violation>,
+}
+
+impl<'ast, 'v> Visit<'ast> for TraitCtxVisitor<'v> {
+    fn visit_item_trait(&mut self, item: &'ast syn::ItemTrait) {
+        if item.ident == self.target {
+            for trait_item in &item.items {
+                if let syn::TraitItem::Fn(f) = trait_item
+                    && let Some(violation) = check_ctx_position(self.file, &f.sig, self.expected)
+                {
+                    self.violations.push(violation);
                 }
             }
         }
+        syn::visit::visit_item_trait(self, item);
     }
 }
 

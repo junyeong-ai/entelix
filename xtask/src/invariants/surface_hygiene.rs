@@ -8,9 +8,15 @@
 //!     break unless the struct is `#[non_exhaustive]`. Open data carriers
 //!     (`Message`, `Document`, `EntityRecord`) are intentionally OPEN.
 //!  3. Error variants carrying inner error types annotate the inner field
-//!     with `#[source]` or `#[from]`. Caught at the AST level: when a
-//!     variant's named field type ends in `Error` and lacks `#[source]` /
-//!     `#[from]`, flag.
+//!     with `#[source]` or `#[from]` so the diagnostic chain is preserved
+//!     for `std::error::Error::source()` traversal. Scope: any `pub enum`
+//!     whose ident is `Error` or ends in `Error`. For every field in
+//!     every variant whose type's last segment is `Error` or ends in
+//!     `Error`, require `#[source]` or `#[from]` on the field — OR
+//!     `#[error(transparent)]` on the variant, which thiserror expands
+//!     into source-forwarding for the inner field. `Box<X>` / `Arc<X>`
+//!     / `Option<X>` wrappers are unwrapped one level so
+//!     `Option<reqwest::Error>` still trips the check.
 
 use std::path::Path;
 
@@ -20,6 +26,12 @@ use syn::visit::Visit;
 use crate::visitor::{FileGate, Violation, run_invariants, span_loc};
 
 const TIER1_CONFIG_STRUCTS: &[&str] = &["ChatModelConfig", "SessionGraph", "Usage", "GraphHop"];
+
+/// Single-arity generic wrappers whose inner type still counts as the
+/// "carried" error for `#[source]` / `#[from]` purposes. `Box<reqwest::Error>`
+/// or `Option<AuthError>` is semantically the same as the bare error
+/// from a diagnostic-chain standpoint.
+const TRANSPARENT_WRAPPERS: &[&str] = &["Box", "Arc", "Rc", "Option"];
 
 const REMEDIATION: &str = "Add `#[non_exhaustive]` to public enums and Tier-1 config structs.\n\
      Annotate error inner fields with `#[source]` or `#[from]` so the\n\
@@ -67,16 +79,18 @@ impl<'ast, 'v, 's> Visit<'ast> for HygieneVisitor<'v, 's> {
         if !matches!(item.vis, syn::Visibility::Public(_)) {
             return;
         }
-        if has_non_exhaustive(&item.attrs) || sealed_enum_marker_above(&item.ident, self.src) {
-            return;
+        if !has_non_exhaustive(&item.attrs) && !sealed_enum_marker_above(&item.ident, self.src) {
+            let (line, col) = span_loc(item.ident.span());
+            self.violations.push(Violation::new(
+                self.file.clone(),
+                line,
+                col,
+                format!("`pub enum {}` missing `#[non_exhaustive]`", item.ident),
+            ));
         }
-        let (line, col) = span_loc(item.ident.span());
-        self.violations.push(Violation::new(
-            self.file.clone(),
-            line,
-            col,
-            format!("`pub enum {}` missing `#[non_exhaustive]`", item.ident),
-        ));
+        if is_error_ident(&item.ident.to_string()) {
+            self.check_error_variants(item);
+        }
     }
 
     fn visit_item_struct(&mut self, item: &'ast syn::ItemStruct) {
@@ -94,6 +108,100 @@ impl<'ast, 'v, 's> Visit<'ast> for HygieneVisitor<'v, 's> {
             ));
         }
     }
+}
+
+impl<'v, 's> HygieneVisitor<'v, 's> {
+    fn check_error_variants(&mut self, item: &syn::ItemEnum) {
+        let enum_name = item.ident.to_string();
+        for variant in &item.variants {
+            // `#[error(transparent)]` on the variant is thiserror's
+            // documented spelling for "forward source to the inner
+            // field". Treat the whole variant as satisfied — thiserror
+            // generates the `Error::source()` plumbing.
+            if variant_is_transparent(&variant.attrs) {
+                continue;
+            }
+            for (idx, field) in variant.fields.iter().enumerate() {
+                if !field_carries_error_type(&field.ty) {
+                    continue;
+                }
+                if field_has_source_or_from(&field.attrs) {
+                    continue;
+                }
+                let span = field.ident.as_ref().map_or_else(
+                    || syn::spanned::Spanned::span(&field.ty),
+                    syn::spanned::Spanned::span,
+                );
+                let (line, col) = span_loc(span);
+                let where_ = match &field.ident {
+                    Some(id) => format!("field `{id}`"),
+                    None => format!("tuple field {idx}"),
+                };
+                self.violations.push(Violation::new(
+                    self.file.clone(),
+                    line,
+                    col,
+                    format!(
+                        "`{enum_name}::{}` {where_} carries an inner error type without `#[source]` / `#[from]` / `#[error(transparent)]` — diagnostic chain breaks",
+                        variant.ident
+                    ),
+                ));
+            }
+        }
+    }
+}
+
+/// Detect `#[error(transparent)]` on a variant. The attr path is
+/// `error` and the argument tokens are exactly the `transparent`
+/// keyword — `parse_args::<syn::Ident>()` succeeds and yields that
+/// identifier.
+fn variant_is_transparent(attrs: &[syn::Attribute]) -> bool {
+    attrs.iter().any(|a| {
+        if !a.path().is_ident("error") {
+            return false;
+        }
+        a.parse_args::<syn::Ident>()
+            .map(|i| i == "transparent")
+            .unwrap_or(false)
+    })
+}
+
+fn is_error_ident(name: &str) -> bool {
+    name == "Error" || name.ends_with("Error")
+}
+
+/// True when the field's type carries an error. Unwraps one level of
+/// single-arity wrapper (`Box<E>`, `Arc<E>`, `Option<E>`) so a wrapped
+/// error still trips the diagnostic-chain requirement.
+fn field_carries_error_type(ty: &syn::Type) -> bool {
+    let Some(seg) = path_last_segment(ty) else {
+        return false;
+    };
+    let name = seg.ident.to_string();
+    if is_error_ident(&name) {
+        return true;
+    }
+    if TRANSPARENT_WRAPPERS.contains(&name.as_str())
+        && let syn::PathArguments::AngleBracketed(args) = &seg.arguments
+        && let Some(syn::GenericArgument::Type(inner)) = args.args.first()
+    {
+        return field_carries_error_type(inner);
+    }
+    false
+}
+
+fn path_last_segment(ty: &syn::Type) -> Option<&syn::PathSegment> {
+    match ty {
+        syn::Type::Path(tp) => tp.path.segments.last(),
+        syn::Type::Reference(r) => path_last_segment(&r.elem),
+        _ => None,
+    }
+}
+
+fn field_has_source_or_from(attrs: &[syn::Attribute]) -> bool {
+    attrs
+        .iter()
+        .any(|a| a.path().is_ident("source") || a.path().is_ident("from"))
 }
 
 fn has_non_exhaustive(attrs: &[syn::Attribute]) -> bool {

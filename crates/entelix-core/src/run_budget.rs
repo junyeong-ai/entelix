@@ -254,12 +254,12 @@ impl RunBudget {
     }
 
     /// Cap cumulative USD cost across the run. Operators wire a
-    /// [`crate::CostCalculator`] (the same one
-    /// `entelix-policy::CostMeter` consumes); the dispatch site
+    /// [`crate::BudgetCostEstimator`] (the same one
+    /// `entelix-policy::CostMeter` implements); the dispatch site
     /// calls [`Self::observe_cost`] on the `Ok` branch with the
     /// per-call charge, and the budget surfaces a breach when the
-    /// running total crosses `limit`. Decimal precision matches
-    /// the cost meter's `rust_decimal` precision.
+    /// running total crosses `limit`. Decimal precision matches the
+    /// cost estimator's `rust_decimal` precision.
     #[must_use]
     pub const fn with_cost_limit_usd(mut self, limit: Decimal) -> Self {
         self.cost_usd_limit = Some(limit);
@@ -300,6 +300,130 @@ impl RunBudget {
                 {
                     return Ok(());
                 }
+            }
+        }
+        Ok(())
+    }
+
+    /// Configured request-count cap. `None` when the axis is
+    /// unbounded. Operators integrating custom pre-call gates read
+    /// this alongside [`Self::snapshot`] to compute their own
+    /// projected counter.
+    #[must_use]
+    pub const fn request_limit(&self) -> Option<u32> {
+        self.request_limit
+    }
+
+    /// Configured input-tokens cap.
+    #[must_use]
+    pub const fn input_tokens_limit(&self) -> Option<u64> {
+        self.input_tokens_limit
+    }
+
+    /// Configured output-tokens cap.
+    #[must_use]
+    pub const fn output_tokens_limit(&self) -> Option<u64> {
+        self.output_tokens_limit
+    }
+
+    /// Configured combined-tokens cap.
+    #[must_use]
+    pub const fn total_tokens_limit(&self) -> Option<u64> {
+        self.total_tokens_limit
+    }
+
+    /// Configured tool-call-count cap.
+    #[must_use]
+    pub const fn tool_calls_limit(&self) -> Option<u32> {
+        self.tool_calls_limit
+    }
+
+    /// Configured USD-cost cap.
+    #[must_use]
+    pub const fn cost_usd_limit(&self) -> Option<Decimal> {
+        self.cost_usd_limit
+    }
+
+    /// Pre-call token gate — compares `(observed + estimate)` against
+    /// each token axis cap and surfaces a breach before the wire
+    /// roundtrip fires. Operators compute the estimate from a
+    /// [`crate::TokenCounter`] over the prompt; the projected
+    /// `output_tokens` is typically `ModelRequest::max_tokens`
+    /// (worst-case) or a conservative heuristic when the request
+    /// leaves `max_tokens` unset.
+    ///
+    /// Increments no counters — the post-call
+    /// [`Self::observe_usage`] is the only mutation path
+    /// (invariant 12: a failed call never drains the budget). The
+    /// pre-call gate is purely projective and idempotent, so a
+    /// retry attempt re-evaluates against the current observed
+    /// total without double-charging.
+    ///
+    /// When multiple axes would breach, the first to fire wins in
+    /// the order `InputTokens` → `OutputTokens` → `TotalTokens`,
+    /// matching [`Self::observe_usage`].
+    pub fn check_pre_request_tokens(
+        &self,
+        estimated_input: u64,
+        estimated_output: u64,
+    ) -> Result<()> {
+        let observed_in = self.state.input_tokens.load(Ordering::Acquire);
+        let observed_out = self.state.output_tokens.load(Ordering::Acquire);
+        let projected_in = observed_in.saturating_add(estimated_input);
+        let projected_out = observed_out.saturating_add(estimated_output);
+        if let Some(limit) = self.input_tokens_limit
+            && projected_in > limit
+        {
+            return Err(Error::UsageLimitExceeded(UsageLimitBreach::InputTokens {
+                limit,
+                observed: projected_in,
+            }));
+        }
+        if let Some(limit) = self.output_tokens_limit
+            && projected_out > limit
+        {
+            return Err(Error::UsageLimitExceeded(UsageLimitBreach::OutputTokens {
+                limit,
+                observed: projected_out,
+            }));
+        }
+        if let Some(limit) = self.total_tokens_limit {
+            let projected_total = projected_in.saturating_add(projected_out);
+            if projected_total > limit {
+                return Err(Error::UsageLimitExceeded(UsageLimitBreach::TotalTokens {
+                    limit,
+                    observed: projected_total,
+                }));
+            }
+        }
+        Ok(())
+    }
+
+    /// Pre-call cost gate — compares `(observed + estimated_charge)`
+    /// against `cost_usd_limit` and surfaces a breach before the
+    /// wire roundtrip fires. Operators wire a
+    /// [`crate::BudgetCostEstimator`] to compute the worst-case charge
+    /// from `(ModelRequest, vendor tariff)` and thread the result
+    /// here.
+    ///
+    /// Increments no counters; [`Self::observe_cost`] on the `Ok`
+    /// branch of the dispatch is the only mutation path. The pre
+    /// gate is conservative — false-positive rejections are
+    /// recoverable (the operator surfaces a budget-soon error to
+    /// the caller), silent cap overrun is not (invariant 15).
+    pub fn check_pre_request_cost(&self, estimated_charge: Decimal) -> Result<()> {
+        if let Some(limit) = self.cost_usd_limit {
+            let observed = *self
+                .state
+                .cost_usd
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let projected = observed.saturating_add(estimated_charge);
+            if projected > limit {
+                return Err(Error::UsageLimitExceeded(UsageLimitBreach::CostUsd {
+                    limit,
+                    observed: projected,
+                }));
             }
         }
         Ok(())
@@ -395,7 +519,7 @@ impl RunBudget {
     /// `cost_usd_limit`. Call from the dispatch site on the **`Ok`
     /// branch only** (invariant 12 — failed calls never drain the
     /// budget). Operators integrate by computing the charge from a
-    /// [`crate::CostCalculator`] and threading the result here.
+    /// [`crate::BudgetCostEstimator`] and threading the result here.
     pub fn observe_cost(&self, charge_usd: Decimal) -> Result<()> {
         let observed = {
             let mut accumulated = self
@@ -456,7 +580,7 @@ pub struct UsageSnapshot {
     pub tool_calls: u32,
     /// Cumulative USD cost across the run (sum of every
     /// `observe_cost` charge). Operators that don't wire a
-    /// [`crate::CostCalculator`] see [`Decimal::ZERO`].
+    /// [`crate::BudgetCostEstimator`] see [`Decimal::ZERO`].
     pub cost_usd: Decimal,
 }
 
@@ -620,6 +744,130 @@ mod tests {
         }
         assert_eq!(parent.snapshot().cost_usd, Decimal::new(110, 2));
         assert_eq!(child.snapshot().cost_usd, Decimal::new(110, 2));
+    }
+
+    // ── pre-call gates (Slice A) ────────────────────────────────
+
+    #[test]
+    fn limit_accessors_reflect_configuration() {
+        let budget = RunBudget::unlimited()
+            .with_request_limit(10)
+            .with_input_tokens_limit(100)
+            .with_output_tokens_limit(50)
+            .with_total_tokens_limit(140)
+            .with_tool_calls_limit(5)
+            .with_cost_limit_usd(Decimal::new(150, 2));
+        assert_eq!(budget.request_limit(), Some(10));
+        assert_eq!(budget.input_tokens_limit(), Some(100));
+        assert_eq!(budget.output_tokens_limit(), Some(50));
+        assert_eq!(budget.total_tokens_limit(), Some(140));
+        assert_eq!(budget.tool_calls_limit(), Some(5));
+        assert_eq!(budget.cost_usd_limit(), Some(Decimal::new(150, 2)));
+        let unbounded = RunBudget::unlimited();
+        assert_eq!(unbounded.request_limit(), None);
+        assert_eq!(unbounded.cost_usd_limit(), None);
+    }
+
+    #[test]
+    fn check_pre_request_cost_blocks_when_estimate_overshoots() {
+        let budget = RunBudget::unlimited().with_cost_limit_usd(Decimal::new(100, 2)); // $1.00
+        budget.observe_cost(Decimal::new(98, 2)).unwrap(); // $0.98 observed
+        let err = budget
+            .check_pre_request_cost(Decimal::new(5, 2)) // estimate $0.05 → $1.03
+            .unwrap_err();
+        match err {
+            Error::UsageLimitExceeded(UsageLimitBreach::CostUsd { limit, observed }) => {
+                assert_eq!(limit, Decimal::new(100, 2));
+                assert_eq!(observed, Decimal::new(103, 2));
+            }
+            other => panic!("unexpected: {other:?}"),
+        }
+        // Pre-call check is read-only — counter unchanged.
+        assert_eq!(budget.snapshot().cost_usd, Decimal::new(98, 2));
+    }
+
+    #[test]
+    fn check_pre_request_cost_passes_when_estimate_fits() {
+        let budget = RunBudget::unlimited().with_cost_limit_usd(Decimal::new(100, 2));
+        budget.observe_cost(Decimal::new(50, 2)).unwrap();
+        budget.check_pre_request_cost(Decimal::new(30, 2)).unwrap();
+        assert_eq!(budget.snapshot().cost_usd, Decimal::new(50, 2));
+    }
+
+    #[test]
+    fn check_pre_request_cost_no_op_when_axis_unbounded() {
+        let budget = RunBudget::unlimited();
+        budget
+            .check_pre_request_cost(Decimal::new(10_000_000, 0))
+            .unwrap();
+    }
+
+    #[test]
+    fn check_pre_request_tokens_blocks_on_input_axis() {
+        let budget = RunBudget::unlimited().with_input_tokens_limit(100);
+        budget.observe_usage(&Usage::new(80, 0)).unwrap();
+        let err = budget.check_pre_request_tokens(30, 0).unwrap_err();
+        match err {
+            Error::UsageLimitExceeded(UsageLimitBreach::InputTokens { limit, observed }) => {
+                assert_eq!(limit, 100);
+                assert_eq!(observed, 110);
+            }
+            other => panic!("unexpected: {other:?}"),
+        }
+        // Pre-call check is read-only.
+        assert_eq!(budget.snapshot().input_tokens, 80);
+    }
+
+    #[test]
+    fn check_pre_request_tokens_blocks_on_output_axis() {
+        let budget = RunBudget::unlimited().with_output_tokens_limit(100);
+        budget.observe_usage(&Usage::new(0, 80)).unwrap();
+        let err = budget.check_pre_request_tokens(0, 30).unwrap_err();
+        assert!(
+            matches!(
+                err,
+                Error::UsageLimitExceeded(UsageLimitBreach::OutputTokens { .. })
+            ),
+            "got: {err:?}"
+        );
+    }
+
+    #[test]
+    fn check_pre_request_tokens_blocks_on_total_axis() {
+        let budget = RunBudget::unlimited().with_total_tokens_limit(150);
+        budget.observe_usage(&Usage::new(50, 50)).unwrap();
+        let err = budget.check_pre_request_tokens(40, 40).unwrap_err();
+        match err {
+            Error::UsageLimitExceeded(UsageLimitBreach::TotalTokens { limit, observed }) => {
+                assert_eq!(limit, 150);
+                assert_eq!(observed, 180);
+            }
+            other => panic!("unexpected: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn check_pre_request_tokens_input_fires_before_total() {
+        // When both axes would breach, the deterministic order is
+        // input → output → total. Ensures consumers branching on the
+        // first breach get a stable signal.
+        let budget = RunBudget::unlimited()
+            .with_input_tokens_limit(50)
+            .with_total_tokens_limit(60);
+        budget.observe_usage(&Usage::new(40, 0)).unwrap();
+        let err = budget.check_pre_request_tokens(20, 20).unwrap_err();
+        assert!(matches!(
+            err,
+            Error::UsageLimitExceeded(UsageLimitBreach::InputTokens { .. })
+        ));
+    }
+
+    #[test]
+    fn check_pre_request_tokens_no_op_when_all_axes_unbounded() {
+        let budget = RunBudget::unlimited();
+        budget
+            .check_pre_request_tokens(u64::MAX / 2, u64::MAX / 2)
+            .unwrap();
     }
 
     #[test]

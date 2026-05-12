@@ -328,6 +328,25 @@ impl<S> AgentEvent<S> {
     /// envelope, usage snapshot) — only the agent's terminal state
     /// is dropped, which is the field a state-agnostic sink could
     /// not type-erase anyway.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use entelix_agents::AgentEvent;
+    /// use entelix_core::TenantId;
+    ///
+    /// let typed: AgentEvent<u32> = AgentEvent::Complete {
+    ///     run_id: "r1".into(),
+    ///     tenant_id: TenantId::new("t1"),
+    ///     state: 42_u32,
+    ///     usage: None,
+    /// };
+    /// let erased: AgentEvent<()> = typed.erase_state();
+    /// match erased {
+    ///     AgentEvent::Complete { state, .. } => assert_eq!(state, ()),
+    ///     _ => unreachable!(),
+    /// }
+    /// ```
     #[allow(clippy::too_many_lines)]
     // 1-to-1 exhaustive variant rebuild — splitting hurts readability and the line count is structural, not accidental.
     #[must_use]

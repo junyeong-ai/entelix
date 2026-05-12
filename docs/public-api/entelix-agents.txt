@@ -558,9 +558,9 @@ pub fn entelix_agents::StateErasureSink<S>::fmt(&self, f: &mut core::fmt::Format
 impl<S> entelix_agents::AgentEventSink<S> for entelix_agents::StateErasureSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_agents::StateErasureSink<S>::send<'life0, 'async_trait>(&'life0 self, event: entelix_agents::AgentEvent<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 impl<S> core::marker::Freeze for entelix_agents::StateErasureSink<S>
-impl<S> core::marker::Send for entelix_agents::StateErasureSink<S>
-impl<S> core::marker::Sync for entelix_agents::StateErasureSink<S>
-impl<S> core::marker::Unpin for entelix_agents::StateErasureSink<S>
+impl<S> core::marker::Send for entelix_agents::StateErasureSink<S> where S: core::marker::Send
+impl<S> core::marker::Sync for entelix_agents::StateErasureSink<S> where S: core::marker::Sync
+impl<S> core::marker::Unpin for entelix_agents::StateErasureSink<S> where S: core::marker::Unpin
 impl<S> core::marker::UnsafeUnpin for entelix_agents::StateErasureSink<S>
 impl<S> !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::StateErasureSink<S>
 impl<S> !core::panic::unwind_safe::UnwindSafe for entelix_agents::StateErasureSink<S>

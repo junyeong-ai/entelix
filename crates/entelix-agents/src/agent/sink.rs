@@ -564,12 +564,33 @@ where
 /// ```
 pub struct StateErasureSink<S> {
     inner: Arc<dyn AgentEventSink<()>>,
-    _phantom: std::marker::PhantomData<fn(S)>,
+    _phantom: std::marker::PhantomData<S>,
 }
 
 impl<S> StateErasureSink<S> {
     /// Wrap a state-agnostic sink for attachment to an
     /// `Agent<S>`-typed event stream.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use std::sync::Arc;
+    /// use entelix::{AgentEventSink, ReActState, StateErasureSink, SupervisorState};
+    ///
+    /// // One audit pipeline consumed by every agent in a multi-agent
+    /// // topology — the adapter projects each typed event to
+    /// // `AgentEvent<()>` via `erase_state` before the audit sink sees it.
+    /// let audit: Arc<dyn AgentEventSink<()>> = Arc::new(MyAuditSink);
+    /// let react_adapter: Arc<dyn AgentEventSink<ReActState>> =
+    ///     Arc::new(StateErasureSink::new(Arc::clone(&audit)));
+    /// let supervisor_adapter: Arc<dyn AgentEventSink<SupervisorState>> =
+    ///     Arc::new(StateErasureSink::new(audit));
+    /// # struct MyAuditSink;
+    /// # #[async_trait::async_trait]
+    /// # impl AgentEventSink<()> for MyAuditSink {
+    /// #     async fn send(&self, _: entelix::AgentEvent<()>) -> entelix::Result<()> { Ok(()) }
+    /// # }
+    /// ```
     #[must_use]
     pub fn new(inner: Arc<dyn AgentEventSink<()>>) -> Self {
         Self {
@@ -868,6 +889,71 @@ mod tests {
         match &events[3] {
             AgentEvent::Complete { state, .. } => assert_eq!(*state, ()),
             other => panic!("unexpected event: {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn state_erasure_sink_pins_first_party_recipe_state_types() {
+        // Companion to the toy-type fan-in test: this one pins the
+        // adapter against the *actual* state shapes the SDK ships
+        // — `ReActState` / `ChatState` / `SupervisorState`. A future
+        // change to the impl bounds (e.g. tightening from
+        // `Clone + Send + Sync + 'static` to something narrower)
+        // breaks here at compile time rather than reaching operators.
+        use crate::state::{ChatState, ReActState, SupervisorState};
+
+        let audit: Arc<CaptureSink<()>> = Arc::new(CaptureSink::<()>::new());
+        let audit_dyn: Arc<dyn AgentEventSink<()>> = audit.clone();
+
+        let react_adapter: StateErasureSink<ReActState> =
+            StateErasureSink::new(Arc::clone(&audit_dyn));
+        let chat_adapter: StateErasureSink<ChatState> =
+            StateErasureSink::new(Arc::clone(&audit_dyn));
+        let supervisor_adapter: StateErasureSink<SupervisorState> =
+            StateErasureSink::new(audit_dyn);
+
+        let tenant = entelix_core::TenantId::new("t-multi");
+
+        // ReAct agent — typed Complete state with `steps` + messages.
+        react_adapter
+            .send(AgentEvent::Complete {
+                run_id: "react-run".into(),
+                tenant_id: tenant.clone(),
+                state: ReActState::from_user("hello react"),
+                usage: None,
+            })
+            .await
+            .unwrap();
+
+        // Chat agent — typed Complete state with messages only.
+        chat_adapter
+            .send(AgentEvent::Complete {
+                run_id: "chat-run".into(),
+                tenant_id: tenant.clone(),
+                state: ChatState::from_user("hello chat"),
+                usage: None,
+            })
+            .await
+            .unwrap();
+
+        // Supervisor agent — typed Complete state with routing fields.
+        supervisor_adapter
+            .send(AgentEvent::Complete {
+                run_id: "super-run".into(),
+                tenant_id: tenant,
+                state: SupervisorState::from_user("hello supervisor"),
+                usage: None,
+            })
+            .await
+            .unwrap();
+
+        let events = audit.events();
+        assert_eq!(events.len(), 3);
+        for event in &events {
+            match event {
+                AgentEvent::Complete { state, .. } => assert_eq!(*state, ()),
+                other => panic!("unexpected event: {other:?}"),
+            }
         }
     }
 }

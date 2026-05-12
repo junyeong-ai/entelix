@@ -588,18 +588,22 @@ fn layer_names_track_compose_order_and_namedlayer_identity() {
 
     let (counting1, _) = CountingLayer::new();
     let (counting2, _) = CountingLayer::new();
+    let (counting3, _) = CountingLayer::new();
 
     // First-registered layer sits innermost (index 0); subsequent
     // `.layer(...)` calls append to the right of the vec, matching
     // the wrap-on-top semantics of the factory chain.
+    // `layer_named` is sugar for `layer(WithName::new(name, L))` —
+    // surfacing the supplied name in the introspection channel.
     let model = ChatModel::from_arc(codec, transport, "m")
         .layer(counting1)
-        .layer(WithName::new("external", counting2));
+        .layer(WithName::new("external", counting2))
+        .layer_named("convenience", counting3);
 
     assert_eq!(
         model.layer_names(),
-        ["counting", "external"],
-        "layer_names tracks insertion order; WithName supplies a name for external middleware"
+        ["counting", "external", "convenience"],
+        "layer_named threads through the same channel as WithName::new"
     );
 }
 

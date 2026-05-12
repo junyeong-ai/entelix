@@ -371,6 +371,31 @@ impl<D: Clone + Send + Sync + 'static> ToolRegistry<D> {
         self
     }
 
+    /// Compose a `tower::Layer` whose only difference from a
+    /// first-party tool-side layer is the missing
+    /// [`crate::NamedLayer`] impl. Equivalent to
+    /// `self.layer(WithName::new(name, layer))` — the wrapper
+    /// supplies the identity surfaced through [`Self::layer_names`].
+    ///
+    /// Use this for external middleware (operator-defined wrappers,
+    /// per-call task-local scope layers, etc.) without implementing
+    /// [`crate::NamedLayer`] manually. First-party tool-side layers
+    /// (`ApprovalLayer`, `ToolEventLayer`, `ToolHookLayer`,
+    /// `ScopedToolLayer`, `RetryToolLayer`) already implement
+    /// [`crate::NamedLayer`] and should compose via [`Self::layer`]
+    /// directly so the canonical `tool_*` role name ships at the
+    /// call site.
+    #[must_use]
+    pub fn layer_named<L>(self, name: &'static str, layer: L) -> Self
+    where
+        L: Layer<BoxedToolService> + Clone + Send + Sync + 'static,
+        L::Service:
+            Service<ToolInvocation, Response = Value, Error = Error> + Clone + Send + 'static,
+        <L::Service as Service<ToolInvocation>>::Future: Send + 'static,
+    {
+        self.layer(crate::service::WithName::new(name, layer))
+    }
+
     /// Diagnostic snapshot of the composed layer stack, in
     /// registration order: `[0]` is the first `.layer(...)` call
     /// (innermost, against the leaf inner tool service); the last
@@ -604,6 +629,7 @@ mod tests {
 
         let log_a = Arc::new(std::sync::Mutex::new(Vec::new()));
         let log_b = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let log_c = Arc::new(std::sync::Mutex::new(Vec::new()));
         let reg = ToolRegistry::new()
             .layer(LabelLayer {
                 label: 'A',
@@ -615,12 +641,19 @@ mod tests {
                     label: 'B',
                     log: log_b,
                 },
-            ));
+            ))
+            .layer_named(
+                "convenience",
+                LabelLayer {
+                    label: 'C',
+                    log: log_c,
+                },
+            );
 
         assert_eq!(
             reg.layer_names(),
-            ["label", "external"],
-            "layer_names tracks insertion order; WithName supplies a name for external middleware"
+            ["label", "external", "convenience"],
+            "layer_named threads through the same channel as WithName::new"
         );
     }
 

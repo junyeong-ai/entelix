@@ -338,6 +338,27 @@ impl CostMeter {
         *self.pricing.write() = pricing;
     }
 
+    /// Atomically replace `model`'s pricing row without rebuilding
+    /// the rest of the table. Inserts the row when the model is not
+    /// yet present, so admin write paths revising a single vendor
+    /// tariff need not re-author the whole catalogue. Pairs with
+    /// [`Self::pricing_snapshot`] for read-modify-write cycles that
+    /// touch only one model.
+    pub fn replace_model_pricing(&self, model: impl Into<String>, pricing: ModelPricing) {
+        self.pricing.write().set(model, pricing);
+    }
+
+    /// Owned point-in-time clone of the current pricing table.
+    /// `O(models)` allocation; intended for admin diff / inspection
+    /// / external-store reconciliation flows rather than per-charge
+    /// hot paths. Mutations on the returned value do not affect the
+    /// meter — use [`Self::replace_model_pricing`] or
+    /// [`Self::replace_pricing`] to persist changes.
+    #[must_use]
+    pub fn pricing_snapshot(&self) -> PricingTable {
+        self.pricing.read().clone()
+    }
+
     /// Internal: emit a one-shot saturation warn and flip the
     /// `tenants_saturated` flag. Race-tolerant via
     /// `compare_exchange` on the flag — only the first thread
@@ -871,6 +892,117 @@ mod tests {
             .charge(&TenantId::new("alpha"), "gpt-4.1", &usage(1000, 0))
             .unwrap();
         assert_eq!(cost, d("20"));
+    }
+
+    #[test]
+    fn replace_model_pricing_updates_existing_row_atomically() {
+        // Single-row replace leaves untouched rows alone — operators
+        // revising one vendor's tariff don't disturb the rest.
+        let meter = CostMeter::new(pricing());
+        meter.replace_model_pricing(
+            "gpt-4.1",
+            ModelPricing::new(d("20"), d("80"), Decimal::ZERO, Decimal::ZERO),
+        );
+
+        // Touched row reflects the new tariff.
+        let gpt_charge = meter
+            .charge(&TenantId::new("alpha"), "gpt-4.1", &usage(1000, 0))
+            .unwrap();
+        assert_eq!(gpt_charge, d("20"));
+
+        // Untouched row keeps its original tariff.
+        let claude_charge = meter
+            .charge(
+                &TenantId::new("alpha"),
+                "claude-opus-4-7",
+                &usage(1000, 1000),
+            )
+            .unwrap();
+        assert_eq!(claude_charge, d("90"));
+    }
+
+    #[test]
+    fn replace_model_pricing_inserts_when_model_absent() {
+        // Insert-or-replace semantic — new vendor models can join
+        // the table without rebuilding it from scratch.
+        let meter = CostMeter::new(PricingTable::new());
+
+        // Pre-condition: unknown model rejects under the default
+        // `Reject` policy.
+        let err = meter
+            .charge(&TenantId::new("alpha"), "new-vendor-x", &usage(100, 0))
+            .unwrap_err();
+        assert!(matches!(err, PolicyError::UnknownModel(_)));
+
+        meter.replace_model_pricing(
+            "new-vendor-x",
+            ModelPricing::new(d("5"), d("15"), Decimal::ZERO, Decimal::ZERO),
+        );
+
+        // Post-condition: the inserted row charges normally.
+        let cost = meter
+            .charge(&TenantId::new("alpha"), "new-vendor-x", &usage(1000, 1000))
+            .unwrap();
+        assert_eq!(cost, d("20"));
+    }
+
+    #[test]
+    fn pricing_snapshot_returns_owned_copy_isolated_from_subsequent_mutations() {
+        // The snapshot is a point-in-time clone. Mutations on the
+        // returned value do NOT propagate back, and mutations on the
+        // meter after the snapshot do not appear in the held copy.
+        let meter = CostMeter::new(pricing());
+        let mut snap = meter.pricing_snapshot();
+        assert!(snap.get("claude-opus-4-7").is_some());
+
+        // Mutate the snapshot — meter must stay intact.
+        snap.set(
+            "claude-opus-4-7",
+            ModelPricing::new(d("999"), d("999"), Decimal::ZERO, Decimal::ZERO),
+        );
+        let meter_charge = meter
+            .charge(&TenantId::new("alpha"), "claude-opus-4-7", &usage(1000, 0))
+            .unwrap();
+        assert_eq!(
+            meter_charge,
+            d("15"),
+            "meter must ignore snapshot mutations"
+        );
+
+        // Mutate the meter — held snapshot must stay intact.
+        meter.replace_model_pricing(
+            "claude-opus-4-7",
+            ModelPricing::new(d("1"), d("1"), Decimal::ZERO, Decimal::ZERO),
+        );
+        let snap_pricing = snap.get("claude-opus-4-7").unwrap();
+        assert_eq!(
+            snap_pricing.input_per_1k,
+            d("999"),
+            "snapshot must not see meter mutations after capture"
+        );
+    }
+
+    #[test]
+    fn replace_model_pricing_is_observed_by_cloned_meters() {
+        // The single-row swap rides through `Arc<CostMeter>` clones
+        // just like the full-table `replace_pricing`. Config-reload
+        // threads holding their own clone do not coordinate with
+        // charge sites.
+        let meter = CostMeter::new(pricing());
+        let cloned = meter.clone();
+        cloned.replace_model_pricing(
+            "gpt-4.1",
+            ModelPricing::new(d("20"), d("80"), Decimal::ZERO, Decimal::ZERO),
+        );
+
+        let cost = meter
+            .charge(&TenantId::new("alpha"), "gpt-4.1", &usage(1000, 0))
+            .unwrap();
+        assert_eq!(
+            cost,
+            d("20"),
+            "original meter must observe a per-row swap installed via a clone"
+        );
     }
 
     /// Test sink that records every `record_unknown_model` call.

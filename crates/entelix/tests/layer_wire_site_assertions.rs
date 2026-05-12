@@ -76,6 +76,47 @@ where
 {
 }
 
+// ── `layer_named` bound mirrors — NamedLayer is supplied by the
+//    convenience wrapper, so the bound drops that requirement. ──────
+
+fn assert_chat_model_layer_named<L>(_: L)
+where
+    L: Layer<BoxedModelService> + Layer<BoxedStreamingService> + Clone + Send + Sync + 'static,
+    <L as Layer<BoxedModelService>>::Service:
+        Service<ModelInvocation, Response = ModelResponse, Error = Error> + Clone + Send + 'static,
+    <<L as Layer<BoxedModelService>>::Service as Service<ModelInvocation>>::Future: Send + 'static,
+    <L as Layer<BoxedStreamingService>>::Service: Service<StreamingModelInvocation, Response = ModelStream, Error = Error>
+        + Clone
+        + Send
+        + 'static,
+    <<L as Layer<BoxedStreamingService>>::Service as Service<StreamingModelInvocation>>::Future:
+        Send + 'static,
+{
+}
+
+fn assert_tool_registry_layer_named<L>(_: L)
+where
+    L: Layer<BoxedToolService> + Clone + Send + Sync + 'static,
+    L::Service: Service<ToolInvocation, Response = Value, Error = Error> + Clone + Send + 'static,
+    <L::Service as Service<ToolInvocation>>::Future: Send + 'static,
+{
+}
+
+// ── Anonymous pass-through `tower::Layer` — stands in for any
+//    external middleware that does not implement [`NamedLayer`].
+//    Used to pin the `layer_named` opt-in path. ─────────────────────
+
+#[derive(Clone)]
+struct AnonymousPassThroughLayer;
+
+impl<S> Layer<S> for AnonymousPassThroughLayer {
+    type Service = S;
+
+    fn layer(&self, inner: S) -> Self::Service {
+        inner
+    }
+}
+
 // ── No-op ToolDispatchScope for the ScopedToolLayer fixture. ────────
 
 struct NoOpScope;
@@ -132,6 +173,18 @@ fn first_party_tool_spine_layers_compose_via_tool_registry_layer() {
 }
 
 // ── NAME constant audit — pins the canonical role-bucket map. ──────
+
+// ── `layer_named` opt-in path — anonymous (no NamedLayer) external
+//    middleware composes without manual `WithName::new` ceremony. ───
+
+#[test]
+fn anonymous_tower_layer_composes_through_layer_named_helper() {
+    // Compile-time: bound matches `layer_named<L>` (no NamedLayer
+    // bound). Runtime: the supplied name surfaces through
+    // `layer_names()`.
+    assert_chat_model_layer_named(AnonymousPassThroughLayer);
+    assert_tool_registry_layer_named(AnonymousPassThroughLayer);
+}
 
 #[test]
 fn first_party_layer_names_are_canonical_role_buckets() {

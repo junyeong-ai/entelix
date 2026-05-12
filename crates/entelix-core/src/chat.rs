@@ -719,6 +719,39 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         self
     }
 
+    /// Compose a `tower::Layer` whose only difference from a
+    /// first-party entelix layer is the missing [`NamedLayer`]
+    /// impl. Equivalent to `self.layer(WithName::new(name, layer))`
+    /// — the wrapper supplies the identity surfaced through
+    /// [`Self::layer_names`].
+    ///
+    /// Use this for external middleware (`tower::limit`,
+    /// `tower::timeout`, operator-defined wrappers) without
+    /// implementing [`NamedLayer`] yourself. First-party entelix
+    /// layers already implement [`NamedLayer`] and should reach for
+    /// [`Self::layer`] directly so the canonical role name
+    /// (e.g. `"policy"`, `"otel"`, `"retry"`) ships at the call
+    /// site.
+    #[must_use]
+    pub fn layer_named<L>(self, name: &'static str, layer: L) -> Self
+    where
+        L: Layer<BoxedModelService> + Layer<BoxedStreamingService> + Clone + Send + Sync + 'static,
+        <L as Layer<BoxedModelService>>::Service: Service<ModelInvocation, Response = ModelResponse, Error = Error>
+            + Clone
+            + Send
+            + 'static,
+        <<L as Layer<BoxedModelService>>::Service as Service<ModelInvocation>>::Future:
+            Send + 'static,
+        <L as Layer<BoxedStreamingService>>::Service: Service<StreamingModelInvocation, Response = ModelStream, Error = Error>
+            + Clone
+            + Send
+            + 'static,
+        <<L as Layer<BoxedStreamingService>>::Service as Service<StreamingModelInvocation>>::Future:
+            Send + 'static,
+    {
+        self.layer(crate::service::WithName::new(name, layer))
+    }
+
     /// Diagnostic snapshot of the composed layer stack, in
     /// registration order: `[0]` is the first `.layer(...)` call
     /// (innermost, against the leaf `InnerChatModel`); the last

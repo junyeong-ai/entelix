@@ -74,6 +74,8 @@ pub fn entelix_policy::CostMeter::charge(&self, tenant_id: &entelix_core::tenant
 pub fn entelix_policy::CostMeter::drain(&self, tenant_id: &entelix_core::tenant_id::TenantId) -> rust_decimal::decimal::Decimal
 pub const fn entelix_policy::CostMeter::max_tenants(&self) -> usize
 pub fn entelix_policy::CostMeter::new(pricing: entelix_policy::PricingTable) -> Self
+pub fn entelix_policy::CostMeter::pricing_snapshot(&self) -> entelix_policy::PricingTable
+pub fn entelix_policy::CostMeter::replace_model_pricing(&self, model: impl core::convert::Into<alloc::string::String>, pricing: entelix_policy::ModelPricing)
 pub fn entelix_policy::CostMeter::replace_pricing(&self, pricing: entelix_policy::PricingTable)
 pub fn entelix_policy::CostMeter::spent_by(&self, tenant_id: &entelix_core::tenant_id::TenantId) -> rust_decimal::decimal::Decimal
 pub fn entelix_policy::CostMeter::tracked_tenant_count(&self) -> usize

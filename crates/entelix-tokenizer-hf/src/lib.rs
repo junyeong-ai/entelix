@@ -42,7 +42,7 @@
 //! `tracing::warn!` records the underlying error.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-tokenizer-hf/0.4.3")]
+#![doc(html_root_url = "https://docs.rs/entelix-tokenizer-hf/0.5.0")]
 #![deny(missing_docs)]
 #![allow(
     // Vendor-name proper nouns (`HuggingFace`, `Llama`, `Qwen`,

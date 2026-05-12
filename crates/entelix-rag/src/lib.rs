@@ -56,7 +56,7 @@
 //! composition) ARE universal so they live here.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-rag/0.4.3")]
+#![doc(html_root_url = "https://docs.rs/entelix-rag/0.5.0")]
 #![deny(missing_docs)]
 #![allow(
     clippy::doc_markdown,

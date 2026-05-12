@@ -4,45 +4,51 @@ pub use entelix_agents::ApprovalDecision
 pub entelix_agents::AgentEvent::Complete
 pub entelix_agents::AgentEvent::Complete::run_id: alloc::string::String
 pub entelix_agents::AgentEvent::Complete::state: S
+pub entelix_agents::AgentEvent::Complete::tenant_id: entelix_core::tenant_id::TenantId
 pub entelix_agents::AgentEvent::Complete::usage: core::option::Option<entelix_core::run_budget::UsageSnapshot>
 pub entelix_agents::AgentEvent::Failed
+pub entelix_agents::AgentEvent::Failed::envelope: entelix_core::error::ErrorEnvelope
 pub entelix_agents::AgentEvent::Failed::error: alloc::string::String
 pub entelix_agents::AgentEvent::Failed::run_id: alloc::string::String
-pub entelix_agents::AgentEvent::Failed::wire_class: entelix_core::error::ErrorClass
-pub entelix_agents::AgentEvent::Failed::wire_code: &'static str
+pub entelix_agents::AgentEvent::Failed::tenant_id: entelix_core::tenant_id::TenantId
 pub entelix_agents::AgentEvent::Started
 pub entelix_agents::AgentEvent::Started::agent: alloc::string::String
 pub entelix_agents::AgentEvent::Started::parent_run_id: core::option::Option<alloc::string::String>
 pub entelix_agents::AgentEvent::Started::run_id: alloc::string::String
+pub entelix_agents::AgentEvent::Started::tenant_id: entelix_core::tenant_id::TenantId
 pub entelix_agents::AgentEvent::ToolCallApproved
 pub entelix_agents::AgentEvent::ToolCallApproved::run_id: alloc::string::String
+pub entelix_agents::AgentEvent::ToolCallApproved::tenant_id: entelix_core::tenant_id::TenantId
 pub entelix_agents::AgentEvent::ToolCallApproved::tool: alloc::string::String
 pub entelix_agents::AgentEvent::ToolCallApproved::tool_use_id: alloc::string::String
 pub entelix_agents::AgentEvent::ToolCallDenied
 pub entelix_agents::AgentEvent::ToolCallDenied::reason: alloc::string::String
 pub entelix_agents::AgentEvent::ToolCallDenied::run_id: alloc::string::String
+pub entelix_agents::AgentEvent::ToolCallDenied::tenant_id: entelix_core::tenant_id::TenantId
 pub entelix_agents::AgentEvent::ToolCallDenied::tool: alloc::string::String
 pub entelix_agents::AgentEvent::ToolCallDenied::tool_use_id: alloc::string::String
 pub entelix_agents::AgentEvent::ToolComplete
 pub entelix_agents::AgentEvent::ToolComplete::duration_ms: u64
 pub entelix_agents::AgentEvent::ToolComplete::output: serde_json::value::Value
 pub entelix_agents::AgentEvent::ToolComplete::run_id: alloc::string::String
+pub entelix_agents::AgentEvent::ToolComplete::tenant_id: entelix_core::tenant_id::TenantId
 pub entelix_agents::AgentEvent::ToolComplete::tool: alloc::string::String
 pub entelix_agents::AgentEvent::ToolComplete::tool_use_id: alloc::string::String
 pub entelix_agents::AgentEvent::ToolComplete::tool_version: core::option::Option<alloc::string::String>
 pub entelix_agents::AgentEvent::ToolError
 pub entelix_agents::AgentEvent::ToolError::duration_ms: u64
+pub entelix_agents::AgentEvent::ToolError::envelope: entelix_core::error::ErrorEnvelope
 pub entelix_agents::AgentEvent::ToolError::error: alloc::string::String
 pub entelix_agents::AgentEvent::ToolError::error_for_llm: entelix_core::llm_facing::RenderedForLlm<alloc::string::String>
 pub entelix_agents::AgentEvent::ToolError::run_id: alloc::string::String
+pub entelix_agents::AgentEvent::ToolError::tenant_id: entelix_core::tenant_id::TenantId
 pub entelix_agents::AgentEvent::ToolError::tool: alloc::string::String
 pub entelix_agents::AgentEvent::ToolError::tool_use_id: alloc::string::String
 pub entelix_agents::AgentEvent::ToolError::tool_version: core::option::Option<alloc::string::String>
-pub entelix_agents::AgentEvent::ToolError::wire_class: entelix_core::error::ErrorClass
-pub entelix_agents::AgentEvent::ToolError::wire_code: &'static str
 pub entelix_agents::AgentEvent::ToolStart
 pub entelix_agents::AgentEvent::ToolStart::input: serde_json::value::Value
 pub entelix_agents::AgentEvent::ToolStart::run_id: alloc::string::String
+pub entelix_agents::AgentEvent::ToolStart::tenant_id: entelix_core::tenant_id::TenantId
 pub entelix_agents::AgentEvent::ToolStart::tool: alloc::string::String
 pub entelix_agents::AgentEvent::ToolStart::tool_use_id: alloc::string::String
 pub entelix_agents::AgentEvent::ToolStart::tool_version: core::option::Option<alloc::string::String>
@@ -247,10 +253,13 @@ impl core::panic::unwind_safe::RefUnwindSafe for entelix_agents::AlwaysApprove
 impl core::panic::unwind_safe::UnwindSafe for entelix_agents::AlwaysApprove
 pub struct entelix_agents::ApprovalLayer
 impl entelix_agents::ApprovalLayer
+pub const entelix_agents::ApprovalLayer::NAME: &'static str
 pub fn entelix_agents::ApprovalLayer::new(approver: alloc::sync::Arc<dyn entelix_agents::Approver>) -> Self
 pub const fn entelix_agents::ApprovalLayer::with_effect_gate(self, gate: entelix_agents::EffectGate) -> Self
 impl core::clone::Clone for entelix_agents::ApprovalLayer
 pub fn entelix_agents::ApprovalLayer::clone(&self) -> Self
+impl entelix_core::service::NamedLayer for entelix_agents::ApprovalLayer
+pub fn entelix_agents::ApprovalLayer::layer_name(&self) -> &'static str
 impl<S> tower_layer::Layer<S> for entelix_agents::ApprovalLayer
 pub type entelix_agents::ApprovalLayer::Service = entelix_agents::ApprovalService<S>
 pub fn entelix_agents::ApprovalLayer::layer(&self, inner: S) -> Self::Service
@@ -656,6 +665,7 @@ impl !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::ToolApprovalEv
 impl !core::panic::unwind_safe::UnwindSafe for entelix_agents::ToolApprovalEventSinkHandle
 pub struct entelix_agents::ToolEventLayer<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
 impl<S> entelix_agents::ToolEventLayer<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub const entelix_agents::ToolEventLayer<S>::NAME: &'static str
 pub fn entelix_agents::ToolEventLayer<S>::new(sink: alloc::sync::Arc<dyn entelix_agents::AgentEventSink<S>>) -> Self
 impl<S, Inner> tower_layer::Layer<Inner> for entelix_agents::ToolEventLayer<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
 pub type entelix_agents::ToolEventLayer<S>::Service = entelix_agents::ToolEventService<S, Inner>
@@ -664,6 +674,8 @@ impl<S> core::clone::Clone for entelix_agents::ToolEventLayer<S> where S: core::
 pub fn entelix_agents::ToolEventLayer<S>::clone(&self) -> Self
 impl<S> core::fmt::Debug for entelix_agents::ToolEventLayer<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_agents::ToolEventLayer<S>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<S> entelix_core::service::NamedLayer for entelix_agents::ToolEventLayer<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::ToolEventLayer<S>::layer_name(&self) -> &'static str
 impl<S> core::marker::Freeze for entelix_agents::ToolEventLayer<S>
 impl<S> core::marker::Send for entelix_agents::ToolEventLayer<S>
 impl<S> core::marker::Sync for entelix_agents::ToolEventLayer<S>
@@ -689,12 +701,15 @@ impl<S, Inner> !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::Tool
 impl<S, Inner> !core::panic::unwind_safe::UnwindSafe for entelix_agents::ToolEventService<S, Inner>
 pub struct entelix_agents::ToolHookLayer
 impl entelix_agents::ToolHookLayer
+pub const entelix_agents::ToolHookLayer::NAME: &'static str
 pub const fn entelix_agents::ToolHookLayer::hooks(&self) -> &entelix_agents::ToolHookRegistry
 pub const fn entelix_agents::ToolHookLayer::new(hooks: entelix_agents::ToolHookRegistry) -> Self
 impl core::clone::Clone for entelix_agents::ToolHookLayer
 pub fn entelix_agents::ToolHookLayer::clone(&self) -> entelix_agents::ToolHookLayer
 impl core::default::Default for entelix_agents::ToolHookLayer
 pub fn entelix_agents::ToolHookLayer::default() -> entelix_agents::ToolHookLayer
+impl entelix_core::service::NamedLayer for entelix_agents::ToolHookLayer
+pub fn entelix_agents::ToolHookLayer::layer_name(&self) -> &'static str
 impl<Inner> tower_layer::Layer<Inner> for entelix_agents::ToolHookLayer
 pub type entelix_agents::ToolHookLayer::Service = entelix_agents::ToolHookService<Inner>
 pub fn entelix_agents::ToolHookLayer::layer(&self, inner: Inner) -> Self::Service
@@ -788,8 +803,8 @@ pub fn entelix_agents::MessageRunnableCompactionExt::with_compaction(self, compa
 impl<R> entelix_agents::MessageRunnableCompactionExt for R where R: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + core::marker::Sized
 pub fn R::with_compaction(self, compactor: alloc::sync::Arc<dyn entelix_session::compaction::Compactor>, threshold_chars: usize) -> entelix_agents::RunnableCompacting<Self>
 pub trait entelix_agents::ToolApprovalEventSink: core::marker::Send + core::marker::Sync + 'static
-pub fn entelix_agents::ToolApprovalEventSink::record_approved<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, run_id: &'life1 str, tool_use_id: &'life2 str, tool: &'life3 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = ()> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
-pub fn entelix_agents::ToolApprovalEventSink::record_denied<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, run_id: &'life1 str, tool_use_id: &'life2 str, tool: &'life3 str, reason: &'life4 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = ()> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_agents::ToolApprovalEventSink::record_approved<'life0, 'life1, 'life2, 'life3, 'life4, 'async_trait>(&'life0 self, tenant_id: &'life1 entelix_core::tenant_id::TenantId, run_id: &'life2 str, tool_use_id: &'life3 str, tool: &'life4 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = ()> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait
+pub fn entelix_agents::ToolApprovalEventSink::record_denied<'life0, 'life1, 'life2, 'life3, 'life4, 'life5, 'async_trait>(&'life0 self, tenant_id: &'life1 entelix_core::tenant_id::TenantId, run_id: &'life2 str, tool_use_id: &'life3 str, tool: &'life4 str, reason: &'life5 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = ()> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait, 'life4: 'async_trait, 'life5: 'async_trait
 pub trait entelix_agents::ToolHook: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_agents::ToolHook::after_tool<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, _request: &'life1 entelix_agents::ToolHookRequest, _output: &'life2 serde_json::value::Value, _ctx: &'life3 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
 pub fn entelix_agents::ToolHook::before_tool<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _request: &'life1 entelix_agents::ToolHookRequest, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<entelix_agents::ToolHookDecision>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait

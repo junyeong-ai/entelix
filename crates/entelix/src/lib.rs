@@ -53,12 +53,12 @@ pub use entelix_core::transports;
 pub use entelix_core::{
     AgentContext, ApprovalDecision, AuditSink, AuditSinkHandle, BudgetCostEstimator,
     ByteCountTokenCounter, ChatModel, ChatModelConfig, Clock, CostCalculator, DEFAULT_TENANT_ID,
-    Error, ErrorClass, ExecutionContext, Extensions, InterruptionKind, InterruptionPhase,
-    LlmFacingSchema, LlmRenderable, OutputValidator, PendingApprovalDecisions, ProviderErrorKind,
-    RenderedForLlm, RequestOverrides, Result, RunBudget, RunOverrides, SystemClock, TenantId,
-    ThreadKey, TokenCounter, TokenCounterRegistry, TokenCounterResolution, ToolCostCalculator,
-    TypedModelStream, UsageLimitBreach, UsageSnapshot, install_default_tls, interrupt,
-    interrupt_with,
+    Error, ErrorClass, ErrorEnvelope, ExecutionContext, Extensions, InterruptionKind,
+    InterruptionPhase, LlmFacingSchema, LlmRenderable, NamedLayer, OutputValidator,
+    PendingApprovalDecisions, ProviderErrorKind, RenderedForLlm, RequestOverrides, Result,
+    RunBudget, RunOverrides, SystemClock, TenantId, ThreadKey, TokenCounter, TokenCounterRegistry,
+    TokenCounterResolution, ToolCostCalculator, TypedModelStream, UsageLimitBreach, UsageSnapshot,
+    WithName, install_default_tls, interrupt, interrupt_with,
 };
 
 // ── Sub-crate re-exports — the 90% surface for crates that don't
@@ -193,8 +193,8 @@ pub use entelix_policy::{
     Budget, CostMeter, DEFAULT_MAX_TENANTS as POLICY_DEFAULT_MAX_TENANTS,
     MAX_WARNED_MODELS as POLICY_MAX_WARNED_MODELS, ModelPricing, PiiPattern, PiiRedactor,
     PolicyError, PolicyLayer, PolicyRegistry, PolicyResult, PolicyService, PricingTable,
-    QuotaLimiter, RateLimiter, RegexRedactor, TenantPolicy, TenantPolicyBuilder,
-    TokenBucketLimiter, UnknownModelPolicy, default_pii_patterns, luhn_valid,
+    QuotaLimiter, RateLimiter, RegexRedactor, TenantPolicy, TokenBucketLimiter, UnknownModelPolicy,
+    UnknownModelSink, default_pii_patterns, luhn_valid,
 };
 pub use entelix_prompt::{
     ChatFewShotPromptTemplate, ChatPromptPart, ChatPromptTemplate, Example, ExampleSelector,

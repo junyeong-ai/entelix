@@ -79,6 +79,7 @@ pub fn entelix_policy::CostMeter::spent_by(&self, tenant_id: &entelix_core::tena
 pub fn entelix_policy::CostMeter::tracked_tenant_count(&self) -> usize
 pub const fn entelix_policy::CostMeter::with_max_tenants(self, cap: usize) -> Self
 pub const fn entelix_policy::CostMeter::with_unknown_model_policy(self, policy: entelix_policy::UnknownModelPolicy) -> Self
+pub fn entelix_policy::CostMeter::with_unknown_model_sink(self, sink: alloc::sync::Arc<dyn entelix_policy::UnknownModelSink>) -> Self
 impl core::clone::Clone for entelix_policy::CostMeter
 pub fn entelix_policy::CostMeter::clone(&self) -> entelix_policy::CostMeter
 impl core::fmt::Debug for entelix_policy::CostMeter
@@ -143,12 +144,15 @@ impl core::panic::unwind_safe::RefUnwindSafe for entelix_policy::PiiPattern
 impl core::panic::unwind_safe::UnwindSafe for entelix_policy::PiiPattern
 pub struct entelix_policy::PolicyLayer
 impl entelix_policy::PolicyLayer
+pub const entelix_policy::PolicyLayer::NAME: &'static str
 pub fn entelix_policy::PolicyLayer::new(manager: alloc::sync::Arc<entelix_policy::PolicyRegistry>) -> Self
 pub const fn entelix_policy::PolicyLayer::with_rate_tokens(self, tokens: u32) -> Self
 impl core::clone::Clone for entelix_policy::PolicyLayer
 pub fn entelix_policy::PolicyLayer::clone(&self) -> entelix_policy::PolicyLayer
 impl core::fmt::Debug for entelix_policy::PolicyLayer
 pub fn entelix_policy::PolicyLayer::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::service::NamedLayer for entelix_policy::PolicyLayer
+pub fn entelix_policy::PolicyLayer::layer_name(&self) -> &'static str
 impl<S> tower_layer::Layer<S> for entelix_policy::PolicyLayer
 pub type entelix_policy::PolicyLayer::Service = entelix_policy::PolicyService<S>
 pub fn entelix_policy::PolicyLayer::layer(&self, inner: S) -> Self::Service
@@ -161,6 +165,8 @@ impl !core::panic::unwind_safe::RefUnwindSafe for entelix_policy::PolicyLayer
 impl !core::panic::unwind_safe::UnwindSafe for entelix_policy::PolicyLayer
 pub struct entelix_policy::PolicyRegistry
 impl entelix_policy::PolicyRegistry
+pub fn entelix_policy::PolicyRegistry::mutate_fallback<F>(&self, f: F) where F: core::ops::function::FnOnce(&entelix_policy::TenantPolicy) -> entelix_policy::TenantPolicy
+pub fn entelix_policy::PolicyRegistry::mutate_tenant<F>(&self, tenant_id: &entelix_core::tenant_id::TenantId, f: F) where F: core::ops::function::FnOnce(&entelix_policy::TenantPolicy) -> entelix_policy::TenantPolicy
 pub fn entelix_policy::PolicyRegistry::new() -> Self
 pub fn entelix_policy::PolicyRegistry::policy_for(&self, tenant_id: &entelix_core::tenant_id::TenantId) -> alloc::sync::Arc<entelix_policy::TenantPolicy>
 pub fn entelix_policy::PolicyRegistry::register(&self, tenant_id: entelix_core::tenant_id::TenantId, policy: entelix_policy::TenantPolicy)
@@ -270,12 +276,14 @@ impl core::panic::unwind_safe::RefUnwindSafe for entelix_policy::RegexRedactor
 impl core::panic::unwind_safe::UnwindSafe for entelix_policy::RegexRedactor
 pub struct entelix_policy::TenantPolicy
 impl entelix_policy::TenantPolicy
-pub fn entelix_policy::TenantPolicy::builder() -> entelix_policy::TenantPolicyBuilder
 pub fn entelix_policy::TenantPolicy::cost_meter(&self) -> core::option::Option<&alloc::sync::Arc<entelix_policy::CostMeter>>
 pub fn entelix_policy::TenantPolicy::is_empty(&self) -> bool
 pub fn entelix_policy::TenantPolicy::new() -> Self
 pub fn entelix_policy::TenantPolicy::quota(&self) -> core::option::Option<&alloc::sync::Arc<entelix_policy::QuotaLimiter>>
 pub fn entelix_policy::TenantPolicy::redactor(&self) -> core::option::Option<&alloc::sync::Arc<dyn entelix_policy::PiiRedactor>>
+pub fn entelix_policy::TenantPolicy::with_cost_meter(self, meter: alloc::sync::Arc<entelix_policy::CostMeter>) -> Self
+pub fn entelix_policy::TenantPolicy::with_quota(self, quota: alloc::sync::Arc<entelix_policy::QuotaLimiter>) -> Self
+pub fn entelix_policy::TenantPolicy::with_redactor(self, redactor: alloc::sync::Arc<dyn entelix_policy::PiiRedactor>) -> Self
 impl core::clone::Clone for entelix_policy::TenantPolicy
 pub fn entelix_policy::TenantPolicy::clone(&self) -> entelix_policy::TenantPolicy
 impl core::default::Default for entelix_policy::TenantPolicy
@@ -289,21 +297,6 @@ impl core::marker::Unpin for entelix_policy::TenantPolicy
 impl core::marker::UnsafeUnpin for entelix_policy::TenantPolicy
 impl !core::panic::unwind_safe::RefUnwindSafe for entelix_policy::TenantPolicy
 impl !core::panic::unwind_safe::UnwindSafe for entelix_policy::TenantPolicy
-pub struct entelix_policy::TenantPolicyBuilder
-impl entelix_policy::TenantPolicyBuilder
-pub fn entelix_policy::TenantPolicyBuilder::build(self) -> entelix_core::error::Result<entelix_policy::TenantPolicy>
-pub fn entelix_policy::TenantPolicyBuilder::with_cost_meter(self, meter: alloc::sync::Arc<entelix_policy::CostMeter>) -> Self
-pub fn entelix_policy::TenantPolicyBuilder::with_quota(self, quota: alloc::sync::Arc<entelix_policy::QuotaLimiter>) -> Self
-pub fn entelix_policy::TenantPolicyBuilder::with_redactor(self, redactor: alloc::sync::Arc<dyn entelix_policy::PiiRedactor>) -> Self
-impl core::default::Default for entelix_policy::TenantPolicyBuilder
-pub fn entelix_policy::TenantPolicyBuilder::default() -> entelix_policy::TenantPolicyBuilder
-impl core::marker::Freeze for entelix_policy::TenantPolicyBuilder
-impl core::marker::Send for entelix_policy::TenantPolicyBuilder
-impl core::marker::Sync for entelix_policy::TenantPolicyBuilder
-impl core::marker::Unpin for entelix_policy::TenantPolicyBuilder
-impl core::marker::UnsafeUnpin for entelix_policy::TenantPolicyBuilder
-impl !core::panic::unwind_safe::RefUnwindSafe for entelix_policy::TenantPolicyBuilder
-impl !core::panic::unwind_safe::UnwindSafe for entelix_policy::TenantPolicyBuilder
 pub struct entelix_policy::TokenBucketLimiter
 impl entelix_policy::TokenBucketLimiter
 pub fn entelix_policy::TokenBucketLimiter::key_count(&self) -> usize
@@ -334,6 +327,8 @@ pub trait entelix_policy::RateLimiter: core::marker::Send + core::marker::Sync +
 pub fn entelix_policy::RateLimiter::try_acquire<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 str, tokens: u32) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_policy::PolicyResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 impl entelix_policy::RateLimiter for entelix_policy::TokenBucketLimiter
 pub fn entelix_policy::TokenBucketLimiter::try_acquire<'life0, 'life1, 'async_trait>(&'life0 self, key: &'life1 str, tokens: u32) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_policy::PolicyResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub trait entelix_policy::UnknownModelSink: core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_policy::UnknownModelSink::record_unknown_model(&self, tenant: &entelix_core::tenant_id::TenantId, model: &str)
 pub fn entelix_policy::default_pii_patterns() -> alloc::vec::Vec<entelix_policy::PiiPattern>
 pub fn entelix_policy::luhn_valid(s: &str) -> bool
 pub type entelix_policy::PolicyResult<T> = core::result::Result<T, entelix_policy::PolicyError>

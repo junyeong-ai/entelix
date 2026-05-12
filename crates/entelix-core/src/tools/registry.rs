@@ -146,8 +146,9 @@ type LayerFactory<D> = Arc<dyn Fn(InnerToolService<D>) -> BoxedToolService + Sen
 
 /// Append-only tool registry with a layered dispatch path.
 ///
-/// `D` defaults to `()`. Deps-less registries (`ToolRegistry`,
-/// `ToolRegistry::new()`) work exactly as in slice 100. Operator-
+/// `D` defaults to `()` for the deps-less zero-cost path —
+/// [`ToolRegistry::new()`] hands out an empty registry whose
+/// `Tool<D>::execute` body receives `()` as `ctx.deps()`. Operator-
 /// typed tools use [`ToolRegistry::with_deps`] to thread typed
 /// handles into every `Tool<D>::execute` body via the
 /// [`AgentContext<D>`] carrier.
@@ -158,6 +159,11 @@ pub struct ToolRegistry<D = ()> {
     /// means "no layers" — dispatch returns the inner service
     /// boxed.
     factory: Option<LayerFactory<D>>,
+    /// Diagnostic stack — names captured at [`Self::layer`] compose
+    /// time via [`crate::NamedLayer::layer_name`], in insertion order
+    /// (innermost composed first → outermost composed last). Mirrors
+    /// [`crate::ChatModel::layer_names`] for the tool-dispatch spine.
+    layer_names: Vec<&'static str>,
     /// Cache stamping strategy applied at [`Self::tool_specs`]
     /// materialisation time. Default [`ToolCacheMode::None`] —
     /// specs leave unchanged.
@@ -170,6 +176,7 @@ impl<D: Clone> Clone for ToolRegistry<D> {
             by_name: self.by_name.clone(),
             deps: self.deps.clone(),
             factory: self.factory.clone(),
+            layer_names: self.layer_names.clone(),
             cache_mode: self.cache_mode,
         }
     }
@@ -201,6 +208,7 @@ impl<D: Clone + Send + Sync + 'static> ToolRegistry<D> {
             by_name: HashMap::new(),
             deps,
             factory: None,
+            layer_names: Vec::new(),
             cache_mode: ToolCacheMode::None,
         }
     }
@@ -324,14 +332,32 @@ impl<D: Clone + Send + Sync + 'static> ToolRegistry<D> {
     /// Value, Error = Error>`. Layers operate on the D-erased
     /// [`BoxedToolService`] boundary so the same layer types work
     /// across every `D`.
+    ///
+    /// ## Introspection
+    ///
+    /// Every layer is recorded in [`Self::layer_names`] at compose
+    /// time via [`crate::NamedLayer::layer_name`]. First-party
+    /// entelix tool-side layers (`RetryToolLayer`, `ApprovalLayer`,
+    /// `ToolEventLayer<S>`, `ToolHookLayer`, `ScopedToolLayer`, plus
+    /// the shared `PolicyLayer` / `OtelLayer`) implement
+    /// [`crate::NamedLayer`] directly; external `tower::Layer`
+    /// middleware wraps through [`crate::service::WithName`] to
+    /// participate.
     #[must_use]
     pub fn layer<L>(mut self, layer: L) -> Self
     where
-        L: Layer<BoxedToolService> + Clone + Send + Sync + 'static,
+        L: Layer<BoxedToolService> + crate::NamedLayer + Clone + Send + Sync + 'static,
         L::Service:
             Service<ToolInvocation, Response = Value, Error = Error> + Clone + Send + 'static,
         <L::Service as Service<ToolInvocation>>::Future: Send + 'static,
     {
+        // Capture the static name BEFORE the type-erasing closure
+        // swallows `L`. The factory chain (Arc<dyn Fn(InnerToolService)
+        // -> BoxedToolService>) discards concrete layer types, so
+        // introspection has to happen here at compose time. Mirrors
+        // `ChatModel::layer`.
+        self.layer_names.push(layer.layer_name());
+
         let prev = self.factory.take();
         let layer = layer;
         let new_factory: LayerFactory<D> = Arc::new(move |inner: InnerToolService<D>| {
@@ -343,6 +369,20 @@ impl<D: Clone + Send + Sync + 'static> ToolRegistry<D> {
         });
         self.factory = Some(new_factory);
         self
+    }
+
+    /// Diagnostic snapshot of the composed layer stack, in
+    /// registration order: `[0]` is the first `.layer(...)` call
+    /// (innermost, against the leaf inner tool service); the last
+    /// element is the most recent registration (outermost, sees
+    /// requests first). Empty for a registry with no layers composed.
+    ///
+    /// Mirrors [`crate::ChatModel::layer_names`] for the tool-
+    /// dispatch spine. Operators correlate the two channels at boot
+    /// to verify their wiring matches the expected production shape.
+    #[must_use]
+    pub fn layer_names(&self) -> &[&'static str] {
+        &self.layer_names
     }
 
     /// Borrow the registry-held deps. Operators typically thread
@@ -403,6 +443,7 @@ impl<D: Clone + Send + Sync + 'static> ToolRegistry<D> {
             by_name,
             deps: self.deps.clone(),
             factory: self.factory.clone(),
+            layer_names: self.layer_names.clone(),
             cache_mode: self.cache_mode,
         }
     }
@@ -493,7 +534,7 @@ impl<D: Send + Sync + 'static> std::fmt::Debug for ToolRegistry<D> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ToolRegistry")
             .field("tools", &self.by_name.keys().collect::<Vec<_>>())
-            .field("layers_attached", &self.factory.is_some())
+            .field("layers", &self.layer_names)
             .finish()
     }
 }
@@ -552,6 +593,38 @@ mod tests {
     }
 
     #[test]
+    fn layer_names_track_compose_order_and_namedlayer_identity() {
+        use crate::WithName;
+
+        let bare = ToolRegistry::new();
+        assert!(
+            bare.layer_names().is_empty(),
+            "freshly built registry has no layers"
+        );
+
+        let log_a = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let log_b = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let reg = ToolRegistry::new()
+            .layer(LabelLayer {
+                label: 'A',
+                log: log_a,
+            })
+            .layer(WithName::new(
+                "external",
+                LabelLayer {
+                    label: 'B',
+                    log: log_b,
+                },
+            ));
+
+        assert_eq!(
+            reg.layer_names(),
+            ["label", "external"],
+            "layer_names tracks insertion order; WithName supplies a name for external middleware"
+        );
+    }
+
+    #[test]
     fn registry_iterators_and_accessors() {
         let reg = ToolRegistry::new()
             .register(Arc::new(EchoTool::new()))
@@ -606,6 +679,12 @@ mod tests {
                 label: self.label,
                 log: Arc::clone(&self.log),
             }
+        }
+    }
+
+    impl crate::NamedLayer for LabelLayer {
+        fn layer_name(&self) -> &'static str {
+            "label"
         }
     }
 

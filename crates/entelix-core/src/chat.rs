@@ -36,7 +36,7 @@ use crate::ir::{
 };
 use crate::overrides::{RequestOverrides, RunOverrides};
 use crate::service::{
-    BoxedModelService, BoxedStreamingService, ModelInvocation, ModelStream,
+    BoxedModelService, BoxedStreamingService, ModelInvocation, ModelStream, NamedLayer,
     StreamingModelInvocation,
 };
 use crate::stream::{StreamDelta, tap_aggregator};
@@ -447,6 +447,12 @@ pub struct ChatModel<C: Codec + 'static, T: Transport + 'static> {
     config: ChatModelConfig,
     factory: Option<LayerFactory<C, T>>,
     streaming_factory: Option<StreamingLayerFactory<C, T>>,
+    /// Diagnostic stack — names captured at [`Self::layer`] compose
+    /// time, in insertion order (innermost composed first → outermost
+    /// composed last). The wrapped service stacks last-composed
+    /// outermost, so this `Vec` reads bottom-to-top relative to
+    /// request flow.
+    layer_names: Vec<&'static str>,
 }
 
 impl<C: Codec + 'static, T: Transport + 'static> Clone for ChatModel<C, T> {
@@ -456,6 +462,7 @@ impl<C: Codec + 'static, T: Transport + 'static> Clone for ChatModel<C, T> {
             config: self.config.clone(),
             factory: self.factory.clone(),
             streaming_factory: self.streaming_factory.clone(),
+            layer_names: self.layer_names.clone(),
         }
     }
 }
@@ -474,6 +481,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
             config: ChatModelConfig::new(model),
             factory: None,
             streaming_factory: None,
+            layer_names: Vec::new(),
         }
     }
 
@@ -526,7 +534,7 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
 
     /// Wire an operator-supplied [`TokenCounter`](crate::TokenCounter)
     /// for pre-flight budget checks and content-economy estimation.
-    /// Replaces any previously-configured counter.
+    /// Each call replaces the configured counter — the last call wins.
     ///
     /// Vendor-accurate counters (tiktoken, HuggingFace, ko-mecab)
     /// ship as companion crates so the core stays
@@ -608,9 +616,11 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
     /// one-shot path (`Service<ModelInvocation, Response =
     /// ModelResponse>`) and the streaming path
     /// (`Service<StreamingModelInvocation, Response =
-    /// ModelStream>`). Layers run in registration order around
-    /// each leaf — the first-registered layer is *outermost*
-    /// (sees the request first, the response last).
+    /// ModelStream>`). Each `.layer(L)` wraps `L` *around* the
+    /// already-composed stack, so the **last-registered layer is
+    /// outermost** (sees the request first, the response last) and
+    /// the first-registered layer sits innermost against the leaf
+    /// `InnerChatModel`.
     ///
     /// `PolicyLayer` and `OtelLayer` from the policy / otel
     /// crates satisfy both spines, so a single `.layer(...)` call
@@ -632,10 +642,34 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
     /// response is meaningless) implement a pass-through
     /// `Layer<BoxedStreamingService>` so they satisfy the
     /// constraint without affecting streaming dispatch.
+    ///
+    /// ## Introspection
+    ///
+    /// Every layer is recorded in [`Self::layer_names`] at compose
+    /// time via [`NamedLayer::layer_name`]. First-party entelix
+    /// layers (`PolicyLayer`, `OtelLayer`) implement
+    /// [`NamedLayer`] directly; external `tower::Layer` middleware
+    /// wraps through [`crate::service::WithName`] to participate:
+    ///
+    /// ```ignore
+    /// use entelix_core::WithName;
+    ///
+    /// chat_model
+    ///     .layer(PolicyLayer::new(registry))
+    ///     .layer(OtelLayer::new("anthropic"))
+    ///     .layer(WithName::new("concurrency", tower::limit::ConcurrencyLimitLayer::new(10)));
+    /// // chat_model.layer_names() == ["policy", "otel", "concurrency"]
+    /// ```
     #[must_use]
     pub fn layer<L>(mut self, layer: L) -> Self
     where
-        L: Layer<BoxedModelService> + Layer<BoxedStreamingService> + Clone + Send + Sync + 'static,
+        L: Layer<BoxedModelService>
+            + Layer<BoxedStreamingService>
+            + NamedLayer
+            + Clone
+            + Send
+            + Sync
+            + 'static,
         <L as Layer<BoxedModelService>>::Service: Service<ModelInvocation, Response = ModelResponse, Error = Error>
             + Clone
             + Send
@@ -649,6 +683,12 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         <<L as Layer<BoxedStreamingService>>::Service as Service<StreamingModelInvocation>>::Future:
             Send + 'static,
     {
+        // Capture the static name BEFORE the type-erasing closure
+        // swallows `L`. The factory chain (Arc<dyn Fn(InnerChatModel)
+        // -> BoxedModelService>) discards concrete layer types, so
+        // introspection has to happen here at compose time.
+        self.layer_names.push(layer.layer_name());
+
         let prev = self.factory.take();
         let prev_streaming = self.streaming_factory.take();
         let layer_one_shot = layer.clone();
@@ -677,6 +717,22 @@ impl<C: Codec + 'static, T: Transport + 'static> ChatModel<C, T> {
         self.factory = Some(new_factory);
         self.streaming_factory = Some(new_streaming);
         self
+    }
+
+    /// Diagnostic snapshot of the composed layer stack, in
+    /// registration order: `[0]` is the first `.layer(...)` call
+    /// (innermost, against the leaf `InnerChatModel`); the last
+    /// element is the most recent registration (outermost, sees
+    /// requests first). Empty for a `ChatModel` with no layers
+    /// composed.
+    ///
+    /// Surfaced for boot-time wiring assertions, debug dashboards,
+    /// and conditional-layer audits. The values are
+    /// [`NamedLayer::layer_name`] outputs — `&'static str` and
+    /// patch-version-stable per the trait's contract.
+    #[must_use]
+    pub fn layer_names(&self) -> &[&'static str] {
+        &self.layer_names
     }
 
     /// Borrow the configured codec — exposes its `name()` and
@@ -1107,7 +1163,7 @@ impl<C: Codec + 'static, T: Transport + 'static> std::fmt::Debug for ChatModel<C
             .field("model", &self.config.model)
             .field("codec", &self.codec().name())
             .field("transport", &self.transport().name())
-            .field("layers_attached", &self.factory.is_some())
+            .field("layers", &self.layer_names)
             .finish()
     }
 }

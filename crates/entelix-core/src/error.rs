@@ -352,75 +352,127 @@ impl Error {
         self
     }
 
-    /// Stable wire identifier for this error — a snake-case ASCII
-    /// string suitable as a key into an integrator's i18n catalogue,
-    /// metric label, or typed wire envelope.
+    /// Typed wire shape for this error — the **single canonical
+    /// inspector** integrators read at sink / SSE / audit boundaries
+    /// instead of parsing `Display` output. `ErrorEnvelope` is `Copy`,
+    /// so call sites cache or pass-by-value without ceremony.
     ///
-    /// Guarantee: **the returned string never changes across patch
-    /// versions**. Adding a new [`Error`] variant adds a new wire
-    /// code; existing codes are forever-stable. Integrators map one
-    /// branch per code instead of parsing `Display` output.
+    /// Guarantees (patch-version stable, mirrored on `ErrorEnvelope`'s
+    /// own doc-comment):
+    /// - `wire_code` is a snake-case ASCII `&'static str` suitable as
+    ///   an i18n key, metric label, or typed-wire-envelope key. Adding
+    ///   a new [`Error`] variant adds a new code; existing codes are
+    ///   forever-stable.
+    /// - `wire_class` is the coarse responsibility split (`Client` for
+    ///   caller-actionable failures, `Server` for SDK/vendor-side
+    ///   failures). Orthogonal to retryability.
+    /// - `retry_after_secs` carries the vendor's `Retry-After` hint
+    ///   converted to whole seconds when the originating
+    ///   [`Self::Provider`] error captured one; `None` for every other
+    ///   variant or Provider error without a hint.
+    /// - `provider_status` carries the raw HTTP status when the error
+    ///   is `Provider` with [`ProviderErrorKind::Http`]; `None`
+    ///   otherwise. Lets sinks/audit retain `429 vs 503` granularity
+    ///   even though `wire_code` collapses them onto coarse buckets.
     ///
-    /// HTTP provider failures bucket on the status family rather than
-    /// the exact code so vendor drift (a new 4xx status added by an
-    /// upstream) is silently absorbed into the right class without an
-    /// SDK release.
-    pub fn wire_code(&self) -> &'static str {
-        match self {
-            Self::InvalidRequest(_) => "invalid_request",
-            Self::Config(_) => "config_error",
-            Self::Provider { kind, .. } => match kind {
-                ProviderErrorKind::Network => "transport_failure",
-                ProviderErrorKind::Tls => "tls_failure",
-                ProviderErrorKind::Dns => "dns_failure",
-                ProviderErrorKind::Http(status) => match *status {
-                    429 => "rate_limited",
-                    401 | 403 => "upstream_unauthorized",
-                    s if (400..500).contains(&s) => "upstream_invalid",
-                    s if (500..600).contains(&s) => "upstream_unavailable",
-                    _ => "upstream_error",
+    /// HTTP provider failures bucket on the status family for
+    /// `wire_code` so vendor drift (a new 4xx) absorbs into the right
+    /// class without an SDK release; the raw status is still observable
+    /// through `provider_status` for operators that want the exact
+    /// signal.
+    pub fn envelope(&self) -> ErrorEnvelope {
+        let (wire_code, wire_class) = self.wire_signal();
+        let (retry_after_secs, provider_status) = match self {
+            Self::Provider {
+                kind, retry_after, ..
+            } => (
+                retry_after.map(|d| d.as_secs()),
+                match kind {
+                    ProviderErrorKind::Http(status) => Some(*status),
+                    _ => None,
                 },
-            },
-            Self::Auth(_) => "auth_failed",
-            Self::Cancelled => "cancelled",
-            Self::DeadlineExceeded => "deadline_exceeded",
-            Self::Interrupted { .. } => "interrupted",
-            Self::ModelRetry { .. } => "model_retry_exhausted",
-            Self::Serde(_) => "serde",
-            Self::UsageLimitExceeded(_) => "quota_exceeded",
+            ),
+            _ => (None, None),
+        };
+        ErrorEnvelope {
+            wire_code,
+            wire_class,
+            retry_after_secs,
+            provider_status,
         }
     }
 
-    /// Coarse responsibility class — `Client` for caller-side failures
-    /// (bad input, expired credentials, exceeded quota) and `Server`
-    /// for SDK/vendor-side failures (deployment misconfiguration,
-    /// upstream unavailability, transport breakage).
-    ///
-    /// Orthogonal to retry semantics: a `Server`-class error may still
-    /// be permanent and a `Client`-class error may still be a
-    /// transient rate limit. Retry decisions consume the typed
-    /// `Error::Provider::retry_after` and `RetryClassifier` surfaces
-    /// (invariant 17), not this method.
-    pub fn wire_class(&self) -> ErrorClass {
+    /// Internal matcher producing the `(wire_code, wire_class)` pair.
+    /// Single match arm per [`Error`] variant keeps the two signals
+    /// from drifting apart on future variant additions — they're
+    /// chosen together, not from two parallel `match` expressions.
+    fn wire_signal(&self) -> (&'static str, ErrorClass) {
         match self {
-            Self::InvalidRequest(_)
-            | Self::Auth(_)
-            | Self::Cancelled
-            | Self::Interrupted { .. }
-            | Self::ModelRetry { .. }
-            | Self::UsageLimitExceeded(_) => ErrorClass::Client,
-            Self::Config(_) | Self::DeadlineExceeded | Self::Serde(_) => ErrorClass::Server,
+            Self::InvalidRequest(_) => ("invalid_request", ErrorClass::Client),
+            Self::Config(_) => ("config_error", ErrorClass::Server),
             Self::Provider { kind, .. } => match kind {
-                ProviderErrorKind::Network | ProviderErrorKind::Tls | ProviderErrorKind::Dns => {
-                    ErrorClass::Server
-                }
+                ProviderErrorKind::Network => ("transport_failure", ErrorClass::Server),
+                ProviderErrorKind::Tls => ("tls_failure", ErrorClass::Server),
+                ProviderErrorKind::Dns => ("dns_failure", ErrorClass::Server),
                 ProviderErrorKind::Http(status) => match *status {
-                    s if (400..500).contains(&s) => ErrorClass::Client,
-                    _ => ErrorClass::Server,
+                    429 => ("rate_limited", ErrorClass::Client),
+                    401 | 403 => ("upstream_unauthorized", ErrorClass::Client),
+                    s if (400..500).contains(&s) => ("upstream_invalid", ErrorClass::Client),
+                    s if (500..600).contains(&s) => ("upstream_unavailable", ErrorClass::Server),
+                    _ => ("upstream_error", ErrorClass::Server),
                 },
             },
+            Self::Auth(_) => ("auth_failed", ErrorClass::Client),
+            Self::Cancelled => ("cancelled", ErrorClass::Client),
+            Self::DeadlineExceeded => ("deadline_exceeded", ErrorClass::Server),
+            Self::Interrupted { .. } => ("interrupted", ErrorClass::Client),
+            Self::ModelRetry { .. } => ("model_retry_exhausted", ErrorClass::Client),
+            Self::Serde(_) => ("serde", ErrorClass::Server),
+            Self::UsageLimitExceeded(_) => ("quota_exceeded", ErrorClass::Client),
         }
     }
+}
+
+/// Typed wire shape of an [`Error`] — the canonical inspector at
+/// sink / SSE / audit boundaries. Built by [`Error::envelope`]; never
+/// constructed externally so the field set evolves under the same
+/// patch-version-stability guarantee as `wire_code` itself.
+///
+/// `Copy` is intentional: every field is 16 bytes or smaller. Carry
+/// the envelope by value through sink fan-out, OTel attribute
+/// stamping, and SSE serialisation without `.clone()` ceremony.
+///
+/// ## Field semantics
+///
+/// - `wire_code` — patch-version-stable snake-case `&'static str`
+///   bucketing the error onto an i18n / metric / typed-wire key. HTTP
+///   provider failures bucket on the status family so vendor drift
+///   does not require an SDK release.
+/// - `wire_class` — coarse responsibility split. `Client` for
+///   caller-actionable failures, `Server` for SDK/vendor-side
+///   failures. Orthogonal to retry semantics.
+/// - `retry_after_secs` — vendor `Retry-After` hint converted to
+///   whole seconds when the originating [`Error::Provider`] captured
+///   one. `None` for every other variant or for Provider errors that
+///   arrived without a hint. Sinks key SSE rate-limit timers /
+///   FE retry indicators off this field.
+/// - `provider_status` — raw HTTP status when the error is
+///   `Provider` with [`ProviderErrorKind::Http`]; `None` otherwise.
+///   Lets audit / replay retain `429 vs 503` granularity even though
+///   `wire_code` collapses them onto coarse buckets.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, serde::Serialize)]
+#[non_exhaustive]
+pub struct ErrorEnvelope {
+    /// Patch-version-stable wire code. See type-level doc.
+    pub wire_code: &'static str,
+    /// Responsibility class. See type-level doc.
+    pub wire_class: ErrorClass,
+    /// Vendor `Retry-After` hint in seconds. See type-level doc.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub retry_after_secs: Option<u64>,
+    /// Raw HTTP status for Provider/Http failures. See type-level doc.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider_status: Option<u16>,
 }
 
 /// Coarse responsibility class for an [`Error`]. Two values by design —
@@ -431,7 +483,12 @@ impl Error {
 /// Maps onto the standard HTTP family split: `Client` ≈ 4xx-equivalent
 /// (caller / integrator can act to fix), `Server` ≈ 5xx-equivalent
 /// (vendor or deployment must act).
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+///
+/// JSON serialisation produces `"client"` / `"server"` to match the
+/// [`std::fmt::Display`] form — wire dashboards keying off the lower-
+/// case bucket stay consistent across the OTel / SSE / audit surfaces.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, serde::Serialize)]
+#[serde(rename_all = "lowercase")]
 #[non_exhaustive]
 pub enum ErrorClass {
     /// The caller — request shape, credentials, quota, cancellation

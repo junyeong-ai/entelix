@@ -71,24 +71,34 @@ async fn main() -> Result<()> {
         match event {
             AgentEvent::Started {
                 run_id,
+                tenant_id,
                 parent_run_id,
                 agent,
             } => {
                 let parent = parent_run_id
                     .as_deref()
                     .map_or_else(String::new, |p| format!(" parent={p}"));
-                println!("Started   | run_id={run_id}{parent} agent={agent}");
+                println!("Started   | run_id={run_id} tenant={tenant_id}{parent} agent={agent}");
             }
-            AgentEvent::Complete { run_id, state, .. } => {
-                println!("Complete  | run_id={run_id} state={state}");
+            AgentEvent::Complete {
+                run_id,
+                tenant_id,
+                state,
+                ..
+            } => {
+                println!("Complete  | run_id={run_id} tenant={tenant_id} state={state}");
             }
             AgentEvent::Failed {
                 run_id,
+                tenant_id,
                 error,
-                wire_code,
-                ..
+                envelope,
             } => {
-                println!("Failed    | run_id={run_id} wire={wire_code} error={error}");
+                println!(
+                    "Failed    | run_id={run_id} tenant={tenant_id} wire={code} class={class} error={error}",
+                    code = envelope.wire_code,
+                    class = envelope.wire_class,
+                );
             }
             other => println!("{other:?}"),
         }

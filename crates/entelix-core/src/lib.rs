@@ -76,7 +76,7 @@ pub use auth::{
 pub use chat::{ChatModel, ChatModelConfig, TypedModelStream};
 pub use context::ExecutionContext;
 pub use cost::{BudgetCostEstimator, CostCalculator, ToolCostCalculator};
-pub use error::{Error, ErrorClass, ProviderErrorKind, Result};
+pub use error::{Error, ErrorClass, ErrorEnvelope, ProviderErrorKind, Result};
 pub use extensions::Extensions;
 pub use interruption::{InterruptionKind, InterruptionPhase, interrupt, interrupt_with};
 pub use llm_facing::{LlmFacingSchema, LlmRenderable, RenderedForLlm};
@@ -85,7 +85,7 @@ pub use overrides::{RequestOverrides, RunOverrides};
 pub use run_budget::{RunBudget, UsageLimitBreach, UsageSnapshot};
 pub use service::{
     BoxedModelService, BoxedStreamingService, BoxedToolService, ModelInvocation, ModelStream,
-    StreamingModelInvocation, ToolInvocation,
+    NamedLayer, StreamingModelInvocation, ToolInvocation, WithName,
 };
 pub use skills::{
     LoadedSkill, Skill, SkillRegistry, SkillResource, SkillResourceContent, SkillSummary,

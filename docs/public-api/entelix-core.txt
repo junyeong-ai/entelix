@@ -271,7 +271,8 @@ pub async fn entelix_core::chat::ChatModel<C, T>::complete_typed<O>(&self, messa
 pub async fn entelix_core::chat::ChatModel<C, T>::complete_typed_validated<O, V>(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, validator: V, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<O> where O: schemars::JsonSchema + serde_core::de::DeserializeOwned + core::marker::Send + 'static, V: entelix_core::output_validator::OutputValidator<O>
 pub const fn entelix_core::chat::ChatModel<C, T>::config(&self) -> &entelix_core::chat::ChatModelConfig
 pub fn entelix_core::chat::ChatModel<C, T>::from_arc(codec: alloc::sync::Arc<C>, transport: alloc::sync::Arc<T>, model: impl core::convert::Into<alloc::string::String>) -> Self
-pub fn entelix_core::chat::ChatModel<C, T>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedModelService> + tower_layer::Layer<entelix_core::service::BoxedStreamingService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service: tower_service::Service<entelix_core::service::ModelInvocation, Response = entelix_core::ir::ModelResponse, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service as tower_service::Service<entelix_core::service::ModelInvocation>>::Future: core::marker::Send + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service: tower_service::Service<entelix_core::service::StreamingModelInvocation, Response = entelix_core::service::ModelStream, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service as tower_service::Service<entelix_core::service::StreamingModelInvocation>>::Future: core::marker::Send + 'static
+pub fn entelix_core::chat::ChatModel<C, T>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedModelService> + tower_layer::Layer<entelix_core::service::BoxedStreamingService> + entelix_core::service::NamedLayer + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service: tower_service::Service<entelix_core::service::ModelInvocation, Response = entelix_core::ir::ModelResponse, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service as tower_service::Service<entelix_core::service::ModelInvocation>>::Future: core::marker::Send + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service: tower_service::Service<entelix_core::service::StreamingModelInvocation, Response = entelix_core::service::ModelStream, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service as tower_service::Service<entelix_core::service::StreamingModelInvocation>>::Future: core::marker::Send + 'static
+pub fn entelix_core::chat::ChatModel<C, T>::layer_names(&self) -> &[&'static str]
 pub fn entelix_core::chat::ChatModel<C, T>::new(codec: C, transport: T, model: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::service(&self) -> entelix_core::service::BoxedModelService
 pub async fn entelix_core::chat::ChatModel<C, T>::stream_deltas(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::service::ModelStream>
@@ -699,6 +700,7 @@ pub entelix_core::error::Error::Serde(serde_json::error::Error)
 pub entelix_core::error::Error::UsageLimitExceeded(entelix_core::run_budget::UsageLimitBreach)
 impl entelix_core::error::Error
 pub fn entelix_core::error::Error::config(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
+pub fn entelix_core::error::Error::envelope(&self) -> entelix_core::error::ErrorEnvelope
 pub fn entelix_core::error::Error::invalid_request(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
 pub const fn entelix_core::error::Error::model_retry(hint: entelix_core::llm_facing::RenderedForLlm<alloc::string::String>, attempt: u32) -> Self
 pub fn entelix_core::error::Error::provider_dns(message: impl core::convert::Into<alloc::string::String>) -> Self
@@ -709,8 +711,6 @@ pub fn entelix_core::error::Error::provider_network(message: impl core::convert:
 pub fn entelix_core::error::Error::provider_network_from<E>(err: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::error::Error::provider_tls(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::error::Error::provider_tls_from<E>(err: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
-pub fn entelix_core::error::Error::wire_class(&self) -> entelix_core::error::ErrorClass
-pub fn entelix_core::error::Error::wire_code(&self) -> &'static str
 pub fn entelix_core::error::Error::with_retry_after(self, duration: core::time::Duration) -> Self
 pub fn entelix_core::error::Error::with_source<E>(self, err: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
 impl core::convert::From<entelix_core::auth::AuthError> for entelix_core::error::Error
@@ -749,6 +749,8 @@ impl core::hash::Hash for entelix_core::error::ErrorClass
 pub fn entelix_core::error::ErrorClass::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for entelix_core::error::ErrorClass
 impl core::marker::StructuralPartialEq for entelix_core::error::ErrorClass
+impl serde_core::ser::Serialize for entelix_core::error::ErrorClass
+pub fn entelix_core::error::ErrorClass::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl core::marker::Freeze for entelix_core::error::ErrorClass
 impl core::marker::Send for entelix_core::error::ErrorClass
 impl core::marker::Sync for entelix_core::error::ErrorClass
@@ -781,6 +783,31 @@ impl core::marker::Unpin for entelix_core::error::ProviderErrorKind
 impl core::marker::UnsafeUnpin for entelix_core::error::ProviderErrorKind
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::error::ProviderErrorKind
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::error::ProviderErrorKind
+#[non_exhaustive] pub struct entelix_core::error::ErrorEnvelope
+pub entelix_core::error::ErrorEnvelope::provider_status: core::option::Option<u16>
+pub entelix_core::error::ErrorEnvelope::retry_after_secs: core::option::Option<u64>
+pub entelix_core::error::ErrorEnvelope::wire_class: entelix_core::error::ErrorClass
+pub entelix_core::error::ErrorEnvelope::wire_code: &'static str
+impl core::clone::Clone for entelix_core::error::ErrorEnvelope
+pub fn entelix_core::error::ErrorEnvelope::clone(&self) -> entelix_core::error::ErrorEnvelope
+impl core::cmp::Eq for entelix_core::error::ErrorEnvelope
+impl core::cmp::PartialEq for entelix_core::error::ErrorEnvelope
+pub fn entelix_core::error::ErrorEnvelope::eq(&self, other: &entelix_core::error::ErrorEnvelope) -> bool
+impl core::fmt::Debug for entelix_core::error::ErrorEnvelope
+pub fn entelix_core::error::ErrorEnvelope::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_core::error::ErrorEnvelope
+pub fn entelix_core::error::ErrorEnvelope::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_core::error::ErrorEnvelope
+impl core::marker::StructuralPartialEq for entelix_core::error::ErrorEnvelope
+impl serde_core::ser::Serialize for entelix_core::error::ErrorEnvelope
+pub fn entelix_core::error::ErrorEnvelope::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for entelix_core::error::ErrorEnvelope
+impl core::marker::Send for entelix_core::error::ErrorEnvelope
+impl core::marker::Sync for entelix_core::error::ErrorEnvelope
+impl core::marker::Unpin for entelix_core::error::ErrorEnvelope
+impl core::marker::UnsafeUnpin for entelix_core::error::ErrorEnvelope
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::error::ErrorEnvelope
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::error::ErrorEnvelope
 pub type entelix_core::error::Result<T> = core::result::Result<T, entelix_core::error::Error>
 pub mod entelix_core::events
 #[non_exhaustive] pub enum entelix_core::events::Event
@@ -2615,10 +2642,41 @@ impl core::marker::Unpin for entelix_core::service::ToolInvocation
 impl core::marker::UnsafeUnpin for entelix_core::service::ToolInvocation
 impl !core::panic::unwind_safe::RefUnwindSafe for entelix_core::service::ToolInvocation
 impl !core::panic::unwind_safe::UnwindSafe for entelix_core::service::ToolInvocation
+pub struct entelix_core::service::WithName<L>
+impl<L> entelix_core::service::WithName<L>
+pub const fn entelix_core::service::WithName<L>::inner(&self) -> &L
+pub const fn entelix_core::service::WithName<L>::new(name: &'static str, inner: L) -> Self
+impl<L, S> tower_layer::Layer<S> for entelix_core::service::WithName<L> where L: tower_layer::Layer<S>
+pub type entelix_core::service::WithName<L>::Service = <L as tower_layer::Layer<S>>::Service
+pub fn entelix_core::service::WithName<L>::layer(&self, inner: S) -> Self::Service
+impl<L: core::clone::Clone> core::clone::Clone for entelix_core::service::WithName<L>
+pub fn entelix_core::service::WithName<L>::clone(&self) -> entelix_core::service::WithName<L>
+impl<L: core::fmt::Debug> core::fmt::Debug for entelix_core::service::WithName<L>
+pub fn entelix_core::service::WithName<L>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<L: core::marker::Copy> core::marker::Copy for entelix_core::service::WithName<L>
+impl<L> entelix_core::service::NamedLayer for entelix_core::service::WithName<L>
+pub fn entelix_core::service::WithName<L>::layer_name(&self) -> &'static str
+impl<L> core::marker::Freeze for entelix_core::service::WithName<L> where L: core::marker::Freeze
+impl<L> core::marker::Send for entelix_core::service::WithName<L> where L: core::marker::Send
+impl<L> core::marker::Sync for entelix_core::service::WithName<L> where L: core::marker::Sync
+impl<L> core::marker::Unpin for entelix_core::service::WithName<L> where L: core::marker::Unpin
+impl<L> core::marker::UnsafeUnpin for entelix_core::service::WithName<L> where L: core::marker::UnsafeUnpin
+impl<L> core::panic::unwind_safe::RefUnwindSafe for entelix_core::service::WithName<L> where L: core::panic::unwind_safe::RefUnwindSafe
+impl<L> core::panic::unwind_safe::UnwindSafe for entelix_core::service::WithName<L> where L: core::panic::unwind_safe::UnwindSafe
 pub trait entelix_core::service::AlwaysReady<Request>: tower_service::Service<Request>
 pub fn entelix_core::service::AlwaysReady::poll_ready_always(_cx: &mut core::task::wake::Context<'_>) -> core::task::poll::Poll<core::result::Result<(), Self::Error>>
 impl<S, Request> entelix_core::service::AlwaysReady<Request> for S where S: tower_service::Service<Request>
 pub fn S::poll_ready_always(_cx: &mut core::task::wake::Context<'_>) -> core::task::poll::Poll<core::result::Result<(), Self::Error>>
+pub trait entelix_core::service::NamedLayer
+pub fn entelix_core::service::NamedLayer::layer_name(&self) -> &'static str
+impl entelix_core::service::NamedLayer for entelix_core::tools::RetryToolLayer
+pub fn entelix_core::tools::RetryToolLayer::layer_name(&self) -> &'static str
+impl entelix_core::service::NamedLayer for entelix_core::tools::ScopedToolLayer
+pub fn entelix_core::tools::ScopedToolLayer::layer_name(&self) -> &'static str
+impl entelix_core::service::NamedLayer for entelix_core::transports::RetryLayer
+pub fn entelix_core::transports::RetryLayer::layer_name(&self) -> &'static str
+impl<L> entelix_core::service::NamedLayer for entelix_core::service::WithName<L>
+pub fn entelix_core::service::WithName<L>::layer_name(&self) -> &'static str
 pub type entelix_core::service::BoxedModelService = tower::util::boxed_clone::BoxCloneService<entelix_core::service::ModelInvocation, entelix_core::ir::ModelResponse, entelix_core::error::Error>
 pub type entelix_core::service::BoxedStreamingService = tower::util::boxed_clone::BoxCloneService<entelix_core::service::StreamingModelInvocation, entelix_core::service::ModelStream, entelix_core::error::Error>
 pub type entelix_core::service::BoxedToolService = tower::util::boxed_clone::BoxCloneService<entelix_core::service::ToolInvocation, serde_json::value::Value, entelix_core::error::Error>
@@ -3093,6 +3151,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::tools::RetryHint
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::tools::RetryHint
 pub struct entelix_core::tools::RetryToolLayer
 impl entelix_core::tools::RetryToolLayer
+pub const entelix_core::tools::RetryToolLayer::NAME: &'static str
 pub fn entelix_core::tools::RetryToolLayer::new() -> Self
 pub fn entelix_core::tools::RetryToolLayer::with_classifier(self, classifier: alloc::sync::Arc<dyn entelix_core::transports::RetryClassifier>) -> Self
 pub const fn entelix_core::tools::RetryToolLayer::with_max_backoff(self, max: core::time::Duration) -> Self
@@ -3102,6 +3161,8 @@ impl core::default::Default for entelix_core::tools::RetryToolLayer
 pub fn entelix_core::tools::RetryToolLayer::default() -> Self
 impl core::fmt::Debug for entelix_core::tools::RetryToolLayer
 pub fn entelix_core::tools::RetryToolLayer::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::service::NamedLayer for entelix_core::tools::RetryToolLayer
+pub fn entelix_core::tools::RetryToolLayer::layer_name(&self) -> &'static str
 impl<S> tower_layer::Layer<S> for entelix_core::tools::RetryToolLayer where S: tower_service::Service<entelix_core::service::ToolInvocation, Response = serde_json::value::Value, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <S as tower_service::Service>::Future: core::marker::Send + 'static
 pub type entelix_core::tools::RetryToolLayer::Service = entelix_core::tools::RetryToolService<S>
 pub fn entelix_core::tools::RetryToolLayer::layer(&self, inner: S) -> Self::Service
@@ -3132,10 +3193,13 @@ impl<Inner> !core::panic::unwind_safe::RefUnwindSafe for entelix_core::tools::Re
 impl<Inner> !core::panic::unwind_safe::UnwindSafe for entelix_core::tools::RetryToolService<Inner>
 pub struct entelix_core::tools::ScopedToolLayer
 impl entelix_core::tools::ScopedToolLayer
+pub const entelix_core::tools::ScopedToolLayer::NAME: &'static str
 pub fn entelix_core::tools::ScopedToolLayer::from_arc(wrapper: alloc::sync::Arc<dyn entelix_core::tools::ToolDispatchScope>) -> Self
 pub fn entelix_core::tools::ScopedToolLayer::new<W>(wrapper: W) -> Self where W: entelix_core::tools::ToolDispatchScope
 impl core::clone::Clone for entelix_core::tools::ScopedToolLayer
 pub fn entelix_core::tools::ScopedToolLayer::clone(&self) -> Self
+impl entelix_core::service::NamedLayer for entelix_core::tools::ScopedToolLayer
+pub fn entelix_core::tools::ScopedToolLayer::layer_name(&self) -> &'static str
 impl<S> tower_layer::Layer<S> for entelix_core::tools::ScopedToolLayer
 pub type entelix_core::tools::ScopedToolLayer::Service = entelix_core::tools::ScopedToolService<S>
 pub fn entelix_core::tools::ScopedToolLayer::layer(&self, inner: S) -> Self::Service
@@ -3244,7 +3308,8 @@ pub async fn entelix_core::ToolRegistry<D>::dispatch(&self, tool_use_id: &str, n
 pub fn entelix_core::ToolRegistry<D>::filter<F>(&self, predicate: F) -> Self where F: core::ops::function::Fn(&dyn entelix_core::Tool<D>) -> bool
 pub fn entelix_core::ToolRegistry<D>::get(&self, name: &str) -> core::option::Option<&alloc::sync::Arc<dyn entelix_core::Tool<D>>>
 pub fn entelix_core::ToolRegistry<D>::is_empty(&self) -> bool
-pub fn entelix_core::ToolRegistry<D>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedToolService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer>::Service: tower_service::Service<entelix_core::service::ToolInvocation, Response = serde_json::value::Value, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer>::Service as tower_service::Service<entelix_core::service::ToolInvocation>>::Future: core::marker::Send + 'static
+pub fn entelix_core::ToolRegistry<D>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedToolService> + entelix_core::service::NamedLayer + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer>::Service: tower_service::Service<entelix_core::service::ToolInvocation, Response = serde_json::value::Value, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer>::Service as tower_service::Service<entelix_core::service::ToolInvocation>>::Future: core::marker::Send + 'static
+pub fn entelix_core::ToolRegistry<D>::layer_names(&self) -> &[&'static str]
 pub fn entelix_core::ToolRegistry<D>::len(&self) -> usize
 pub fn entelix_core::ToolRegistry<D>::names(&self) -> impl core::iter::traits::iterator::Iterator<Item = &str>
 pub fn entelix_core::ToolRegistry<D>::register(self, tool: alloc::sync::Arc<dyn entelix_core::Tool<D>>) -> entelix_core::error::Result<Self>
@@ -3361,11 +3426,14 @@ impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::transports::Retry
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::transports::RetryDecision
 pub struct entelix_core::transports::RetryLayer
 impl entelix_core::transports::RetryLayer
+pub const entelix_core::transports::RetryLayer::NAME: &'static str
 pub const fn entelix_core::transports::RetryLayer::new(policy: entelix_core::transports::RetryPolicy) -> Self
 impl core::clone::Clone for entelix_core::transports::RetryLayer
 pub fn entelix_core::transports::RetryLayer::clone(&self) -> entelix_core::transports::RetryLayer
 impl core::fmt::Debug for entelix_core::transports::RetryLayer
 pub fn entelix_core::transports::RetryLayer::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::service::NamedLayer for entelix_core::transports::RetryLayer
+pub fn entelix_core::transports::RetryLayer::layer_name(&self) -> &'static str
 impl<S> tower_layer::Layer<S> for entelix_core::transports::RetryLayer
 pub type entelix_core::transports::RetryLayer::Service = entelix_core::transports::RetryService<S>
 pub fn entelix_core::transports::RetryLayer::layer(&self, inner: S) -> Self::Service
@@ -3541,6 +3609,7 @@ pub entelix_core::Error::Serde(serde_json::error::Error)
 pub entelix_core::Error::UsageLimitExceeded(entelix_core::run_budget::UsageLimitBreach)
 impl entelix_core::error::Error
 pub fn entelix_core::error::Error::config(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
+pub fn entelix_core::error::Error::envelope(&self) -> entelix_core::error::ErrorEnvelope
 pub fn entelix_core::error::Error::invalid_request(msg: impl core::convert::Into<alloc::borrow::Cow<'static, str>>) -> Self
 pub const fn entelix_core::error::Error::model_retry(hint: entelix_core::llm_facing::RenderedForLlm<alloc::string::String>, attempt: u32) -> Self
 pub fn entelix_core::error::Error::provider_dns(message: impl core::convert::Into<alloc::string::String>) -> Self
@@ -3551,8 +3620,6 @@ pub fn entelix_core::error::Error::provider_network(message: impl core::convert:
 pub fn entelix_core::error::Error::provider_network_from<E>(err: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::error::Error::provider_tls(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::error::Error::provider_tls_from<E>(err: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
-pub fn entelix_core::error::Error::wire_class(&self) -> entelix_core::error::ErrorClass
-pub fn entelix_core::error::Error::wire_code(&self) -> &'static str
 pub fn entelix_core::error::Error::with_retry_after(self, duration: core::time::Duration) -> Self
 pub fn entelix_core::error::Error::with_source<E>(self, err: E) -> Self where E: core::error::Error + core::marker::Send + core::marker::Sync + 'static
 impl core::convert::From<entelix_core::auth::AuthError> for entelix_core::error::Error
@@ -3591,6 +3658,8 @@ impl core::hash::Hash for entelix_core::error::ErrorClass
 pub fn entelix_core::error::ErrorClass::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for entelix_core::error::ErrorClass
 impl core::marker::StructuralPartialEq for entelix_core::error::ErrorClass
+impl serde_core::ser::Serialize for entelix_core::error::ErrorClass
+pub fn entelix_core::error::ErrorClass::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
 impl core::marker::Freeze for entelix_core::error::ErrorClass
 impl core::marker::Send for entelix_core::error::ErrorClass
 impl core::marker::Sync for entelix_core::error::ErrorClass
@@ -3963,7 +4032,8 @@ pub async fn entelix_core::chat::ChatModel<C, T>::complete_typed<O>(&self, messa
 pub async fn entelix_core::chat::ChatModel<C, T>::complete_typed_validated<O, V>(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, validator: V, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<O> where O: schemars::JsonSchema + serde_core::de::DeserializeOwned + core::marker::Send + 'static, V: entelix_core::output_validator::OutputValidator<O>
 pub const fn entelix_core::chat::ChatModel<C, T>::config(&self) -> &entelix_core::chat::ChatModelConfig
 pub fn entelix_core::chat::ChatModel<C, T>::from_arc(codec: alloc::sync::Arc<C>, transport: alloc::sync::Arc<T>, model: impl core::convert::Into<alloc::string::String>) -> Self
-pub fn entelix_core::chat::ChatModel<C, T>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedModelService> + tower_layer::Layer<entelix_core::service::BoxedStreamingService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service: tower_service::Service<entelix_core::service::ModelInvocation, Response = entelix_core::ir::ModelResponse, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service as tower_service::Service<entelix_core::service::ModelInvocation>>::Future: core::marker::Send + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service: tower_service::Service<entelix_core::service::StreamingModelInvocation, Response = entelix_core::service::ModelStream, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service as tower_service::Service<entelix_core::service::StreamingModelInvocation>>::Future: core::marker::Send + 'static
+pub fn entelix_core::chat::ChatModel<C, T>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedModelService> + tower_layer::Layer<entelix_core::service::BoxedStreamingService> + entelix_core::service::NamedLayer + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service: tower_service::Service<entelix_core::service::ModelInvocation, Response = entelix_core::ir::ModelResponse, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedModelService>>::Service as tower_service::Service<entelix_core::service::ModelInvocation>>::Future: core::marker::Send + 'static, <L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service: tower_service::Service<entelix_core::service::StreamingModelInvocation, Response = entelix_core::service::ModelStream, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer<entelix_core::service::BoxedStreamingService>>::Service as tower_service::Service<entelix_core::service::StreamingModelInvocation>>::Future: core::marker::Send + 'static
+pub fn entelix_core::chat::ChatModel<C, T>::layer_names(&self) -> &[&'static str]
 pub fn entelix_core::chat::ChatModel<C, T>::new(codec: C, transport: T, model: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn entelix_core::chat::ChatModel<C, T>::service(&self) -> entelix_core::service::BoxedModelService
 pub async fn entelix_core::chat::ChatModel<C, T>::stream_deltas(&self, messages: alloc::vec::Vec<entelix_core::ir::Message>, ctx: &entelix_core::context::ExecutionContext) -> entelix_core::error::Result<entelix_core::service::ModelStream>
@@ -4052,6 +4122,31 @@ impl core::marker::Unpin for entelix_core::CurrentToolInvocation
 impl core::marker::UnsafeUnpin for entelix_core::CurrentToolInvocation
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::CurrentToolInvocation
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::CurrentToolInvocation
+#[non_exhaustive] pub struct entelix_core::ErrorEnvelope
+pub entelix_core::ErrorEnvelope::provider_status: core::option::Option<u16>
+pub entelix_core::ErrorEnvelope::retry_after_secs: core::option::Option<u64>
+pub entelix_core::ErrorEnvelope::wire_class: entelix_core::error::ErrorClass
+pub entelix_core::ErrorEnvelope::wire_code: &'static str
+impl core::clone::Clone for entelix_core::error::ErrorEnvelope
+pub fn entelix_core::error::ErrorEnvelope::clone(&self) -> entelix_core::error::ErrorEnvelope
+impl core::cmp::Eq for entelix_core::error::ErrorEnvelope
+impl core::cmp::PartialEq for entelix_core::error::ErrorEnvelope
+pub fn entelix_core::error::ErrorEnvelope::eq(&self, other: &entelix_core::error::ErrorEnvelope) -> bool
+impl core::fmt::Debug for entelix_core::error::ErrorEnvelope
+pub fn entelix_core::error::ErrorEnvelope::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for entelix_core::error::ErrorEnvelope
+pub fn entelix_core::error::ErrorEnvelope::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for entelix_core::error::ErrorEnvelope
+impl core::marker::StructuralPartialEq for entelix_core::error::ErrorEnvelope
+impl serde_core::ser::Serialize for entelix_core::error::ErrorEnvelope
+pub fn entelix_core::error::ErrorEnvelope::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl core::marker::Freeze for entelix_core::error::ErrorEnvelope
+impl core::marker::Send for entelix_core::error::ErrorEnvelope
+impl core::marker::Sync for entelix_core::error::ErrorEnvelope
+impl core::marker::Unpin for entelix_core::error::ErrorEnvelope
+impl core::marker::UnsafeUnpin for entelix_core::error::ErrorEnvelope
+impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::error::ErrorEnvelope
+impl core::panic::unwind_safe::UnwindSafe for entelix_core::error::ErrorEnvelope
 #[non_exhaustive] pub struct entelix_core::ExecutionContext
 impl entelix_core::context::ExecutionContext
 pub fn entelix_core::context::ExecutionContext::add_extension<T>(self, value: T) -> Self where T: core::marker::Send + core::marker::Sync + 'static
@@ -4583,7 +4678,8 @@ pub async fn entelix_core::ToolRegistry<D>::dispatch(&self, tool_use_id: &str, n
 pub fn entelix_core::ToolRegistry<D>::filter<F>(&self, predicate: F) -> Self where F: core::ops::function::Fn(&dyn entelix_core::Tool<D>) -> bool
 pub fn entelix_core::ToolRegistry<D>::get(&self, name: &str) -> core::option::Option<&alloc::sync::Arc<dyn entelix_core::Tool<D>>>
 pub fn entelix_core::ToolRegistry<D>::is_empty(&self) -> bool
-pub fn entelix_core::ToolRegistry<D>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedToolService> + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer>::Service: tower_service::Service<entelix_core::service::ToolInvocation, Response = serde_json::value::Value, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer>::Service as tower_service::Service<entelix_core::service::ToolInvocation>>::Future: core::marker::Send + 'static
+pub fn entelix_core::ToolRegistry<D>::layer<L>(self, layer: L) -> Self where L: tower_layer::Layer<entelix_core::service::BoxedToolService> + entelix_core::service::NamedLayer + core::clone::Clone + core::marker::Send + core::marker::Sync + 'static, <L as tower_layer::Layer>::Service: tower_service::Service<entelix_core::service::ToolInvocation, Response = serde_json::value::Value, Error = entelix_core::error::Error> + core::clone::Clone + core::marker::Send + 'static, <<L as tower_layer::Layer>::Service as tower_service::Service<entelix_core::service::ToolInvocation>>::Future: core::marker::Send + 'static
+pub fn entelix_core::ToolRegistry<D>::layer_names(&self) -> &[&'static str]
 pub fn entelix_core::ToolRegistry<D>::len(&self) -> usize
 pub fn entelix_core::ToolRegistry<D>::names(&self) -> impl core::iter::traits::iterator::Iterator<Item = &str>
 pub fn entelix_core::ToolRegistry<D>::register(self, tool: alloc::sync::Arc<dyn entelix_core::Tool<D>>) -> entelix_core::error::Result<Self>
@@ -4647,6 +4743,27 @@ impl core::marker::Unpin for entelix_core::run_budget::UsageSnapshot
 impl core::marker::UnsafeUnpin for entelix_core::run_budget::UsageSnapshot
 impl core::panic::unwind_safe::RefUnwindSafe for entelix_core::run_budget::UsageSnapshot
 impl core::panic::unwind_safe::UnwindSafe for entelix_core::run_budget::UsageSnapshot
+pub struct entelix_core::WithName<L>
+impl<L> entelix_core::service::WithName<L>
+pub const fn entelix_core::service::WithName<L>::inner(&self) -> &L
+pub const fn entelix_core::service::WithName<L>::new(name: &'static str, inner: L) -> Self
+impl<L, S> tower_layer::Layer<S> for entelix_core::service::WithName<L> where L: tower_layer::Layer<S>
+pub type entelix_core::service::WithName<L>::Service = <L as tower_layer::Layer<S>>::Service
+pub fn entelix_core::service::WithName<L>::layer(&self, inner: S) -> Self::Service
+impl<L: core::clone::Clone> core::clone::Clone for entelix_core::service::WithName<L>
+pub fn entelix_core::service::WithName<L>::clone(&self) -> entelix_core::service::WithName<L>
+impl<L: core::fmt::Debug> core::fmt::Debug for entelix_core::service::WithName<L>
+pub fn entelix_core::service::WithName<L>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<L: core::marker::Copy> core::marker::Copy for entelix_core::service::WithName<L>
+impl<L> entelix_core::service::NamedLayer for entelix_core::service::WithName<L>
+pub fn entelix_core::service::WithName<L>::layer_name(&self) -> &'static str
+impl<L> core::marker::Freeze for entelix_core::service::WithName<L> where L: core::marker::Freeze
+impl<L> core::marker::Send for entelix_core::service::WithName<L> where L: core::marker::Send
+impl<L> core::marker::Sync for entelix_core::service::WithName<L> where L: core::marker::Sync
+impl<L> core::marker::Unpin for entelix_core::service::WithName<L> where L: core::marker::Unpin
+impl<L> core::marker::UnsafeUnpin for entelix_core::service::WithName<L> where L: core::marker::UnsafeUnpin
+impl<L> core::panic::unwind_safe::RefUnwindSafe for entelix_core::service::WithName<L> where L: core::panic::unwind_safe::RefUnwindSafe
+impl<L> core::panic::unwind_safe::UnwindSafe for entelix_core::service::WithName<L> where L: core::panic::unwind_safe::UnwindSafe
 pub const entelix_core::DEFAULT_TENANT_ID: &str
 pub trait entelix_core::AuditSink: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::AuditSink::record_agent_handoff(&self, from: core::option::Option<&str>, to: &str)
@@ -4686,6 +4803,16 @@ pub fn alloc::string::String::render_for_llm(&self) -> alloc::string::String
 impl entelix_core::llm_facing::LlmRenderable<alloc::string::String> for entelix_core::error::Error
 pub fn entelix_core::error::Error::for_llm(&self) -> entelix_core::llm_facing::RenderedForLlm<T>
 pub fn entelix_core::error::Error::render_for_llm(&self) -> alloc::string::String
+pub trait entelix_core::NamedLayer
+pub fn entelix_core::NamedLayer::layer_name(&self) -> &'static str
+impl entelix_core::service::NamedLayer for entelix_core::tools::RetryToolLayer
+pub fn entelix_core::tools::RetryToolLayer::layer_name(&self) -> &'static str
+impl entelix_core::service::NamedLayer for entelix_core::tools::ScopedToolLayer
+pub fn entelix_core::tools::ScopedToolLayer::layer_name(&self) -> &'static str
+impl entelix_core::service::NamedLayer for entelix_core::transports::RetryLayer
+pub fn entelix_core::transports::RetryLayer::layer_name(&self) -> &'static str
+impl<L> entelix_core::service::NamedLayer for entelix_core::service::WithName<L>
+pub fn entelix_core::service::WithName<L>::layer_name(&self) -> &'static str
 pub trait entelix_core::OutputValidator<O> where O: core::marker::Send + 'static: core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_core::OutputValidator::validate(&self, output: &O) -> entelix_core::error::Result<()>
 impl<O, F> entelix_core::output_validator::OutputValidator<O> for F where O: core::marker::Send + 'static, F: core::ops::function::Fn(&O) -> entelix_core::error::Result<()> + core::marker::Send + core::marker::Sync + 'static

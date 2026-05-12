@@ -98,6 +98,7 @@ impl !core::panic::unwind_safe::RefUnwindSafe for entelix_otel::GenAiMetrics
 impl !core::panic::unwind_safe::UnwindSafe for entelix_otel::GenAiMetrics
 pub struct entelix_otel::OtelLayer
 impl entelix_otel::OtelLayer
+pub const entelix_otel::OtelLayer::NAME: &'static str
 pub fn entelix_otel::OtelLayer::new(system: impl core::convert::Into<alloc::sync::Arc<str>>) -> Self
 pub fn entelix_otel::OtelLayer::with_cost_calculator(self, calculator: alloc::sync::Arc<dyn entelix_core::cost::CostCalculator>) -> Self
 pub fn entelix_otel::OtelLayer::with_metrics(self, metrics: entelix_otel::GenAiMetrics) -> Self
@@ -107,6 +108,8 @@ impl core::clone::Clone for entelix_otel::OtelLayer
 pub fn entelix_otel::OtelLayer::clone(&self) -> entelix_otel::OtelLayer
 impl core::fmt::Debug for entelix_otel::OtelLayer
 pub fn entelix_otel::OtelLayer::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl entelix_core::service::NamedLayer for entelix_otel::OtelLayer
+pub fn entelix_otel::OtelLayer::layer_name(&self) -> &'static str
 impl<S> tower_layer::Layer<S> for entelix_otel::OtelLayer
 pub type entelix_otel::OtelLayer::Service = entelix_otel::OtelService<S>
 pub fn entelix_otel::OtelLayer::layer(&self, inner: S) -> Self::Service

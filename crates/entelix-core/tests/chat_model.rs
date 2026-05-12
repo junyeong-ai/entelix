@@ -476,6 +476,12 @@ impl<S> Layer<S> for CountingLayer {
     }
 }
 
+impl entelix_core::NamedLayer for CountingLayer {
+    fn layer_name(&self) -> &'static str {
+        "counting"
+    }
+}
+
 #[derive(Clone)]
 struct CountingService<S> {
     inner: S,
@@ -564,6 +570,38 @@ where
 // via `ChatModel::layer`.
 const _BOXED_MODEL_SERVICE_REF: Option<BoxedModelService> = None;
 const _BOXED_STREAMING_SERVICE_REF: Option<BoxedStreamingService> = None;
+
+#[test]
+fn layer_names_track_compose_order_and_namedlayer_identity() {
+    use entelix_core::WithName;
+
+    let codec = Arc::new(RecordingCodec::new());
+    let transport = Arc::new(FakeStatusTransport {
+        status: 200,
+        body: Bytes::new(),
+    });
+    let bare = ChatModel::from_arc(codec.clone(), transport.clone(), "m");
+    assert!(
+        bare.layer_names().is_empty(),
+        "freshly built model has no layers"
+    );
+
+    let (counting1, _) = CountingLayer::new();
+    let (counting2, _) = CountingLayer::new();
+
+    // First-registered layer sits innermost (index 0); subsequent
+    // `.layer(...)` calls append to the right of the vec, matching
+    // the wrap-on-top semantics of the factory chain.
+    let model = ChatModel::from_arc(codec, transport, "m")
+        .layer(counting1)
+        .layer(WithName::new("external", counting2));
+
+    assert_eq!(
+        model.layer_names(),
+        ["counting", "external"],
+        "layer_names tracks insertion order; WithName supplies a name for external middleware"
+    );
+}
 
 #[tokio::test]
 async fn layer_fires_pre_and_post_around_complete_full() {

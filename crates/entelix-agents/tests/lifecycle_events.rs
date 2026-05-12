@@ -197,18 +197,17 @@ async fn execute_stream_emits_failed_then_typed_err_on_caller_side() {
     // Sink-side terminal: Started → Failed.
     let sink_events = sink.events();
     assert_eq!(sink_events.len(), 2);
-    // The Failed event carries the typed wire identity derived from
+    // The Failed event carries the typed `envelope` derived from
     // the inner `Error::Provider::Http(503)` — sink consumers route
-    // on `wire_code` / `wire_class` instead of parsing the prose
+    // on `envelope.wire_code` / `envelope.wire_class` /
+    // `envelope.provider_status` instead of parsing the prose
     // `error` field.
     match &sink_events[1] {
-        AgentEvent::Failed {
-            wire_code,
-            wire_class,
-            ..
-        } => {
-            assert_eq!(*wire_code, "upstream_unavailable");
-            assert_eq!(*wire_class, entelix_core::ErrorClass::Server);
+        AgentEvent::Failed { envelope, .. } => {
+            assert_eq!(envelope.wire_code, "upstream_unavailable");
+            assert_eq!(envelope.wire_class, entelix_core::ErrorClass::Server);
+            assert_eq!(envelope.provider_status, Some(503));
+            assert!(envelope.retry_after_secs.is_none());
         }
         other => panic!("expected Failed, got {other:?}"),
     }
@@ -450,14 +449,10 @@ async fn tool_event_layer_stamps_typed_wire_identity_on_error() {
         .unwrap_err();
     let events = sink.events();
     match &events[1] {
-        AgentEvent::ToolError {
-            wire_code,
-            wire_class,
-            ..
-        } => {
+        AgentEvent::ToolError { envelope, .. } => {
             // VersionedTool surfaces `Error::Config` on failure.
-            assert_eq!(*wire_code, "config_error");
-            assert_eq!(*wire_class, entelix_core::ErrorClass::Server);
+            assert_eq!(envelope.wire_code, "config_error");
+            assert_eq!(envelope.wire_class, entelix_core::ErrorClass::Server);
         }
         other => panic!("expected ToolError, got {other:?}"),
     }

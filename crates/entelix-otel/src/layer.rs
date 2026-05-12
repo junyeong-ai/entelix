@@ -107,6 +107,12 @@ pub struct OtelLayer {
 }
 
 impl OtelLayer {
+    /// Patch-version-stable identifier surfaced through
+    /// [`entelix_core::ChatModel::layer_names`] /
+    /// `ToolRegistry::layer_names`. Renaming this constant is a
+    /// breaking change for dashboards keyed off the value.
+    pub const NAME: &'static str = "otel";
+
     /// Build with a system name (provider identifier — typically
     /// `"anthropic"`, `"openai"`, etc.).
     #[must_use]
@@ -176,6 +182,12 @@ impl std::fmt::Debug for OtelLayer {
             )
             .field("tool_io_capture", &self.tool_io_capture)
             .finish()
+    }
+}
+
+impl entelix_core::NamedLayer for OtelLayer {
+    fn layer_name(&self) -> &'static str {
+        Self::NAME
     }
 }
 

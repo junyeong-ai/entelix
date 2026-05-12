@@ -256,3 +256,84 @@ pub trait AlwaysReady<Request>: Service<Request> {
 }
 
 impl<S, Request> AlwaysReady<Request> for S where S: Service<Request> {}
+
+/// Static identity for a [`tower::Layer`] participant in
+/// [`crate::ChatModel::layer`] / `ToolRegistry::layer` composition.
+///
+/// [`crate::ChatModel::layer_names`] walks the composed stack and
+/// surfaces the names through the typed introspection channel —
+/// diagnostic dashboards read `entelix.chat_model.layers` without
+/// parsing prose `Debug` output, conditional-wiring code asserts the
+/// expected stack at boot ("did my staging `OtelLayer` actually
+/// compose in?"), and audit trails distinguish runs whose policy
+/// wiring drifted at deploy time.
+///
+/// **Conventions** (patch-version-stable — renaming is a breaking
+/// change for dashboards keyed off the value):
+///
+/// - `snake_case` ASCII bucketing the layer's primary role
+///   (`"policy"`, `"otel"`, `"retry"`, `"approval"`).
+/// - One canonical name per concrete layer struct, surfaced as
+///   `pub const NAME: &'static str` on the struct so renaming
+///   happens in one place.
+/// - The trait method returns `&'static str` because layer
+///   composition is a startup-time event and the name is part of
+///   the binary's identity — runtime-built names would defeat the
+///   stable-key promise.
+///
+/// External `tower::Layer` middleware (e.g. `tower::limit`'s
+/// `ConcurrencyLimitLayer`) wraps through [`WithName`] to
+/// participate in the same channel.
+pub trait NamedLayer {
+    /// Stable, patch-version-stable identifier surfaced through
+    /// [`crate::ChatModel::layer_names`]. See trait doc for the
+    /// naming convention.
+    fn layer_name(&self) -> &'static str;
+}
+
+/// Wraps any [`tower::Layer<S>`] with a static name so external
+/// middleware participates in the [`crate::ChatModel::layer_names`]
+/// introspection channel. The wrapper is transparent at the
+/// `tower::Layer` boundary — `WithName::new("concurrency",
+/// ConcurrencyLimitLayer::new(10)).layer(inner)` produces the same
+/// service the underlying layer would.
+///
+/// First-party entelix layers (`PolicyLayer`, `OtelLayer`)
+/// implement [`NamedLayer`] directly and do **not** need this
+/// wrapper; it exists exclusively for external `tower` middleware.
+#[derive(Clone, Copy, Debug)]
+pub struct WithName<L> {
+    name: &'static str,
+    inner: L,
+}
+
+impl<L> WithName<L> {
+    /// Stamp `inner` with the diagnostic name `name`. See
+    /// [`NamedLayer`]'s trait doc for the snake_case convention.
+    pub const fn new(name: &'static str, inner: L) -> Self {
+        Self { name, inner }
+    }
+
+    /// Borrow the underlying layer.
+    #[must_use]
+    pub const fn inner(&self) -> &L {
+        &self.inner
+    }
+}
+
+impl<L> NamedLayer for WithName<L> {
+    fn layer_name(&self) -> &'static str {
+        self.name
+    }
+}
+
+impl<L, S> tower::Layer<S> for WithName<L>
+where
+    L: tower::Layer<S>,
+{
+    type Service = L::Service;
+
+    fn layer(&self, inner: S) -> Self::Service {
+        self.inner.layer(inner)
+    }
+}

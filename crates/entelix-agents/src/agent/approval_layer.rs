@@ -68,6 +68,7 @@ use serde_json::{Value, json};
 use tower::{Layer, Service};
 
 use entelix_core::PendingApprovalDecisions;
+use entelix_core::TenantId;
 use entelix_core::error::{Error, Result};
 use entelix_core::interruption::InterruptionKind;
 use entelix_core::service::ToolInvocation;
@@ -90,12 +91,32 @@ pub trait ToolApprovalEventSink: Send + Sync + 'static {
     /// the approval marker fires *before* the inner tool service
     /// begins; observability ordering matches the operator's mental
     /// model (approve → start → complete).
-    async fn record_approved(&self, run_id: &str, tool_use_id: &str, tool: &str);
+    ///
+    /// `tenant_id` is the scope of the originating
+    /// [`ToolInvocation`]'s [`entelix_core::ExecutionContext`]; the
+    /// `AgentEventSink<S>` adapter stamps it onto the emitted
+    /// [`AgentEvent::ToolCallApproved`] so audit/billing/replay
+    /// consumers read the same tenant scope as every other event in
+    /// the run.
+    async fn record_approved(
+        &self,
+        tenant_id: &TenantId,
+        run_id: &str,
+        tool_use_id: &str,
+        tool: &str,
+    );
 
     /// Record a denial decision. The layer awaits and then returns
     /// `Error::InvalidRequest` to the caller; the matching
-    /// `ToolStart` does NOT fire.
-    async fn record_denied(&self, run_id: &str, tool_use_id: &str, tool: &str, reason: &str);
+    /// `ToolStart` does NOT fire. `tenant_id` mirrors `record_approved`.
+    async fn record_denied(
+        &self,
+        tenant_id: &TenantId,
+        run_id: &str,
+        tool_use_id: &str,
+        tool: &str,
+        reason: &str,
+    );
 }
 
 /// Refcounted handle for [`ToolApprovalEventSink`]. Stored in
@@ -152,18 +173,33 @@ impl<S> ToolApprovalEventSink for SinkAdapter<S>
 where
     S: Clone + Send + Sync + 'static,
 {
-    async fn record_approved(&self, run_id: &str, tool_use_id: &str, tool: &str) {
+    async fn record_approved(
+        &self,
+        tenant_id: &TenantId,
+        run_id: &str,
+        tool_use_id: &str,
+        tool: &str,
+    ) {
         let event: AgentEvent<S> = AgentEvent::ToolCallApproved {
             run_id: run_id.to_owned(),
+            tenant_id: tenant_id.clone(),
             tool_use_id: tool_use_id.to_owned(),
             tool: tool.to_owned(),
         };
         let _ = self.sink.send(event).await;
     }
 
-    async fn record_denied(&self, run_id: &str, tool_use_id: &str, tool: &str, reason: &str) {
+    async fn record_denied(
+        &self,
+        tenant_id: &TenantId,
+        run_id: &str,
+        tool_use_id: &str,
+        tool: &str,
+        reason: &str,
+    ) {
         let event: AgentEvent<S> = AgentEvent::ToolCallDenied {
             run_id: run_id.to_owned(),
+            tenant_id: tenant_id.clone(),
             tool_use_id: tool_use_id.to_owned(),
             tool: tool.to_owned(),
             reason: reason.to_owned(),
@@ -223,6 +259,12 @@ pub struct ApprovalLayer {
 }
 
 impl ApprovalLayer {
+    /// Patch-version-stable identifier surfaced through
+    /// [`entelix_core::tools::ToolRegistry::layer_names`]. Renaming
+    /// this constant is a breaking change for dashboards keyed off
+    /// the value.
+    pub const NAME: &'static str = "tool_approval";
+
     /// Wrap an `Arc<dyn Approver>` for layer attachment with the
     /// default [`EffectGate::Always`] policy — every dispatch
     /// reaches the approver. Cloning the layer bumps the inner
@@ -265,6 +307,12 @@ impl<S> Layer<S> for ApprovalLayer {
             approver: Arc::clone(&self.approver),
             gate: self.gate.clone(),
         }
+    }
+}
+
+impl entelix_core::NamedLayer for ApprovalLayer {
+    fn layer_name(&self) -> &'static str {
+        Self::NAME
     }
 }
 
@@ -333,6 +381,7 @@ where
             };
 
             let sink = invocation.ctx.extension::<ToolApprovalEventSinkHandle>();
+            let tenant_id = invocation.ctx.tenant_id().clone();
             let run_id = invocation.ctx.run_id().unwrap_or("").to_owned();
             let tool_use_id = invocation.tool_use_id.clone();
             let tool_name = invocation.metadata.name.clone();
@@ -343,7 +392,7 @@ where
                     if let Some(handle) = sink.as_deref() {
                         handle
                             .inner()
-                            .record_approved(&run_id, &tool_use_id, &tool_name)
+                            .record_approved(&tenant_id, &run_id, &tool_use_id, &tool_name)
                             .await;
                     }
                     inner.call(invocation).await
@@ -352,7 +401,7 @@ where
                     if let Some(handle) = sink.as_deref() {
                         handle
                             .inner()
-                            .record_denied(&run_id, &tool_use_id, &tool_name, &reason)
+                            .record_denied(&tenant_id, &run_id, &tool_use_id, &tool_name, &reason)
                             .await;
                     }
                     Err(Error::invalid_request(format!(
@@ -458,11 +507,18 @@ mod tests {
 
     #[async_trait]
     impl ToolApprovalEventSink for CountingApprovalSink {
-        async fn record_approved(&self, _run_id: &str, _tool_use_id: &str, _tool: &str) {
+        async fn record_approved(
+            &self,
+            _tenant_id: &TenantId,
+            _run_id: &str,
+            _tool_use_id: &str,
+            _tool: &str,
+        ) {
             self.approved.fetch_add(1, Ordering::SeqCst);
         }
         async fn record_denied(
             &self,
+            _tenant_id: &TenantId,
             _run_id: &str,
             _tool_use_id: &str,
             _tool: &str,

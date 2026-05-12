@@ -222,6 +222,12 @@ pub struct ToolHookLayer {
 }
 
 impl ToolHookLayer {
+    /// Patch-version-stable identifier surfaced through
+    /// [`entelix_core::tools::ToolRegistry::layer_names`]. Renaming
+    /// this constant is a breaking change for dashboards keyed off
+    /// the value.
+    pub const NAME: &'static str = "tool_hook";
+
     /// Construct a layer from an ordered hook registry.
     #[must_use]
     pub const fn new(hooks: ToolHookRegistry) -> Self {
@@ -243,6 +249,12 @@ impl<Inner> Layer<Inner> for ToolHookLayer {
             inner,
             hooks: self.hooks.clone(),
         }
+    }
+}
+
+impl entelix_core::NamedLayer for ToolHookLayer {
+    fn layer_name(&self) -> &'static str {
+        Self::NAME
     }
 }
 

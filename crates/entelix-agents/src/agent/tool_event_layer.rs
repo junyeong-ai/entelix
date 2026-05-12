@@ -68,6 +68,12 @@ impl<S> ToolEventLayer<S>
 where
     S: Clone + Send + Sync + 'static,
 {
+    /// Patch-version-stable identifier surfaced through
+    /// [`entelix_core::tools::ToolRegistry::layer_names`]. Renaming
+    /// this constant is a breaking change for dashboards keyed off
+    /// the value.
+    pub const NAME: &'static str = "tool_event";
+
     /// Build with a sink. Cloning the layer is cheap (`Arc`-backed).
     #[must_use]
     pub fn new(sink: Arc<dyn AgentEventSink<S>>) -> Self {
@@ -105,6 +111,15 @@ where
             inner,
             sink: Arc::clone(&self.sink),
         }
+    }
+}
+
+impl<S> entelix_core::NamedLayer for ToolEventLayer<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    fn layer_name(&self) -> &'static str {
+        Self::NAME
     }
 }
 
@@ -150,6 +165,7 @@ where
         Box::pin(async move {
             // Run-id stamping is a no-op outside an agent run.
             let run_id = invocation.ctx.run_id().map(str::to_owned);
+            let tenant_id = invocation.ctx.tenant_id().clone();
             let tool = invocation.metadata.name.clone();
             let tool_version = invocation.metadata.version.clone();
             let tool_use_id = invocation.tool_use_id.clone();
@@ -159,6 +175,7 @@ where
                 let _ = sink
                     .send(AgentEvent::ToolStart {
                         run_id: rid.clone(),
+                        tenant_id: tenant_id.clone(),
                         tool_use_id: tool_use_id.clone(),
                         tool: tool.clone(),
                         tool_version: tool_version.clone(),
@@ -193,6 +210,7 @@ where
                     let _ = sink
                         .send(AgentEvent::ToolComplete {
                             run_id: rid,
+                            tenant_id,
                             tool_use_id,
                             tool,
                             tool_version,
@@ -202,16 +220,17 @@ where
                         .await;
                 }
                 (Err(err), Some(rid)) => {
+                    let envelope = err.envelope();
                     let _ = sink
                         .send(AgentEvent::ToolError {
                             run_id: rid,
+                            tenant_id,
                             tool_use_id,
                             tool,
                             tool_version,
                             error: err.to_string(),
                             error_for_llm: err.for_llm(),
-                            wire_code: err.wire_code(),
-                            wire_class: err.wire_class(),
+                            envelope,
                             duration_ms,
                         })
                         .await;

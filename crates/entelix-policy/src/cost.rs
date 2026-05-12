@@ -156,6 +156,53 @@ pub enum UnknownModelPolicy {
     WarnOnce,
 }
 
+/// Observer notified on every unknown-model charge attempt.
+///
+/// Independent of [`UnknownModelPolicy`] — the policy decides what the
+/// `charge()` *return value* is (error vs. zero charge), the sink
+/// decides *what side-effect* runs when an unknown model is dispatched
+/// (metric counter increment, breadcrumb, alert). Operators wire both:
+/// `WarnOnce` keeps log noise bounded for human readers, the sink
+/// emits a counter that production dashboards consume without dedup.
+///
+/// **Contract** (mirrors [`entelix_core::AuditSink`], invariant 18):
+///
+/// - Sync `&self` — the call site is the cost-meter hot path; the
+///   sink must not block. Async work is the sink impl's responsibility
+///   (spawn an internal task, push onto a channel).
+/// - Fires on every attempt — NOT deduped. The `WarnOnce` log gate
+///   dedupes the human-facing message; this sink sees raw counts so
+///   Prometheus / Datadog scrapes see request-rate, not unique-model-
+///   count.
+/// - Fires under every [`UnknownModelPolicy`] — including `Reject`,
+///   where the call ultimately errors. The sink runs *before* the
+///   policy decision so dashboards reflect "operator hit an unknown
+///   model" regardless of whether the call surfaced as an error.
+/// - Failures stay inside — sink impls must not panic; if they do,
+///   the panic is the impl's bug. The cost-meter does not catch.
+///
+/// Example: a metrics-counter sink.
+///
+/// ```ignore
+/// struct MetricsUnknownModelSink;
+///
+/// impl entelix_policy::UnknownModelSink for MetricsUnknownModelSink {
+///     fn record_unknown_model(&self, tenant: &entelix_core::TenantId, model: &str) {
+///         metrics::counter!(
+///             "entelix_policy.unknown_model_charge",
+///             "tenant" => tenant.as_str().to_owned(),
+///             "model" => model.to_owned(),
+///         ).increment(1);
+///     }
+/// }
+/// ```
+pub trait UnknownModelSink: Send + Sync + 'static {
+    /// Record one unknown-model dispatch attempt. See trait doc for
+    /// the firing contract (every attempt, no dedup, runs ahead of
+    /// the policy decision).
+    fn record_unknown_model(&self, tenant: &entelix_core::TenantId, model: &str);
+}
+
 /// Cap on distinct model names tracked under `WarnOnce`.
 ///
 /// Bounds `warned_models` at roughly `MAX_WARNED_MODELS *
@@ -211,6 +258,12 @@ pub struct CostMeter {
     /// saturation warn has been emitted. Subsequent unknown-tenant
     /// calls return `Ok(Decimal::ZERO)` silently.
     tenants_saturated: Arc<std::sync::atomic::AtomicBool>,
+    /// Optional observer fired on every unknown-model dispatch — see
+    /// [`UnknownModelSink`]'s trait doc. `None` makes every unknown-
+    /// model path a silent no-op on the sink channel; the
+    /// [`UnknownModelPolicy`] decision (`Reject` / `WarnOnce`) is
+    /// independent.
+    unknown_model_sink: Option<Arc<dyn UnknownModelSink>>,
 }
 
 impl CostMeter {
@@ -226,6 +279,7 @@ impl CostMeter {
             warned_saturated: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             max_tenants: DEFAULT_MAX_TENANTS,
             tenants_saturated: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+            unknown_model_sink: None,
         }
     }
 
@@ -233,6 +287,19 @@ impl CostMeter {
     #[must_use]
     pub const fn with_unknown_model_policy(mut self, policy: UnknownModelPolicy) -> Self {
         self.unknown_policy = policy;
+        self
+    }
+
+    /// Wire an [`UnknownModelSink`] observer. The sink fires on every
+    /// unknown-model dispatch attempt — distinct from
+    /// [`UnknownModelPolicy::WarnOnce`]'s log-dedup gate (the policy
+    /// suppresses repeat log lines; the sink sees raw per-attempt
+    /// counts). The [`UnknownModelPolicy`] decision (`Reject` /
+    /// `WarnOnce`) is independent. Pairs with the trait doc for the
+    /// contract.
+    #[must_use]
+    pub fn with_unknown_model_sink(mut self, sink: Arc<dyn UnknownModelSink>) -> Self {
+        self.unknown_model_sink = Some(sink);
         self
     }
 
@@ -351,20 +418,30 @@ impl CostMeter {
         model: &str,
         usage: &Usage,
     ) -> PolicyResult<Decimal> {
-        let cost = {
-            let pricing = self.pricing.read();
-            match pricing.get(model) {
-                Some(model_pricing) => model_pricing.cost_for(usage),
-                None => match self.unknown_policy {
-                    UnknownModelPolicy::Reject => {
-                        return Err(PolicyError::UnknownModel(model.to_owned()));
-                    }
-                    UnknownModelPolicy::WarnOnce => {
-                        self.warn_once_for_unknown(model);
-                        return Ok(Decimal::ZERO);
-                    }
-                },
+        // Cost lookup is the only step that needs the pricing read
+        // guard. Drop it before running the unknown-model side-effect
+        // chain (operator sink + warn-once + policy decision) so a
+        // sink impl that internally acquires its own lock cannot
+        // deadlock against a concurrent `replace_pricing` writer
+        // (lock-ordering, root CLAUDE.md).
+        let lookup = self.pricing.read().get(model).map(|p| p.cost_for(usage));
+        let Some(cost) = lookup else {
+            // Sink fires ahead of the policy split — operators routing
+            // dashboards off this signal see every attempt regardless
+            // of whether the call surfaces as an error (`Reject`) or
+            // zero charge (`WarnOnce`). The log-dedup gate below
+            // belongs to the human-facing channel; the sink is the
+            // machine channel.
+            if let Some(sink) = &self.unknown_model_sink {
+                sink.record_unknown_model(tenant_id, model);
             }
+            return match self.unknown_policy {
+                UnknownModelPolicy::Reject => Err(PolicyError::UnknownModel(model.to_owned())),
+                UnknownModelPolicy::WarnOnce => {
+                    self.warn_once_for_unknown(model);
+                    Ok(Decimal::ZERO)
+                }
+            };
         };
         if cost.is_zero() {
             return Ok(cost);
@@ -530,6 +607,7 @@ impl std::fmt::Debug for CostMeter {
                     .tenants_saturated
                     .load(std::sync::atomic::Ordering::Relaxed),
             )
+            .field("unknown_model_sink", &self.unknown_model_sink.is_some())
             .finish()
     }
 }
@@ -793,6 +871,161 @@ mod tests {
             .charge(&TenantId::new("alpha"), "gpt-4.1", &usage(1000, 0))
             .unwrap();
         assert_eq!(cost, d("20"));
+    }
+
+    /// Test sink that records every `record_unknown_model` call.
+    /// Captures `(tenant, model)` pairs so tests can assert order +
+    /// count, exercises the production sink-impl shape (Arc-shareable,
+    /// sync, internally synchronised via `Mutex`).
+    #[derive(Default)]
+    struct CapturingSink {
+        calls: std::sync::Mutex<Vec<(String, String)>>,
+    }
+
+    impl CapturingSink {
+        fn snapshot(&self) -> Vec<(String, String)> {
+            self.calls.lock().unwrap().clone()
+        }
+    }
+
+    impl UnknownModelSink for CapturingSink {
+        fn record_unknown_model(&self, tenant: &TenantId, model: &str) {
+            self.calls
+                .lock()
+                .unwrap()
+                .push((tenant.as_str().to_owned(), model.to_owned()));
+        }
+    }
+
+    #[test]
+    fn unknown_model_sink_fires_under_warn_once_without_dedup() {
+        // WarnOnce dedupes the tracing log channel; the sink must NOT
+        // dedupe — production dashboards consume raw per-attempt counts
+        // (rate, p50, percentiles).
+        let sink = Arc::new(CapturingSink::default());
+        let meter = CostMeter::new(pricing())
+            .with_unknown_model_policy(UnknownModelPolicy::WarnOnce)
+            .with_unknown_model_sink(sink.clone());
+
+        for _ in 0..5 {
+            let _ = meter
+                .charge(&TenantId::new("alpha"), "vendor-preview-x", &usage(1, 1))
+                .unwrap();
+        }
+
+        let calls = sink.snapshot();
+        assert_eq!(
+            calls.len(),
+            5,
+            "sink must observe every attempt, not the warn-once-deduped subset"
+        );
+        for (tenant, model) in &calls {
+            assert_eq!(tenant, "alpha");
+            assert_eq!(model, "vendor-preview-x");
+        }
+        // Log gate still dedupes — the sink + log channels are
+        // independent.
+        assert_eq!(meter.warned_models.len(), 1);
+    }
+
+    #[test]
+    fn unknown_model_sink_fires_under_reject_before_err_returns() {
+        // Reject surfaces the call as an Err — but the sink must still
+        // see the attempt, so dashboards reflect "operator hit an
+        // unknown model" regardless of whether the call ultimately
+        // succeeds or errors.
+        let sink = Arc::new(CapturingSink::default());
+        let meter = CostMeter::new(pricing()).with_unknown_model_sink(sink.clone());
+
+        let err = meter
+            .charge(&TenantId::new("bravo"), "mystery-model", &usage(10, 10))
+            .unwrap_err();
+        assert!(matches!(err, PolicyError::UnknownModel(_)));
+
+        let calls = sink.snapshot();
+        assert_eq!(
+            calls,
+            vec![("bravo".to_owned(), "mystery-model".to_owned())]
+        );
+    }
+
+    #[test]
+    fn absent_unknown_model_sink_is_a_silent_no_op() {
+        // The default constructor wires no sink — neither the charge
+        // path nor the ledger should observe any sink-related work.
+        let meter = CostMeter::new(pricing());
+        let _ = meter
+            .charge(&TenantId::new("alpha"), "unknown", &usage(1, 1))
+            .unwrap_err();
+        assert_eq!(meter.spent_by(&TenantId::new("alpha")), Decimal::ZERO);
+    }
+
+    #[test]
+    fn known_model_charge_does_not_fire_unknown_sink() {
+        // Sink is scoped to the unknown branch — a healthy known-model
+        // charge must NOT trip the dashboard counter.
+        let sink = Arc::new(CapturingSink::default());
+        let meter = CostMeter::new(pricing()).with_unknown_model_sink(sink.clone());
+        let _ = meter
+            .charge(
+                &TenantId::new("alpha"),
+                "claude-opus-4-7",
+                &usage(1000, 1000),
+            )
+            .unwrap();
+        assert!(
+            sink.snapshot().is_empty(),
+            "known-model dispatch must not invoke the unknown-model sink"
+        );
+    }
+
+    #[test]
+    fn unknown_model_sink_may_replace_pricing_without_deadlock() {
+        // Regression-pin for the lock-ordering reshape: the sink runs
+        // outside the `pricing.read()` scope, so a sink impl that
+        // calls `replace_pricing` (an admin write path acting on the
+        // observed dispatch) must not deadlock. If the read guard
+        // leaked into the sink call, this test would hang on the
+        // `pricing.write()` inside `replace_pricing`.
+        struct HotSwapSink {
+            meter: Arc<RwLock<Option<CostMeter>>>,
+        }
+        impl UnknownModelSink for HotSwapSink {
+            fn record_unknown_model(&self, _tenant: &TenantId, model: &str) {
+                if let Some(m) = self.meter.read().as_ref() {
+                    let mut p = pricing();
+                    p.set(
+                        model,
+                        ModelPricing::new(d("1"), d("1"), Decimal::ZERO, Decimal::ZERO),
+                    );
+                    m.replace_pricing(p);
+                }
+            }
+        }
+
+        let slot: Arc<RwLock<Option<CostMeter>>> = Arc::new(RwLock::new(None));
+        let meter = CostMeter::new(pricing())
+            .with_unknown_model_policy(UnknownModelPolicy::WarnOnce)
+            .with_unknown_model_sink(Arc::new(HotSwapSink {
+                meter: slot.clone(),
+            }));
+        *slot.write() = Some(meter.clone());
+
+        // First call: model is unknown → sink fires → installs pricing.
+        let first = meter
+            .charge(&TenantId::new("alpha"), "freshly-launched", &usage(1000, 0))
+            .unwrap();
+        assert_eq!(
+            first,
+            Decimal::ZERO,
+            "first call returns zero (the model was unknown when looked up)"
+        );
+
+        // Second call: pricing is now installed → charges normally.
+        let second = meter
+            .charge(&TenantId::new("alpha"), "freshly-launched", &usage(1000, 0))
+            .unwrap();
+        assert_eq!(second, d("1"));
     }
 
     #[test]

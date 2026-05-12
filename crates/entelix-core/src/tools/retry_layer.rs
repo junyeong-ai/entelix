@@ -80,6 +80,16 @@ pub struct RetryToolLayer {
 }
 
 impl RetryToolLayer {
+    /// Patch-version-stable identifier surfaced through
+    /// `ToolRegistry::layer_names`. Distinguished from the
+    /// transport-level [`crate::transports::RetryLayer`] (`"retry"`)
+    /// — this layer drives per-tool retries from the wrapped tool's
+    /// [`RetryHint`](crate::tools::RetryHint) metadata, not from a
+    /// global [`crate::transports::RetryPolicy`]. Renaming this
+    /// constant is a breaking change for dashboards keyed off the
+    /// value.
+    pub const NAME: &'static str = "tool_retry";
+
     /// Build with the default classifier ([`DefaultRetryClassifier`])
     /// and [`DEFAULT_MAX_BACKOFF`] cap.
     #[must_use]
@@ -137,6 +147,12 @@ where
             classifier: Arc::clone(&self.classifier),
             max_backoff: self.max_backoff,
         }
+    }
+}
+
+impl crate::NamedLayer for RetryToolLayer {
+    fn layer_name(&self) -> &'static str {
+        Self::NAME
     }
 }
 

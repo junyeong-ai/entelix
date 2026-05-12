@@ -74,11 +74,11 @@ mod tenant;
 
 pub use cost::{
     CostMeter, DEFAULT_MAX_TENANTS, MAX_WARNED_MODELS, ModelPricing, PricingTable,
-    UnknownModelPolicy,
+    UnknownModelPolicy, UnknownModelSink,
 };
 pub use error::{PolicyError, PolicyResult};
 pub use layer::{PolicyLayer, PolicyService};
 pub use pii::{PiiPattern, PiiRedactor, RegexRedactor, default_pii_patterns, luhn_valid};
 pub use quota::{Budget, QuotaLimiter};
 pub use rate_limit::{RateLimiter, TokenBucketLimiter};
-pub use tenant::{PolicyRegistry, TenantPolicy, TenantPolicyBuilder};
+pub use tenant::{PolicyRegistry, TenantPolicy};

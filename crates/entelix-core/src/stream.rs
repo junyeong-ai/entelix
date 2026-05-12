@@ -85,8 +85,8 @@ pub enum StreamDelta {
         /// the aggregator stays codec-agnostic and just accumulates.
         provider_echoes: Vec<ProviderEchoSnapshot>,
     },
-    /// Begin a new tool-use block. Closes any previously-open text block
-    /// so the output preserves the model's intended ordering.
+    /// Begin a new tool-use block. Closes any open text block so the
+    /// output preserves the model's intended ordering.
     ToolUseStart {
         /// Stable tool-use id.
         id: String,

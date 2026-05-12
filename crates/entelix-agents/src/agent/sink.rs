@@ -544,6 +544,7 @@ mod tests {
     fn started(agent: impl Into<String>) -> TestEvent {
         TestEvent::Started {
             run_id: "test-run".into(),
+            tenant_id: entelix_core::TenantId::new("t-test"),
             parent_run_id: None,
             agent: agent.into(),
         }
@@ -552,6 +553,7 @@ mod tests {
     fn complete(state: i32) -> TestEvent {
         TestEvent::Complete {
             run_id: "test-run".into(),
+            tenant_id: entelix_core::TenantId::new("t-test"),
             state,
             usage: None,
         }

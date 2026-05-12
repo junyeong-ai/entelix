@@ -107,6 +107,12 @@ impl Layer<BoxedToolService> for CountingLayer {
     }
 }
 
+impl entelix_core::NamedLayer for CountingLayer {
+    fn layer_name(&self) -> &'static str {
+        "counting"
+    }
+}
+
 #[derive(Clone)]
 struct CountingService {
     inner: BoxedToolService,

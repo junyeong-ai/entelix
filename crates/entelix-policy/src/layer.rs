@@ -53,6 +53,12 @@ pub struct PolicyLayer {
 }
 
 impl PolicyLayer {
+    /// Patch-version-stable identifier surfaced through
+    /// [`entelix_core::ChatModel::layer_names`] /
+    /// `ToolRegistry::layer_names`. Renaming this constant is a
+    /// breaking change for dashboards keyed off the value.
+    pub const NAME: &'static str = "policy";
+
     /// Build with the supplied manager; one rate-limit token per
     /// request.
     #[must_use]
@@ -68,6 +74,12 @@ impl PolicyLayer {
     pub const fn with_rate_tokens(mut self, tokens: u32) -> Self {
         self.rate_tokens_per_request = tokens;
         self
+    }
+}
+
+impl entelix_core::NamedLayer for PolicyLayer {
+    fn layer_name(&self) -> &'static str {
+        Self::NAME
     }
 }
 
@@ -432,11 +444,9 @@ mod tests {
         let mgr = Arc::new(
             PolicyRegistry::new().with_tenant(
                 TenantId::new("acme"),
-                TenantPolicy::builder()
+                TenantPolicy::new()
                     .with_redactor(Arc::new(RegexRedactor::with_defaults()))
-                    .with_cost_meter(meter.clone())
-                    .build()
-                    .unwrap(),
+                    .with_cost_meter(meter.clone()),
             ),
         );
         let leaf = FakeModelService::new(make_response());
@@ -459,19 +469,14 @@ mod tests {
 
     #[tokio::test]
     async fn rate_refusal_returns_provider_429_and_skips_inner() {
-        let mgr = Arc::new(
-            PolicyRegistry::new().with_tenant(
-                TenantId::new("acme"),
-                TenantPolicy::builder()
-                    .with_quota(Arc::new(QuotaLimiter::new(
-                        Some(Arc::new(TokenBucketLimiter::new(1, 1.0).unwrap())),
-                        None,
-                        Budget::unlimited(),
-                    )))
-                    .build()
-                    .unwrap(),
-            ),
-        );
+        let mgr = Arc::new(PolicyRegistry::new().with_tenant(
+            TenantId::new("acme"),
+            TenantPolicy::new().with_quota(Arc::new(QuotaLimiter::new(
+                Some(Arc::new(TokenBucketLimiter::new(1, 1.0).unwrap())),
+                None,
+                Budget::unlimited(),
+            ))),
+        ));
         let leaf = FakeModelService::new(make_response());
         let calls = leaf.calls.clone();
         let layer = PolicyLayer::new(mgr);
@@ -535,15 +540,10 @@ mod tests {
         // table dominates a $0.10 ceiling; the pre-call gate must
         // refuse the dispatch before the inner service runs.
         let meter = Arc::new(CostMeter::new(pricing()));
-        let mgr = Arc::new(
-            PolicyRegistry::new().with_tenant(
-                TenantId::new("acme"),
-                TenantPolicy::builder()
-                    .with_cost_meter(meter.clone())
-                    .build()
-                    .unwrap(),
-            ),
-        );
+        let mgr = Arc::new(PolicyRegistry::new().with_tenant(
+            TenantId::new("acme"),
+            TenantPolicy::new().with_cost_meter(meter.clone()),
+        ));
         let leaf = FakeModelService::new(make_response());
         let calls = leaf.calls.clone();
         let service = PolicyLayer::new(mgr).layer(leaf);
@@ -577,15 +577,10 @@ mod tests {
     #[tokio::test]
     async fn cost_observation_populates_run_budget_after_ok() {
         let meter = Arc::new(CostMeter::new(pricing()));
-        let mgr = Arc::new(
-            PolicyRegistry::new().with_tenant(
-                TenantId::new("acme"),
-                TenantPolicy::builder()
-                    .with_cost_meter(meter.clone())
-                    .build()
-                    .unwrap(),
-            ),
-        );
+        let mgr = Arc::new(PolicyRegistry::new().with_tenant(
+            TenantId::new("acme"),
+            TenantPolicy::new().with_cost_meter(meter.clone()),
+        ));
         let leaf = FakeModelService::new(make_response());
         let service = PolicyLayer::new(mgr).layer(leaf);
 
@@ -607,15 +602,10 @@ mod tests {
 
     #[tokio::test]
     async fn tool_layer_redacts_input_and_output() {
-        let mgr = Arc::new(
-            PolicyRegistry::new().with_tenant(
-                TenantId::new("acme"),
-                TenantPolicy::builder()
-                    .with_redactor(Arc::new(RegexRedactor::with_defaults()))
-                    .build()
-                    .unwrap(),
-            ),
-        );
+        let mgr = Arc::new(PolicyRegistry::new().with_tenant(
+            TenantId::new("acme"),
+            TenantPolicy::new().with_redactor(Arc::new(RegexRedactor::with_defaults())),
+        ));
         let layer = PolicyLayer::new(mgr);
         let svc = layer.layer(EchoToolService);
         let inv = ToolInvocation::new(

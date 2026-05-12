@@ -97,6 +97,11 @@ pub struct ScopedToolLayer {
 }
 
 impl ScopedToolLayer {
+    /// Patch-version-stable identifier surfaced through
+    /// `ToolRegistry::layer_names`. Renaming this constant is a
+    /// breaking change for dashboards keyed off the value.
+    pub const NAME: &'static str = "tool_scope";
+
     /// Wrap a concrete [`ToolDispatchScope`] for layer attachment.
     /// The boxed-trait shape lets operators stack heterogeneous
     /// scope wrappers if they need to compose (e.g. a tenant-RLS
@@ -134,6 +139,12 @@ impl<S> Layer<S> for ScopedToolLayer {
             inner,
             wrapper: Arc::clone(&self.wrapper),
         }
+    }
+}
+
+impl crate::NamedLayer for ScopedToolLayer {
+    fn layer_name(&self) -> &'static str {
+        Self::NAME
     }
 }
 

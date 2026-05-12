@@ -198,6 +198,7 @@ where
         self.sink
             .send(AgentEvent::Started {
                 run_id: run_id.clone(),
+                tenant_id: ctx.tenant_id().clone(),
                 parent_run_id: parent_run_id.clone(),
                 agent: self.name.clone(),
             })
@@ -221,6 +222,7 @@ where
                 self.sink
                     .send(AgentEvent::Complete {
                         run_id: result.run_id.clone(),
+                        tenant_id: ctx.tenant_id().clone(),
                         state: result.state.clone(),
                         usage: result.usage,
                     })
@@ -236,13 +238,14 @@ where
                 // Best-effort `Failed` emission — if the sink itself
                 // errors (dropped receiver), swallow the secondary
                 // error so the original surfaces unchanged.
+                let envelope = err.envelope();
                 let _ = self
                     .sink
                     .send(AgentEvent::Failed {
                         run_id,
+                        tenant_id: ctx.tenant_id().clone(),
                         error: err.to_string(),
-                        wire_code: err.wire_code(),
-                        wire_class: err.wire_class(),
+                        envelope,
                     })
                     .await;
                 Err(err)
@@ -463,6 +466,7 @@ where
             // Started book-end (sink + caller stream).
             let started = AgentEvent::Started {
                 run_id: run_id.clone(),
+                tenant_id: inner_ctx.tenant_id().clone(),
                 parent_run_id,
                 agent: self.name.clone(),
             };
@@ -474,6 +478,7 @@ where
             // agent-run span. Sink emissions (book-end events)
             // stay outside the span; they're sink-only, not
             // tracing events.
+            let tenant_id = inner_ctx.tenant_id().clone();
             let outcome = self
                 .run_inner(input, run_id.clone(), inner_ctx)
                 .instrument(self.run_span(&run_id, inner_ctx))
@@ -485,6 +490,7 @@ where
                 Ok(result) => {
                     let complete = AgentEvent::Complete {
                         run_id: result.run_id,
+                        tenant_id,
                         state: result.state,
                         usage: result.usage,
                     };
@@ -492,11 +498,12 @@ where
                     yield Ok(complete);
                 }
                 Err(err) => {
+                    let envelope = err.envelope();
                     let failed = AgentEvent::Failed {
                         run_id,
+                        tenant_id,
                         error: err.to_string(),
-                        wire_code: err.wire_code(),
-                        wire_class: err.wire_class(),
+                        envelope,
                     };
                     let _ = self.sink.send(failed.clone()).await;
                     yield Ok(failed);

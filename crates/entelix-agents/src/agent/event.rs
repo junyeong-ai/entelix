@@ -37,15 +37,15 @@
 //! wiring both an `AgentEventSink` (for telemetry) and a
 //! `SessionGraph` (for durable audit) routes tool emissions
 //! through this method rather than constructing `GraphEvent`
-//! independently. That eliminates the duplication that previously
-//! made the two enums parallel channels recording the same fact
-//! twice (RC-1 second half).
+//! independently — the two channels record the same fact through
+//! one construction path.
 
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 
-use entelix_core::ErrorClass;
+use entelix_core::ErrorEnvelope;
 use entelix_core::RenderedForLlm;
+use entelix_core::TenantId;
 use entelix_core::UsageSnapshot;
 use entelix_core::ir::ToolResultContent;
 use entelix_session::GraphEvent;
@@ -62,6 +62,12 @@ pub enum AgentEvent<S> {
         /// duration of the run; matches the id on every subsequent
         /// event for this same call.
         run_id: String,
+        /// Tenant scope this event belongs to (invariant 11 —
+        /// every emit site stamps `ctx.tenant_id().clone()`). Audit /
+        /// billing / replay consumers key off this field directly
+        /// instead of correlating through a separate `run_id` →
+        /// `tenant_id` lookup.
+        tenant_id: TenantId,
         /// Run id of the calling agent when this run was dispatched
         /// from a parent (sub-agent fan-out, supervisor handoff).
         /// `None` for top-level runs. LangSmith-style trace-tree
@@ -79,6 +85,8 @@ pub enum AgentEvent<S> {
     ToolStart {
         /// Run correlation id.
         run_id: String,
+        /// Tenant scope this event belongs to (see `Started`).
+        tenant_id: TenantId,
         /// Stable tool-use id matching the originating
         /// `ContentPart::ToolUse`.
         tool_use_id: String,
@@ -96,6 +104,8 @@ pub enum AgentEvent<S> {
     ToolComplete {
         /// Run correlation id.
         run_id: String,
+        /// Tenant scope this event belongs to (see `Started`).
+        tenant_id: TenantId,
         /// Stable tool-use id matching the corresponding `ToolStart`.
         tool_use_id: String,
         /// Tool name (echoed for sink convenience).
@@ -117,6 +127,8 @@ pub enum AgentEvent<S> {
     ToolError {
         /// Run correlation id.
         run_id: String,
+        /// Tenant scope this event belongs to (see `Started`).
+        tenant_id: TenantId,
         /// Stable tool-use id matching the corresponding `ToolStart`.
         tool_use_id: String,
         /// Tool name (echoed for sink convenience).
@@ -139,17 +151,15 @@ pub enum AgentEvent<S> {
         /// reconstructs the model's view without re-leaking
         /// operator content (invariant #16).
         error_for_llm: RenderedForLlm<String>,
-        /// Patch-version-stable wire identifier paired with the
-        /// originating [`entelix_core::Error::wire_code`]. Sink
-        /// consumers (audit log replay, metric labels, typed wire
-        /// envelopes) key off this field instead of parsing the
-        /// `error` prose. `&'static str` mirrors `wire_code`'s
-        /// stability promise.
-        wire_code: &'static str,
-        /// Responsibility class paired with the originating
-        /// [`entelix_core::Error::wire_class`]. `Client` for
-        /// caller-actionable failures, `Server` for SDK/vendor side.
-        wire_class: ErrorClass,
+        /// Typed wire shape produced by
+        /// [`entelix_core::Error::envelope`]. Bundles `wire_code`
+        /// (i18n key / metric label), `wire_class` (responsibility
+        /// split), `retry_after_secs` (vendor `Retry-After` hint),
+        /// and `provider_status` (raw HTTP status) so sinks, audit
+        /// replay, SSE adapters, and FE rate-limit timers all read
+        /// one `Copy` value instead of pattern-matching the inner
+        /// error variant. Patch-version-stable.
+        envelope: ErrorEnvelope,
         /// Wall-clock duration measured by the layer.
         duration_ms: u64,
     },
@@ -161,22 +171,23 @@ pub enum AgentEvent<S> {
     Failed {
         /// Run correlation id.
         run_id: String,
+        /// Tenant scope this event belongs to (see `Started`).
+        tenant_id: TenantId,
         /// Lean error message (`Display` form).
         error: String,
-        /// Patch-version-stable wire identifier paired with the
-        /// originating [`entelix_core::Error::wire_code`]. Replay /
-        /// audit / metric consumers route off this field instead of
-        /// parsing `error` prose.
-        wire_code: &'static str,
-        /// Responsibility class paired with
-        /// [`entelix_core::Error::wire_class`].
-        wire_class: ErrorClass,
+        /// Typed wire shape produced by
+        /// [`entelix_core::Error::envelope`] — see `ToolError` for
+        /// the field roster. Replay / audit / metric / SSE consumers
+        /// route off this field instead of parsing `error` prose.
+        envelope: ErrorEnvelope,
     },
 
     /// Run terminated successfully with the agent's terminal state.
     Complete {
         /// Run correlation id.
         run_id: String,
+        /// Tenant scope this event belongs to (see `Started`).
+        tenant_id: TenantId,
         /// Final state returned by the inner runnable.
         state: S,
         /// Frozen [`UsageSnapshot`] of the [`entelix_core::RunBudget`]
@@ -196,6 +207,8 @@ pub enum AgentEvent<S> {
     ToolCallApproved {
         /// Run correlation id.
         run_id: String,
+        /// Tenant scope this event belongs to (see `Started`).
+        tenant_id: TenantId,
         /// Stable tool-use id matching the originating
         /// `ContentPart::ToolUse`. Pairs with the subsequent
         /// `ToolStart` / `ToolComplete` / `ToolError`.
@@ -211,6 +224,8 @@ pub enum AgentEvent<S> {
     ToolCallDenied {
         /// Run correlation id.
         run_id: String,
+        /// Tenant scope this event belongs to (see `Started`).
+        tenant_id: TenantId,
         /// Stable tool-use id of the rejected dispatch.
         tool_use_id: String,
         /// Tool name being denied.
@@ -313,21 +328,24 @@ mod tests {
 
     #[test]
     fn lifecycle_variants_have_no_audit_projection() {
+        let tenant = TenantId::new("t-test");
         let started: AgentEvent<u32> = AgentEvent::Started {
             run_id: "r1".into(),
+            tenant_id: tenant.clone(),
             parent_run_id: None,
             agent: "a".into(),
         };
         let complete: AgentEvent<u32> = AgentEvent::Complete {
             run_id: "r1".into(),
+            tenant_id: tenant.clone(),
             state: 7,
             usage: None,
         };
         let failed: AgentEvent<u32> = AgentEvent::Failed {
             run_id: "r1".into(),
+            tenant_id: tenant,
             error: "boom".into(),
-            wire_code: "internal",
-            wire_class: ErrorClass::Server,
+            envelope: entelix_core::Error::config("boom").envelope(),
         };
         assert!(started.to_graph_event(ts()).is_none());
         assert!(complete.to_graph_event(ts()).is_none());
@@ -338,6 +356,7 @@ mod tests {
     fn tool_start_projects_to_graph_event_tool_call() {
         let event: AgentEvent<u32> = AgentEvent::ToolStart {
             run_id: "r1".into(),
+            tenant_id: TenantId::new("t-test"),
             tool_use_id: "tu-1".into(),
             tool: "double".into(),
             tool_version: Some("1.2.0".into()),
@@ -364,6 +383,7 @@ mod tests {
     fn tool_complete_projects_to_successful_tool_result() {
         let event: AgentEvent<u32> = AgentEvent::ToolComplete {
             run_id: "r1".into(),
+            tenant_id: TenantId::new("t-test"),
             tool_use_id: "tu-1".into(),
             tool: "double".into(),
             tool_version: Some("1.2.0".into()),
@@ -404,9 +424,12 @@ mod tests {
         // error" rendering through the same code path the
         // production tool-event layer uses, so the test exercises
         // the real boundary instead of stubbing past it.
-        let llm_facing = Error::provider_http(503, "vendor down").for_llm();
+        let source = Error::provider_http(503, "vendor down");
+        let envelope = source.envelope();
+        let llm_facing = source.for_llm();
         let event: AgentEvent<u32> = AgentEvent::ToolError {
             run_id: "r1".into(),
+            tenant_id: TenantId::new("t-test"),
             tool_use_id: "tu-1".into(),
             tool: "double".into(),
             tool_version: None,
@@ -417,8 +440,7 @@ mod tests {
             // LLM-facing rendering — short, actionable, no vendor
             // identifiers. The audit projection picks this.
             error_for_llm: llm_facing,
-            wire_code: "upstream_unavailable",
-            wire_class: ErrorClass::Server,
+            envelope,
             duration_ms: 7,
         };
         let projected = event.to_graph_event(ts()).unwrap();
@@ -460,6 +482,7 @@ mod tests {
         // clock get the same audit row).
         let event: AgentEvent<u32> = AgentEvent::ToolStart {
             run_id: "r1".into(),
+            tenant_id: TenantId::new("t-test"),
             tool_use_id: "tu-1".into(),
             tool: "double".into(),
             tool_version: None,

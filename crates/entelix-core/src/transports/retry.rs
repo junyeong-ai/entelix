@@ -270,6 +270,12 @@ pub struct RetryLayer {
 }
 
 impl RetryLayer {
+    /// Patch-version-stable identifier surfaced through
+    /// [`crate::ChatModel::layer_names`] /
+    /// `ToolRegistry::layer_names`. Renaming this constant is a
+    /// breaking change for dashboards keyed off the value.
+    pub const NAME: &'static str = "retry";
+
     /// Build with a retry policy.
     #[must_use]
     pub const fn new(policy: RetryPolicy) -> Self {
@@ -284,6 +290,12 @@ impl<S> Layer<S> for RetryLayer {
             inner,
             policy: self.policy.clone(),
         }
+    }
+}
+
+impl crate::NamedLayer for RetryLayer {
+    fn layer_name(&self) -> &'static str {
+        Self::NAME
     }
 }
 

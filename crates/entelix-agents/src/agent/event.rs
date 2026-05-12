@@ -312,6 +312,139 @@ impl<S> AgentEvent<S> {
             }),
         }
     }
+
+    /// Erase the agent-state type parameter, replacing
+    /// [`Self::Complete::state`] with the unit value. Every other
+    /// variant rebuilds with identical field values — they carry no
+    /// state. Enables a single audit / SSE / OTel sink (typed
+    /// [`AgentEventSink<()>`](crate::agent::AgentEventSink)) to fan
+    /// in from heterogeneous agents (`Agent<ReActState>`,
+    /// `Agent<SupervisorState>`, …) through the
+    /// [`StateErasureSink`](crate::agent::StateErasureSink) adapter.
+    ///
+    /// Operators consuming the post-erasure event tree retain access
+    /// to every header field (`run_id`, `tenant_id`, `parent_run_id`)
+    /// and every per-variant payload (tool inputs / outputs, error
+    /// envelope, usage snapshot) — only the agent's terminal state
+    /// is dropped, which is the field a state-agnostic sink could
+    /// not type-erase anyway.
+    #[allow(clippy::too_many_lines)]
+    // 1-to-1 exhaustive variant rebuild — splitting hurts readability and the line count is structural, not accidental.
+    #[must_use]
+    pub fn erase_state(self) -> AgentEvent<()> {
+        match self {
+            Self::Started {
+                run_id,
+                tenant_id,
+                parent_run_id,
+                agent,
+            } => AgentEvent::Started {
+                run_id,
+                tenant_id,
+                parent_run_id,
+                agent,
+            },
+            Self::ToolStart {
+                run_id,
+                tenant_id,
+                tool_use_id,
+                tool,
+                tool_version,
+                input,
+            } => AgentEvent::ToolStart {
+                run_id,
+                tenant_id,
+                tool_use_id,
+                tool,
+                tool_version,
+                input,
+            },
+            Self::ToolComplete {
+                run_id,
+                tenant_id,
+                tool_use_id,
+                tool,
+                tool_version,
+                duration_ms,
+                output,
+            } => AgentEvent::ToolComplete {
+                run_id,
+                tenant_id,
+                tool_use_id,
+                tool,
+                tool_version,
+                duration_ms,
+                output,
+            },
+            Self::ToolError {
+                run_id,
+                tenant_id,
+                tool_use_id,
+                tool,
+                tool_version,
+                error,
+                error_for_llm,
+                envelope,
+                duration_ms,
+            } => AgentEvent::ToolError {
+                run_id,
+                tenant_id,
+                tool_use_id,
+                tool,
+                tool_version,
+                error,
+                error_for_llm,
+                envelope,
+                duration_ms,
+            },
+            Self::Failed {
+                run_id,
+                tenant_id,
+                error,
+                envelope,
+            } => AgentEvent::Failed {
+                run_id,
+                tenant_id,
+                error,
+                envelope,
+            },
+            Self::Complete {
+                run_id,
+                tenant_id,
+                state: _,
+                usage,
+            } => AgentEvent::Complete {
+                run_id,
+                tenant_id,
+                state: (),
+                usage,
+            },
+            Self::ToolCallApproved {
+                run_id,
+                tenant_id,
+                tool_use_id,
+                tool,
+            } => AgentEvent::ToolCallApproved {
+                run_id,
+                tenant_id,
+                tool_use_id,
+                tool,
+            },
+            Self::ToolCallDenied {
+                run_id,
+                tenant_id,
+                tool_use_id,
+                tool,
+                reason,
+            } => AgentEvent::ToolCallDenied {
+                run_id,
+                tenant_id,
+                tool_use_id,
+                tool,
+                reason,
+            },
+        }
+    }
 }
 
 #[cfg(test)]

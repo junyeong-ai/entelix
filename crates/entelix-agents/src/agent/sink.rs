@@ -534,6 +534,76 @@ where
     }
 }
 
+/// Adapter that erases an agent's state type so a single
+/// [`AgentEventSink<()>`] can fan in from heterogeneous agents
+/// (`Agent<ReActState>`, `Agent<SupervisorState>`, operator-defined
+/// state types) in a multi-agent system.
+///
+/// The wrapper takes any `Arc<dyn AgentEventSink<()>>` (the canonical
+/// state-agnostic sink shape) and produces an [`AgentEventSink<S>`]
+/// for any `S: Send + Sync + 'static`. The adapter calls
+/// [`AgentEvent::erase_state`] on every dispatch, replacing the
+/// agent's terminal state with `()` while every other field
+/// (`run_id`, `tenant_id`, `parent_run_id`, tool I/O, error envelope,
+/// usage snapshot, approval decisions) reaches the sink unchanged.
+///
+/// Wire pattern:
+///
+/// ```ignore
+/// let audit: Arc<dyn AgentEventSink<()>> = Arc::new(MyAuditSink);
+///
+/// // ReAct agent — own state-typed sink built from the same audit.
+/// let react = ReActAgentBuilder::new(model)
+///     .add_sink(Arc::new(StateErasureSink::new(Arc::clone(&audit))))
+///     .build()?;
+///
+/// // Supervisor agent — sharing the same audit pipeline.
+/// let supervisor = create_supervisor_agent(...)
+///     .add_sink(Arc::new(StateErasureSink::new(audit)))
+///     .build()?;
+/// ```
+pub struct StateErasureSink<S> {
+    inner: Arc<dyn AgentEventSink<()>>,
+    _phantom: std::marker::PhantomData<fn(S)>,
+}
+
+impl<S> StateErasureSink<S> {
+    /// Wrap a state-agnostic sink for attachment to an
+    /// `Agent<S>`-typed event stream.
+    #[must_use]
+    pub fn new(inner: Arc<dyn AgentEventSink<()>>) -> Self {
+        Self {
+            inner,
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<S> Clone for StateErasureSink<S> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: Arc::clone(&self.inner),
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<S> std::fmt::Debug for StateErasureSink<S> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("StateErasureSink").finish_non_exhaustive()
+    }
+}
+
+#[async_trait]
+impl<S> AgentEventSink<S> for StateErasureSink<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    async fn send(&self, event: AgentEvent<S>) -> Result<()> {
+        self.inner.send(event.erase_state()).await
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::indexing_slicing)]
 mod tests {
@@ -704,5 +774,100 @@ mod tests {
             1,
             "lifting the failing sink with FailOpenSink must keep downstream sinks reachable"
         );
+    }
+
+    #[tokio::test]
+    async fn state_erasure_sink_fans_in_heterogeneous_agents_to_one_unit_sink() {
+        // Two agents with distinct state types (i32, String) share a
+        // single `AgentEventSink<()>` audit pipeline through
+        // StateErasureSink wrappers. The audit sees every event from
+        // both agents with `Complete::state == ()` and every header
+        // field (run_id / tenant_id / parent_run_id) preserved.
+        let audit: Arc<CaptureSink<()>> = Arc::new(CaptureSink::<()>::new());
+        let audit_dyn: Arc<dyn AgentEventSink<()>> = audit.clone();
+
+        // Agent A: state-typed `i32`.
+        let a_adapter: StateErasureSink<i32> = StateErasureSink::new(Arc::clone(&audit_dyn));
+        a_adapter
+            .send(AgentEvent::Started {
+                run_id: "a-run".into(),
+                tenant_id: entelix_core::TenantId::new("t-shared"),
+                parent_run_id: None,
+                agent: "agent-a".into(),
+            })
+            .await
+            .unwrap();
+        a_adapter
+            .send(AgentEvent::Complete {
+                run_id: "a-run".into(),
+                tenant_id: entelix_core::TenantId::new("t-shared"),
+                state: 42_i32,
+                usage: None,
+            })
+            .await
+            .unwrap();
+
+        // Agent B: state-typed `String`.
+        let b_adapter: StateErasureSink<String> = StateErasureSink::new(audit_dyn);
+        b_adapter
+            .send(AgentEvent::Started {
+                run_id: "b-run".into(),
+                tenant_id: entelix_core::TenantId::new("t-shared"),
+                parent_run_id: Some("a-run".into()),
+                agent: "agent-b".into(),
+            })
+            .await
+            .unwrap();
+        b_adapter
+            .send(AgentEvent::Complete {
+                run_id: "b-run".into(),
+                tenant_id: entelix_core::TenantId::new("t-shared"),
+                state: "done".to_owned(),
+                usage: None,
+            })
+            .await
+            .unwrap();
+
+        // Audit captured all four events with Complete::state == ().
+        let events = audit.events();
+        assert_eq!(events.len(), 4);
+
+        // Headers survived erasure.
+        match &events[0] {
+            AgentEvent::Started {
+                run_id,
+                tenant_id,
+                parent_run_id,
+                agent,
+            } => {
+                assert_eq!(run_id, "a-run");
+                assert_eq!(tenant_id.as_str(), "t-shared");
+                assert_eq!(parent_run_id.as_deref(), None);
+                assert_eq!(agent, "agent-a");
+            }
+            other => panic!("unexpected event: {other:?}"),
+        }
+        match &events[2] {
+            AgentEvent::Started {
+                parent_run_id,
+                agent,
+                ..
+            } => {
+                assert_eq!(parent_run_id.as_deref(), Some("a-run"));
+                assert_eq!(agent, "agent-b");
+            }
+            other => panic!("unexpected event: {other:?}"),
+        }
+
+        // Complete events lost their typed state via erasure — the
+        // single-unit audit sink observes `state: ()` from both.
+        match &events[1] {
+            AgentEvent::Complete { state, .. } => assert_eq!(*state, ()),
+            other => panic!("unexpected event: {other:?}"),
+        }
+        match &events[3] {
+            AgentEvent::Complete { state, .. } => assert_eq!(*state, ()),
+            other => panic!("unexpected event: {other:?}"),
+        }
     }
 }

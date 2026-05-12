@@ -983,6 +983,73 @@ mod tests {
     }
 
     #[test]
+    fn pricing_mutations_serialise_under_concurrent_clones() {
+        // Two threads pound the same `Arc<CostMeter>` clones with
+        // disjoint mutation patterns — one rebuilds the full table,
+        // the other partials a single row. Both go through the same
+        // `RwLock<PricingTable>` slot so writes serialise; the test
+        // pins (a) no panics / no torn state and (b) the post-join
+        // table reflects every committed mutation deterministically.
+        let meter = Arc::new(CostMeter::new(pricing()));
+        let barrier = Arc::new(std::sync::Barrier::new(2));
+
+        // Snapshot baseline: claude row exists, gpt-4.1 row exists.
+        assert!(meter.pricing_snapshot().get("claude-opus-4-7").is_some());
+
+        let m_replace = Arc::clone(&meter);
+        let b_replace = Arc::clone(&barrier);
+        let t_replace = std::thread::spawn(move || {
+            b_replace.wait();
+            for i in 0..500 {
+                let mut next = PricingTable::new();
+                next.set(
+                    "claude-opus-4-7",
+                    ModelPricing::new(
+                        Decimal::from(i % 3),
+                        Decimal::from((i % 3) * 2),
+                        Decimal::ZERO,
+                        Decimal::ZERO,
+                    ),
+                );
+                m_replace.replace_pricing(next);
+            }
+        });
+
+        let m_partial = Arc::clone(&meter);
+        let b_partial = Arc::clone(&barrier);
+        let t_partial = std::thread::spawn(move || {
+            b_partial.wait();
+            for i in 0..500 {
+                m_partial.replace_model_pricing(
+                    "gpt-4.1",
+                    ModelPricing::new(
+                        Decimal::from(i % 5),
+                        Decimal::from((i % 5) * 4),
+                        Decimal::ZERO,
+                        Decimal::ZERO,
+                    ),
+                );
+            }
+        });
+
+        t_replace.join().unwrap();
+        t_partial.join().unwrap();
+
+        // Final state: t_replace's last write installed a table
+        // containing only `claude-opus-4-7`. t_partial's last write
+        // may have installed `gpt-4.1` AFTER that swap (insert
+        // semantic), or BEFORE it (lost to the table replace). Both
+        // orderings are valid; what must hold is that the meter is
+        // in ONE of these two states — no torn row, no panic, no
+        // missing claude.
+        let final_snap = meter.pricing_snapshot();
+        assert!(
+            final_snap.get("claude-opus-4-7").is_some(),
+            "claude row must survive — every t_replace write installs it"
+        );
+    }
+
+    #[test]
     fn replace_model_pricing_is_observed_by_cloned_meters() {
         // The single-row swap rides through `Arc<CostMeter>` clones
         // just like the full-table `replace_pricing`. Config-reload

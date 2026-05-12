@@ -73,7 +73,8 @@ pub use self::mode::ExecutionMode;
 pub use self::observer::{AgentObserver, DynObserver};
 pub use self::result::AgentRunResult;
 pub use self::sink::{
-    AgentEventSink, BroadcastSink, CaptureSink, ChannelSink, DroppingSink, FailOpenSink, FanOutSink,
+    AgentEventSink, BroadcastSink, CaptureSink, ChannelSink, DroppingSink, FailOpenSink,
+    FanOutSink, StateErasureSink,
 };
 pub use self::tool_event_layer::{ToolEventLayer, ToolEventService};
 pub use self::tool_hook_layer::{

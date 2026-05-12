@@ -53,6 +53,7 @@ pub entelix_agents::AgentEvent::ToolStart::tool: alloc::string::String
 pub entelix_agents::AgentEvent::ToolStart::tool_use_id: alloc::string::String
 pub entelix_agents::AgentEvent::ToolStart::tool_version: core::option::Option<alloc::string::String>
 impl<S> entelix_agents::AgentEvent<S>
+pub fn entelix_agents::AgentEvent<S>::erase_state(self) -> entelix_agents::AgentEvent<()>
 pub fn entelix_agents::AgentEvent<S>::to_graph_event(&self, timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>) -> core::option::Option<entelix_session::event::GraphEvent>
 impl<S: core::clone::Clone> core::clone::Clone for entelix_agents::AgentEvent<S>
 pub fn entelix_agents::AgentEvent<S>::clone(&self) -> entelix_agents::AgentEvent<S>
@@ -395,6 +396,7 @@ pub struct entelix_agents::ChatState
 pub entelix_agents::ChatState::messages: alloc::vec::Vec<entelix_core::ir::message::Message>
 impl entelix_agents::ChatState
 pub fn entelix_agents::ChatState::from_user(text: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_agents::ChatState::last_assistant_text(&self) -> core::option::Option<alloc::string::String>
 impl core::clone::Clone for entelix_agents::ChatState
 pub fn entelix_agents::ChatState::clone(&self) -> entelix_agents::ChatState
 impl core::cmp::Eq for entelix_agents::ChatState
@@ -501,6 +503,7 @@ pub entelix_agents::ReActState::messages: alloc::vec::Vec<entelix_core::ir::mess
 pub entelix_agents::ReActState::steps: usize
 impl entelix_agents::ReActState
 pub fn entelix_agents::ReActState::from_user(text: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_agents::ReActState::last_assistant_text(&self) -> core::option::Option<alloc::string::String>
 impl core::clone::Clone for entelix_agents::ReActState
 pub fn entelix_agents::ReActState::clone(&self) -> entelix_agents::ReActState
 impl core::cmp::Eq for entelix_agents::ReActState
@@ -545,6 +548,22 @@ impl<R> core::marker::Unpin for entelix_agents::RunnableToSummarizerAdapter<R>
 impl<R> core::marker::UnsafeUnpin for entelix_agents::RunnableToSummarizerAdapter<R>
 impl<R> core::panic::unwind_safe::RefUnwindSafe for entelix_agents::RunnableToSummarizerAdapter<R> where R: core::panic::unwind_safe::RefUnwindSafe
 impl<R> core::panic::unwind_safe::UnwindSafe for entelix_agents::RunnableToSummarizerAdapter<R> where R: core::panic::unwind_safe::RefUnwindSafe
+pub struct entelix_agents::StateErasureSink<S>
+impl<S> entelix_agents::StateErasureSink<S>
+pub fn entelix_agents::StateErasureSink<S>::new(inner: alloc::sync::Arc<dyn entelix_agents::AgentEventSink<()>>) -> Self
+impl<S> core::clone::Clone for entelix_agents::StateErasureSink<S>
+pub fn entelix_agents::StateErasureSink<S>::clone(&self) -> Self
+impl<S> core::fmt::Debug for entelix_agents::StateErasureSink<S>
+pub fn entelix_agents::StateErasureSink<S>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<S> entelix_agents::AgentEventSink<S> for entelix_agents::StateErasureSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::StateErasureSink<S>::send<'life0, 'async_trait>(&'life0 self, event: entelix_agents::AgentEvent<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl<S> core::marker::Freeze for entelix_agents::StateErasureSink<S>
+impl<S> core::marker::Send for entelix_agents::StateErasureSink<S>
+impl<S> core::marker::Sync for entelix_agents::StateErasureSink<S>
+impl<S> core::marker::Unpin for entelix_agents::StateErasureSink<S>
+impl<S> core::marker::UnsafeUnpin for entelix_agents::StateErasureSink<S>
+impl<S> !core::panic::unwind_safe::RefUnwindSafe for entelix_agents::StateErasureSink<S>
+impl<S> !core::panic::unwind_safe::UnwindSafe for entelix_agents::StateErasureSink<S>
 pub struct entelix_agents::Subagent<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
 impl<M> entelix_agents::Subagent<M> where M: entelix_runnable::runnable::Runnable<alloc::vec::Vec<entelix_core::ir::message::Message>, entelix_core::ir::message::Message> + 'static
 pub fn entelix_agents::Subagent<M>::builder(model: M, parent_registry: &entelix_core::tools::registry::ToolRegistry, name: impl core::convert::Into<alloc::string::String>, description: impl core::convert::Into<alloc::string::String>) -> entelix_agents::SubagentBuilder<'_, M>
@@ -632,6 +651,7 @@ pub entelix_agents::SupervisorState::messages: alloc::vec::Vec<entelix_core::ir:
 pub entelix_agents::SupervisorState::next_speaker: core::option::Option<entelix_agents::SupervisorDecision>
 impl entelix_agents::SupervisorState
 pub fn entelix_agents::SupervisorState::from_user(text: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn entelix_agents::SupervisorState::last_assistant_text(&self) -> core::option::Option<alloc::string::String>
 impl core::clone::Clone for entelix_agents::SupervisorState
 pub fn entelix_agents::SupervisorState::clone(&self) -> entelix_agents::SupervisorState
 impl core::cmp::Eq for entelix_agents::SupervisorState
@@ -787,6 +807,8 @@ impl<S> entelix_agents::AgentEventSink<S> for entelix_agents::FailOpenSink<S> wh
 pub fn entelix_agents::FailOpenSink<S>::send<'life0, 'async_trait>(&'life0 self, event: entelix_agents::AgentEvent<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 impl<S> entelix_agents::AgentEventSink<S> for entelix_agents::FanOutSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
 pub fn entelix_agents::FanOutSink<S>::send<'life0, 'async_trait>(&'life0 self, event: entelix_agents::AgentEvent<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
+impl<S> entelix_agents::AgentEventSink<S> for entelix_agents::StateErasureSink<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static
+pub fn entelix_agents::StateErasureSink<S>::send<'life0, 'async_trait>(&'life0 self, event: entelix_agents::AgentEvent<S>) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait
 pub trait entelix_agents::AgentObserver<S> where S: core::clone::Clone + core::marker::Send + core::marker::Sync + 'static: core::marker::Send + core::marker::Sync
 pub fn entelix_agents::AgentObserver::name(&self) -> &'static str
 pub fn entelix_agents::AgentObserver::on_complete<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, _state: &'life1 S, _ctx: &'life2 entelix_core::context::ExecutionContext) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = entelix_core::error::Result<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait

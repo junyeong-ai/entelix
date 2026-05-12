@@ -33,7 +33,7 @@
 //! `clone` for fan-out.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-tokenizer-tiktoken/0.5.0")]
+#![doc(html_root_url = "https://docs.rs/entelix-tokenizer-tiktoken/0.5.1")]
 #![deny(missing_docs)]
 #![allow(
     // Vendor-name proper nouns (`OpenAI`, `OTel`, `BPE`, `GPT-4o`)

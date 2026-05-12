@@ -20,7 +20,7 @@
 //!   integration tests; implies both backends.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-persistence/0.5.0")]
+#![doc(html_root_url = "https://docs.rs/entelix-persistence/0.5.1")]
 #![deny(missing_docs)]
 // Backend modules cross-translate `sqlx`/`redis` errors many times; the
 // `&Error` form fights with the implicit `Into` conversions sqlx

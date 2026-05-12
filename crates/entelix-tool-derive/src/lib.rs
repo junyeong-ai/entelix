@@ -60,7 +60,7 @@
 //!   typed-deps macro support lands when `ToolRegistry<D>` (slice
 //!   103) settles the call shape.
 
-#![doc(html_root_url = "https://docs.rs/entelix-tool-derive/0.5.0")]
+#![doc(html_root_url = "https://docs.rs/entelix-tool-derive/0.5.1")]
 #![deny(missing_docs)]
 
 use proc_macro::TokenStream;

@@ -30,7 +30,7 @@
 //! stays free of coding-shape opinions.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-tools/0.5.0")]
+#![doc(html_root_url = "https://docs.rs/entelix-tools/0.5.1")]
 #![deny(missing_docs)]
 // Doc-prose lints fire on legitimate proper nouns (HTTP, URL, SSRF,
 // API names) and on the `RFC1918` shorthand; the redundant_pub_crate

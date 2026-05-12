@@ -30,6 +30,13 @@ commit and mirror the headline summary of each entry below.
 ### Removed
 - Over-scoped `#[allow(clippy::unwrap_used)]` on
   `entelix-agents/src/state.rs` test module.
+- Root `CLAUDE.md` dev-env content (linker `rustflags`, nextest
+  install hint, per-invariant `cargo xtask <name>` enumeration).
+  CLAUDE.md is loaded into every Claude Code session — per-developer
+  toolchain optimization belongs in contributor docs, not the
+  per-session context budget. Net: 183 → 122 lines. Every removed
+  line is re-discoverable via `cargo xtask --help` or the inline
+  `Enforced by cargo xtask …` references inside each invariant body.
 
 ## [0.5.2] — 2026-05-12
 

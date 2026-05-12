@@ -37,7 +37,7 @@
 //! provisioning, trusting the operator to have stamped them.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-memory-pgvector/0.5.2")]
+#![doc(html_root_url = "https://docs.rs/entelix-memory-pgvector/0.5.3")]
 #![deny(missing_docs)]
 // `Postgres`, `pgvector` ride through doc strings as vendor names.
 // `pub(crate)` items inside private modules are the canonical

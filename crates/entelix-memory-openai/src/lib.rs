@@ -38,7 +38,7 @@
 //!   token charge in downstream meters.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-memory-openai/0.5.2")]
+#![doc(html_root_url = "https://docs.rs/entelix-memory-openai/0.5.3")]
 #![deny(missing_docs)]
 // `OpenAI` ride through doc strings as the vendor name (not as code
 // identifier) frequently — backticking each occurrence noisily.

@@ -39,7 +39,7 @@
 //! `list_tools` / `call_tool` for a `(tenant, server)` pair.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc(html_root_url = "https://docs.rs/entelix-mcp/0.5.2")]
+#![doc(html_root_url = "https://docs.rs/entelix-mcp/0.5.3")]
 #![deny(missing_docs)]
 #![allow(
     clippy::missing_errors_doc,

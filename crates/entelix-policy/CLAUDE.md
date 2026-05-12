@@ -6,11 +6,11 @@ Multi-tenant operational primitives. Composes through `tower::Layer<S>` over `en
 
 - **`RateLimiter` trait** + `TokenBucketLimiter` — async, per-key, time-injectable. Time abstraction (`Clock` trait + `SystemClock`) lives in `entelix-core::time` so any sub-crate can take a time source without depending on `entelix-policy`.
 - **`PiiRedactor` trait** + `RegexRedactor` — bidirectional. Runs `pre_request` AND `post_response`.
-- **`CostMeter`** + `PricingTable` / `ModelPricing` — `rust_decimal` arithmetic (no float). `charge(tenant, model, usage)` runs only after the response decoder succeeds (transactional, invariant 12).
+- **`CostMeter`** + `PricingTable` / `ModelPricing` — `rust_decimal` arithmetic (no float). `charge(tenant, model, usage)` runs only after the response decoder succeeds (transactional, invariant 12). `UnknownModelPolicy::{Reject, WarnOnce}` controls behaviour when `model` is absent from the pricing table; `UnknownModelSink` trait (sync `&self`, `record_unknown_model(&TenantId, &str)` — `AuditSink`-style per invariant 18) is wired via `CostMeter::with_unknown_model_sink(Arc<dyn UnknownModelSink>)` and fires on every attempt regardless of the policy's log-dedup state, so production dashboards see raw catalog-drift counts.
 - **`QuotaLimiter`** — composite gate: rate (RPS) + budget ceiling (per-tenant cumulative spend cap). Runs *before* the request.
-- **`TenantPolicy`** — per-tenant aggregate of optional handles (`rate_limiter`, `redactor`, `cost_meter`, `quota`).
-- **`PolicyRegistry`** — `DashMap<tenant_id, Arc<TenantPolicy>>` with fallback default policy.
-- **`PolicyLayer<S>`** — `tower::Layer` that wraps both `Service<ModelInvocation>` (request scrub + response scrub + cost) AND `Service<ToolInvocation>` (input scrub + output scrub). One layer instance, two service shapes.
+- **`TenantPolicy`** — per-tenant aggregate of optional handles. Fluent construction: `TenantPolicy::new().with_redactor(r).with_quota(q).with_cost_meter(m)` — every primitive is `Option<Arc<...>>`, absence means "disabled" (pass-through).
+- **`PolicyRegistry`** — `DashMap<TenantId, Arc<TenantPolicy>>` + `Arc<RwLock<Arc<TenantPolicy>>>` fallback. `register(tenant, policy)` / `replace_fallback(policy)` for whole-policy swaps; `mutate_fallback(|p| -> TenantPolicy)` / `mutate_tenant(tid, |p| -> TenantPolicy)` for atomic partial updates — the closure receives the current policy by reference and returns the next one, the registry installs it in a single shard-locked step so concurrent mutations on the same tenant cannot lose updates. Closures run under the slot's write lock; perform any I/O *before* calling.
+- **`PolicyLayer`** — `tower::Layer` (`NAME = "policy"`, impls `NamedLayer`) that wraps both `Service<ModelInvocation>` (request scrub + response scrub + cost) AND `Service<ToolInvocation>` (input scrub + output scrub). One layer instance, two service shapes.
 
 ## Crate-local rules
 

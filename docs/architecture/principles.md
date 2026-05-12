@@ -92,11 +92,19 @@ companion crates.
   parsers, sub-agents, compiled state graphs all implement it; `.pipe()` is the
   universal connector). `tower::Service<Request>` is the middleware wiring —
   *how* a model or tool dispatch is mediated (`PolicyLayer`, `OtelLayer`,
-  `RetryService`, `ApprovalLayer`, `ToolHookLayer`, `ToolEventLayer`,
-  `ScopedToolLayer` plug onto `ModelInvocation` and `ToolInvocation`).
-  The two domains are intentionally disjoint — adapters that convert one to
-  the other are reviewer-rejected because they would smuggle middleware
-  concerns into composition logic, or vice versa.
+  `RetryLayer`, `RetryToolLayer`, `ApprovalLayer`, `ToolHookLayer`,
+  `ToolEventLayer`, `ScopedToolLayer` plug onto `ModelInvocation` and
+  `ToolInvocation`). The two domains are intentionally disjoint — adapters
+  that convert one to the other are reviewer-rejected because they would
+  smuggle middleware concerns into composition logic, or vice versa.
+- Every first-party layer self-identifies through the `NamedLayer` trait so
+  `ChatModel::layer_names()` and `ToolRegistry::layer_names()` surface the
+  composed stack at boot time. External `tower::Layer` middleware participates
+  through the `WithName::new(name, inner)` wrapper. Heterogeneous agents in a
+  multi-agent topology fan their `AgentEvent<S>` streams into a single
+  state-agnostic `AgentEventSink<()>` audit / SSE / OTel pipeline through the
+  `StateErasureSink<S>` adapter, which projects each event via
+  `AgentEvent::erase_state`.
 
 ## Observability And Policy
 
@@ -112,6 +120,19 @@ companion crates.
 - LLM-facing content passes through explicit rendering surfaces. Operator
   diagnostics, raw provider errors, timestamps, internal type names, and
   unfiltered metadata do not enter model context.
+- Error wire shape is the `ErrorEnvelope` produced by `Error::envelope()` —
+  one `Copy + Serialize` value bundling `wire_code`, `wire_class`,
+  `retry_after_secs`, and `provider_status`. Sinks, SSE adapters, and audit
+  replay read this single value rather than pattern-matching the inner error
+  variant.
+- Cost-meter observability hooks are typed. `UnknownModelPolicy` controls
+  whether an unknown-model dispatch returns an error or a zero charge;
+  `UnknownModelSink` (sync `&self`, `AuditSink`-style) fires on every attempt
+  regardless of the policy's log-dedup state so production dashboards see raw
+  catalog-drift counts. Pricing hot-reload runs through
+  `replace_pricing(table)` (full swap) or `replace_model_pricing(model,
+  pricing)` (single row); both serialise through the same write lock so
+  concurrent admin writers cannot tear the table.
 
 ## Security
 

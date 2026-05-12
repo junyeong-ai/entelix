@@ -109,75 +109,14 @@ Key references:
 
 ## Commands
 
-Two bundled cadences encode the canonical sequence — local fast for
-the commit-time discipline, full CI for push/merge gate. Iterating?
-Use targeted per-crate gates (`cargo build -p <crate>` + `cargo test
--p <crate> --lib <module>`) and reach for `gates` only at slice
-boundaries.
-
-The local cadence picks up `cargo-nextest` automatically when it's on
-`PATH` (typically a faster + colour-richer test runner). Install once
-per-developer with `cargo install cargo-nextest --locked`; falls back
-transparently to `cargo test` when absent.
-
-Linker — the workspace's link step dominates incremental rebuild on
-larger refactors. Recommended per-developer override (not committed —
-add to `.cargo/config.toml` outside the repo, or to a local
-`~/.cargo/config.toml`):
-
-```toml
-# macOS (Apple Silicon / Intel) — `brew install llvm` ships lld, but
-# the LLVM formula is keg-only. Add its `bin` to `PATH` (the brew
-# install hint prints the right export line) so cargo can resolve
-# `ld64.lld` / `lld`.
-[target.aarch64-apple-darwin]
-rustflags = ["-C", "link-arg=-fuse-ld=lld"]
-[target.x86_64-apple-darwin]
-rustflags = ["-C", "link-arg=-fuse-ld=lld"]
-
-# Linux — `apt install mold` / `pacman -S mold`. Mold beats lld here.
-[target.x86_64-unknown-linux-gnu]
-rustflags = ["-C", "link-arg=-fuse-ld=mold"]
-```
-
-Workspace `.cargo/config.toml` stays linker-agnostic so CI and casual
-contributors keep working without setup.
+Two bundled cadences encode the canonical sequence — `cargo xtask gates` is the local commit-time discipline, `cargo xtask gates-ci` is the push / merge gate. Iterating? Use targeted per-crate gates (`cargo build -p <crate>`, `cargo test -p <crate> --lib <module>`) and reach for `gates` only at slice boundaries.
 
 ```bash
-# Local — fmt + clippy (default features) + test (default features) + AST invariants.
-# Skips `--all-features` / `--all-targets` and the subprocess gates that CI handles.
-cargo xtask gates
-
-# CI — adds `--all-features --all-targets` clippy/test, doc with -D warnings,
-# public-api drift, feature-matrix isolation, supply-chain audit. Push-time.
-cargo xtask gates-ci
-
-# AST invariants only (every subcommand maps to one CLAUDE.md invariant).
-cargo xtask invariants
-
-# Or per-invariant — `xtask/src/invariants/<name>.rs` typed-AST visitors.
-cargo xtask no-fs                    # invariant 9
-cargo xtask managed-shape            # invariants 1, 2, 4, 10
-cargo xtask naming                   # taxonomy + ctx-position
-cargo xtask surface-hygiene          # #[non_exhaustive] + #[source] / #[from]
-cargo xtask silent-fallback          # invariant 15
-cargo xtask magic-constants          # invariant 17
-cargo xtask no-shims                 # invariant 14
-cargo xtask lock-ordering            # await_holding_lock pinned at deny
-cargo xtask dead-deps                # workspace.dependencies hygiene
-cargo xtask facade-completeness      # every pub item reachable via `entelix::*`
-cargo xtask doc-canonical-paths      # live docs use facade canonical paths
-
-# Subprocess gates — embedded in `gates-ci`, also runnable standalone.
-cargo xtask supply-chain             # cargo audit (RustSec) + cargo deny
-cargo xtask feature-matrix           # each facade feature compiles alone
-cargo xtask public-api               # per-crate public-API drift baseline
-
-# Refreeze public-API baselines after a deliberate API change.
-cargo xtask freeze-public-api [<crate>...]
-
-# Live integration (requires API keys, opt-in).
-cargo test --workspace --all-features -- --ignored
+cargo xtask gates                       # local — fmt + clippy + test + AST invariants
+cargo xtask gates-ci                    # CI — adds --all-features/--all-targets, doc -D warnings, public-api drift, feature-matrix, supply-chain
+cargo xtask invariants                  # AST invariants only — per-invariant subcommands listed in `cargo xtask --help`
+cargo xtask freeze-public-api [<crate>] # refreeze baselines after a deliberate API change
+cargo test --workspace --all-features -- --ignored   # live integration (requires API keys)
 ```
 
 `gates-ci` is the merge gate. PR cannot merge with a red `gates-ci` run.

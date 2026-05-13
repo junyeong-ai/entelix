@@ -1,4 +1,4 @@
-name: CodeQL
+name: codeql
 
 on:
   push:
@@ -11,10 +11,9 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 concurrency:
-  group: codeql-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -22,23 +21,26 @@ jobs:
     name: analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
     strategy:
       fail-fast: false
       matrix:
-        # Rust scanning is GA (2025-10) with `build-mode: none` — no toolchain
-        # install required. Add `actions` later if YAML-bound CodeQL queries
-        # become useful for this workflow set.
-        language: [rust]
+        # rust: scans the codebase. actions: scans this workflow set itself
+        # for script-injection and untrusted-input pitfalls. Both run under
+        # build-mode: none — CodeQL needs no toolchain.
+        language: [rust, actions]
     steps:
       - uses: actions/checkout@v6
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           build-mode: none
 
       - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"

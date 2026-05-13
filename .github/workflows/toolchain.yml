@@ -1,0 +1,114 @@
+name: toolchain
+
+# Manual-trigger only. Rust stable releases every ~6 weeks on Thursdays;
+# operator dispatches this workflow after a release to bootstrap the bump.
+#
+# Bot pushes a branch with the new channel pinned and emits a prefilled
+# compare URL in the job summary. Operator clicks once to open the PR —
+# at which point ci.yml fires on `pull_request` and gates the bump.
+#
+# Why human-in-the-loop on the final click: PRs created by GITHUB_TOKEN
+# do not trigger downstream workflows (GHA design — prevents loops), so a
+# bot-opened PR would land with no CI gating. A maintainer-opened PR fires
+# pull_request events normally. This design needs zero extra secrets and
+# no GitHub App.
+#
+# Cargo.toml `rust-version` (MSRV) is intentionally untouched — bump it
+# deliberately when adopting features from a newer stable.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Serialize concurrent dispatches: two operators (or one double-click)
+# would both observe the remote branch absent between dedupe and push;
+# the loser hits non-fast-forward. cancel-in-progress: false queues so
+# the second run's dedupe step sees the first run's pushed branch and
+# emits the stale-branch guidance.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    name: bump rust-toolchain.toml
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: detect new stable
+        id: detect
+        run: |
+          set -euo pipefail
+          rustup update stable --no-self-update
+          new=$(rustup run stable rustc --version | awk '{print $2}')
+          old=$(grep '^channel' rust-toolchain.toml | sed 's/.*= *"\([^"]*\)".*/\1/')
+          if [ "$old" = "$new" ]; then
+            {
+              echo "## Already current"
+              echo ""
+              echo "\`rust-toolchain.toml\` is already pinned to \`$new\` — no bump needed."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          {
+            echo "new=$new"
+            echo "old=$old"
+            echo "branch=rust-toolchain/bump-$new"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: skip if branch already on remote
+        if: steps.detect.outputs.skip != 'true'
+        id: dedupe
+        env:
+          BRANCH: ${{ steps.detect.outputs.branch }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            {
+              echo "## Stale branch on remote"
+              echo ""
+              echo "Branch \`$BRANCH\` already exists on remote — likely from a prior bump attempt whose PR was closed without deletion."
+              echo ""
+              echo "Delete the branch (\`git push origin --delete $BRANCH\` or via the GitHub UI) and re-run this workflow."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: push bump branch + emit PR URL
+        if: steps.detect.outputs.skip != 'true' && steps.dedupe.outputs.skip != 'true'
+        env:
+          NEW: ${{ steps.detect.outputs.new }}
+          OLD: ${{ steps.detect.outputs.old }}
+          BRANCH: ${{ steps.detect.outputs.branch }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$BRANCH"
+          sed -i "s|^channel = .*|channel = \"$NEW\"|" rust-toolchain.toml
+          git add rust-toolchain.toml
+          git commit -m "build(rust): bump toolchain $OLD -> $NEW"
+          git push -u origin "$BRANCH"
+          title="build(rust): bump toolchain $OLD -> $NEW"
+          body=$(printf '%s\n\n%s\n\n%s\n' \
+            "Automated bump of \`rust-toolchain.toml\` channel from \`$OLD\` to \`$NEW\`." \
+            "ci.yml gates this PR — any new default-warn lint surfaces here before main is affected." \
+            "MSRV (\`Cargo.toml\` rust-version) is intentionally not touched.")
+          encoded_title=$(jq -rn --arg t "$title" '$t | @uri')
+          encoded_body=$(jq -rn --arg b "$body" '$b | @uri')
+          url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/main...$BRANCH?expand=1&title=$encoded_title&body=$encoded_body"
+          {
+            echo "## PR ready to open"
+            echo ""
+            echo "Branch \`$BRANCH\` pushed."
+            echo ""
+            echo "[**Click here to open the bump PR**]($url) — title and body are prefilled. Submitting it fires ci.yml against the new toolchain."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Open PR: $url"

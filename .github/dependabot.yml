@@ -1,6 +1,7 @@
 version: 2
 updates:
-  # GitHub Actions — pinned `@v6` / `@v2` move forward as upstream cuts new majors.
+  # GitHub Actions — major-version pins (`@vN`) move forward when upstream
+  # cuts a new major. `cooldown` blocks day-zero adoption (yank window).
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -10,8 +11,12 @@ updates:
       actions:
         patterns:
           - "*"
+    cooldown:
+      default-days: 3
 
-  # Cargo dependencies — workspace root + xtask sub-workspace.
+  # Workspace cargo dependencies. semver-tiered cooldown — majors get a
+  # 14-day yank window, minors 5, patches 2. Security updates bypass
+  # cooldown by Dependabot policy, so CVE patches still land immediately.
   - package-ecosystem: cargo
     directory: /
     schedule:
@@ -22,7 +27,14 @@ updates:
         update-types:
           - minor
           - patch
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+      semver-minor-days: 5
+      semver-patch-days: 2
 
+  # xtask is a sibling sub-workspace (`[workspace]` at xtask/Cargo.toml) —
+  # the root entry does not cover it, hence a second entry.
   - package-ecosystem: cargo
     directory: /xtask
     schedule:
@@ -33,3 +45,8 @@ updates:
         update-types:
           - minor
           - patch
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+      semver-minor-days: 5
+      semver-patch-days: 2

@@ -1,31 +1,26 @@
-name: live-API verification
+name: live-api
 
-# Manual-trigger only. There is intentionally no `push` /
-# `pull_request` / `schedule` trigger — running the live smoke
-# costs vendor cents per invocation, and the cost ceiling
-# discipline demands explicit operator intent.
+# Manual-trigger only. Vendor API calls cost real money. Each smoke is
+# #[ignore]-gated; this workflow opts in via -- --ignored.
 #
-# How to run:
-#   1. GitHub UI → Actions → "live-API verification" → "Run workflow"
-#   2. Optionally pass a comma-separated `vendors` input to scope
-#      the sweep (e.g. `anthropic,openai_chat`).
+# Secrets per vendor (only configured vendors run):
+#   anthropic         -> ANTHROPIC_API_KEY
+#   openai_chat       -> OPENAI_API_KEY
+#   openai_responses  -> OPENAI_API_KEY
+#   openai_embedder   -> OPENAI_API_KEY
+#   gemini            -> GEMINI_API_KEY
+#   bedrock           -> AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY + AWS_REGION
 #
-# Required secrets (per vendor — only those you supply will run):
-#   - ANTHROPIC_API_KEY
-#   - OPENAI_API_KEY
-#   - GEMINI_API_KEY
-#   - AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY + AWS_REGION
-#
-# Each smoke is `#[ignore]`-gated; this workflow opts in via
-# `-- --ignored` and `--test live_<vendor>` filters.
+# `vendors` is a comma-separated subset of those tokens. Empty = run every
+# configured vendor. Matching is token-delimited (anthropic != notanthropic).
+# An explicitly requested vendor whose secret is missing fails the run
+# immediately rather than skipping silently.
 
 on:
   workflow_dispatch:
     inputs:
       vendors:
-        description: |
-          Comma-separated subset of {anthropic,openai_chat,openai_responses,gemini,bedrock,openai_embedder}.
-          Empty = run every vendor whose secret is configured.
+        description: comma-separated subset; empty = all configured
         required: false
         default: ""
 
@@ -33,58 +28,116 @@ permissions:
   contents: read
 
 jobs:
-  live-api:
-    name: live-API smoke
+  smoke:
+    name: live-api smoke
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Job-level env carries only booleans, not the secret values. Each
+    # vendor key lands at step scope on the one step that needs it, so
+    # checkout / toolchain setup / cache restore never see them.
     env:
-      RUSTFLAGS: "-D warnings"
+      HAS_ANTHROPIC: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+      HAS_OPENAI: ${{ secrets.OPENAI_API_KEY != '' }}
+      HAS_GEMINI: ${{ secrets.GEMINI_API_KEY != '' }}
+      HAS_AWS: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.AWS_REGION != '' }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v6
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          components: rustfmt, clippy
+          cache: false
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: smoke
 
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
+      # Normalises `inputs.vendors` (strips whitespace) and fails fast on
+      # unknown tokens or on a requested vendor whose secret is unset.
+      # Writes VENDORS_NORMALIZED so per-vendor `if:` reads a canonicalised
+      # form (the unencoded input could carry whitespace that breaks the
+      # token-delimited contains() check).
+      # User input flows through env, never directly into shell — guards
+      # against script injection from a hostile vendors value (workflow_dispatch
+      # is permission-gated, but env-pass is the standardized hardening).
+      - name: validate vendor selection
+        env:
+          VENDORS_RAW: ${{ inputs.vendors }}
+        run: |
+          set -euo pipefail
+          v_normalized=$(printf '%s' "$VENDORS_RAW" | tr -d '[:space:]')
+          echo "VENDORS_NORMALIZED=$v_normalized" >> "$GITHUB_ENV"
+          if [ -z "$v_normalized" ]; then
+            echo "no vendor filter — running every configured vendor"
+            exit 0
+          fi
+          valid="anthropic openai_chat openai_responses openai_embedder gemini bedrock"
+          errors=0
+          selected=0
+          IFS=',' read -ra requested <<< "$v_normalized"
+          for r in "${requested[@]}"; do
+            [ -z "$r" ] && continue
+            case " $valid " in
+              *" $r "*) : ;;
+              *)
+                echo "::error::unknown vendor '$r' — valid: $valid"
+                errors=1
+                continue
+                ;;
+            esac
+            case "$r" in
+              anthropic)                                          has="$HAS_ANTHROPIC" ;;
+              openai_chat|openai_responses|openai_embedder)       has="$HAS_OPENAI" ;;
+              gemini)                                             has="$HAS_GEMINI" ;;
+              bedrock)                                            has="$HAS_AWS" ;;
+            esac
+            if [ "$has" != "true" ]; then
+              echo "::error::vendor '$r' requested but its secret(s) are not configured"
+              errors=1
+              continue
+            fi
+            selected=$((selected + 1))
+          done
+          # comma-only / whitespace-only inputs (e.g. ",", ",,") normalize to
+          # non-empty but resolve to zero vendor tokens. Fail rather than
+          # silently exit green with no smoke run.
+          if [ "$errors" = "0" ] && [ "$selected" = "0" ]; then
+            echo "::error::vendors input '$VENDORS_RAW' resolved to zero vendor tokens after normalization"
+            errors=1
+          fi
+          exit $errors
 
-      - name: Anthropic smoke
-        if: ${{ env.ANTHROPIC_API_KEY != '' && (inputs.vendors == '' || contains(inputs.vendors, 'anthropic')) }}
+      - name: anthropic
+        if: env.HAS_ANTHROPIC == 'true' && (env.VENDORS_NORMALIZED == '' || contains(format(',{0},', env.VENDORS_NORMALIZED), ',anthropic,'))
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: cargo test -p entelix-core --test live_anthropic -- --ignored
 
-      - name: OpenAI Chat smoke
-        if: ${{ env.OPENAI_API_KEY != '' && (inputs.vendors == '' || contains(inputs.vendors, 'openai_chat')) }}
+      - name: openai-chat
+        if: env.HAS_OPENAI == 'true' && (env.VENDORS_NORMALIZED == '' || contains(format(',{0},', env.VENDORS_NORMALIZED), ',openai_chat,'))
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: cargo test -p entelix-core --test live_openai_chat -- --ignored
 
-      - name: OpenAI Responses smoke
-        if: ${{ env.OPENAI_API_KEY != '' && (inputs.vendors == '' || contains(inputs.vendors, 'openai_responses')) }}
+      - name: openai-responses
+        if: env.HAS_OPENAI == 'true' && (env.VENDORS_NORMALIZED == '' || contains(format(',{0},', env.VENDORS_NORMALIZED), ',openai_responses,'))
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: cargo test -p entelix-core --test live_openai_responses -- --ignored
 
-      - name: Gemini smoke
-        if: ${{ env.GEMINI_API_KEY != '' && (inputs.vendors == '' || contains(inputs.vendors, 'gemini')) }}
+      - name: gemini
+        if: env.HAS_GEMINI == 'true' && (env.VENDORS_NORMALIZED == '' || contains(format(',{0},', env.VENDORS_NORMALIZED), ',gemini,'))
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: cargo test -p entelix-core --test live_gemini -- --ignored
 
-      - name: Bedrock smoke
-        if: ${{ env.AWS_ACCESS_KEY_ID != '' && (inputs.vendors == '' || contains(inputs.vendors, 'bedrock')) }}
+      - name: bedrock
+        if: env.HAS_AWS == 'true' && (env.VENDORS_NORMALIZED == '' || contains(format(',{0},', env.VENDORS_NORMALIZED), ',bedrock,'))
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: cargo test -p entelix-cloud --features aws --test live_bedrock -- --ignored
 
-      - name: OpenAI Embedder smoke
-        if: ${{ env.OPENAI_API_KEY != '' && (inputs.vendors == '' || contains(inputs.vendors, 'openai_embedder')) }}
+      - name: openai-embedder
+        if: env.HAS_OPENAI == 'true' && (env.VENDORS_NORMALIZED == '' || contains(format(',{0},', env.VENDORS_NORMALIZED), ',openai_embedder,'))
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: cargo test -p entelix-memory-openai --test live_openai_embedder -- --ignored

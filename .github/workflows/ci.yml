@@ -54,7 +54,7 @@ jobs:
         with:
           shared-key: supply-chain
           workspaces: xtask -> target
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2.77.4
         with:
           tool: cargo-audit,cargo-deny
       - run: cargo xtask supply-chain
@@ -76,7 +76,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: build-${{ matrix.os }}
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2.77.4
         with:
           tool: cargo-nextest
       - run: cargo clippy --workspace --all-features --all-targets -- -D warnings
@@ -145,7 +145,7 @@ jobs:
           workspaces: |
             . -> target
             xtask -> target
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2.77.4
         with:
           tool: cargo-public-api
       - run: cargo xtask public-api

@@ -9,6 +9,48 @@ Workspace releases ship in lockstep — every member crate carries the
 same version. Annotated git tags (`vX.Y.Z`) point at the release
 commit and mirror the headline summary of each entry below.
 
+## [0.5.4] — 2026-05-13
+
+### Changed
+- CI workflows align with `rust-toolchain.toml` via
+  `actions-rust-lang/setup-rust-toolchain@v1` (the prior
+  `dtolnay/rust-toolchain@stable` rev ignored the channel pin,
+  diverging CI from local). Per-job `shared-key` cache isolation
+  declares the `xtask` sub-workspace explicitly. The test step
+  splits `cargo nextest run` from `cargo test --doc` since nextest
+  skips doctests.
+- `codeql-action` `@v3` → `@v4` (v3 deprecation). The `actions`
+  language joins the matrix so workflow YAML itself is scanned for
+  script-injection and untrusted-input pitfalls.
+- `dependabot.yml` carries semver-tiered `cooldown` (cargo major
+  14d / minor 5d / patch 2d, github-actions 3d) so day-zero
+  releases pass through the yank window; security updates bypass
+  cooldown by Dependabot policy.
+
+### Added
+- `.github/workflows/toolchain.yml` (manual dispatch) — bot pushes
+  a `rust-toolchain/bump-<version>` branch with the toml channel
+  updated and emits a prefilled compare URL in the run summary.
+  `GITHUB_TOKEN`-created PRs do not fire downstream workflows, so
+  the maintainer's 1-click opens the PR under their own identity
+  and `ci.yml` gates the bump normally. `git ls-remote` detects
+  stale branches from prior closed bump PRs.
+
+### Fixed
+- `live-api.yml` stops exposing vendor secrets at job scope —
+  job-level env carries only `HAS_*` booleans, actual API keys
+  land at step scope on the step that uses them. Vendor matching
+  is token-delimited (`anthropic` no longer matches `notanthropic`).
+  A `validate vendor selection` pre-step fails fast on unknown
+  tokens, missing secrets, and zero-resolution inputs (e.g. `","`).
+  User input flows through env, not direct expression
+  interpolation, closing the script-injection path CodeQL's
+  `actions`-language scan flags.
+
+### Removed
+- Redundant `live` job from `ci.yml` — `live-api.yml` is the single
+  source of vendor smokes.
+
 ## [0.5.3] — 2026-05-12
 
 ### Changed

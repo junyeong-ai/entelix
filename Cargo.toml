@@ -146,7 +146,7 @@ pgvector = { version = "0.4", features = ["sqlx"] }
 
 # ── Observability ────────────────────────────────────────────────────────
 opentelemetry = "0.31"
-opentelemetry_sdk = { version = "0.31", features = ["rt-tokio", "metrics", "logs"] }
+opentelemetry_sdk = { version = "0.32", features = ["rt-tokio", "metrics", "logs"] }
 opentelemetry-otlp = { version = "0.31", features = ["http-proto", "metrics", "logs", "reqwest-client"] }
 tracing-opentelemetry = "0.32"
 http-body-util = "0.1"
